@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/cr/cr06/conf/AUMM" data-source="tcamsDS">
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  SYS_ID
+ ,MENU_CD
+ ,UP_MENU_CD
+ ,LINK_URL
+ ,USR_CLS
+ ,MENU_TYP
+ ,SORT_ORD
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) AS ( 
+       SELECT '100','PCA00110','PCA00000','ui/bp/tcams/cr/cr06/em-cr06-01.html','B',NULL, 9,'Y',NULL,'U','ADMIN'   ,'2014-06-03 15:55:36','GE00059' ,'2020-04-29 10:22:58' FROM DUAL
+ UNION SELECT '100','PCW00010','PCW00000','ui/bp/tcams/cw/cw01/em-cw01.html'   ,'B',NULL, 1,'Y',NULL,'U','ADMIN'   ,'2020-02-12 10:41:54.000','TSA00024','2023-02-28 16:42:59.000' FROM DUAL
+ UNION SELECT '100','PCW00040','PCW00000','ui/bp/tcams/cw/cw04/em-cw04.html'   ,'B',NULL, 4,'Y',NULL,'C','ADMIN'   ,'2024-03-19 09:51:00.000','SYSTEMPG','2024-03-19 09:51:00.000' FROM DUAL
+)
+SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN ESAAUMM B
+       ON    B.SYS_ID  = A.SYS_ID
+         AND B.MENU_CD = A.MENU_CD
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO ESAAUMM (
+  SYS_ID
+ ,MENU_CD
+ ,UP_MENU_CD
+ ,LINK_URL
+ ,USR_CLS
+ ,MENU_TYP
+ ,SORT_ORD
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) VALUES ( 
+  #sys_id#
+ ,#menu_cd#
+ ,#up_menu_cd#
+ ,#link_url#
+ ,#usr_cls#
+ ,#menu_typ#
+ ,#sort_ord#
+ ,#use_yn#
+ ,#rem#
+ ,#sts#
+ ,#reg_id#
+ ,#reg_dt#
+ ,#mod_id#
+ ,#mod_dt#
+)
+  ]]>
+ </sql> 
+</sql-descriptor> 
