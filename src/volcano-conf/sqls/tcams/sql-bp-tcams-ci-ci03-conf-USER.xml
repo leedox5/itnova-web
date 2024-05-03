@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci03/conf/USER" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  SYS_ID
+ ,GRP_CD
+ ,DTL_CD
+) AS (
+ SELECT '100' ,'CHK_USER' ,'AUTH' FROM DUAL
+)
+SELECT CASE WHEN INSTR(B.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END DEV_AUTH
+      ,CASE WHEN INSTR(D.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END DEGR_YN
+      ,CASE WHEN INSTR(E.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END TESTING_YN
+      ,CASE WHEN INSTR(F.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END CHECKING_YN
+      ,B.REM
+      ,SUBSTRING(C.REM, 1, 4) COME
+      ,SUBSTRING(C.REM, 6)    S_KEY
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON    B.SYS_ID = A.SYS_ID    
+        AND B.GRP_CD = A.GRP_CD 
+        AND B.DTL_CD = A.DTL_CD
+      LEFT OUTER JOIN 
+       ESACDDT C
+      ON    C.SYS_ID = '100'
+        AND C.GRP_CD = 'CHK_USER'
+        AND C.DTL_CD = 'WORK'
+      LEFT OUTER JOIN 
+       ESACDDT D
+      ON    D.SYS_ID = '100'
+        AND D.GRP_CD = 'CHK_USER'
+        AND D.DTL_CD = 'DEGR'
+      LEFT OUTER JOIN 
+       ESACDDT E
+      ON    E.SYS_ID = '100'
+        AND E.GRP_CD = 'CHK_USER'
+        AND E.DTL_CD = 'TESTING'
+      LEFT OUTER JOIN 
+       ESACDDT F
+      ON    F.SYS_ID = '100'
+        AND F.GRP_CD = 'CHK_USER'
+        AND F.DTL_CD = 'CHECKING'
+  ]]>
+ </sql>
+
+ <sql id="select.work" comment="조회">
+  <![CDATA[
+WITH T1 (
+  SYS_ID
+ ,GRP_CD
+ ,DTL_CD
+) AS (
+ SELECT '100', 'CHK_USER', 'WORK' FROM DUAL
+)
+SELECT SUBSTRING(B.REM ,1 ,4) CURR_COME
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON     B.SYS_ID = A.SYS_ID    
+         AND B.GRP_CD = A.GRP_CD 
+         AND B.DTL_CD = A.DTL_CD
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
