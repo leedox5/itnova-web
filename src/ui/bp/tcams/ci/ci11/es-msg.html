@@ -1,0 +1,56 @@
+<dom-module id="es-msg">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 메세지
+        ** @Description     :
+        ** @Author          : LMH
+        ** @Create Date     : 2022.10.27
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+		<sc-service-provider id="getGrid" descriptor="bp/tcams/ci/common/conf" service-id="getGrid" on-response="responseHandler"></sc-service-provider>
+		<sc-grid id="grid" 
+		         sortable="false"
+		         column-fit-style="fill" 
+		         fit-row-height="true" 
+		         use-dummy="true"
+		         use-selection="false"
+		         use-state="false" >
+		    <cc-grid-toolbar title-text="▶ 메세지">
+		    </cc-grid-toolbar>
+		    <sc-grid-columns>
+		    </sc-grid-columns>
+		</sc-grid>
+	</template>
+
+	<script>
+		Polymer({
+			is:	"es-msg",
+			properties:	{
+				searchParam: {type: Object, value: function() {return {};}},
+			},
+	
+			load: function() {
+				var	me = this;
+			    me.$.getGrid.body = { param: me.searchParam }
+				me.$.getGrid.service();
+			},
+			
+			responseHandler: function(e, res) {
+				let handler = new ResponseHandler(res.response, UT.alert, this.$.grid);
+				handler.setGrid();
+			},
+
+			showMsg: function(data) {
+				let msg = new Msg(data, UT.alert, this.$.grid);
+				msg.showMsgOnGrid();
+			}
+        });
+	</script>
+</dom-module>

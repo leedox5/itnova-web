@@ -1,0 +1,89 @@
+<dom-module id="ep-ci11-01">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 미등록 컬럼 조회 
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.11.27
+        ** @History         : 2019.11.27 최초작성
+        *****************************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+    <template>
+        <!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+        -->
+		<!-- 공법정보 컬럼 조회 -->
+	    <sc-service-provider id="getListRPC" descriptor="bp/tcams/ci/ci13" service-id="get.newColumnlist">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="newColumnlist" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- page title toolbar -->
+		<cc-page-title-bar page-title="미등록 컬럼 조회"></cc-page-title-bar>
+		
+		<sc-grid id="gridPanel" class="flex" use-dummy="true" use-state="false" use-selection="false" data-provider="{{resultList}}">
+			<cc-grid-toolbar>
+		        <sc-button id="btn_close"     		text="닫기" 	 		on-click="close"	></sc-button>
+			</cc-grid-toolbar>
+			<sc-grid-columns>
+				<sc-data-column	data-field="comd_tabl_name"	header-text="테이블명"	width="150"	text-align="center"></sc-data-column>
+				<sc-data-column	data-field="comd_colm_name"	header-text="컬럼명"	width="250"	text-align="left"></sc-data-column>
+			</sc-grid-columns>
+		</sc-grid>
+    </template>
+	<!-- 화면 구성 끝-->
+    
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'ep-ci11-01',
+            properties : {
+            	searchParam : {type  : Object,value : function() {return {};}},
+				resultList  : {type  : Array, value : function() {return []}}
+            },
+            
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+            // 1. 화면 로딩시 최초 호출 함수
+			initialized : function() {
+				var me = this;
+			},
+
+            load : function(param) {
+                var me = this;
+                me.getList();
+            },
+			
+			/**************************************************
+             * 버튼 이벤트
+             **************************************************/
+			// 조회 버튼
+            getList : function() {
+         	    var me = this;
+         	    UT.request(me.$.getListRPC);
+            },
+            
+			// 조회 버튼
+            close : function() {
+         	    var me = this;
+         	    me.fire("close");
+            }
+        });
+    </script>
+
+</dom-module>

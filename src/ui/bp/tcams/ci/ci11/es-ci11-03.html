@@ -1,0 +1,434 @@
+<sc-link rel="import" href="ep-ci11-01.html"></sc-link>
+
+<dom-module id="es-ci11-03">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 공법정보 테이블 목록
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.11.27
+        ** @History         : 2019.11.27 최초작성
+        *****************************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+	<template>
+        <!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+        -->
+
+		<!-- 공법정보 테이블 조회 -->
+	    <sc-service-provider id="getListRPC" descriptor="bp/tcams/ci/ci12" service-id="get.pkmslist" on-response="afterGetList">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="pkmsList" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	
+		<!-- 저장 -->
+	    <sc-service-provider id="saveListRPC" descriptor="bp/tcams/ci/ci12" service-id="save.pkmslist" on-response="resultsaveList">
+	        <outputs>
+	            <sc-service-output name="result" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+
+		<!-- 자동 등록 -->
+	    <sc-service-provider id="save2ListRPC" descriptor="bp/tcams/ci/ci12" service-id="save2.pkmslist" on-response="resultsaveList">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_message}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+
+		<sc-service-provider id="getOpts" descriptor="bp/tcams/ci/common/conf" service-id="getOpts"></sc-service-provider>
+		<sc-service-provider id="getConf" descriptor="bp/tcams/ci/common/conf" service-id="getConf"></sc-service-provider>
+		<sc-service-provider id="setConf" descriptor="bp/tcams/ci/common/conf" service-id="setConf"></sc-service-provider>
+		<sc-service-provider id="setConfDesc" descriptor="bp/tcams/ci/common/conf" service-id="setConfDescTbl" on-response="afterSetConfDesc"></sc-service-provider>
+		<sc-service-provider id="getGrid" descriptor="bp/tcams/ci/common/conf" service-id="getGrid" on-response="responseHandler"></sc-service-provider>
+
+        <sc-ajax id="pkms" url="/tcams/pkms.do" method="POST" on-response="afterPkms"></sc-ajax>
+
+	    <!--
+	    *********************************************************************************************************
+	    *************************         UI Area                                          **********************   
+	    *********************************************************************************************************
+	    -->
+		<cc-page-title-bar id="comeInfoTitleBar" page-title="공법정보 테이블 목록">
+	        <sc-button id="btn_retrieve" 		text="조회" 		on-click="getList" 		></sc-button>
+	        <sc-button id="btn_auto" 		  	text="자동등록" 	on-click="autoinsert"	></sc-button>
+	        <sc-button id="btn_save"     		text="저장" 	 	on-click="saveList"		></sc-button>
+	        <sc-button id="btn_close"     		text="닫기" 	 	on-click="closeScreen"	></sc-button>
+		</cc-page-title-bar>
+	    <cc-search-container search-button-hidden="true">
+			<table validation-group="search">
+				<colgroup>
+					<col style="width:70px"/>
+					<col style="width:90px"/>
+					<col style="width:70px"/>
+					<col style="width:200px"/>
+					<col></col>
+				</colgroup>
+				<tr>
+					<th>
+						<sc-label text="공법코드" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_comecode" value="{{searchParam.pkms_come_code}}"   on-enter="getList" max-length="4"></sc-text-field>
+					</td>
+					<th>
+						<sc-label text="TABLE ID" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_tablid" value="{{searchParam.pkms_tabl_id}}"   on-enter="getList"></sc-text-field>
+					</td>
+					<td></td>
+				</tr>
+			</table>
+		</cc-search-container>
+		<div class="hbox flex-8">
+		<sc-grid id="gridPanel" class="flex" editable="true" use-dummy="true" validation-group="save" data-provider="{{resultList}}"  selection-type="eliminate"
+				 on-item-click="itemClickHandler"
+				 row-style-function="onRowStyle"
+				 on-item-edit-end="setUpperCase">
+			<cc-grid-toolbar>
+                <sc-button id="BT10" text="getGridConf" on-click="getConf" hidden="true"></sc-button>
+                <sc-button id="pkms" text="CONF" on-click="setConf" hidden="true"></sc-button>
+                <sc-button id="btn_pkms" text="PKMS" on-click="callPkms" hidden="true"></sc-button>
+			</cc-grid-toolbar>
+			<sc-grid-columns>
+				<sc-data-column		data-field="comd_come_code"	header-text="공법코드"	width="100"	text-align="center" 
+									max-length="4" editor-maskre="/[A-Za-z0-9]/" hangul-restrict="true" text-case="upper" required="true"></sc-data-column>
+				<sc-data-column		data-field="comd_tabl_id"	header-text="TABLE ID"	width="100"	text-align="left" item-style-function="setStyle"
+									max-length="8" editor-maskre="/[A-Za-z0-9]/" hangul-restrict="true" text-case="upper" required="true"></sc-data-column>
+				<sc-data-column		data-field="comd_tabl_name"	header-text="TABLE 명"	width="200"	editable="true" text-align="left" 
+									max-length="80"></sc-data-column>
+				<sc-data-column		data-field="comd_sort_numb"	header-text="순서"	width="100"	editable="true" text-align="right" format-type="number" 
+									editor-maskre="/[0-9]/" max-length="10"></sc-data-column>
+				<sc-data-column		data-field="comd_updt_date"	header-text="수정일"	width="100"	editable="false" text-align="center" format-type="date"></sc-data-column>
+				<sc-data-column		data-field="comd_init_name"	header-text="등록자"	width="100"	editable="false" text-align="center"></sc-data-column>
+				<sc-data-column		data-field="comd_corp_code"	header-text="법인코드"	width="100"	editable="false" text-align="center" visible="false"></sc-data-column>
+				<sc-data-column data-field="created_yn" header-text="생성여부" width="100" text-align="center"	visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column	data-field="desc_yn" header-text="DESC" width="80" text-align="center"	visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column	data-field="cnt_col" header-text="컬럼수" width="80" text-align="center"	visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column	data-field="cnt_col_desc" header-text="DESC CNT" width="80" text-align="center"	visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column	data-field="mgt_yn" header-text="MGT" width="80" text-align="center" visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column	data-field="cmt" header-text="COMMENT" width="200" text-align="left" visible="{{isVisible}}" ></sc-data-column>
+				<sc-data-column		data-field="row_str"	header-text="Row"			width="200"	text-align="left"	visible="{{isVisible}}" ></sc-data-column>
+			</sc-grid-columns>
+			<sc-grid-fields> 
+				<sc-grid-field data-field="temp_gubn"></sc-grid-field>
+			</sc-grid-fields>
+		</sc-grid>
+		</div>
+		<sc-splitter id="sp1" split-type="horizontal"></sc-splitter>
+		<div id="msg" class="hbox flex-2">
+		<sc-grid id="gridLog" 
+		         sortable="false"
+		         column-fit-style="fill" 
+		         fit-row-height="true" 
+		         use-dummy="true"
+		         use-selection="false"
+		         use-state="false" >
+		    <cc-grid-toolbar title-text="▶ 메세지">
+		    </cc-grid-toolbar>
+		    <sc-grid-columns>
+		    </sc-grid-columns>
+		</sc-grid>
+		</div>		
+    </template>
+	
+	<script>
+		Polymer({
+			is: "es-ci11-03",
+		    properties:{
+		    		codes       : {type: Object,reset: false, value: function() {return {caMethGubnCd	:  [{label: this.translate("자동"),  data: 'A'},
+		    		                                               	            						    {label: this.translate("금형"),  data: 'M'}],
+		    																			 caYnCd         :  [{label: this.translate("Y"),     data: 'Y'},
+			    		                                               	            					 	{label: this.translate("N"),     data: 'N'}]
+					};}},
+		    		// 조회조건
+		            searchParam : {type: Object,              value: function() {return {}   ;}},
+		            _roll       : {type: Number,              value: 0},
+		            isVisible   : {type: Boolean,             value: function() {return false;}},
+		    },
+
+			/**
+			 * CreationComplete Event
+			 */
+	        initialized: function() {
+	            var me = this;
+	        },
+
+            // 화면 laod
+            load: function(data) {
+            	var me = this;
+            	
+            	me.getConf();
+            	
+            	if(data) {
+            		me.searchParam = data;
+            		me.set("searchParam.pkms_come_code",data.comd_come_code);
+            		me.getGrid();
+            	}
+            },
+
+		    getGrid: function() {
+			    var me = this;
+			    me.$.getGrid.body = {
+					param: me.searchParam
+				}
+
+				me.$.getGrid.service();
+			},
+
+			responseHandler: function(e, res) {
+				this.setVisible(res.response.result.devAuth);
+				
+				let handler = new ResponseHandler(res.response, UT.alert, this.$.gridLog);
+				handler.setGrid();
+				if(handler.reload) {
+					this.getList();
+				}
+			},
+			
+	        //조회 버튼 클릭 시 - 조회
+	        getList : function(){
+	            var me = this;
+	            UT.request(me.$.getListRPC);
+	        },
+
+	        setVisible: function(devAuth) {
+		        var me = this;
+				if(devAuth == "Y") {
+					me.set("isVisible", true);
+					me.$.pkms.hidden = false;
+					me.$.btn_pkms.hidden = false;
+					me.$.BT10.hidden = false;
+					me.$.gridLog.hidden = false;
+					me.$.sp1.hidden = false;
+				} else {
+					me.set("isVisible", false);
+					me.$.pkms.hidden = true;
+					me.$.btn_pkms.hidden = true;
+					me.$.BT10.hidden = true;
+					me.$.gridLog.hidden = true;
+					me.$.sp1.hidden = true;
+				}	
+		    },
+		    
+	        afterGetList: function(e, res) {
+	        	var me = this;
+				var data = res.response;
+				var result = data.result;
+				
+				console.log(data);
+				
+				let msg = new Msg(data, UT.alert, me.$.gridLog);
+				msg.showMsgOnGrid();
+		    },
+
+		    getConf: function() {
+			    var me = this;
+
+			    commonJS.callService(me.$.getOpts).then((data) => {
+				    console.log(data);
+				    var cols = gridUtil.getCols(data.result.opts, me.$.gridPanel);
+				    me.set("searchParam.sqlId", me.tagName);
+				    me.set("searchParam.cols", cols);
+				    me.$.getConf.body = { param : me.searchParam };
+
+					commonJS.callService(me.$.getConf).then((data) => {
+						console.log(data);
+						gridUtil.resetCols(data.result.cols, me.$.gridPanel);
+					});
+				});
+			},
+			
+            setConf: function(e) {
+                var me = this;
+                
+                me.set("searchParam.conf_id", e.currentTarget.id);
+                
+				me.$.setConf.body = { param : me.searchParam };
+
+				commonJS.callService(me.$.setConf).then((data) => {
+					let msg = new Msg(data, UT.alert, me.$.gridLog);
+					msg.showMsgOnGrid();
+				});
+            },
+
+		    callPkms: function() {
+				var me = this;
+                var json = JSON.stringify(me.searchParam);
+				me.$.pkms.body = json;
+				UT.request(me.$.pkms);    
+			},
+
+			afterPkms: function(res) {
+				var me = this;
+				var result = res.detail.response;
+				console.log(result);
+			},
+			
+	        //저장 버튼 클릭 시
+	        saveList : function(){
+	            var me   = this,
+                provider = me.$.gridPanel.getDataProvider(),
+                _inserts = provider.getNewItems(),
+                _updates = provider.getUpdateItems(),
+                _deletes = provider.selectionCheckedItems(),
+                rows     = provider.getItems();
+
+	            if(!me.validate("save")) {
+	                UT.alert("입력하신 정보에 오류가 있습니다. 다시 확인 하세요.");
+	                return;
+	            }
+
+	            //추가되거나, 변경된 내용이 없을 경우 리턴
+	            if(_inserts.length + _updates.length + _deletes.length === 0) {
+	                UT.alert("변경된 내용이 없습니다.");
+	                return;
+	            }
+	            
+	         	// 파라미터 추가
+	            me.set('inserts', _inserts);
+		        me.set('updates', _updates);
+		        me.set('deletes', _deletes);
+
+	            //저장하시겠습니까 /
+	            UT.confirm("저장 하시겠습니까?", function() {
+	                me.$.saveListRPC.body={
+	                		inserts    : _inserts,
+	                		updates    : _updates,
+	                		deletes    : _deletes
+	                }
+	                UT.request(me.$.saveListRPC);
+	            });
+	        },
+		        
+	        //저장 완료 후
+	        resultsaveList : function(e,res){
+	            var me = this;
+	            if(res.response.result.MESG_CODE==="SA-001"){
+	                UT.alert(res.response.result.MESG);
+	                me.getList();
+	            } else {
+	            	UT.alert(res.response.result.MESG);
+	            }
+	        },
+	        
+	        //자동등록
+	        autoinsert : function(){
+	            var me = this;
+	            UT.confirm("실행 하시겠습니까?", function() {
+	               me.save2List();
+	            });
+
+	        },
+
+	        //자동등록
+	        save2List : function(event){
+	            var me = this;
+	            me.$.save2ListRPC.service();
+	        },
+
+            closeScreen: function() {
+                var me = this;
+                me.fire('close', me.searchParam);
+            },
+            
+	        // 실행 결과 목록 그리드 Click Event 
+	        itemClickHandler: function(event){
+	            var me = this, 
+	            data = event.detail.data,
+	            item = event.detail.item,
+	            fieldName = item.dataField,
+	            provider = event.detail.provider;
+
+                var newValue = event.detail.newValue;
+	            
+	            switch(item.dataField) 
+				{
+					case 'comd_tabl_id':  
+						if(data.temp_gubn != "I") {					
+							var param = {};
+							param['pkcl_corp_code'] = data.comd_corp_code;
+							param['pkcl_come_code'] = data.comd_come_code;
+							param['pkcl_tabl_id']   = data.comd_tabl_id;
+							param['mgt_yn'] = data.mgt_yn;
+							me.fire('show-come-column-management', param);
+						} else {
+							
+						}		
+						break;
+					case 'created_yn':
+						if(data.created_yn == "N") {
+							data.conf_id = "pkms";
+							data.action_id = "create";
+							me.$.setConf.body = { param : data };
+
+							commonJS.callService(me.$.setConf).then((data) => {
+								let msg = new Msg(data, UT.alert, me.$.gridLog);
+								msg.showMsgOnGrid();
+							});
+						}
+						break;
+					case 'desc_yn':
+						me.$.setConfDesc.body = {
+							row: data
+						}
+						me.$.setConfDesc.service();
+					case "cmt":
+						provider.setCellValue(item.rowIndex, "comd_tabl_name", data.cmt);
+						break;
+					default :
+						break;
+				}	    
+	        },
+
+            afterSetConfDesc: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+                
+                if(data.result.code == "Y") {
+					me.getList();
+                } else {
+                    UT.alert(data.result.message);
+                }
+            },
+	        
+	        setStyle: function(data, item) {
+                var me = this;
+                return {fontColor : "#0000ff"};
+            },
+
+            onRowStyle: function(data){
+                if(chkRow(data) === "N"){
+                    return { "background": "#B9FFFF" }
+                }
+            },
+      });
+	  const chkRow = (row) => {
+		  if(row.cnt_col === row.cnt_col_desc) {
+			  return "Y";
+	      } else {
+		      return "N";
+		  }
+      }
+    </script>
+	
+</dom-module>

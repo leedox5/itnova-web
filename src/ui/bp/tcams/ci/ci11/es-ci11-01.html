@@ -1,0 +1,705 @@
+﻿<dom-module id="es-ci11-01">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 공법차수 정보
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.11.19
+        ** @History         : 2019.11.19 최초작성
+        *****************************************************************************************************
+    -->
+    
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+        <!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+        -->
+
+        <!-- 공법 구분 -->
+        <sc-service-group id="codes" on-result="resultHandler">
+            <sc-code-provider code="CA_METHGUBN" target="{{codes.caMethGubnCd}}" ></sc-code-provider>
+        </sc-service-group>
+        
+        <!-- 공법 차수 조회 -->
+        <sc-service-provider id="getListRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_list" on-response="resultGetList">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+    
+        <!-- 저장 -->
+        <sc-service-provider id="saveListRPC" descriptor="bp/tcams/ci/ci11" service-id="save.mtcdlist" on-response="resultsaveList">
+            <outputs>
+                <sc-service-output name="result" target="{{resultList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 공법코드 -->
+        <sc-service-provider id="methCodeRPC" descriptor="bp/tcams/ci/ci11" service-id="get.methCode">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{_methCode}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <sc-service-provider id="getRoll" descriptor="bp/tcams/ci/ci11" service-id="get.roll" on-response="resultRoll">
+            <outputs>
+                <sc-service-output name="roll" target="{{_roll}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        <sc-service-provider id="chkUser" descriptor="bp/tcams/ci/ci03/conf" service-id="chkUser"></sc-service-provider>
+        <sc-service-provider id="setConf" descriptor="bp/tcams/ci/ci11/conf" service-id="setConf"></sc-service-provider>
+        <sc-service-provider id="setConfProc" descriptor="bp/tcams/ci/ci11/conf" service-id="setConfProc"></sc-service-provider>
+        <sc-service-provider id="setConfMTDG" descriptor="bp/tcams/ci/ci11/conf" service-id="setConfMTDG"></sc-service-provider>
+        <sc-service-provider id="getLog" descriptor="bp/tcams/ci/ci11/conf" service-id="getLog" on-response="afterGetLog"></sc-service-provider>
+        <sc-service-provider id="setConfCode" descriptor="bp/tcams/ci/ci11/conf" service-id="setConfCode" on-response="afterSetConfCode"></sc-service-provider>
+
+        <!--
+        *********************************************************************************************************
+        *************************         UI Area                                          **********************   
+        *********************************************************************************************************
+        -->
+        <cc-page-title-bar page-title="공법차수 정보">
+            <sc-button id="btn_comeInfo" text="공법정보" on-click="comeInfo"></sc-button>
+            <sc-button id="btn_comeManagement" text="공법관리" on-click="comeManagement"></sc-button>
+        </cc-page-title-bar>
+        <div class="vbox flex">
+        <cc-search-container search-button-hidden="true">
+            <table>
+                <colgroup>
+                    <col style="width:70px"/>
+                    <col style="width:100px"/>
+                    <col style="width:60px"/>
+                    <col style="width:100px"/>
+                    <col style="width:60px"/>
+                    <col style="width:185px"/>
+                    <col style="width:80px"/>
+                    <col style="width:80px"/>
+                    <col style="width:80px"/>
+                    <col style="width:50px"/>
+                    <col></col>
+                </colgroup>
+                <tr>
+                    <th>
+                        <sc-label text="공법구분" ></sc-label>
+                    </th>
+                    <td>
+                        <sc-combobox-field display-field="label" value-field="data" items="{{codes.caMethGubnCd}}" value="{{searchParam.mtcd_meth_gubn}}" placeholder="전체" on-change="onChangeMethGubn"></sc-combobox-field>
+                    </td>
+                    <th>
+                        <sc-label text="공법코드"></sc-label>
+                    </th>
+                    <td>
+                        <sc-text-field value="{{searchParam.mtcd_come_code}}" on-enter="getList"></sc-text-field>
+                    </td>
+                    <th>
+                        <sc-label text="공법명" ></sc-label>
+                    </th>
+                    <td>
+                        <sc-text-field value="{{searchParam.mtcd_meth_name}}" on-enter="getList"></sc-text-field>
+                    </td>
+                    <th>
+                        <sc-label text="개정차수"></sc-label>
+                    </th>
+                    <td>
+                        <sc-text-field value="{{searchParam.mtdg_stnd_degr}}"   on-enter="getList"></sc-text-field>
+                    </td>
+                    <th>
+                        <sc-label text="현재적용"></sc-label>
+                    </th>
+                    <td colspan="3">
+                        <sc-checkbox-field id="cb_curr_appl" input-value="{{searchParam.cb_curr_appl}}" checked-value="Y" un-checked-value="N"></sc-checkbox-field>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+            
+        </cc-search-container>
+        <sc-grid id="gridPanel" class="flex" editable="true" use-dummy="true" data-provider="{{resultList}}" selection-type="eliminate"
+                 on-item-click="itemClickHandler" on-upload-complete="onUploadComplete" header-height="40">
+            <cc-grid-toolbar>
+                <sc-button id="btn_retrieve"         text="조회"         on-click="getList"             ></sc-button>
+                <sc-button id="btn_add"              text="추가"          on-click="addItem"             ></sc-button>
+                <sc-button id="btn_save"             text="저장"          on-click="saveList"            ></sc-button>
+                <sc-button id="btn_conf" text="CONF" on-click="setConf" hidden="true"></sc-button>
+            </cc-grid-toolbar>
+            <sc-grid-columns>
+                <sc-data-column        data-field="comd_come_code"    header-text="공법코드"            width="60"    text-align="center" item-editable-function="isItemEnabled" required="true" style-name="link"
+                                    max-length="4" editor-maskre="/[A-Za-z0-9]/" hangul-restrict="true" text-case="upper"></sc-data-column>
+                <sc-combobox-column id="meth_gubn" data-field="comd_meth_gubn"    header-text="공법구분"            width="60"    text-align="center" item-editable-function="isItemEnabled" required="true"
+                                    display-field="label"    value-field="data"    items="{{codes.caMethGubnCd}}"></sc-combobox-column>
+                <sc-data-column        data-field="comd_docu_numb"    header-text="문서번호"            width="135"    text-align="left"     editable="true"
+                                    max-length="50"></sc-data-column>
+                <sc-data-column        data-field="comd_meth_name"    header-text="공법명"            width="135"    text-align="left"     editable="true"
+                                    max-length="50"></sc-data-column>
+                <sc-data-column        id="tran_degr" data-field="comd_tran_degr"    header-text="개정차수&#xa;(T)"            width="60"    text-align="center" item-editable-function="isItemEnabled"
+                                    max-length="10"></sc-data-column>
+                <sc-data-column        data-field="comd_hkmc_degr"    header-text="개정차수&#xa;(H)"            width="60"    text-align="center" editable="true" item-editable-function="isItemEnabled" max-length="10"></sc-data-column>
+                <sc-data-column        id="stnd_degr" data-field="comd_stnd_degr"    header-text="개정&#xa;차수"            width="60"    text-align="center" item-editable-function="isItemEnabled" required="true"
+                                    max-length="10"></sc-data-column>
+                <sc-data-column        data-field="comd_inds_code"    header-text="업종"                width="40"    text-align="center" item-editable-function="isItemEnabled" 
+                                    max-length="2"    editor-maskre="/[A-Za-z0-9]/" hangul-restrict="true" text-case="upper"></sc-data-column>
+                <sc-data-column        data-field="comd_matl_clas"    header-text="재료&#xa;코드" width="40"    text-align="center" item-editable-function="isItemEnabled" 
+                                    max-length="2"    editor-maskre="/[A-Za-z0-9]/" hangul-restrict="true" text-case="upper"></sc-data-column>
+                <sc-date-column        data-field="comd_revi_date"    header-text="개정일"            width="80"    text-align="center" editable="true" item-editable-function="isItemEnabled" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_appl_date"    header-text="적용일"            width="80"    text-align="center" editable="true" required="true" item-editable-function="isItemEnabled" format-type="date"></sc-date-column>
+                <sc-date-column data-field="mtdg_mchh_date" header-text="기계경비&#xa;적용일" width="80" text-align="center" editable="true" format-type="date"></sc-date-column>
+                <sc-data-column        data-field="comd_degr_cont"    header-text="개정내용"            width="280"    text-align="left"     editable="true" item-editable-function="isItemEnabled"
+                                    max-length="200"></sc-data-column>
+                <sc-attachment-column data-field="file_cnt" shared-group-field="comd_att_grp_cd"  header-text="첨부" width="40"    text-align="right" editable="true" on-upload-complete="onUploadComplete"></sc-attachment-column>
+                <sc-combobox-column data-field="comd_appl_yn"    header-text="적용여부"            width="60"    text-align="center" editable="true" 
+                                    display-field="data"    value-field="data"    items="{{codes.caYnCd}}"></sc-combobox-column>
+                <sc-data-column    data-field="proc_name" header-text="PROC" width="100" text-align="center" visible="{{isVisible}}" editable="true" max-length="20"></sc-data-column>
+                <sc-data-column    data-field="proc_mode" header-text="MODE" width="55" text-align="center" visible="{{isVisible}}" editable="true" max-length="20"></sc-data-column>
+                <sc-data-column        data-field="row_str"    header-text="Row"            width="200"    text-align="left"    visible="{{isVisible}}" ></sc-data-column>
+                <sc-data-column        data-field="comd_stnd_man1"    header-text="담당자1"            width="55"    text-align="center"    editable="true" max-length="20"></sc-data-column>
+                <sc-data-column        data-field="comd_stnd_man2"    header-text="담당자2"            width="55"    text-align="center"    editable="true" max-length="20"></sc-data-column>
+                <sc-data-column        data-field="comd_phon_no1"    header-text="연락처" width="55" text-align="center" editable="true" max-length="20"></sc-data-column>
+                <sc-data-column        data-field="comd_menu_id"    header-text="메뉴아이디"        width="80"    text-align="center"    editable="true" max-length="20"></sc-data-column>
+                <sc-data-column        data-field="comd_mxml_path"    header-text="공법 프로그램경로"    width="270"    text-align="left"    editable="true" max-length="60"></sc-data-column>
+                <sc-data-column        data-field="comd_init_date"    header-text="등록일"            width="90"    text-align="center" format-type="date"></sc-data-column>
+                <sc-data-column        data-field="comd_init_name"    header-text="등록자"            width="90"    text-align="center"></sc-data-column>
+                <sc-data-column        data-field="temp_gubn"        visible="false"></sc-data-column>
+            </sc-grid-columns>
+            <sc-grid-fields>
+                <sc-grid-field data-field="comd_att_grp_cd" ></sc-grid-field> <!-- 첨부파일그룹코드 -->
+            </sc-grid-fields>
+        </sc-grid>
+        <sc-splitter split-type="horizontal"></sc-splitter>
+        <sc-tab-navigation id="tab" class="flex" hidden="{{!isVisible}}">
+        <div title-text="LOG" id="t1" class="vbox fit">
+        <sc-grid id="gridLog" use-dummy="true" use-selection="false" use-state="false" hidden="{{!isVisible}}" class="flex">
+            <cc-grid-toolbar>
+                <sc-button on-click="getLog" text="조회"></sc-button>
+            </cc-grid-toolbar>
+            <sc-grid-paging id="PG01" 
+                            paging-function="search" 
+                            scroll-page-size="50" 
+                            scroll-paging="true"
+                            ajax-ref="getLog" 
+                            list-data="{{logList}}">
+            </sc-grid-paging>
+            <sc-grid-columns>
+                <sc-data-column data-field="id" width="50" text-align="right" header-text="ID"></sc-data-column>
+                <sc-data-column data-field="table_id" width="200" text-align="left" header-text="KEY"></sc-data-column>
+                <sc-data-column data-field="conts"    width="400" text-align="left" header-text="CONTS"></sc-data-column>
+                <sc-data-column data-field="crt_date" width="100" text-align="center" header-text="DATE"></sc-data-column>
+                <sc-data-column data-field="crt_user" width="100" text-align="center" header-text="ID"></sc-data-column>
+                <sc-data-column data-field="usr_nm"   width="100" text-align="center" header-text="NAME"></sc-data-column>
+            </sc-grid-columns>
+        </sc-grid>
+        </div>
+        </sc-tab-navigation>
+        </div>
+    </template>
+    
+    <script>
+        Polymer({
+            is: "es-ci11-01",
+            properties:{
+                    codes       : {type: Object,reset: false, value: function() {return {caMethGubnCd    :  [{label: "자동",  data: 'A'},
+                                                                                                               {label: "금형",  data: 'M'}],
+                                                                                             caYnCd     :  [{label: "Y",     data: 'Y'},
+                                                                                                                {label: "N",     data: 'N'}]
+                    };}},
+                    logList  : {type : Array,  value : function() {return [];}},
+                    // 조회조건
+                    searchParam : {type: Object,              value: function() {return {}   ;}},
+                    _roll       : {type: Number,              value: 0},
+                    isVisible   : {type: Boolean,             value: function() {return false;}},
+            },
+
+            /**
+             * CreationComplete Event
+             */
+            initialized: function() {
+                var me = this;
+                me.$.cb_curr_appl.value = "Y";
+                if(       SCSessionManager.getCurrentUser().usr_id == "TSA00024"){
+                    me.$.stnd_degr.visible = true;
+                } else {
+                    me.$.stnd_degr.visible = false;
+                }
+                me.creaPage();
+            },
+            
+            creaPage: function() {
+                var me = this;
+                UT.request(me.$.getRoll);
+            },
+
+            resultRoll: function(e,res) {
+                var me = this;
+                me.set('_roll',res.response.roll.cnt);
+                if(parseInt(res.response.roll.cnt) > 0){
+                    btn_comeInfo.hidden       = false;
+                    btn_comeManagement.hidden = false;
+                    btn_add.hidden            = false;
+                    btn_save.hidden           = false;
+                } else {
+                    btn_comeInfo.hidden       = true;
+                    btn_comeInfo.width        = 0;
+                    btn_comeManagement.hidden = true;
+                    btn_comeManagement.width  = 0;
+                    btn_add.hidden            = true;
+                    btn_add.width             = 0;
+                    btn_save.hidden           = true;
+                    btn_save.width            = 0;
+                }
+                me.chkUser("N");
+            },
+
+            chkUser: function(retrieve) {
+                var me = this;
+
+                me.set("searchParam.retrieve", retrieve);
+                me.$.chkUser.body = { param : me.searchParam }
+                
+                commonJS.callService(me.$.chkUser).then((data) => {
+                    console.log(data);
+                    if(data.result.DEV_AUTH === "Y") {
+                        me.set("isVisible", true);
+                        me.$.stnd_degr.visible  = true;
+                        me.$.btn_conf.hidden    = false;
+                        if(me.searchParam.retrieve === "N") {
+                            if(UT.isEmpty(me.searchParam.mtcd_meth_name)) {
+                                me.set("searchParam.cb_curr_appl", "N");
+                                //me.set("searchParam.mtcd_meth_name", data.result.S_KEY);
+                                me.set("searchParam.mtcd_come_code", data.result.COME);
+                            }
+                        }                        
+                    } else {
+                        me.set("isVisible", false);
+                        if(data.result.DEGR_YN == "Y") {
+                            me.$.stnd_degr.visible  = true;
+                        } else {
+                            me.$.stnd_degr.visible  = false;
+                        }
+                        me.$.btn_conf.hidden    = true;
+                    }
+                    if(me.searchParam.retrieve === "Y") {
+                        UT.request(this.$.getListRPC);
+                    }
+                });
+            },
+            
+            afterChkUser: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+                
+                if(data.result.MESG_CODE == "SA-001") {
+                    if(data.result.DEV_AUTH == "Y") {
+                        me.set("isVisible", true);
+                        me.$.stnd_degr.visible  = true;
+                        me.$.btn_conf.hidden    = false;
+                        if(me.searchParam.retrieve === "N") {
+                            if(UT.isEmpty(me.searchParam.mtcd_meth_name)) {
+                                me.set("searchParam.cb_curr_appl", "N");
+                                //me.set("searchParam.mtcd_meth_name", data.result.S_KEY);
+                                me.set("searchParam.mtcd_come_code", data.result.COME);
+                            }
+                        }                        
+                    } else {
+                        me.set("isVisible", false);
+                        if(data.result.DEGR_YN == "Y") {
+                            me.$.stnd_degr.visible  = true;
+                        } else {
+                            me.$.stnd_degr.visible  = false;
+                        }
+                        me.$.btn_conf.hidden    = true;
+                        //me.set("searchParam.cb_curr_appl", "Y");
+                    }
+
+                    if(me.searchParam.retrieve === "Y") {
+                        UT.request(this.$.getListRPC);
+                    }
+                }
+            },
+
+            //조회 버튼 클릭 시 - 조회
+            getList: function() {
+                this.chkUser("Y");
+            },
+            
+            resultGetList : function(e, res) {
+                var me = this;
+                
+                var data = res.response;
+                
+                if(data.result.MESG_CODE == "SA-002") {
+                    UT.alert(data.result.MESG);
+                }
+            },
+            
+            //추가 버튼 클릭 시
+            addItem : function(){
+                var me       = this;
+                var provider = me.$.gridPanel.getDataProvider();
+                // 그리드 신규행 추가
+                provider.addItemAt(0, {comd_meth_gubn : "A", temp_gubn: "I"});
+            },
+            
+            //저장 버튼 클릭 시
+            saveList : function(){
+                var me   = this,
+                provider = me.$.gridPanel.getDataProvider(),
+                _inserts = provider.getNewItems(),
+                _updates = provider.getUpdateItems(),
+                _deletes = provider.selectionCheckedItems(),
+                rows     = provider.getItems();
+
+                if(!me.validate("save")) {
+                    UT.alert("입력하신 정보에 오류가 있습니다. 다시 확인 하세요.");
+                    return;
+                }
+
+                //추가되거나, 변경된 내용이 없을 경우 리턴
+                if(_inserts.length + _updates.length + _deletes.length === 0) {
+                    UT.alert("변경된 내용이 없습니다.");
+                    return;
+                }
+                // ===========================================
+                // 조건 확인
+                // ===========================================                
+                for (var i=0; i<_inserts.length;i++) {
+                    if (_inserts[i].comd_come_code != 'MANU' && _inserts[i].comd_come_code != 'TMAN') {
+                        if (_inserts[i].comd_inds_code == '' || _inserts[i].comd_inds_code == null ) {
+                            UT.alert("업종은 필수 입력입니다.");
+                            return false;    
+                        }
+                        if (_inserts[i].comd_matl_clas == '' || _inserts[i].comd_matl_clas == null ) {
+                            UT.alert("재료코드는 필수 입력입니다.");
+                            return false;    
+                        }
+                    }
+                    
+                    if (!commonAS.validationDate(_inserts[i].comd_appl_date)) {
+                        UT.alert("날짜값이 유효하지 않습니다.");
+                        return false;
+                    }
+
+                }
+
+                for (var i=0; i<_updates.length;i++) {
+                    if (_updates[i].comd_come_code != 'MANU' && _updates[i].comd_come_code != 'TMAN') {
+                        if (_updates[i].comd_inds_code == '' || _updates[i].comd_inds_code == null ) {
+                            UT.alert("업종은 필수 입력입니다.");
+                            return false;    
+                        }
+                        if (_updates[i].comd_matl_clas == '' || _updates[i].comd_matl_clas == null ) {
+                            UT.alert("재료코드는 필수 입력입니다.");
+                            return false;    
+                        }
+                    }
+                    
+                    if (!commonAS.validationDate(_updates[i].comd_appl_date)) {
+                        UT.alert("날짜값이 유효하지 않습니다.");
+                        return false;
+                    }
+                }
+                
+                 // 파라미터 추가
+                me.set('inserts', _inserts);
+                me.set('updates', _updates);
+                me.set('deletes', _deletes);
+
+                //저장하시겠습니까 /
+                UT.confirm("저장 하시겠습니까?", function() {
+                    me.$.saveListRPC.body={
+                            inserts    : _inserts,
+                            updates    : _updates,
+                            deletes    : _deletes
+                    }
+                    UT.request(me.$.saveListRPC);
+                });
+            },
+                
+            //저장 완료 후
+            resultsaveList : function(e,res){
+                var me = this;
+                if(res.response.result.MESG_CODE==="SA-001"){
+                    UT.alert(res.response.result.MESG);
+                    me.getList();
+                } else {
+                    UT.alert(res.response.result.MESG);
+                }
+            },
+
+            /******************************
+             * 그리드 이벤트
+             ******************************/
+            // 그리드 수정여부 함수
+            isItemEnabled: function(data, item) {
+                var me = this;    
+                switch(item.dataField){
+                case "file_cnt" :
+                    if(data.file_cnt != 0){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                case "comd_come_code" :
+                    if(data.temp_gubn == "I" || parseInt(me._roll) > 0){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                case "comd_meth_name" :
+                    if(data.temp_gubn == "I"){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                /*
+                case "comd_stnd_degr" :
+                    if(data.temp_gubn == "I"){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                */
+                case "comd_meth_gubn" :
+                    if(data.temp_gubn == "I"){
+                        if(data.comd_mach_gubn == 'T'){
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    } else {
+                        return false;
+                    }
+                break;
+                /*
+                case "comd_inds_code" :
+                    if(data.temp_gubn == "I"){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                case "comd_matl_clas" :
+                    if(data.temp_gubn == "I"){
+                        return true;
+                    } else {
+                        return false;
+                    }
+                break;
+                */
+                default:
+                    return true;
+                }    
+            },         
+
+            // 실행 결과 목록 그리드 Click Event .
+            itemClickHandler: function(event){
+                var me = this, 
+                data = event.detail.data,
+                item = event.detail.item,
+                fieldName = item.dataField,
+                provider = event.detail.provider;
+                switch(item.dataField) {
+                    case 'comd_come_code':
+                        if(data.comd_come_code != null && data.comd_come_code != ''){
+                            if(data.temp_gubn == "I"){
+                            } else {
+                                me.fire("show-come-management", data);
+                            }
+                        }
+                        break;
+                    case 'file_cnt':
+                        break;
+
+                    case 'proc_name':
+                        if(data.proc_mode == "D" || data.proc_mode == "A") {
+                            /* ---
+                            me.$.setConfProc.body = {
+                                param : data 
+                            };
+                            UT.request(me.$.setConfProc);
+                            --- */
+                            me.setConfProc(data);
+                        } else if(data.proc_mode == "C") {
+                            data.class_id = "src";
+                            me.setConfMTDG(data);                                
+                        } else if(data.proc_mode == "S") {
+                            me.$.setConfCode.body = {
+                                param : data 
+                            };
+                            UT.request(me.$.setConfCode);                                
+                        }
+                        break;
+                    case 'row_str':
+                        if(data.proc_mode == "D") {
+                            /* ---
+                            me.$.setConfMTDG.body = {
+                                param : data
+                            };
+                            UT.request(me.$.setConfMTDG);
+                            --- */
+                            data.class_id = "mtdg";
+                            me.setConfMTDG(data);
+                        }
+                    default :
+                        break;                        
+                }
+            },
+
+            resultHandler : function(data){
+                var me = this;
+            },
+            
+            // 공법정보 화면 호출
+            comeInfo : function() {
+                var me = this;
+                me.fire('show-come-info', me.searchParam);
+            },
+            
+            // 공법관리 화면 호출
+            comeManagement : function(data) {
+                var me = this;
+                me.fire('show-come-management', data);
+            },
+            
+            /**
+             * 첨부파일 업로드 후 이벤트
+             */
+            onUploadComplete : function(e, data) {
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+                // 첨부 그룹코드 set
+                provider.setItemAt(data.itemIndex, { comd_att_grp_cd : data.grpCd});
+            },
+
+            getLog: function() {
+                var me = this;
+
+                me.$.PG01.pagingParam.endRowNum = 0;
+                /* ---
+                me.$.getLog.body = {
+                    param : me.searchParam 
+                };
+                UT.request(me.$.getLog);
+                */      
+                me.search(me.$.PG01.pagingParam);          
+            },
+
+            afterGetLog: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+
+                var result = data.result;
+                
+                if(result.code == "Y") {
+                    //me.$.gridLog.setDataProvider(data.logList);
+                    me.set("logList", data.logList);
+                    me.set("searchParam.total_row_num", data.total_row_num);
+                } else {
+                    UT.alert(result.mesg);
+                }
+            },
+
+            search: function(param) {
+                var me = this;
+
+                if(UT.isNotEmpty(me.searchParam.total_row_num)) {
+                    param.total_row_num = me.searchParam.total_row_num;                    
+                }
+                
+                me.$.getLog.body = {
+                    param: param 
+                };
+                
+                UT.request(me.$.getLog);
+            },
+            
+            setConf: function() {
+                var me = this;
+                me.$.setConf.body = { param : me.searchParam };
+
+                commonJS.callService(me.$.setConf).then((data) => {
+                    let msg = new Msg(data, UT.alert, me.$.gridLog)
+                    msg.showMsgOnGrid();                
+                });                
+            },
+
+            afterSetConfCode: function(e, res) {
+                var me = this;
+                var data = res.response;
+                
+                let msg = new Msg(data, UT.alert, me.$.gridLog)
+                msg.showMsgOnGrid();
+            },
+
+            setConfProc: function(data) {
+                var me = this;
+                me.$.setConfProc.body = { param : data };
+
+                commonJS.callService(me.$.setConfProc).then((data) => {
+                    let msg = new Msg(data, UT.alert, me.$.gridLog);
+                    msg.showMsgOnGrid();
+                });
+            },
+
+            setConfSrc: function(data) {
+                var me = this;
+                me.$.setConfSrc.body = { param : data };
+
+                commonJS.callService(me.$.setConfSrc).then((data) => {
+                    let msg = new Msg(data, UT.alert, me.$.gridLog);
+                    msg.showMsgOnGrid();
+                });
+            },
+            
+            afterSetConfProc: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+                if(data.result.MESG_CODE == "SA-001") {
+                    
+                } else {
+                    UT.alert(data.result.MESG);            
+                }
+            },
+
+            setConfMTDG: function(data) {
+                var me = this;
+
+                me.$.setConfMTDG.body = { param : data };
+
+                commonJS.callService(me.$.setConfMTDG).then((data) => {
+                    let msg = new Msg(data, UT.alert, me.$.gridLog);
+                    msg.showMsgOnGrid();
+                });
+            },
+            
+            responseHandler: function(e, res) {
+                let msg = new Msg(res.response, UT.alert, this.$.gridLog)
+                msg.showMsgOnGrid();     
+                if(msg.reload) {
+                    this.getList();
+                }           
+            },
+      });
+    </script>
+</dom-module>

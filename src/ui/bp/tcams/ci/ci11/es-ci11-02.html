@@ -1,0 +1,489 @@
+<sc-link rel="import" href="es-msg.html"></sc-link>
+
+<dom-module id="es-ci11-02">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 공법정보
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.11.26
+        ** @History         : 2019.11.26 최초작성
+        *****************************************************************************************************
+    -->
+    <!-- layout Style -->
+    <style>
+        :host {
+            @apply (--hbox-layout);
+        }
+    </style>
+
+    <template>
+
+        <!-- 공법 구분 -->
+        <sc-service-group id="codes" on-result="resultHandler">
+            <sc-code-provider code="CA_METHGUBN" target="{{codes.caMethGubnCd}}" ></sc-code-provider>
+        </sc-service-group>
+
+        <!-- ServiceBinder : 호출 할 RemoteObject 서비스 정보 -->
+        <sc-service-provider id="getNameRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_list.name">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 정보 헤더 얻어오기 -->
+        <sc-service-provider id="getComeHeaderRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_header.list" on-response="aftergetComeRPC">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramHeader}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultListHeader}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 상세정보 Data 얻기 -->
+        <sc-service-provider id="getComeDetailRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_detail.list" on-response="aftergetComeDetailRPC">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramDetail}}"></sc-service-input>
+                <sc-service-input name="headerParam" value="{{_resultListHeader}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultListDetail}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 엑셀 -->
+        <sc-service-provider id="getExcelListRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_detail.list" on-response="getExcelListRPC_resultHandler">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramDetail}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultListDetail}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 상세정보 Data 얻기 -->
+        <sc-service-provider id="getComeDetailRPC2" descriptor="bp/tcams/ci/ci11" service-id="get.come_detail.list" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramDetail}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultListDetail}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 헤더 정보 전체 얻어오기 -->
+        <sc-service-provider id="getComeAllHeadRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_allHeader.list" on-response="aftergetComeAllHeaderRPC">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramAllHeader}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultHeaderMap}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 상세 정보 전체 얻기 -->
+        <sc-service-provider id="getComeAllDetailRPC" descriptor="bp/tcams/ci/ci11" service-id="get.come_allDetail.list" on-response="aftergetComeAllDetailRPC">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{_paramAllDetail}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{_resultDetailMap}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- ServiceBinder : 공법 차수 -->
+        <sc-service-provider id="getStndDegrRPC" descriptor="bp/tcams/ci/ci11" service-id="get.stnd_degr.list" on-response="afterGetStndDegr">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{stnd_degr_list}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="getComeRPC" descriptor="bp/tcams/cc/cc01" service-id="get.ca_come_code.list" on-response="afterGetCome">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{_comeResultList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="setConf" descriptor="bp/tcams/ci/common/conf" service-id="setConf"></sc-service-provider>
+
+        <div class="vbox flex-3">
+            <cc-page-title-bar id="comeInfoTitleBar" page-title="공법 LIST">
+                <sc-button id="btn_retrieve"     text="조회"        on-click="getNameList"         ></sc-button>
+            </cc-page-title-bar>
+
+            <cc-search-container search-button-hidden="true">
+                <table validation-group="search" on-enter="getNameRPC">
+                    <colgroup>
+                        <col style="width: 50px">
+                        <col style="width:150px">
+                        <col style="width: 50px">
+                        <col style="width: 50px">
+                    </colgroup>
+                    <tr>
+                        <th><sc-label text="공법 LIST"></sc-label></th>
+                        <td>
+                            <sc-combobox-field id="sb_meth_code" display-field="code_name" value-field="code" items="{{_comeResultList}}" value="{{searchParam.mtcd_come_code}}" placeholder="전체" on-select="methCodeChange" input-clear="false"></sc-combobox-field>
+                        </td>
+                        <th><sc-label text="공법 차수"></sc-label></th>
+                        <td>
+                            <sc-combobox-field id="sb_stnd_degr" display-field="code_name" value-field="code" items="{{stnd_degr_list}}" value="{{searchParam.mtcd_stnd_degr}}" placeholder="전체"></sc-combobox-field>
+                        </td>
+                    </tr>
+                </table>
+            </cc-search-container>
+
+            <sc-grid id="gridPanelList" class="flex" data-provider="{{resultList}}" editable="false" use-selection="false" use-state="false" show-number-line="false"
+                     on-item-click="onItemClick" row-style-function="rowStyleFn">
+                <cc-grid-toolbar>
+                </cc-grid-toolbar>
+                <sc-grid-columns>
+                    <sc-data-column        data-field="comd_come_code"    header-text="공법코드"    width="160"    text-align="center"    editable="false" visible="false"></sc-data-column>
+                    <sc-data-column    data-field="comd_come_name"    header-text="공법명" width="120" text-align="left" editable="false"></sc-data-column>
+                    <sc-data-column        data-field="comd_tabl_name"    header-text="상세구분"    width="170"    text-align="left"    editable="false"></sc-data-column>
+                    <sc-data-column        data-field="comd_tabl_id"    header-text="상세코드"    width="0"    text-align="left"    editable="false" visible="false"></sc-data-column>
+                    <sc-image-column data-field="search_icon" header-text="상세"     width="50" text-align="center" editable="false" image-cls="search"></sc-image-column>
+                </sc-grid-columns>
+                <sc-grid-fields>
+                    <sc-grid-field         data-field="tabl_id"></sc-grid-field>
+                </sc-grid-fields>
+            </sc-grid>
+        </div>
+        <sc-splitter split-type="vertical"></sc-splitter>
+        <div class="vbox flex-7">
+            <cc-page-title-bar id="" page-title="상세내용">
+                <sc-button id="btn_excel"    text="엑셀" on-click="getExcel"></sc-button>
+                <sc-button id="btn_close"   text="닫기" on-click="closeScreen"    ></sc-button>
+            </cc-page-title-bar>
+            <div class="hbox flex-8">
+                <sc-grid id="linegrid"
+                         class="flex"
+                         data-provider="{{_resultListDetail}}"
+                         editable="false"
+                         use-selection="false"
+                         use-state="false"
+                         header-height="40"
+                         on-item-click="itemClickHandler"
+                    >
+                    <cc-grid-toolbar>
+                        <sc-button id="btn_conf" text="CONF" on-click="setConf" hidden="true"></sc-button>
+                    </cc-grid-toolbar>
+                    <sc-grid-columns>
+                    </sc-grid-columns>
+                </sc-grid>
+            </div>
+            <sc-splitter id="sp1" split-type="horizontal"></sc-splitter>
+            <div class="hbox flex-2">
+                <es-msg id="msg"></es-msg>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is : "es-ci11-02",
+            properties : {
+                // 코드 데이터
+                codes : {type : Object,reset : false,value : function() {return {comeNameCd : []};}},
+                // 조회조건
+                searchParam : {type : Object,value : function() {return {};}},
+                // 공법헤더 조회조건
+                searchParamHeader : {type : Object,value : function() {return {};}},
+                 // 검색조건 -- 공법정보 상세 조회용
+                _paramDetail       : {type : Object,value : function() {return {};}},
+
+                isVisible: {type: Boolean, value: function() {return false;}},
+            },
+
+            /******************************
+             * 초기화 설정
+             ******************************/
+            // 초기화 완료 후 호출 함수
+            initialized : function() {
+                var me = this;
+                me.$.getComeRPC.service();
+            },
+
+            // 화면 laod
+            load: function(data) {
+                var me = this;
+
+                me.$.msg.load();
+
+                if(data) {
+                    me.searchParam = data;
+                    me.methCodeChange();
+                }
+            },
+
+            /******************************
+             * 그리드 이벤트
+             ******************************/
+            // 공법 LIST : 그리드 cell click 이벤트
+            onItemClick : function(event) {
+                var me = this,
+                    data = event.detail.data,
+                    item = event.detail.item;
+
+                if (item.dataField == "search_icon") {
+                    me.getComeList(data);
+                }
+            },
+
+            /******************************
+             * 버튼 이벤트
+             ******************************/
+            // 조회 버튼 클릭
+            getNameList : function() {
+                var me = this;
+                 UT.request(me.$.getNameRPC);
+            },
+
+            // 공법헤더 조회
+            getComeList : function(data) {
+                var me = this;
+                me._paramHeader = data;
+
+
+                UT.request(me.$.getComeHeaderRPC);
+            },
+
+            // 공법헤더 조회 후
+            aftergetComeRPC: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+
+                if(data.DEV_AUTH == "Y") {
+                    me.set("isVisible", true);
+                    me.$.btn_conf.hidden = false;
+                    me.$.msg.hidden = false;
+                } else {
+                    me.set("isVisible", false);
+                    me.$.btn_conf.hidden = true;
+                    me.$.msg.hidden = true;
+                }
+
+                // Grid 생성전 초기화
+                if(me._resultListHeader.length > 0){
+                    me.clearGrid();
+
+                    var temp = me._resultListHeader[0].pkcl_tabl_id.toString();
+
+                    me._paramDetail['table_id']  = temp;
+                    me._paramDetail['column_id'] = temp.substr(4, 8);
+                    me._paramDetail['stnd_degr'] =  me.searchParam['mtcd_stnd_degr'];
+
+                    if (temp == "CATBCMPK") {
+                        me._paramDetail['come_code'] =  me.searchParam['mtcd_come_code'];
+                        me._paramDetail['order_str'] =  "ORDER BY 1,2,3,6";
+                    } else {
+                        me._paramDetail['come_code'] = "";
+                        me._paramDetail['order_str'] =  "ORDER BY 1,2,3,4";
+                    }
+
+                    me.aftergetComeDetail();
+
+                } else {
+                    UT.alert("헤더정보가 없습니다.");
+                    return;
+                }
+            },
+
+            setConf: function() {
+                var me = this;
+
+                me.set("searchParam.conf_id", "data");
+                me.set("searchParam.action_id", "chk");
+
+                me.set("searchParam.comd_tabl_id", me._paramHeader.comd_tabl_id);
+
+                me.$.setConf.body = { param : me.searchParam };
+
+                /* ---
+                UT.request(me.$.setConf);
+                --- */
+
+                commonJS.callService(me.$.setConf).then((data) => me.$.msg.showMsg(data));
+            },
+
+            afterSetConfData: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+                if(data.result.MESG_CODE == "SA-001") {
+
+                } else {
+                    UT.alert(data.result.MESG);
+                }
+            },
+
+            afterGetCome: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+                if(data.ret.code == "Y") {
+                    me.set("searchParam.mtcd_come_code", data.param.curr_come);
+                } else {
+                    UT.alert(data.ret.mesg);
+                }
+            },
+
+            /**
+             * Grid 초기화 (동적 추가를 위해 기 데이터를 초기화 하고 컬럼생성)
+             */
+            clearGrid : function() {
+                var me = this;
+                var cols = me.$.linegrid.gridColumns.columns;
+
+                for(var i = 0; i < me.$.linegrid.gridColumns.columns.length; i++) {
+                    cols.pop();
+                    me.$.linegrid.gridColumns.columns = cols;
+                }
+            },
+
+            /**
+             *  헤더와 데이터를 얻은후 동적으로 Grid 생성하기...
+             */
+            aftergetComeDetail : function(e, res) {
+                var me = this;
+                var cols = me.$.linegrid.gridColumns.columns;
+                var me = this;
+                var columns = [];
+                var result = me._resultListHeader;
+
+                // 컬럼 초기화
+                me.$.linegrid.setColumns([]);
+
+                if(result.length > 0) {
+                    for(var i = 0; i < result.length; i++){
+                        var col = document.createElement('sc-data-column');
+                        col.dataField  = result[i].pkcl_colm_id    == null ? null : result[i].pkcl_colm_id.toString().toLowerCase();
+                        col.headerText = result[i].pkcl_colm_name  == null ? null : result[i].pkcl_colm_name.toString();
+                        col.width      = result[i].pkcl_with_scrn  == null ? null : result[i].pkcl_with_scrn.toString();
+                        col.textAlign  = result[i].pkcl_text_align == null ? null : result[i].pkcl_text_align.toString();
+                        col.itemStyleFunction = "onItemStyle";
+                        columns.push(col);
+                    }
+
+                    if(me.isVisible) {
+                        var col = document.createElement('sc-data-column');
+                        col.dataField  = "row_str";
+                        col.headerText = "Row";
+                        col.width      = "300";
+                        col.textAlign  = "left"
+                        columns.push(col);
+                    }
+
+                      me.$.linegrid.setColumns(columns);
+                      me.getComeDetail();
+
+                } else {
+                    UT.alert("헤더정보가 없습니다.");
+                }
+            },
+
+            onItemStyle: function() {
+                return {
+                    paddingLeft: 10,
+                    paddingRight: 10
+                };
+            },
+
+            // 공법상세 조회
+            getComeDetail : function() {
+                var me = this;
+                UT.request(me.$.getComeDetailRPC);
+            },
+
+            // 공법상세 조회 완료
+            aftergetComeDetailRPC : function(e, res) {
+                var me = this;
+
+                if(res.response.length === 0) {
+                    UT.alert("데이터 또는 테이블이 없습니다.");
+                }
+            },
+
+            /**
+             * 공법 차수 콤보 데이터
+             */
+            methCodeChange: function(){
+                var me       = this;
+                UT.request(me.$.getStndDegrRPC);
+            },
+
+            //전체 엑셀
+            getExcel: function(){
+                var me       = this;
+                UT.request(me.$.getExcelListRPC);
+
+            },
+
+            //엑셀 콜백 펑션
+            getExcelListRPC_resultHandler: function(){
+                var me       = this;
+                me.$.linegrid.excelExport();
+            },
+
+            closeScreen: function() {
+                var me = this;
+                me.fire('close', me.searchParam);
+            },
+
+            itemClickHandler: function(event){
+                var me = this,
+                data = event.detail.data,
+                item = event.detail.item,
+                fieldName = item.dataField,
+                provider = event.detail.provider;
+
+                switch(item.dataField) {
+                    case 'row_str':
+                        me.set("searchParam.conf_id", "data");
+                        me.set("searchParam.action_id", "crt");
+                        me.set("searchParam.comd_tabl_id", me._paramHeader.comd_tabl_id);
+                        me.set("searchParam.row_index", item.rowIndex);
+                        me.set("searchParam.items", provider.getItems());
+                        me.$.setConf.body = { param : me.searchParam };
+
+                        ci11.setConf(me.$.setConf).then((data) => me.$.msg.showMsg(data));
+                        break;
+                    default :
+                        break;
+                }
+            },
+
+            rowStyleFn: function() {
+                var style = {};
+                style.paddingLeft = 10;
+                style.paddingRight = 10;
+                return style;
+            },
+
+            afterGetStndDegr: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                console.log(data);
+
+                var curDegrIdx = data.resultList.length;
+
+                if(curDegrIdx > 0) {
+                    me.set("searchParam.mtcd_stnd_degr", data.resultList[curDegrIdx - 1].code);
+                }
+            },
+        });
+    </script>
+</dom-module>

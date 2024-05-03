@@ -1,0 +1,96 @@
+﻿<sc-link rel="import" href="es-ci11-01.html"></sc-link>
+<sc-link rel="import" href="es-ci11-02.html"></sc-link>
+<sc-link rel="import" href="es-ci11-03.html"></sc-link>
+<sc-link rel="import" href="es-ci11-04.html"></sc-link>
+<dom-module id="em-ci11">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 공법차수 정보
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.11.19
+        ** @History         : 2019.11.19 최초작성
+        *****************************************************************************************************
+    -->
+	
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+	
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+<!-- 		<cc-page-title-bar id="comeInfoTitleBar" page-title="공법정보"> -->
+<!-- 			<sc-button text="닫기" on-click="onClose"></sc-button> -->
+<!-- 		</cc-page-title-bar> -->
+		<sc-pages id="pages" selected="0" class="flex">
+			<es-ci11-01 id="list" on-show-come-info="onShowComeInfo" on-show-come-management="onShowComeManagement">
+			</es-ci11-01>
+			<es-ci11-02 id="comeInfo" on-close="onClose">
+			</es-ci11-02>
+			<es-ci11-03 id="comeManagement" on-close="onClose" on-show-come-column-management="onShowComeColumnManagement">
+			</es-ci11-03>
+			<es-ci11-04 id="comeColumnManagement" on-close="onClose" on-cancel="onCancel">
+			</es-ci11-04>
+		</sc-pages>
+	</template>
+	
+	
+	<script>
+		Polymer({
+			is: "em-ci11",
+            properties : {
+            },
+            
+			// 공법 컬럼관리 화면으로 이동
+            // 공법정보 상세화면 호출
+            onShowComeInfo : function(e, data) {
+            	var me = this;
+            	
+            	me.$.pages.selectItem(me.$.comeInfo);
+            	me.$.comeInfo.load(data);
+            	
+            },
+            
+            // 닫기 버튼 클릭
+            onClose : function() {
+            	var me = this;
+            	
+				me.$.pages.selectItem(me.$.list);
+            	
+            },
+            
+            // 공법관리 화면 호출
+            onShowComeManagement : function(e, data) {
+            	var me = this;
+            	
+            	me.$.pages.selectItem(me.$.comeManagement);
+            	me.$.comeManagement.load(data);
+            	
+            },
+            
+            // 공법정보 컬럼 목록 화면 호출
+            onShowComeColumnManagement : function(e, data) {
+				var me = this;
+            	
+            	me.$.pages.selectItem(me.$.comeColumnManagement);
+            	me.$.comeColumnManagement.load(data);
+            	
+            },
+            
+            // 취소 버튼 클릭
+            onCancel : function(e, data) {
+            	var me = this;
+            	// 공법관리 화면 호출
+            	me.onShowComeManagement(data);
+            }	
+		});
+	</script>
+	
+</dom-module>
