@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/cd/cd09/2023" data-source="tcamsDS">
+ <sql id="08.0001">
+  <![CDATA[
+WITH T1(C1, C2, C3) AS (
+ SELECT '100', 'CHK_USER', 'DEGR' FROM DUAL
+)
+SELECT CASE WHEN INSTR(B.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END AUTH_DEGR_YN
+  FROM T1 A
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON    B.SYS_ID = A.C1
+        AND B.GRP_CD = A.C2
+        AND B.DTL_CD = A.C3
+  ]]>
+ </sql>
+
+ <sql id="08.0002">
+  <![CDATA[
+WITH T1(C1, C2, C3) AS (
+ SELECT '100', 'CONF', '0002' FROM DUAL
+)
+SELECT CASE 
+        WHEN #auth_degr_yn# = 'Y' AND USE_YN = 'Y' THEN COALESCE(B.REM, TO_CHAR(SYSDATE, 'YYYYMMDD')) 
+        ELSE CASE WHEN B.FLAG='Y' THEN B.REM ELSE TO_CHAR(SYSDATE, 'YYYYMMDD')  END
+       END CUR_DATE
+  FROM T1 A
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON    B.SYS_ID = A.C1
+        AND B.GRP_CD = A.C2
+        AND B.DTL_CD = A.C3
+  ]]>
+ </sql>
+
+ <sql id="select.autocomecode.list" comment="P/T 공법정보 리스트 조회">
+  <![CDATA[
+SELECT ROW_NUMBER() OVER(ORDER BY PT_SEQ) COMD_RN
+      ,COMD_SEQ                           COMD_SEQ
+      ,COMD_METH_NAME                     COMD_METH_NAME
+      ,COMD_COME_CODE                     COMD_COME_CODE
+      ,COMD_METH_GUBN                     COMD_METH_GUBN
+      ,COMD_INDS_CODE                     COMD_INDS_CODE
+      ,COMD_STND_DEGR                     COMD_STND_DEGR
+      ,COMD_HKMC_DEGR                     COMD_HKMC_DEGR
+      ,COMD_TRAN_DEGR                     COMD_TRAN_DEGR
+      ,COMD_ATT_GRP_CD                    COMD_ATT_GRP_CD
+      ,COMD_APPL_DATE                     COMD_APPL_DATE
+      ,FILE_CNT                           FILE_CNT
+      ,PT_SEQ                             ST_SEQ
+  FROM (
+        SELECT A.MTCD_SORT_KEY0  COMD_SEQ
+              ,A.MTCD_METH_NAME  COMD_METH_NAME
+              ,A.MTCD_COME_CODE  COMD_COME_CODE
+              ,A.MTCD_METH_GUBN  COMD_METH_GUBN
+              ,A.MTCD_INDS_CODE  COMD_INDS_CODE
+              --20200408 보이는 차수 정보 HTS기준으로 변경 
+              ,B.MTDG_STND_DEGR  COMD_STND_DEGR
+              ,B.MTDG_HKMC_DEGR  COMD_HKMC_DEGR
+              ,B.MTDG_TRAN_DEGR  COMD_TRAN_DEGR
+              ,B.MTDG_ATT_GRP_CD COMD_ATT_GRP_CD
+              ,B.MTDG_APPL_DATE  COMD_APPL_DATE
+              ,(
+                SELECT COUNT(E.ATT_SEQ) AS FILE_CNT
+                  FROM ESAATTH E
+                 WHERE E.STS <> 'D'
+                   AND E.SYS_ID = #sys_id#
+                   AND E.GRP_CD = MTDG_ATT_GRP_CD
+               ) FILE_CNT
+              ,CASE
+                 WHEN MTCD_COME_CODE = 'HEFO'
+                   THEN '0'
+                 WHEN MTCD_COME_CODE = 'COFO'
+                   THEN '1'
+                 WHEN MTCD_COME_CODE = 'DIEC'
+                   THEN '2'
+                 WHEN MTCD_COME_CODE = 'PRES'
+                   THEN '3'
+                 WHEN MTCD_COME_CODE = 'CICT'
+                   THEN '4'
+                 WHEN MTCD_COME_CODE = 'MCHH'
+                   THEN '5'
+                 WHEN MTCD_COME_CODE = 'HEAT'
+                   THEN '6'
+                 ELSE '7'
+                END PT_SEQ
+          FROM CITBMTCD A
+              ,CITBMTDG B
+         WHERE A.MTCD_CORP_CODE  = #corp_cd#
+           AND A.MTCD_CORP_CODE  = B.MTDG_CORP_CODE
+           AND A.MTCD_COME_CODE  = B.MTDG_COME_CODE
+           AND A.MTCD_METH_GUBN  = B.MTDG_METH_GUBN
+           AND A.MTCD_METH_GUBN  = 'A'
+           AND B.MTDG_APPL_DATE  = (
+                                    SELECT MAX(MTDG_APPL_DATE)
+                                      FROM CITBMTDG
+                                     WHERE MTDG_CORP_CODE = A.MTCD_CORP_CODE
+                                       AND MTDG_COME_CODE = A.MTCD_COME_CODE
+                                       AND MTDG_APPL_DATE <= #cur_date#
+                                   )
+           AND B.MTDG_APPL_YN = 'Y'
+           AND A.MTCD_COME_CODE NOT IN ('GEAR', 'GRIN', 'BROA', 'GENL', 'PIPE')
+          [AND A.MTCD_METH_NAME LIKE '%'|| UPPER(#comd_meth_name#) ||'%']
+         ORDER BY PT_SEQ,COMD_SEQ
+       )
+  ]]>
+ </sql>
+ 
+ <sql id="select.moldcomecode.list" comment="공법정보 리스트 조회">
+  <![CDATA[
+      SELECT A.MTCD_SORT_KEY0  COMD_SEQ
+            ,A.MTCD_METH_NAME  COMD_METH_NAME
+            ,A.MTCD_COME_CODE  COMD_COME_CODE
+            ,A.MTCD_METH_GUBN  COMD_METH_GUBN
+            ,A.MTCD_INDS_CODE  COMD_INDS_CODE
+            ,B.MTDG_STND_DEGR COMD_STND_DEGR
+            ,B.MTDG_HKMC_DEGR COMD_HKMC_DEGR
+            ,B.MTDG_TRAN_DEGR COMD_TRAN_DEGR
+            ,B.MTDG_ATT_GRP_CD AS COMD_ATT_GRP_CD
+            ,B.MTDG_APPL_DATE COMD_APPL_DATE
+            ,(SELECT COUNT(E.ATT_SEQ) AS FILE_CNT
+                    FROM ESAATTH E
+                   WHERE E.STS <> 'D'
+                    AND E.SYS_ID = #sys_id#
+                   AND E.GRP_CD = MTDG_ATT_GRP_CD) FILE_CNT
+        FROM CITBMTCD A
+            ,CITBMTDG B
+       WHERE A.MTCD_CORP_CODE = #corp_cd#
+         AND A.MTCD_CORP_CODE = B.MTDG_CORP_CODE
+         AND A.MTCD_COME_CODE = B.MTDG_COME_CODE
+         AND A.MTCD_METH_GUBN = B.MTDG_METH_GUBN
+         AND A.MTCD_METH_GUBN = 'M'
+         AND B.MTDG_APPL_DATE = (SELECT MAX(MTDG_APPL_DATE)
+                                   FROM CITBMTDG
+                                  WHERE MTDG_CORP_CODE = #corp_cd#
+                                    AND MTDG_COME_CODE = A.MTCD_COME_CODE
+                                    AND MTDG_APPL_DATE <= #cur_date#)
+         AND B.MTDG_APPL_YN = 'Y'
+        [AND A.MTCD_METH_NAME LIKE '%'|| UPPER(#comd_meth_name#) ||'%']
+       ORDER BY COMD_SEQ
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 

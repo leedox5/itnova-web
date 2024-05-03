@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/cd/cd02/2023">
+
+ <service id="chkCompute" label="환산단가계산">
+   <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    
+	var result = new Map();
+    var chk = new Map();
+    var err = new Map();
+    var calc = new Map();
+    			
+    try {
+		
+    	chk = $jdbc.query("bp/tcams/cd/cd02/2023", "get.mony_rate", $data.param);
+
+    	$logger.info(chk);
+    	
+    	if(chk.chk_cd != "00") {
+    		err = $jdbc.query("bp/tcams/cd/cd02/2023", "get.error", chk);
+    		throw new Exception(err.msg);
+    	} 	
+    	result.calc = chk;
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+    	$logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+    $data.result = result;
+   ]]>
+  </script>	
+ </service>
+
+ <service id="saveImpt" label="환산단가 저장">
+   <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    importClass(Packages.emro.util.CalendarUtil);
+    
+    var items = $data.items;
+    
+	var result = new Map();
+    var param = new Map();
+    var chk = new Map();
+    var err = new Map();
+    var calc = new Map();
+    			
+    try {
+    	for(var i = 0 ; i < items.size() ; i++) {
+	    	param.impt_corp_code = items[i].comd_corp_code;
+	        param.impt_cost_gubn = 'S';
+	        param.impt_part_no   = items[i].comd_part_sub0;
+	        param.impt_eono      = items[i].comd_eono_sub0;
+	        param.impt_cumt_no   = items[i].comd_cumt_sub0;
+	        param.impt_come_code = "CHIN";
+	        param.impt_matl_seq0 = 1;
+	        param.impt_matl_code = items[i].comd_part_sub0;
+            
+            param.impt_stnd_gubn = "H";
+            param.impt_impt_code = items[i].impt_impt_code;
+            param.impt_impt_cost = items[i].impt_impt_cost;
+            param.impt_nati_code = items[i].impt_nati_code;
+            
+            param.impt_exch_stnd = "H";
+            param.impt_exch_gubn = items[i].impt_exch_gubn;
+            param.impt_exch_mogb = items[i].impt_exch_mogb;
+            param.impt_exch_apdt = items[i].impt_exch_apdt;
+            param.impt_exch_mony = items[i].impt_exch_mony;
+            param.impt_exch_user = items[i].impt_exch_user;
+            
+            param.impt_ldcr_stnd = items[i].impt_ldcr_stnd;
+            param.impt_ldcr_code = items[i].impt_ldcr_code;
+            param.impt_ldcr_apdt = items[i].impt_ldcr_apdt;
+            param.impt_ldcr_rate = items[i].impt_ldcr_rate;
+            param.impt_ldcr_user = items[i].impt_ldcr_user;
+            
+            param.impt_matl_pric = items[i].impt_matl_pric;
+            param.impt_trif_rate = items[i].impt_trif_rate;
+            param.impt_trif_inpt = items[i].impt_trif_inpt;
+            param.impt_carr_rate = items[i].impt_carr_rate;
+            param.impt_carr_inpt = items[i].impt_carr_inpt;
+            param.impt_insu_rate = items[i].impt_insu_rate;
+            param.impt_insu_inpt = items[i].impt_insu_inpt;
+            param.impt_trif_pric = items[i].impt_trif_pric;
+            
+            param.impt_updt_date = CalendarUtil.formatNow("yyyyMMdd");  
+            param.impt_updt_cman = $user.usr_id;
+            param.impt_init_date = CalendarUtil.formatNow("yyyyMMdd");  
+            param.impt_init_cman = $user.usr_id;
+
+	        chk = $jdbc.query("bp/tcams/cd/cd02/2023", "chk.IMPT", param);
+	        
+	        $logger.info(chk);
+	        
+	        if(chk.chk_yn == "N") {
+	        	$jdbc.update("bp/tcams/cd/cd02/2023", "insert.IMPT", param);
+	        } else {
+	            $jdbc.update("bp/tcams/cd/cd02/2023", "update.IMPT", param);
+	        }
+    	}
+    	
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+    	$logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+    
+    $data.result = result;
+   ]]>
+  </script>	
+ </service>
+
+ <service id="getImpt" label="환산단가 조회">
+   <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    
+	var result = new Map();
+	
+    var impt = new Map();
+    var err = new Map();
+    var param = new Map();
+    			
+    try {
+	    param.impt_corp_code = $data.param.comd_corp_code;
+	    param.impt_cost_gubn = 'S';
+	    param.impt_part_no   = $data.param.comd_part_sub0;
+	    param.impt_eono      = $data.param.comd_eono_sub0;
+	    param.impt_cumt_no   = $data.param.comd_cumt_sub0;
+	    param.impt_come_code = "CHIN";
+	    param.impt_matl_seq0 = 1;
+	    param.impt_matl_code = $data.param.comd_part_sub0;
+    	
+    	impt = $jdbc.query("bp/tcams/cd/cd02/2023", "select.IMPT", param);
+        
+        impt.impt_cond = impt.impt_ldcr_code + impt.impt_exch_mogb;
+
+    	$logger.info(impt);
+    	
+    	result.impt = impt;
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+    	$logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+    $data.result = result;   
+   ]]>
+  </script>	
+ </service>
+
+</service-descriptor>

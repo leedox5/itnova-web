@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/cd/cd02/2023" data-source="tcamsDS">
+
+ <sql id="get.error">
+  <![CDATA[
+WITH T1 (
+  CD
+ ,MSG
+) AS (
+       SELECT '10', '수입단가 없습니다. 확인 후 작업하세요.' FROM DUAL
+ UNION SELECT '20', '환율은 필수 입력입니다.' FROM DUAL
+ UNION SELECT '30', '관세율은 필수 입력입니다.' FROM DUAL
+)  
+SELECT *
+  FROM T1
+ WHERE CD = #chk_cd#
+  ]]>
+ </sql>	
+
+ <sql id="get.mony_rate">
+  <![CDATA[
+WITH T1 AS (  
+ SELECT COALESCE(#impt_pric#, '0') C1
+       ,COALESCE(#mony_rate2#, #mony_rate1#, '0') C2
+       ,COALESCE(#carr_rate2#, #carr_rate1#, '0') C3
+       ,COALESCE(#insu_rate2#, #insu_rate1#, '0') C4
+       ,COALESCE(#trif_rate2#, #trif_rate1#, '0') C5
+       ,SUBSTRING(#impt_cond#, 3, 3) C6
+       ,COALESCE(#ldcr_rate2#, #ldcr_rate1#, '0') C7
+   FROM DUAL
+)
+SELECT CASE 
+        WHEN C1 = 0 THEN '10' 
+        WHEN C2 = 0 THEN '20'
+        ELSE '00'          
+       END CHK_CD
+      ,C1 IMPT_PRIC
+      ,C2 MONY_RATE
+      ,C3 CARR_RATE
+      ,C4 INSU_RATE
+      ,C5 TRIF_RATE
+      ,CASE 
+        WHEN C6 = 'FOB' THEN C1 * C2 * (1.00000 + C3 + C4) * (C5 * 0.01)
+        ELSE                 C1 * C2 * (C5 * 0.01)
+       END TRIF_PRIC
+      ,C7 LDCR_RATE
+      ,C1 * C2 * C7    MATL_PRIC
+      ,C1 * C2         TRIF_COST   -- [2023.01.11] 확인해야함...
+  FROM T1 
+  ]]>
+ </sql>	
+
+ <sql id="chk.IMPT.X">
+  <![CDATA[
+WITH T1 (
+  IMPT_CORP_CODE
+ ,IMPT_COST_GUBN
+ ,IMPT_PART_NO
+ ,IMPT_EONO
+ ,IMPT_CUMT_NO
+ ,IMPT_COME_CODE
+ ,IMPT_MATL_SEQ0
+ ,IMPT_MATL_CODE
+) AS (
+SELECT 'K1' 
+       ,'S' 
+       ,'45100-3B210'   
+       ,'CKKEA027'      
+       ,10001   
+       ,'CHIN' 
+       ,1 
+       ,'45100-3B210' 
+   FROM DUAL 
+)  
+SELECT CASE WHEN B.IMPT_CORP_CODE IS NULL THEN 'N' ELSE 'Y' END CHK_YN 
+  FROM T1 A
+      LEFT OUTER JOIN
+       CRTBIMPT B
+      ON    B.IMPT_CORP_CODE = A.IMPT_CORP_CODE
+        AND TRIM(B.IMPT_COST_GUBN) = A.IMPT_COST_GUBN
+        AND B.IMPT_PART_NO   = A.IMPT_PART_NO  
+        AND B.IMPT_EONO      = A.IMPT_EONO     
+        AND B.IMPT_CUMT_NO   = A.IMPT_CUMT_NO  
+        AND B.IMPT_COME_CODE = A.IMPT_COME_CODE
+        AND B.IMPT_MATL_SEQ0 = A.IMPT_MATL_SEQ0
+        AND B.IMPT_MATL_CODE = A.IMPT_MATL_CODE
+  ]]>
+ </sql>	
+ <sql id="chk.IMPT">
+  <![CDATA[
+WITH T1 AS (
+ SELECT #impt_corp_code# C1
+       ,#impt_cost_gubn# C2
+       ,#impt_part_no#   C3
+       ,#impt_eono#      C4
+       ,@impt_cumt_no@   C5
+       ,#impt_come_code# C6
+       ,@impt_matl_seq0@ C7
+       ,#impt_matl_code# C8
+   FROM DUAL
+)  
+SELECT CASE WHEN B.IMPT_CORP_CODE IS NULL THEN 'N' ELSE 'Y' END CHK_YN 
+  FROM T1 A
+      LEFT OUTER JOIN
+       CRTBIMPT B
+      ON    B.IMPT_CORP_CODE = A.C1
+        AND TRIM(B.IMPT_COST_GUBN) = A.C2
+        AND B.IMPT_PART_NO   = A.C3
+        AND B.IMPT_EONO      = A.C4
+        AND B.IMPT_CUMT_NO   = A.C5
+        AND B.IMPT_COME_CODE = A.C6
+        AND B.IMPT_MATL_SEQ0 = A.C7
+        AND B.IMPT_MATL_CODE = A.C8
+  ]]>
+ </sql>	
+
+ <sql id="insert.IMPT">
+  <![CDATA[
+INSERT INTO CRTBIMPT (
+  IMPT_CORP_CODE
+ ,IMPT_COST_GUBN
+ ,IMPT_PART_NO
+ ,IMPT_EONO
+ ,IMPT_CUMT_NO
+ ,IMPT_COME_CODE
+ ,IMPT_MATL_SEQ0
+ ,IMPT_MATL_CODE
+ ,IMPT_STND_GUBN
+ ,IMPT_IMPT_CODE
+ ,IMPT_IMPT_APDT
+ ,IMPT_IMPT_COST
+ ,IMPT_NATI_CODE
+ ,IMPT_EXCH_STND
+ ,IMPT_EXCH_GUBN
+ ,IMPT_EXCH_PROJ
+ ,IMPT_EXCH_MOGB
+ ,IMPT_EXCH_APDT
+ ,IMPT_EXCH_MONY
+ ,IMPT_EXCH_USER
+ ,IMPT_EXCH_APPL
+ ,IMPT_LDCR_STND
+ ,IMPT_LDCR_CODE
+ ,IMPT_LDCR_APDT
+ ,IMPT_LDCR_RATE
+ ,IMPT_LDCR_USER
+ ,IMPT_LDCR_APPL
+ ,IMPT_MATL_PRIC
+ ,IMPT_TRIF_RATE
+ ,IMPT_TRIF_INPT
+ ,IMPT_TRIF_APPL
+ ,IMPT_CARR_RATE
+ ,IMPT_CARR_INPT
+ ,IMPT_CARR_APPL
+ ,IMPT_INSU_RATE
+ ,IMPT_INSU_INPT
+ ,IMPT_INSU_APPL
+ ,IMPT_TRIF_PRIC
+ ,IMPT_EXCH_LINK
+ ,IMPT_UPDT_DATE
+ ,IMPT_UPDT_CMAN
+ ,IMPT_INIT_DATE
+ ,IMPT_INIT_CMAN
+) VALUES (
+  #impt_corp_code#
+ ,#impt_cost_gubn#
+ ,#impt_part_no#  
+ ,#impt_eono#     
+ ,#impt_cumt_no#  
+ ,#impt_come_code#
+ ,#impt_matl_seq0#
+ ,#impt_matl_code#
+ ,#impt_stnd_gubn#
+ ,#impt_impt_code#
+ ,#impt_impt_apdt#
+ ,#impt_impt_cost#
+ ,#impt_nati_code#
+ ,#impt_exch_stnd#
+ ,#impt_exch_gubn#
+ ,#impt_exch_proj#
+ ,#impt_exch_mogb#
+ ,#impt_exch_apdt#
+ ,#impt_exch_mony#
+ ,#impt_exch_user#
+ ,COALESCE(#impt_exch_user#, #impt_exch_mony#)
+ ,#impt_ldcr_stnd#
+ ,#impt_ldcr_code#
+ ,#impt_ldcr_apdt#
+ ,#impt_ldcr_rate#
+ ,#impt_ldcr_user#
+ ,COALESCE(#impt_ldcr_user#, #impt_ldcr_rate#)
+ ,#impt_matl_pric#
+ ,#impt_trif_rate#
+ ,#impt_trif_inpt#
+ ,COALESCE(#impt_trif_inpt#, #impt_trif_rate#)
+ ,#impt_carr_rate#
+ ,#impt_carr_inpt#
+ ,COALESCE(#impt_carr_inpt#, #impt_carr_rate#)
+ ,#impt_insu_rate#
+ ,#impt_insu_inpt#
+ ,COALESCE(#impt_insu_inpt#, #impt_insu_rate#)
+ ,#impt_trif_pric#
+ ,#impt_exch_link#
+ ,#impt_updt_date#
+ ,#impt_updt_cman#
+ ,#impt_init_date#
+ ,#impt_init_cman#
+)  
+  ]]>
+ </sql>	
+
+ <sql id="update.IMPT">
+  <![CDATA[
+UPDATE CRTBIMPT 
+   SET IMPT_STND_GUBN = #impt_stnd_gubn# 
+      ,IMPT_IMPT_CODE = #impt_impt_code#
+      ,IMPT_IMPT_APDT = #impt_impt_apdt#
+      ,IMPT_IMPT_COST = #impt_impt_cost#
+      ,IMPT_NATI_CODE = #impt_nati_code#
+      ,IMPT_EXCH_STND = #impt_exch_stnd#
+      ,IMPT_EXCH_GUBN = #impt_exch_gubn#
+      ,IMPT_EXCH_PROJ = #impt_exch_proj#
+      ,IMPT_EXCH_MOGB = #impt_exch_mogb#
+      ,IMPT_EXCH_APDT = #impt_exch_apdt#
+      ,IMPT_EXCH_MONY = #impt_exch_mony#
+      ,IMPT_EXCH_USER = #impt_exch_user#
+      ,IMPT_EXCH_APPL = COALESCE(#impt_exch_user#, #impt_exch_mony#)
+      ,IMPT_LDCR_STND = #impt_ldcr_stnd#
+      ,IMPT_LDCR_CODE = #impt_ldcr_code#
+      ,IMPT_LDCR_APDT = #impt_ldcr_apdt#
+      ,IMPT_LDCR_RATE = #impt_ldcr_rate#
+      ,IMPT_LDCR_USER = #impt_ldcr_user#
+      ,IMPT_LDCR_APPL = COALESCE(#impt_ldcr_user#, #impt_ldcr_rate#)      
+      ,IMPT_MATL_PRIC = #impt_matl_pric#
+      ,IMPT_TRIF_RATE = #impt_trif_rate#
+      ,IMPT_TRIF_INPT = #impt_trif_inpt#
+      ,IMPT_TRIF_APPL = COALESCE(#impt_trif_inpt#, #impt_trif_rate#)
+      ,IMPT_CARR_RATE = #impt_carr_rate#
+      ,IMPT_CARR_INPT = #impt_carr_inpt#
+      ,IMPT_CARR_APPL = COALESCE(#impt_carr_inpt#, #impt_carr_rate#)
+      ,IMPT_INSU_RATE = #impt_insu_rate#
+      ,IMPT_INSU_INPT = #impt_insu_inpt#
+      ,IMPT_INSU_APPL = COALESCE(#impt_insu_inpt#, #impt_insu_rate#)
+      ,IMPT_TRIF_PRIC = #impt_trif_pric#
+      ,IMPT_EXCH_LINK = #impt_exch_link#
+      ,IMPT_UPDT_DATE = #impt_updt_date#
+      ,IMPT_UPDT_CMAN = #impt_updt_cman#
+ WHERE IMPT_CORP_CODE = #impt_corp_code# 
+   AND TRIM(IMPT_COST_GUBN) = #impt_cost_gubn#
+   AND IMPT_PART_NO   = #impt_part_no#  
+   AND IMPT_EONO      = #impt_eono#     
+   AND IMPT_CUMT_NO   = #impt_cumt_no#  
+   AND IMPT_COME_CODE = #impt_come_code#
+   AND IMPT_MATL_SEQ0 = #impt_matl_seq0#
+   AND IMPT_MATL_CODE = #impt_matl_code#
+  ]]>
+ </sql>	
+
+ <sql id="select.IMPT">
+  <![CDATA[
+SELECT *
+  FROM CRTBIMPT
+ WHERE IMPT_CORP_CODE = #impt_corp_code# 
+   AND TRIM(IMPT_COST_GUBN) = #impt_cost_gubn#
+   AND IMPT_PART_NO   = #impt_part_no#  
+   AND IMPT_EONO      = #impt_eono#     
+   AND IMPT_CUMT_NO   = #impt_cumt_no#  
+   AND IMPT_COME_CODE = #impt_come_code#
+   AND IMPT_MATL_SEQ0 = #impt_matl_seq0#
+   AND IMPT_MATL_CODE = #impt_matl_code#  
+  ]]>
+ </sql>	
+
+</sql-descriptor>

@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/cd/cd09">
+ <service id="get.selected_comecode" label="원가계산 공법선택 조회">
+  <script>
+   <![CDATA[
+    var param = new Map();
+    var chk = new Map();
+    try {
+        param = $data.searchParam;
+
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0001", null);
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0002", chk);
+        param.cur_date = chk.cur_date;
+        $data.resultList = $jdbc.queryList("bp/tcams/cd/cd09", "select.selected_comecode", param);
+    } catch(e) {
+        $logger.info(e.message);
+    }
+  ]]>
+  </script>
+ </service>
+
+    <service id="get.autocomecode.list.X0817" label="P/T 공법정보 리스트 조회">
+        <select descriptor="bp/tcams/cd/cd09" sql-id="select.autocomecode.list"
+            parameter-name="searchParam2" result-class="list" result-name="resultList" />
+    </service>
+
+ <service id="get.autocomecode.list">
+  <script>
+   <![CDATA[
+    var list = new List();
+    var param = new Map();
+    var chk = new Map();
+
+    try {
+        param = $data.searchParam2;
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0001", null);
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0002", chk);
+        param.cur_date = chk.cur_date;
+
+        list = $jdbc.queryList("bp/tcams/cd/cd09/2023", "select.autocomecode.list", param);
+    } catch(e) {
+        $logger.info(e.message);
+    }
+
+    $data.resultList = list;
+   ]]>
+  </script>
+ </service>
+
+    <service id="get.stautocomecode.list" label="시트 공법정보 리스트 조회">
+        <select descriptor="bp/tcams/cd/cd09" sql-id="select.stautocomecode.list"
+            parameter-name="searchParam2" result-class="list" result-name="resultList" />
+    </service>
+
+ <service id="get.cmautocomecode.list">
+  <script>
+   <![CDATA[
+    var list = new List();
+    var sql_id = "";
+
+    try {
+        $data.searchParam2.dept_cd = $user.dept_cd;
+
+        chk_list = $jdbc.queryList("bp/tcams/cd/cd09", "select.CDDT", $data.searchParam2);
+
+        if(chk_list.size() > 0) {
+            $logger.info(chk_list[0]);
+            if(chk_list[0].chk == "PT") {
+                sql_id = "select.autocomecode.list";
+            } else {
+                sql_id = "select.stautocomecode.list";
+            }
+            list = $jdbc.queryList("bp/tcams/cd/cd09", sql_id, $data.searchParam2);
+        }
+    } catch(e) {
+        $logger.info(e.message);
+    }
+
+    $data.resultList = list;
+   ]]>
+  </script>
+ </service>
+
+
+ <service id="get.moldcomecode.list.X" label="공법정보 리스트 조회">
+  <select descriptor="bp/tcams/cd/cd09" sql-id="select.moldcomecode.list"
+          parameter-name="searchParam2" result-class="list" result-name="resultList" />
+</service>
+
+ <service id="get.moldcomecode.list">
+  <script>
+   <![CDATA[
+    var list = new List();
+    var param = new Map();
+    var chk = new Map();
+
+    try {
+        param = $data.searchParam2;
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0001", null);
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0002", chk);
+        param.cur_date = chk.cur_date;
+
+        list = $jdbc.queryList("bp/tcams/cd/cd09/2023", "select.moldcomecode.list", param);
+    } catch(e) {
+        $logger.info(e.message);
+    }
+
+    $data.resultList = list;
+   ]]>
+  </script>
+ </service>
+
+
+
+    <service id="save.selected_comecode" label="공법선택(마스터) 저장 ">
+        <insert descriptor="bp/tcams/cd/cd09" sql-id="insert.selected_comecode"
+            parameter-name="inserts" parameter-class="list" />
+    </service>
+
+    <service id="del.selected_comecode" label="공법마스터 삭제">
+        <script>
+        <![CDATA[
+            try {
+
+                // DELETE
+                for (var j=0; $data.param.size() > j ; j++) {
+                    var result = $jdbc.call("bp/tcams/cd/cd09", "delete.selected_comecode_proc", $data.param[j]);
+                    $data.result = result;
+                    $data.result.CURR_PART = $data.param[j].comd_part_no;
+                    $data.result.CURR_ROW  = j;
+
+                    if(result.MESG_CODE == 'SA-002') {
+                        throw e;
+                    }
+
+                } // end for
+
+                // 순번 재조정
+                var resultList = $jdbc.queryList("bp/tcams/cd/cd09", "select.selected_comecode1", $data.param[0]);
+
+                for (var k=0; k < resultList.size() ; k++) {
+                    resultList[k].comd_sort_key0 = (k+1);
+                    $jdbc.update("bp/tcams/cd/cd09", "save.CMMSInfo.update", resultList[k]);
+                }
+
+                $jdbc.update("bp/tcams/cd/cd09", "periodlist.delete", $data.param[0]);
+            } catch (e) {
+                //$data.result = new Map();
+                //$data.result.MESG_CODE = 'SA-002';
+                $jdbc.update("bp/tcams/ca/common", "rollback", null);
+            }
+
+        ]]>
+        </script>
+    </service>
+
+    <service id="replace.selected_comecode" label="공법차수 변경 ">
+        <script>
+        <![CDATA[
+            try {
+
+                $data.result = new Map();
+
+                // [PCAMS 설계원가 고도화 3차]
+                // PIPE인발가공(PIPE) 하나의 공법 → PIPE인발(PIDR), PIPE가공(PIWR) 두개의 공법으로 분리
+                // PIPE가공(PIWR) 공법에  고도화 이전차수   PIPE인발가공(PIPE)를 종속시킴
+                // 20171218 LSM : 다른공법과 다른 공법차수 변경 로직 구현 추가
+
+
+                // --------------------------------------
+                // PIPE인발가공 & PIPE가공 공법
+                // --------------------------------------
+                if ($data.degrParam.comd_come_code == "PIPE" ||
+                    $data.degrParam.comd_come_code == "PIWR") {
+
+                    // PIPE가공 → PIPE인발가공 변경
+                    if ($data.degrParam.comd_come_code == "PIPE") {
+
+                        // 결재상태 체크
+                        // 결재진행중('30'), 승인('40') 아닌 경우만 공법차수 변경 가능
+                        var statCheck = $jdbc.queryList("bp/tcams/cd/cd09", "stat.check", $data.degrParam);
+
+                        if (statCheck[0].error_mesg != "NONE") {
+                            $data.result.MESG = statCheck.error_mesg;
+                            throw e;
+                        }
+
+                        $data.degrParam.spms_cost_endi = statCheck[0].spms_cost_endi;
+                        $data.degrParam.spms_part_endi = statCheck[0].spms_part_endi;
+                        $data.degrParam.spms_eono_endi = statCheck[0].spms_eono_endi;
+                        $data.degrParam.spms_cumt_endi = statCheck[0].spms_cumt_endi;
+
+                        var piwrComeCodeInfo = $jdbc.queryList("bp/tcams/cd/cd09", "select.comecode.info", $data.degrParam);
+
+                        $data.degrParam.cmms_corp_code = piwrComeCodeInfo[0].cmms_corp_code;
+                        $data.degrParam.cmms_part_no   = piwrComeCodeInfo[0].cmms_part_no;
+                        $data.degrParam.cmms_eono      = piwrComeCodeInfo[0].cmms_eono;
+                        $data.degrParam.cmms_cumt_no   = piwrComeCodeInfo[0].cmms_cumt_no;
+                        $data.degrParam.cmms_meth_gubn = piwrComeCodeInfo[0].cmms_meth_gubn;
+                        $data.degrParam.cmms_come_code = piwrComeCodeInfo[0].cmms_come_code;
+                        $data.degrParam.cmms_stnd_degr = piwrComeCodeInfo[0].cmms_stnd_degr;
+
+                        // 데이터 삭제 처리
+                        $jdbc.update("bp/tcams/cd/cd09", "replace.come.degr", $data.degrParam);
+
+                        // 재집계 처리
+                        var result = $jdbc.call("bp/tcams/cd/cd09", "replace.comecode.sum", $data.degrParam);
+
+                        if (result.MESG_CODE == 'SA-002') {
+                            $data.result = result;
+                            throw e;
+                        }
+
+                        // CRSPSPCR_C01 에서  CMMS_SUM0_GUBN이 'Y' SET 되므로 다시 CLEAR함
+                        $jdbc.update("bp/tcams/cd/cd09", "update.cmms.sumgubn", $data.degrParam);
+
+                    }
+
+                    // 1) PIPE가공 다른 차수로 변경
+                    // 2) PIPE인발가공  → PIPE가공 변경
+                    if ($data.degrParam.comd_come_code == "PIWR") {
+
+                        // 고도화 3차 분리 전 PIPE인발가곧 공법이 존재하는지 조회
+                        var pipeComeCode = $jdbc.queryList("bp/tcams/cd/cd09", "select.comecode.yn", $data.degrParam);
+
+                        // 고도화 3차 분리 전 PIPE인발가곧 공법 → PIPE가공 공법으로 변경
+                        if (pipeComeCode[0].cnt > 0) {
+
+                            var statCheck = $jdbc.queryList("bp/tcams/cd/cd09", "stat.check", $data.degrParam);
+
+                            if (statCheck[0].error_mesg != "NONE") {
+                                $data.result.MESG = statCheck[0].error_mesg;
+                                throw e;
+                            }
+
+                            $data.degrParam.spms_cost_endi = statCheck[0].spms_cost_endi;
+                            $data.degrParam.spms_part_endi = statCheck[0].spms_part_endi;
+                            $data.degrParam.spms_eono_endi = statCheck[0].spms_eono_endi;
+                            $data.degrParam.spms_cumt_endi = statCheck[0].spms_cumt_endi;
+
+                            var pipeComeCodeInfo = $jdbc.queryList("bp/tcams/cd/cd09", "select.comecode.info", $data.degrParam);
+
+                            $data.degrParam.cmms_corp_code = pipeComeCodeInfo[0].cmms_corp_code;
+                            $data.degrParam.cmms_part_no   = pipeComeCodeInfo[0].cmms_part_no;
+                            $data.degrParam.cmms_eono      = pipeComeCodeInfo[0].cmms_eono;
+                            $data.degrParam.cmms_cumt_no   = pipeComeCodeInfo[0].cmms_cumt_no;
+                            $data.degrParam.cmms_meth_gubn = pipeComeCodeInfo[0].cmms_meth_gubn;
+                            $data.degrParam.cmms_come_code = pipeComeCodeInfo[0].cmms_come_code;
+                            $data.degrParam.cmms_stnd_degr = pipeComeCodeInfo[0].cmms_stnd_degr;
+
+                            // 데이터 삭제 처리
+                            $jdbc.update("bp/tcams/cd/cd09", "replace.come.degr", $data.degrParam);
+
+                            // 재집계 처리
+                            var result = $jdbc.call("bp/tcams/cd/cd09", "replace.comecode.sum", $data.degrParam);
+
+                            if (result.MESG_CODE == 'SA-002') {
+                                $data.result = result;
+                                throw e;
+                            }
+
+                            // CRSPSPCR_C01 에서  CMMS_SUM0_GUBN이 'Y' SET 되므로 다시 CLEAR함
+                            $jdbc.update("bp/tcams/cd/cd09", "update.cmms.sumgubn", $data.degrParam);
+
+                        // 고도화 3차 이후 분리된 PIPE가공 공법의 차수변경
+                        } else {
+                            var result = $jdbc.call("bp/tcams/cd/cd09", "replace.selected_comecode", $data.degrParam);
+
+                            $data.result = result;
+                            $data.result.CURR_PART = $data.degrParam.comd_part_no;
+
+                            if (result.MESG_CODE == 'SA-002') {
+                                throw e;
+                            }
+                        }
+                    }
+
+                // --------------------------------------
+                // PIPE인발가공 & PIPE가공 제외 공법
+                // --------------------------------------
+                } else {
+                    var result = $jdbc.call("bp/tcams/cd/cd09", "replace.selected_comecode", $data.degrParam);
+
+                    $data.result = result;
+                    $data.result.CURR_PART = $data.degrParam.comd_part_no;
+
+                    if ($data.degrParam.comd_come_code == "MCHH") {
+                        $jdbc.update("bp/tcams/cd/cd09", "replace.mchh_cumtyn", $data.degrParam);
+                    }
+
+                    if (result.MESG_CODE == 'SA-002') {
+                        throw e;
+                    }
+                }
+
+                $data.result.MESG_CODE = 'SA-001';
+
+            } catch (e) {
+                $data.result.MESG_CODE = 'SA-002';
+                $jdbc.update("bp/tcams/ca/common", "rollback", null);
+            }
+
+        ]]>
+        </script>
+    </service>
+
+    <service id="get.selected_moldcomecode" label="원가계산 금형공법선택 조회">
+        <script>
+            <![CDATA[
+                $data.resultList = $jdbc.queryList("bp/tcams/cd/cd09", "select.selected_moldcomecode", $data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+
+
+    <!-- 아래 내용은 안씀 -->
+    <service id="save.comecode.list" label="이건 안쓴다.">
+        <delete descriptor="bp/tcams/cd/cd09" sql-id="delete.comecode.list"
+            parameter-name="deletes" parameter-class="map" />
+        <insert descriptor="bp/tcams/cd/cd09" sql-id="insert.comecode.list"
+            parameter-name="inserts" parameter-class="list" />
+    </service>
+
+    <service id="save.CMMSInfo" label="공법리스트 순번 저장">
+        <script>
+        <![CDATA[
+            try{
+                $data.result = new Map();
+
+                for(var i=0; i<$data.params.size(); i++){
+                    System.out.println("i : " + i);
+                    System.out.println("data.params.size() : " + $data.params.size());
+                    System.out.println("$data.params[i] : " + $data.params[i]);
+                    $jdbc.update("bp/tcams/cd/cd09", "save.CMMSInfo.update", $data.params[i]);
+                }
+
+                $jdbc.update("bp/tcams/cd/cd09", "save.CMATInfo.update", $data.params[0]);
+                $jdbc.update("bp/tcams/cd/cd09", "save.CPROInfo.update", $data.params[0]);
+
+                $data.result.MESG_CODE = "SA-001";
+                $data.result.MESG = "저장 완료했습니다.";
+
+            }catch(e){
+                var rollback = new Map();
+                var msg = e.message;
+                var index = msg.indexOf('ORA');
+
+                $data.result.MESG_CODE = 'SA-002';
+
+                if ("ORA-01438" == msg.substr(index, 9)) {
+                    $data.result.MESG = "지정된 자릿수보다 초과한 값이 입력되었습니다. \r자릿수를 확인하세요.";
+                } else {
+                    $data.result.MESG = "저장 시 문제가 발생하였습니다.";
+                }
+
+                $jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+            }
+        ]]>
+        </script>
+    </service>
+
+    <service id="get.periodlist" label="주기정보 조회">
+        <script>
+            <![CDATA[
+                $data.periodList = $jdbc.queryList("bp/tcams/cd/cd09", "periodlist.select", $data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+    <service id="update.periodlist" label="주기정보 저장">
+        <script>
+            <![CDATA[
+                $data.result = new Map();
+                try {
+                    var result = $jdbc.update("bp/tcams/cd/cd09", "periodlist.update", $data.updates);
+                    $data.result.MESG="저장되었습니다.";
+                } catch (e) {
+                    System.out.println(e);
+                    var index = e.message.indexOf('ORA');
+                    if ("ORA-12899" == e.message.substr(index, 9)) {
+                        $data.result.MESG="* 입력값이 너무 큽니다";
+                    }
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+            ]]>
+        </script>
+    </service>
+
+    <service id="insert.periodlist" label="주기정보 추가">
+        <script>
+            <![CDATA[
+                $data.result = new Map();
+                try {
+                    var result = $jdbc.update("bp/tcams/cd/cd09", "periodlist.insert", $data.inserts);
+                    $data.result.MESG="저장되었습니다.";
+                } catch (e) {
+                    System.out.println(e);
+                    var index = e.message.indexOf('ORA');
+                    if ("ORA-12899" == e.message.substr(index, 9)) {
+                        $data.result.MESG="* 입력값이 너무 큽니다";
+                    }
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+            ]]>
+        </script>
+    </service>
+    <service id="delete.periodlist" label="주기정보 삭제">
+        <script>
+            <![CDATA[
+                $data.result = new Map();
+                try {
+                    var result = $jdbc.update("bp/tcams/cd/cd09", "periodlist.delete2", $data.deletes);
+                    $data.result.MESG="삭제되었습니다.";
+                } catch (e) {
+                    System.out.println(e);
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+            ]]>
+        </script>
+    </service>
+
+        <service id="get.periodlist_endpart" label="END PART 별 주기정보 조회">
+        <script>
+            <![CDATA[
+                $data.periodList = $jdbc.queryList("bp/tcams/cd/cd09", "periodlist_endpart.select", $data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+    <service id="save.return" label="진행 상태 반송인 경우, 공법 변경이 발생하면 진행중 상태로 리턴">
+        <script>
+        <![CDATA[
+            try {
+
+                // 진행상태, 결재자 ID, 결재문서 번호  조회
+                var result = $jdbc.query("bp/tcams/cd/cd09", "get.emstInfo", $data.searchParam);
+
+                // 진행상태가 '반송'인 경우
+                if (result.pass_stat == 50) {
+
+                    // 조회한 결재자ID, 결재문서 번호 파라미터에 담기
+                    $data.searchParam.aprv_id = result.aprv_id;
+                    $data.searchParam.aprv_no = result.aprv_no;
+
+                    // 진행상태를 '진행중'으로 되돌리고, 결재 문서를 삭제한다.
+                    $jdbc.update("bp/tcams/cd/cd09", "set.return.stat", $data.searchParam);
+                }
+
+            } catch (e) {
+                System.out.println(e);
+                $jdbc.update("bp/tcams/ca/common", "rollback", null);
+            }
+
+        ]]>
+        </script>
+    </service>
+</service-descriptor>

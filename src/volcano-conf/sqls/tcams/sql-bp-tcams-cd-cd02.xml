@@ -1,0 +1,3558 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/cd/cd02" data-source="tcamsDS">
+
+	<sql id="get.CodeInfo.select" comment="코드 조회">
+	<![CDATA[
+			SELECT D.DTL_CD     DATA
+			      ,DL.DTL_CD_NM LABEL
+			  FROM ESACDDT D
+			      ,ESALANG L
+			      ,ESACDDL DL
+			 WHERE D.SYS_ID   = '100'
+			   AND D.GRP_CD   = 'CD_TRPT_KIND'
+			   AND D.SYS_ID   = DL.SYS_ID
+			   AND D.GRP_CD   = DL.GRP_CD
+			   AND D.DTL_CD   = DL.DTL_CD
+			   AND DL.LANG_CD = 'ko_KR'
+			   AND DL.SYS_ID  = L.SYS_ID
+			   AND DL.LANG_CD = L.LANG_CD
+         ]]>
+	</sql>
+	
+	<sql id="chinlist.select" comment="체인 조회">
+        <![CDATA[
+	       SELECT  CHIN.CHIN_CORP_CODE           COMD_CORP_CODE
+	              ,CHIN.CHIN_COST_GUBN           COMD_COST_GUBN
+	              ,CHIN.CHIN_PART_NO             COMD_PART_ENDI
+	              ,CHIN.CHIN_EONO                COMD_EONO_ENDI
+	              ,CHIN.CHIN_CUMT_NO             COMD_CUMT_ENDI
+	              ,CHIN.CHIN_SEQ0                COMD_SEQ0
+	              ,CHIN.CHIN_LEVL                COMD_LEVL      
+	              ,CHIN.CHIN_SORT_KEY0           COMD_SORT_KEY0
+	              ,CHIN.CHIN_PART_SUB0           COMD_PART_SUB0
+	              ,CHIN.CHIN_EONO_SUB0           COMD_EONO_SUB0
+	              ,CHIN.CHIN_EONO_SUB0           COMD_EONO_OLD
+	              ,CHIN.CHIN_CUMT_SUB0           COMD_CUMT_SUB0
+	              ,CASE WHEN EMST.EMST_COST_GUBN = SPMS.SPMS_COST_ENDI
+	                     AND EMST.EMST_PART_NO   = SPMS.SPMS_PART_ENDI
+	                     AND EMST.EMST_EONO      = SPMS.SPMS_EONO_ENDI
+	                     AND EMST.EMST_CUMT_NO   = SPMS.SPMS_CUMT_ENDI
+	                    THEN 'N'
+	                    ELSE 'Y'
+	               END                           COMD_CHIN_REF0
+	              ,EMST.EMST_PASS_STAT           COMD_SPMS_STAT 
+	              ,EMST.EMST_LINK_METH           COMD_LINK_METH  -- 연동구분 2018.08.24 BJM 추가 
+	              ,CHIN.CHIN_USG0                COMD_USG0
+	              --,NVL(CHIN_LOWS_GUBN,'Y')       COMD_LOWS_GUBN
+	              ,(
+	                SELECT NVL(CASE
+	                         WHEN NVL(SPMS.SPMS_PIMS_APPL, 'X') IN( 'A', 'M', 'U')
+	                              THEN EMST.EMST_SUM0_GUBN
+	                         ELSE DECODE(COUNT(*), 0, 'Y', 'N')
+	                       END, 'N')
+	                  FROM CRTBCMMS
+	                 WHERE CMMS_CORP_CODE = SPMS.SPMS_CORP_CODE
+	                   AND CMMS_PART_NO   = SPMS.SPMS_PART_NO
+	                   AND CMMS_EONO      = SPMS.SPMS_EONO
+	                   AND CMMS_CUMT_NO   = SPMS.SPMS_CUMT_NO
+	                   AND NVL(CMMS_SUM0_GUBN, 'N') <> 'Y'
+	               ) COMD_SUM0_GUBN
+	              ,NVL(SPMS.SPMS_STND_GUBN,'')   COMD_STND_GUBN
+	              ,NVL(SPMS.SPMS_BASE_DATE,'')   COMD_BASE_DATE
+	              ,SPMS.SPMS_CARS_CODE           COMD_CARS_CODE
+	              ,EMST.EMST_VEHL_GUBN           COMD_VEHL_GUBN
+	              ,SPMS.SPMS_INDS_CODE           COMD_INDS_CODE 
+	              ,SPMS.SPMS_VEND_CODE           COMD_VEND_CODE
+	              ,SPMS.SPMS_VEND_APFR           COMD_VEND_APFR
+	              ,NVL(CHIN.CHIN_VEND_DEGR, '1') COMD_VEND_DEGR
+	              ,(SELECT CRFT_SPMS_VEND_NAME(SPMS.SPMS_CORP_CODE,SPMS.SPMS_VEND_CODE,SPMS.SPMS_VEND_APFR) 
+	                  FROM DUAL 
+	               )                             COMD_VEND_NAME
+	              ,CASE WHEN SPMS.SPMS_SRC0 = ''  THEN EMST.EMST_SRC0
+	                    ELSE SPMS.SPMS_SRC0
+	               END                           COMD_SRC0
+	              ,NVL(CHIN.CHIN_OMGT_GUBN, 'N') COMD_OMGT_GUBN
+	              ,CHIN_ASSY_PRIC                COMD_ASSY_PRIC
+	              ,NVL(CHIN_EXMT_MGCT,0)         COMD_EXMT_MGCT
+	              ,NVL(SPSM_MATL_COST,0) 
+	              + NVL(SPSM_MATL_MACT,0)        COMD_MATL_COST
+	              ,NVL(SPSM_IBR0_COST,0)
+	              +NVL(SPSM_EXPM_COST,0)
+	              +NVL(SPSM_GME0_COST,0)
+	              +NVL(SPSM_PROF_COST,0)         COMD_PROC_COST
+	              ,NVL(SPSM_ETC0_COST,0)         COMD_ETC0_COST
+	              ,NVL(SPSM_REPY_COST,0)         COMD_REPY_COST
+	              ,NVL(SPSM_MATL_COST,0)         SPSM_MATL_COST  --재료비
+	              ,NVL(SPSM_PROC_COST,0)         SPSM_PROC_COST  --가공비
+	              ,NVL(SPSM_MATL_MACT,0)         SPSM_MATL_MACT  --재료관리비
+	              ,NVL(SPSM_GME0_COST,0)         SPSM_GME0_COST  --일반관리비
+	              ,NVL(SPSM_PROF_COST,0)         SPSM_PROF_COST  --이윤              
+	              ,NVL(SPSM_ETC0_COST,0) - NVL(SPSM_REPY_COST,0)   COMD_ETC0_COST2
+	              
+	              ,CASE WHEN SPMS_TRIF_INPT > 0  THEN 'Y'
+	                    ELSE 'N'
+	               END                           COMD_TRIF_INYN
+	              ,CASE WHEN NVL(SPSM_TRIF_APCT,0)=0 THEN NVL(SPMS_TRIF_INPT,0)
+	                    ELSE NVL(SPSM_TRIF_APCT,0)
+	               END                           COMD_TRIF_APCT
+				  ,NVL(SPSM_CUMT_PRIC,0)         COMD_CUMT_PRIC
+	              ,(SELECT CRFT_IMST_PART_NAME(SPMS_CORP_CODE,SPMS_PART_NO,SPMS_EONO) 
+	                  FROM DUAL
+	               )                             COMD_PART_NAME
+	              ,CASE
+	                 WHEN CHIN.CHIN_LEVL = 1
+	                      THEN DECODE(
+	                                  ( SELECT COUNT(*)
+	                                      FROM CRTBREMK
+	                                     WHERE REMK_CORP_CODE = CHIN.CHIN_CORP_CODE
+	                                       AND REMK_COST_GUBN = CHIN.CHIN_COST_GUBN
+	                                       AND REMK_PART_NO   = CHIN.CHIN_PART_NO
+	                                       AND REMK_EONO      = CHIN.CHIN_EONO
+	                                       AND REMK_CUMT_NO   = CHIN.CHIN_CUMT_NO
+	                                       AND REMK_SEQ0 IN (0, 1)
+	                                       AND REMK_FLAG = 'N' 
+	                                       AND REMK_METH_GUBN IN ('E','S')
+	                                   )
+	                                  , 1, 'C', 2, 'C', DECODE(
+	                                                           (SELECT COUNT(*)
+	                                                              FROM CRTBREMK
+	                                                             WHERE REMK_CORP_CODE = CHIN.CHIN_CORP_CODE
+	                                                               AND REMK_COST_GUBN = CHIN.CHIN_COST_GUBN
+	                                                               AND REMK_PART_NO   = CHIN.CHIN_PART_NO
+	                                                               AND REMK_EONO      = CHIN.CHIN_EONO
+	                                                               AND REMK_CUMT_NO   = CHIN.CHIN_CUMT_NO
+	                                                               AND REMK_SEQ0 IN (0, 1)
+	                                                               AND NVL(REMK_FLAG, 'Y') = 'Y'
+	                                                               AND (   REMK_REM1 IS NOT NULL
+	                                                                    OR REMK_REM1 <> ''
+	                                                                   )
+	                                                               AND REMK_METH_GUBN IN ('E','S')
+	                                                           )
+	                                                           , 1, 'Y', 2, 'Y', 'N'
+	                                                          )
+	                                )
+	                 ELSE CASE
+	                        WHEN REMK_FLAG = 'N'
+	                             THEN 'C'
+	                        ELSE CASE
+	                               WHEN    REMK_REM1 IS NULL
+	                                    OR REMK_REM1 = ''
+	                                    THEN 'N'
+	                               ELSE 'Y'
+	                             END
+	                      END
+	               END COMD_REMK
+	              ,(
+	                SELECT NVL(IMST_TEMP_GUBN,'')
+	                  FROM CRTBIMST
+	                 WHERE IMST_CORP_CODE = CHIN.CHIN_CORP_SUB0
+	                   AND IMST_PART_NO   = CHIN.CHIN_PART_SUB0
+	                   AND IMST_EONO      = CHIN.CHIN_EONO_SUB0
+	               ) COMD_TEMP_GUBN
+	              ,SPMS_COST_ENDI
+	              ,SPMS_PART_ENDI
+	              ,SPMS_EONO_ENDI
+	              ,SPMS_CUMT_ENDI
+	              ,NVL((SELECT DISTINCT DECODE((
+							SELECT COUNT(DISTINCT CMMS_RPAY_GUBN) CNT 
+							FROM CRTBCMMS
+							WHERE CMMS_METH_GUBN ='M'
+							  AND CMMS_CORP_CODE =  A.CMMS_CORP_CODE
+							  AND CMMS_PART_NO   =  A.CMMS_PART_NO     
+							  AND CMMS_EONO      =  A.CMMS_EONO           
+							  AND CMMS_CUMT_NO   =  A.CMMS_CUMT_NO     
+							) ,2,'ALL', DECODE(CMMS_RPAY_GUBN,'L','일시불','P','영구상각')) 
+	                  FROM CRTBCMMS A                            
+					WHERE CMMS_METH_GUBN ='M'
+					  AND CMMS_CORP_CODE =CHIN.CHIN_CORP_CODE    
+					  AND CMMS_PART_NO   =CHIN.CHIN_PART_SUB0      
+					  AND CMMS_EONO      =CHIN.CHIN_EONO_SUB0         
+					  AND CMMS_CUMT_NO   =CHIN.CHIN_CUMT_SUB0
+					  AND CMMS_RPAY_GUBN IS NOT NULL  -- 20151119 UKKIM 고도화2차 금형 신규 공법 등록시에는 일시불/영구상각이 아직 미정임 
+	  				),'') COMD_RPAY_GUBN
+	  			,SPMS_PIMS_PRIC  COMD_PIMS_PRIC
+	          	,SPMS_PIMS_APPL  COMD_PIMS_APPL 
+	          	
+	          	,SPMS_PIMS_VEND PIMS_VEND_CODE--부품업체코드
+	            ,CRFT_SPMS_VEND_NAME(SPMS_CORP_CODE, SPMS_PIMS_VEND, SPMS_VEND_APFR) PIMS_VEND_NAME--부품업체명
+	          	
+	          	,SPMS_PIMS_SEQ   COMD_PIMS_SEQ
+	          	,SPMS_PIMS_SRDT  COMD_PIMS_SRDT
+	          	,'' COMD_USE_YN
+	          	,NVL(SPMS_TRIF_INPT,0)         SPSM_TRIF_APCT  --적용관세
+	          	,CHIN.CHIN_LINK_GUBN  CHIN_LINK_GUBN		--변동구분
+                ,(
+                  SELECT COUNT(E.ATT_SEQ) FILE_CNT
+                    FROM ESAATTH E
+                   WHERE 1 = 1
+                     AND E.STS <> 'D'
+                     AND E.SYS_ID = #sys_id#
+                     AND E.GRP_CD = CHIN_ATT_GRP_CD
+                 )                                                          FILE_CNT
+                ,CHIN_ATT_GRP_CD	          	                            COMD_ATT_GRP_CD
+	          	,'none'          EDITSTATUS
+	          	,'N'             CHK
+	          	,CASE WHEN IMPT.IMPT_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END IMPT_YN
+	          FROM CRTBCHIN CHIN
+	                 LEFT OUTER JOIN
+	               CRTBEMST EMST
+	                   ON EMST.EMST_CORP_CODE = CHIN.CHIN_CORP_CODE
+	                  AND EMST.EMST_COST_GUBN = CHIN.CHIN_COST_GUBN
+	                  AND EMST.EMST_PART_NO   = CHIN.CHIN_PART_NO
+	                  AND EMST.EMST_EONO      = CHIN.CHIN_EONO
+	                  AND EMST.EMST_CUMT_NO   = CHIN.CHIN_CUMT_NO
+	                 LEFT OUTER JOIN
+	               CRTBSPMS SPMS
+	                   ON SPMS_CORP_CODE = CHIN.CHIN_CORP_SUB0
+	                  AND SPMS_PART_NO   = CHIN.CHIN_PART_SUB0
+	                  AND SPMS_EONO      = CHIN.CHIN_EONO_SUB0
+	                  AND SPMS_CUMT_NO   = CHIN.CHIN_CUMT_SUB0
+	                INNER JOIN
+	               CRTBEMST EMSC
+	                   ON EMSC.EMST_CORP_CODE = SPMS_CORP_ENDI
+	                  AND EMSC.EMST_COST_GUBN = SPMS_COST_ENDI
+	                  AND TRIM(EMSC.EMST_PART_NO)   = TRIM(SPMS_PART_ENDI)
+	                  AND TRIM(EMSC.EMST_EONO)      = TRIM(SPMS_EONO_ENDI)
+	                  AND EMSC.EMST_CUMT_NO   = SPMS_CUMT_ENDI
+	                 LEFT OUTER JOIN
+	               CRTBSPSM SPSM
+	                   ON SPSM_CORP_CODE = SPMS.SPMS_CORP_CODE
+	                  AND SPSM_PART_NO   = SPMS.SPMS_PART_NO
+	                  AND SPSM_EONO      = SPMS.SPMS_EONO
+	                  AND SPSM_CUMT_NO   = SPMS.SPMS_CUMT_NO
+	                  AND SPSM_CUMT_GUBN = 'A'
+	                 LEFT OUTER JOIN
+	               CRTBREMK REMK
+	                   ON REMK_CORP_CODE = CHIN.CHIN_CORP_CODE
+	                  AND REMK_COST_GUBN = CHIN.CHIN_COST_GUBN
+	                  AND REMK_PART_NO   = CHIN.CHIN_PART_NO
+	                  AND REMK_EONO      = CHIN.CHIN_EONO
+	                  AND REMK_CUMT_NO   = CHIN.CHIN_CUMT_NO
+	                  AND REMK_SEQ0      = CHIN_SEQ0
+	                  AND REMK_METH_GUBN IN ('E','S')
+	                 LEFT OUTER JOIN
+	               CRTBIMPT IMPT
+	                   ON IMPT_CORP_CODE = CHIN.CHIN_CORP_CODE
+                      AND IMPT_COST_GUBN = 'S'
+                      AND IMPT_PART_NO   = CHIN.CHIN_PART_SUB0  
+                      AND IMPT_EONO      = CHIN.CHIN_EONO_SUB0     
+                      AND IMPT_CUMT_NO   = CHIN.CHIN_CUMT_SUB0  
+                      AND IMPT_COME_CODE = 'CHIN'
+                      AND IMPT_MATL_SEQ0 = 1 
+                      AND IMPT_MATL_CODE = CHIN.CHIN_PART_SUB0
+	          WHERE 1 = 1 
+	           [AND CHIN_CORP_CODE = #chin_corp_code#]
+	           [AND CHIN_COST_GUBN = #chin_cost_gubn#]
+	           [AND CHIN_PART_NO   = #chin_part_no#]
+	           [AND CHIN_EONO      = #chin_eono#]
+	           [AND CHIN_CUMT_NO   = #chin_seq0#]
+	          ORDER BY COMD_SORT_KEY0
+	        ]]>
+		</sql>
+	
+	<sql id="chinlist.spmsCount" comment="1레벨 서브파트 체크 ">
+        <![CDATA[
+            SELECT COUNT(*)
+              FROM CRTBSPMS
+             WHERE SPMS_CORP_CODE   = #chin_corp_code#
+               AND SPMS_PART_ENDI   = #chin_part_no#
+               AND SPMS_EONO_ENDI   = #chin_eono#
+               AND SPMS_CUMT_ENDI   = #chin_seq0#
+        ]]>
+	</sql>
+
+	<sql id="chinlist.chinCount" comment="1레벨 chin체크 ">
+        <![CDATA[
+            SELECT COUNT(*)
+              FROM CRTBCHIN
+             WHERE CHIN_CORP_CODE = #chin_corp_code#
+               AND CHIN_PART_NO   = #chin_part_no#
+               AND CHIN_EONO      = #chin_eono#
+               AND CHIN_CUMT_NO   = #chin_seq0#
+        ]]>
+	</sql>
+
+	<sql id="chinlist.insert1Lv" comment="서브파트 1레벨 추가 ">
+        <![CDATA[
+			INSERT INTO CRTBSPMS
+			(
+			   SPMS_CORP_CODE
+			  ,SPMS_PART_NO
+			  ,SPMS_EONO
+			  ,SPMS_CUMT_NO
+			  ,SPMS_CORP_ENDI
+			  ,SPMS_COST_ENDI
+			  ,SPMS_PART_ENDI
+			  ,SPMS_EONO_ENDI
+			  ,SPMS_CUMT_ENDI
+			  ,SPMS_STND_GUBN
+			  ,SPMS_CARS_CODE
+			  ,SPMS_INDS_CODE
+			  ,SPMS_SRC0
+			  ,SPMS_UPDT_DATE
+			  ,SPMS_UPDT_CMAN
+			  ,SPMS_INIT_DATE
+			  ,SPMS_INIT_CMAN
+			)
+			SELECT TRIM(EMST_CORP_CODE)
+			      ,TRIM(EMST_PART_NO)
+			      ,TRIM(EMST_EONO)
+			      ,TRIM(EMST_CUMT_NO)
+			      ,TRIM(EMST_CORP_CODE)
+			      ,TRIM(EMST_COST_GUBN)
+			      ,TRIM(EMST_PART_NO)
+			      ,TRIM(EMST_EONO)
+			      ,TRIM(EMST_CUMT_NO)
+			      ,EMST_STND_GUBN
+			      ,EMST_CARS_CODE
+			      ,EMST_INDS_CODE
+			      ,EMST_SRC0
+			      ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			      ,#reg_id#
+			      ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			      ,#reg_id#
+			  FROM CRTBEMST
+			 WHERE EMST_CORP_CODE = #chin_corp_code#
+			   AND EMST_PART_NO   = #chin_part_no#
+			   AND EMST_EONO      = #chin_eono#
+			   AND EMST_CUMT_NO   = #chin_seq0#
+        ]]>
+	</sql>
+
+	<sql id="chinlist.insertChin1Lv" comment="체인 1레벨 추가 ">
+        <![CDATA[
+			INSERT INTO CRTBCHIN 
+			(
+			  CHIN_CORP_CODE
+			 ,CHIN_COST_GUBN
+			 ,CHIN_PART_NO
+			 ,CHIN_EONO
+			 ,CHIN_CUMT_NO
+			 ,CHIN_SEQ0
+			 ,CHIN_LEVL
+			 ,CHIN_SORT_KEY0
+			 ,CHIN_CORP_SUB0
+			 ,CHIN_PART_SUB0
+			 ,CHIN_EONO_SUB0
+			 ,CHIN_CUMT_SUB0
+			 ,CHIN_USG0
+			 ,CHIN_USG0_TOTL
+			 ,CHIN_ASSY_PRIC
+			 ,CHIN_EXMT_MGCT
+			 ,CHIN_OMGT_GUBN
+			 ,CHIN_UPDT_DATE
+			 ,CHIN_UPDT_CMAN
+			 ,CHIN_INIT_DATE
+			 ,CHIN_INIT_CMAN
+			)
+			SELECT TRIM(EMST_CORP_CODE)
+			      ,TRIM(EMST_COST_GUBN)
+			      ,TRIM(EMST_PART_NO)
+			      ,TRIM(EMST_EONO)
+			      ,TRIM(EMST_CUMT_NO)
+			      ,1
+			      ,1
+			      ,1
+			      ,TRIM(EMST_CORP_CODE)
+			      ,TRIM(EMST_PART_NO)
+			      ,TRIM(EMST_EONO)
+			      ,TRIM(EMST_CUMT_NO)
+			      ,1
+			      ,0
+			      ,0
+			      ,0
+			      ,null
+			      ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			      ,#reg_id#
+			      ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			      ,#reg_id#
+			  FROM CRTBEMST
+			 WHERE EMST_CORP_CODE = #chin_corp_code#
+			   AND EMST_PART_NO   = #chin_part_no#
+			   AND EMST_EONO      = #chin_eono#
+			   AND EMST_CUMT_NO   = #chin_seq0#
+        ]]>
+	</sql>
+
+	<sql id="update.RequiredInfo" comment="체인 필수정보 Update">
+        <![CDATA[
+			UPDATE CRTBSPMS
+			   SET SPMS_STND_GUBN = #emst_stnd_gubn#
+			      ,SPMS_CARS_CODE = #emst_cars_code#
+			      ,SPMS_INDS_CODE = #emst_inds_code#
+			      ,SPMS_BASE_DATE = #emst_base_date#
+			 WHERE (SPMS_CORP_CODE 
+			       ,SPMS_PART_NO 
+			       ,SPMS_EONO 
+			       ,SPMS_CUMT_NO) IN (  
+			                           SELECT SPMS_CORP_CODE
+			                                 ,SPMS_PART_NO
+			                                 ,SPMS_EONO
+			                                 ,SPMS_CUMT_NO
+			                             FROM CRTBEMST A
+			                                 LEFT OUTER JOIN 
+			                                  CRTBCHIN B
+			                                 ON     CHIN_CORP_CODE = EMST_CORP_CODE
+			                                    AND CHIN_COST_GUBN = EMST_COST_GUBN
+			                                    AND CHIN_PART_NO   = EMST_PART_NO
+			                                    AND CHIN_EONO      = EMST_EONO
+			                                    AND CHIN_CUMT_NO   = EMST_CUMT_NO
+			                                 LEFT OUTER JOIN 
+			                                  CRTBSPMS C
+			                                 ON     SPMS_CORP_ENDI = EMST_CORP_CODE
+			                                    AND SPMS_COST_ENDI = EMST_COST_GUBN
+			                                    AND SPMS_PART_ENDI = EMST_PART_NO
+			                                    AND SPMS_EONO_ENDI = EMST_EONO
+			                                    AND SPMS_CUMT_ENDI = EMST_CUMT_NO
+			                            WHERE 1 = 1
+			                              AND EMST_CORP_CODE = #chin_corp_code#
+			                              AND EMST_COST_GUBN = #chin_cost_gubn#
+			                              AND EMST_PART_NO   = #chin_part_no#
+			                              AND EMST_EONO      = #chin_eono#
+			                              AND EMST_CUMT_NO   = #chin_seq0#
+			                              AND EMST_PASS_STAT IN ('10', '20')
+			                              AND (   SPMS_STND_GUBN IS NULL
+			                                   OR SPMS_CARS_CODE IS NULL
+			                                   OR SPMS_BASE_DATE IS NULL
+			                                   OR SPMS_INDS_CODE IS NULL)
+			                         )
+        ]]>
+	</sql>
+
+	<sql id="update.RequiredInfo1Lv" comment="체인 필수정보 Update (1레벨)">
+        <![CDATA[
+			UPDATE CRTBSPMS
+			   SET SPMS_STND_GUBN = #emst_stnd_gubn#
+			      ,SPMS_CARS_CODE = nvl(#emst_cars_code#,'')
+			      ,SPMS_INDS_CODE = #emst_inds_code#
+			      ,SPMS_BASE_DATE = #emst_base_date# 
+			 WHERE (SPMS_CORP_CODE 
+			       ,SPMS_PART_NO 
+			       ,SPMS_EONO 
+			       ,SPMS_CUMT_NO) IN (  
+			                            SELECT SPMS_CORP_CODE
+			                                  ,SPMS_PART_NO
+			                                  ,SPMS_EONO
+			                                  ,SPMS_CUMT_NO
+			                              FROM CRTBEMST A
+			                                  INNER JOIN 
+			                                   CRTBCHIN B
+			                                  ON     CHIN_CORP_CODE = EMST_CORP_CODE
+			                                     AND CHIN_COST_GUBN = EMST_COST_GUBN
+			                                     AND CHIN_PART_NO   = EMST_PART_NO
+			                                     AND CHIN_EONO      = EMST_EONO
+			                                     AND CHIN_CUMT_NO   = EMST_CUMT_NO
+			                                     AND CHIN_LEVL = '1'
+			                                  INNER JOIN 
+			                                   CRTBSPMS C
+			                                  ON     SPMS_CORP_ENDI = EMST_CORP_CODE
+			                                     AND SPMS_COST_ENDI = EMST_COST_GUBN
+			                                     AND SPMS_PART_ENDI = EMST_PART_NO
+			                                     AND SPMS_EONO_ENDI = EMST_EONO
+			                                     AND SPMS_CUMT_ENDI = EMST_CUMT_NO
+			                                     AND SPMS_CORP_CODE = CHIN_CORP_SUB0
+			                                     AND SPMS_PART_NO   = CHIN_PART_SUB0
+			                                     AND SPMS_EONO      = CHIN_EONO_SUB0
+			                                     AND SPMS_CUMT_NO   = CHIN_CUMT_SUB0
+			                             WHERE 1 = 1
+			                               AND EMST_CORP_CODE = #chin_corp_code#
+			                               AND EMST_COST_GUBN = #chin_cost_gubn#
+			                               AND EMST_PART_NO   = #chin_part_no#
+			                               AND EMST_EONO      = #chin_eono#
+			                               AND EMST_CUMT_NO   = #chin_seq0#
+			                               AND EMST_PASS_STAT IN ('10', '20')
+			                         )
+        ]]>
+	</sql>
+
+	<sql id="insert.chinlist" comment="체인 추가" callable="true">
+        <![CDATA[
+			CALL CRSPCHIN_I01 (
+			                    #reg_id:varchar:in#
+			                   ,#comd_corp_code:varchar:in#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_endi:varchar:in#
+			                   ,#comd_eono_endi:varchar:in#
+			                   ,#comd_cumt_endi:varchar:in#
+			                   ,#comd_seq0:varchar:in#
+			                   ,#comd_levl:varchar:in#
+			                   ,#comd_sort_key0:varchar:in#
+			                   ,#comd_part_sub0:varchar:in#
+			                   ,#comd_eono_sub0:varchar:in#
+			                   ,#comd_usg0:varchar:in#
+			                   ,#comd_stnd_gubn:varchar:in#
+			                   ,#comd_base_date:varchar:in#
+			                   ,#comd_cars_code:varchar:in#
+			                   ,#comd_inds_code:varchar:in#
+			                   ,#comd_vend_code:varchar:in#
+			                   ,#comd_vend_apfr:varchar:in#
+			                   ,#comd_vend_degr:varchar:in#
+			                   ,#comd_att_grp_cd:varchar:in#
+			                   ,NVL(#comd_src0:varchar:in#, '')
+			                   ,#comd_lows_gubn:varchar:in#
+			                   ,#comd_omgt_gubn:varchar:in#
+			                   ,#comd_exmt_mgct:varchar:in#
+			                   ,#comd_trif_apct:varchar:in#
+			                   ,#comd_pims_appl:varchar:in#
+			                   ,#comd_pims_pric:varchar:in#
+			                   ,#pims_vend_code:varchar:in#
+			                   ,#comd_pims_srdt:varchar:in#
+			                   ,#comd_pims_seq:varchar:in#
+			
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+        ]]>
+	</sql>
+
+	<sql id="update.chinlist" comment="체인 수정" callable="true">
+        <![CDATA[
+			CALL CRSPCHIN_S01 (
+			                    #reg_id:varchar:in#
+			                   ,#comd_corp_code:varchar:in#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_endi:varchar:in#
+			                   ,#comd_eono_endi:varchar:in#
+			                   ,#comd_cumt_endi:varchar:in#
+			                   ,#comd_seq0:varchar:in#
+			                   ,#comd_levl:varchar:in#
+			                   ,#comd_sort_key0:varchar:in#
+			                   ,#comd_part_sub0:varchar:in#
+			                   ,#comd_eono_sub0:varchar:in#
+			                   ,#comd_usg0:varchar:in#
+			                   ,#comd_stnd_gubn:varchar:in#
+			                   ,#comd_base_date:varchar:in#
+			                   ,#comd_cars_code:varchar:in#
+			                   ,#comd_inds_code:varchar:in#
+			                   ,#comd_vend_code:varchar:in#
+			                   ,#comd_vend_apfr:varchar:in#
+			                   ,#comd_vend_degr:varchar:in#
+			                   ,#comd_att_grp_cd:varchar:in#
+			                   ,#comd_src0:varchar:in#
+			                   ,#comd_sum0_gubn:varchar:in#
+			                   ,#comd_omgt_gubn:varchar:in#
+			                   ,#comd_exmt_mgct:varchar:in#
+			                   ,#comd_trif_apct:varchar:in#
+			                   ,#comd_pims_appl:varchar:in#
+			                   ,#comd_pims_pric:varchar:in#
+			                   ,#pims_vend_code:varchar:in#
+			                   ,#comd_pims_srdt:varchar:in#
+			                   ,#comd_pims_seq:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+        ]]>
+	</sql>
+	
+	<sql id="delete.emstlist" comment="end item delete (프로시저) "
+		callable="true"> 
+         <![CDATA[ 
+			CALL CRSPEMST_D01 (
+			                    #reg_id:varchar:in#
+			                   ,#corp_cd#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+	</sql>
+	
+	<sql id="delete.chinlist" comment="체인 삭제" callable="true">
+        <![CDATA[
+			CALL CRSPCHIN_D01(
+			                   #reg_id:varchar:in#
+			                  ,#comd_corp_code:varchar:in#
+			                  ,#comd_cost_gubn:varchar:in#
+			                  ,#comd_part_endi:varchar:in#
+			                  ,#comd_eono_endi:varchar:in#
+			                  ,#comd_cumt_endi:varchar:in#
+			                  ,#comd_seq0:varchar:in#
+			                  
+			                  ,#MESG_CODE:varchar:out#
+			                  ,#MESG:varchar:out#
+			                  ,#SQL0_CODE:varchar:out#
+			                  ,#PRGM_ID:varchar:out#
+			                  ,#LINE_NO:varchar:out#
+			                 )
+        ]]>
+	</sql>
+
+	<sql id="repylist.select" comment="금형비 조회">
+        <![CDATA[
+        SELECT REPY_CORP_CODE                   COMD_CORP_CODE
+              ,REPY_PART_NO                     COMD_PART_NO
+              ,REPY_EONO                        COMD_EONO
+              ,REPY_MOLD_SEQ0                   COMD_MOLD_SEQ0
+              ,REPY_SORT_KEY0                   COMD_SORT_KEY0
+              ,REPY_MOLD_CRUD                   COMD_MOLD_CRUD
+              ,REPY_REPY_GUBN                   COMD_REPY_GUBN
+              ,REPY_MOLD_TYPE                   COMD_MOLD_TYPE
+              ,REPY_ADD0_IVST                   COMD_ADD0_IVST
+              ,REPY_1SET_MDCT                   COMD_1SET_MDCT
+              ,REPY_MDST_CNT0                   COMD_MDST_CNT0
+              ,REPY_MOLD_COST                   COMD_MOLD_COST
+              ,REPY_MDLF_PROD                   COMD_MDLF_PROD
+              ,REPY_USG0                        COMD_USG0
+              ,REPY_CAVR_PROD                   COMD_CAVR_PROD
+              ,REPY_NEGO_FACT                   COMD_NEGO_FACT
+              ,REPY_QTY1                        COMD_QTY1
+              ,REPY_MOLD_STND                   COMD_MOLD_STND
+              ,REPY_MOLD_MACH                   COMD_MOLD_MACH
+              ,REPY_MOLD_GUBN                   COMD_MOLD_GUBN
+              ,REPY_MOLD_CODE                   COMD_MOLD_CODE
+              ,REPY_MOLD_APPL                   COMD_MOLD_APPL
+              ,SUBSTR(REPY_MOLD_CODE,3,8)       COMD_MOLD_CD05
+              ,REPY_MOLD_LIFE                   COMD_MOLD_LIFE
+              ,REPY_MDLF_UNIT                   COMD_MDLF_UNIT
+              ,REPY_CAVT                        COMD_CAVT
+              ,REPY_METR_LENG                   COMD_METR_LENG
+              ,TRUNC(REPY_QTY2, 0)              COMD_REPY_QTY2
+              ,REPY_AUTO_MANU                   COMD_AUTO_MANU
+              ,TRUNC(REPY_MOLD_REPY,0)          COMD_MOLD_REPY
+              ,TRUNC(REPY_MOLD_INPT,0)          COMD_MOLD_INPT
+              ,TRUNC(REPY_MOLD_APCT,0)          COMD_MOLD_APCT
+              ,REPY_REPY_COST                   COMD_REPY_COST
+              ,REPY_INIT_DATE                   COMD_INIT_DATE
+              ,REPY_INIT_CMAN                   COMD_INIT_CMAN
+              ,MDLF_MOLD_LIFE                   COMD_MDLF_LIFE
+          FROM CRTBREPY
+              LEFT OUTER JOIN
+               CITBMDLF
+              ON     MDLF_CORP_CODE = REPY_CORP_CODE
+                 AND MDLF_STND_GUBN = REPY_MOLD_STND
+                 AND MDLF_MOLD_GUBN = REPY_MOLD_GUBN
+                 AND MDLF_MDDE_GUBN = REPY_MOLD_CODE
+                 AND MDLF_APPL_DATE = REPY_MOLD_APPL
+         WHERE 1 = 1
+          [AND REPY_CORP_CODE = #repy_corp_code#]
+          [AND REPY_PART_NO   = #repy_part_no#]
+          [AND REPY_EONO      = #repy_eono#]
+          [AND REPY_CUMT_NO   = #repy_cumt_no#]
+         ORDER BY REPY_SORT_KEY0
+        ]]>
+	</sql>
+
+	<sql id="repylist.select2" comment="금형비 조회">
+        <![CDATA[
+			SELECT NVL(SUM(REPY_MOLD_COST),0) * 1000 comd_mold_cost
+			      ,NVL(SUM(REPY_REPY_COST),0)        comd_repy_cost
+			  FROM CRTBREPY
+			 WHERE 1 = 1
+			  [AND REPY_CORP_CODE = #repy_corp_code#]
+			  [AND REPY_PART_NO   = #repy_part_no#]
+			  [AND REPY_EONO      = #repy_eono#]
+			  [AND REPY_CUMT_NO   = #repy_cumt_no#]
+        ]]>
+	</sql>
+
+	<sql id="delete.repylist" comment="금형비 삭제 (프로시저) " callable="true"> 
+         <![CDATA[ 
+			CALL CRSPREPY_D01 (
+			                    #reg_id:varchar:in#
+			                   ,#corp_cd#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   ,#comd_mold_seq0:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+	</sql>
+
+	<sql id="insert.repylist" comment="금형비 삭제 (프로시저) " callable="true"> 
+         <![CDATA[ 
+			CALL CRSPREPY_I01 (
+			                    #reg_id:varchar:in#
+			                   ,#corp_cd#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   ,#comd_mold_seq0:varchar:in#
+			                   
+			                   ,#comd_mold_stnd:varchar:in#
+			                   ,#comd_mold_mach:varchar:in#
+			                   ,#comd_mold_gubn:varchar:in#
+			                   ,#comd_mold_code:varchar:in#
+			                   ,#comd_mold_appl:varchar:in#
+			                   ,#comd_mold_crud:varchar:in#
+			                   ,#comd_repy_gubn:varchar:in#
+			                   ,#comd_mold_type:varchar:in#
+			                   ,#comd_add0_ivst:varchar:in#
+			                   ,#comd_1set_mdct:varchar:in#
+			                   ,#comd_mdst_cnt0:varchar:in#
+			                   ,#comd_mdlf_prod:varchar:in#
+			                   ,#comd_usg0:varchar:in#
+			                   ,#comd_cavr_prod:varchar:in#
+			                   ,#comd_nego_fact:varchar:in#
+			                   ,#comd_cavt:varchar:in#
+			                   ,#comd_metr_leng:varchar:in#
+			                   ,#comd_auto_manu:varchar:in#
+			                   ,#comd_mold_apct:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+	</sql>
+
+	<sql id="update.repylist" comment="금형비 삭제 (프로시저) " callable="true"> 
+         <![CDATA[ 
+			CALL CRSPREPY_U01 (
+			                    #reg_id:varchar:in#
+			                   ,#corp_cd#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   ,#comd_mold_seq0:varchar:in#
+			                   
+			                   ,#comd_mold_stnd:varchar:in#
+			                   ,#comd_mold_mach:varchar:in#
+			                   ,#comd_mold_gubn:varchar:in#
+			                   ,#comd_mold_code:varchar:in#
+			                   ,#comd_mold_appl:varchar:in#
+			                   ,#comd_mold_crud:varchar:in#
+			                   ,#comd_repy_gubn:varchar:in#
+			                   ,#comd_mold_type:varchar:in#
+			                   ,#comd_add0_ivst:varchar:in#
+			                   ,#comd_1set_mdct:varchar:in#
+			                   ,#comd_mdst_cnt0:varchar:in#
+			                   ,#comd_mdlf_prod:varchar:in#
+			                   ,#comd_usg0:varchar:in#
+			                   ,#comd_cavr_prod:varchar:in#
+			                   ,#comd_nego_fact:varchar:in#
+			                   ,#comd_cavt:varchar:in#
+			                   ,#comd_metr_leng:varchar:in#
+			                   ,#comd_auto_manu:varchar:in#
+			                   ,#comd_mold_apct:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+	</sql>
+
+	<sql id="repylist.insert" comment="금형비 추가">
+        <![CDATA[
+			INSERT INTO CRTBREPY 
+			(
+			  CHIN_CORP_CODE
+			 ,CHIN_STND_GUBN
+			 ,CHIN_MACH_GUBN
+			 ,CHIN_CARS_CODE
+			 ,CHIN_VEND_DEGR
+			 ,CHIN_INDS_CODE
+			 ,CHIN_APPL_DATE
+			 ,CHIN_PROD_CNT0
+			 ,CHIN_PROD_YEAR
+			 ,CHIN_PAY0_RATE
+			 ,CHIN_IDRT_RATE
+			 ,CHIN_GME0_RATE
+			 ,CHIN_MATL_RATE
+			 ,CHIN_MAPT_RATE
+			 ,CHIN_PROF_RATE
+			 ,CHIN_ET00_RATE
+			 ,CHIN_UPDT_DATE
+			 ,CHIN_UPDT_CMAN
+			 ,CHIN_INIT_DATE
+			 ,CHIN_INIT_CMAN
+			) VALUES (
+			           #corp_cd#
+			          ,#comd_stnd_gubn#
+			          ,#comd_mach_gubn#
+			          ,nvl(UPPER(#comd_cars_code#),'')
+			          ,#comd_vend_degr#
+			          ,UPPER(#comd_inds_code#)
+			          ,#comd_appl_date#
+			          ,#comd_prod_cnt0#
+			          ,#comd_prod_year#
+			          ,#comd_pay0_rate#
+			          ,#comd_idrt_rate#
+			          ,#comd_gme0_rate#
+			          ,#comd_matl_rate#
+			          ,#comd_mapt_rate#
+			          ,#comd_prof_rate#
+			          ,#comd_et00_rate#
+			          ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			          ,#reg_id#
+			          ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			          ,#reg_id#
+			         )
+        ]]>
+	</sql>
+
+	<sql id="repylist.update" comment="금형비수정">
+        <![CDATA[
+			UPDATE CRTBREPY
+			   SET REPY_MOLD_CRUD = #comd_mold_crud#
+			      ,REPY_REPY_GUBN = #comd_repy_gubn#
+			      ,REPY_MOLD_TYPE = #comd_mold_type#
+			      ,REPY_ADD0_IVST = #comd_add0_ivst#
+			      ,REPY_1SET_MDCT = #comd_1set_mdct#
+			      ,REPY_MDST_CNT0 = #comd_mdst_cnt0#
+			      ,REPY_MDLF_PROD = #comd_mdlf_prod#
+			      ,REPY_USG0      = #comd_usg0#
+			      ,REPY_CAVR_PROD = #comd_cavr_prod#
+			      ,REPY_NEGO_FACT = #comd_nego_fact#
+			      ,REPY_MOLD_CODE = #comd_mold_code#
+			      ,REPY_CAVT      = #comd_cavt#
+			      ,REPY_AUTO_MANU = #comd_auto_manu#
+			      ,REPY_UPDT_DATE = #comd_auto_manu#
+			      ,REPY_UPDT_CMAN = #comd_auto_manu#
+			 WHERE REPY_CORP_CODE = #corp_cd#
+			   AND REPY_PART_NO   = #comd_part_no#
+			   AND REPY_EONO      = #comd_eono#
+			   AND REPY_CUMT_NO   = #comd_cumt_no#
+			   AND REPY_COME_CODE = #comd_come_code#
+			   AND REPY_MOLD_SEQ0 = #comd_mold_seq0#
+        ]]>
+	</sql>
+
+	<sql id="repylist.delete" comment="금형비 삭제">
+        <![CDATA[
+			DELETE 
+			  FROM CITBREPY
+			 WHERE REPY_CORP_CODE = #corp_cd#
+			   AND REPY_PART_NO   = #comd_part_no#
+			   AND REPY_EONO      = #comd_eono#
+			   AND REPY_CUMT_NO   = #comd_cumt_no#
+			   AND REPY_COME_CODE = #comd_come_code#
+			   AND REPY_MOLD_SEQ0 = #comd_mold_seq0#
+        ]]>
+	</sql>
+
+	<!-- 기타비 계산용 추가부분 -->
+	<sql id="get.transPaltInfo.count" comment="운반비/파렛트비 입력데이터  Count">
+        <![CDATA[
+			SELECT COUNT(*) TRPT_COUNT
+			  FROM CRTBTRPT 
+			 WHERE TRPT_CORP_CODE = TO_CHAR(#corp_code#)
+			   AND TRPT_PART_NO   = #part_no#
+			   AND TRPT_EONO      = TO_CHAR(#eono#)
+			   AND TRPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+	</sql>
+	
+	<sql id="get.transPaltCheckInfo.select" comment="불량비 적용공정 조회">
+        <![CDATA[
+			SELECT SUBSTR(PRO_NM,1,LENGTH(PRO_NM)-1) PRO_NM
+			  FROM(
+			    SELECT MAX(PRO_NM1)|| MAX(PRO_NM2) || MAX(PRO_NM3) PRO_NM
+			      FROM (
+			       SELECT CASE WHEN NVL(COUNT(*),0) > 0 THEN 'BRAZING/' ELSE NULL END PRO_NM1
+			             ,NULL PRO_NM2
+			             ,NULL PRO_NM3
+			         FROM CATBBRAI
+			        WHERE BRAI_KIND_CODE = 'VNI_FNAC'
+			          AND EXISTS (
+			           SELECT 'X'
+			             FROM CRTBCHIN CHIN
+			            WHERE 1 = 1 
+			              AND CHIN_CORP_CODE = #comd_corp_code#
+			              AND CHIN_COST_GUBN = #comd_cost_gubn#
+			              AND CHIN_PART_NO   = #comd_part_no#
+			              AND CHIN_EONO      = #comd_eono#
+			              AND CHIN_CUMT_NO   = #comd_cumt_no#
+			              AND CHIN_CORP_SUB0 = BRAI_CORP_CODE   
+			              AND CHIN_PART_SUB0 = BRAI_PART_NO   
+			              AND CHIN_EONO_SUB0 = BRAI_EONO   
+			              AND CHIN_CUMT_SUB0 = BRAI_CUMT_NO   
+                          --공법 계산 대상만 단가 구분이 직접 입력등은 불량비 처리에서 제외함
+                          --해당에 경우 공법별 계산 값이 클리어 되어 있는것으로 체크함
+                          AND EXISTS (
+                             SELECT 'X'
+                               FROM CRTBSPCR B
+                              WHERE CHIN_CORP_SUB0 = B.SPCR_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.SPCR_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.SPCR_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.SPCR_CUMT_NO                         
+                                AND B.SPCR_COME_CODE = 'BRAZ'
+                                AND (NVL(B.SPCR_TOTL_COST,0) <> 0)
+                          ) 
+                          
+                           --END ITEM대상 만으로 적용시 이미 SUBITEM에 불량비 적용한 경우는 제외
+                          AND NOT EXISTS (
+                             SELECT 'X'
+                               FROM CRTBCETC B
+                              WHERE CHIN_CORP_SUB0 = B.CETC_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.CETC_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.CETC_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.CETC_CUMT_NO                         
+                                AND 'A' = B.CETC_CUMT_GUBN
+                                AND (NVL(B.CETC_PDAB_RATE,0) <> 0 OR NVL(B.CETC_PDAB_COST,0) <> 0)
+                                AND #coms_corp_code# IS NULL 
+						)                          
+
+			          )
+			          -- 서브집계시 동적 추가
+			         [AND BRAI_CORP_CODE = #coms_corp_code#]
+			         [AND BRAI_PART_NO   = #coms_part_no#  ]
+			         [AND BRAI_EONO      = #coms_eono#     ]
+			         [AND BRAI_CUMT_NO   = #coms_cumt_no#  ]
+			       UNION
+			       SELECT NULL PRO_NM1
+			             ,CASE WHEN NVL(COUNT(*),0) > 0 THEN '용접류/' ELSE NULL END PRO_NM2
+			             ,NULL PRO_NM3
+			         FROM CATBWELA
+			        WHERE 1 = 1
+			          AND EXISTS (
+			           SELECT 'X'
+			             FROM CRTBCHIN CHIN
+			            WHERE 1 = 1 
+			              AND CHIN_CORP_CODE = #comd_corp_code# 
+			              AND CHIN_COST_GUBN = #comd_cost_gubn# 
+			              AND CHIN_PART_NO   = #comd_part_no#   
+			              AND CHIN_EONO      = #comd_eono#      
+			              AND CHIN_CUMT_NO   = #comd_cumt_no#   
+			              AND CHIN_CORP_SUB0 = WELA_CORP_CODE   
+			              AND CHIN_PART_SUB0 = WELA_PART_NO   
+			              AND CHIN_EONO_SUB0 = WELA_EONO   
+			              AND CHIN_CUMT_SUB0 = WELA_CUMT_NO   
+                          --공법 계산 대상만 단가 구분이 직접 입력등은 불량비 처리에서 제외함
+                          --해당에 경우 공법별 계산 값이 클리어 되어 있는것으로 체크함
+                          AND EXISTS (
+                             SELECT 'X'
+                               FROM CRTBSPCR B
+                              WHERE CHIN_CORP_SUB0 = B.SPCR_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.SPCR_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.SPCR_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.SPCR_CUMT_NO                         
+                                AND B.SPCR_COME_CODE = 'WELD'
+                                AND (NVL(B.SPCR_TOTL_COST,0) <> 0)
+                          ) 
+                          --END ITEM대상 만으로 적용시 이미 SUBITEM에 불량비 적용한 경우는 제외
+                          AND NOT EXISTS (
+                             SELECT 'X'
+                               FROM CRTBCETC B
+                              WHERE CHIN_CORP_SUB0 = B.CETC_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.CETC_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.CETC_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.CETC_CUMT_NO                         
+                                AND 'A' = B.CETC_CUMT_GUBN
+                                AND (NVL(B.CETC_PDAB_RATE,0) <> 0 OR NVL(B.CETC_PDAB_COST,0) <> 0)
+                                AND #coms_corp_code# IS NULL 
+						)                          
+			          )
+			          -- 서브집계시 동적 추가
+			         [AND WELA_CORP_CODE = #coms_corp_code#]
+			         [AND WELA_PART_NO   = #coms_part_no#  ]
+			         [AND WELA_EONO      = #coms_eono#     ]
+			         [AND WELA_CUMT_NO   = #coms_cumt_no#  ]
+			       UNION
+			       SELECT NULL PRO_NM1
+			             ,NULL PRO_NM2
+			             ,CASE WHEN NVL(COUNT(*),0) > 0 THEN 'PRESS/' ELSE NULL END PRO_NM3
+			         FROM CATBPREI
+			        --WHERE PREI_PROD_CODE IN ('EXTERNAL','ALPROT')
+			        WHERE PREI_PROD_CODE IN ('GENL','ALPROT') -- 외판류 코드가 GENL이었음 
+			          AND EXISTS (
+			           SELECT 'X'
+			             FROM CRTBCHIN CHIN
+			            WHERE 1 = 1 
+			              AND CHIN_CORP_CODE = #comd_corp_code# 
+			              AND CHIN_COST_GUBN = #comd_cost_gubn# 
+			              AND CHIN_PART_NO   = #comd_part_no#   
+			              AND CHIN_EONO      = #comd_eono#      
+			              AND CHIN_CUMT_NO   = #comd_cumt_no#   
+			              AND CHIN_CORP_SUB0 = PREI_CORP_CODE   
+			              AND CHIN_PART_SUB0 = PREI_PART_NO   
+			              AND CHIN_EONO_SUB0 = PREI_EONO   
+			              AND CHIN_CUMT_SUB0 = PREI_CUMT_NO   
+                          --공법 계산 대상만 단가 구분이 직접 입력등은 불량비 처리에서 제외함
+                          --해당에 경우 공법별 계산 값이 클리어 되어 있는것으로 체크함
+                          AND EXISTS (
+                             SELECT 'X'
+                               FROM CRTBSPCR B
+                              WHERE CHIN_CORP_SUB0 = B.SPCR_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.SPCR_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.SPCR_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.SPCR_CUMT_NO                         
+                                AND B.SPCR_COME_CODE = 'PRES'
+                                AND (NVL(B.SPCR_TOTL_COST,0) <> 0)
+                          ) 
+
+                          --END ITEM대상 만으로 적용시 이미 SUBITEM에 불량비 적용한 경우는 제외
+                          AND NOT EXISTS (
+                             SELECT 'X'
+                               FROM CRTBCETC B
+                              WHERE CHIN_CORP_SUB0 = B.CETC_CORP_CODE                       
+                                AND CHIN_PART_SUB0 = B.CETC_PART_NO                         
+                                AND CHIN_EONO_SUB0 = B.CETC_EONO                            
+                                AND CHIN_CUMT_SUB0 = B.CETC_CUMT_NO                         
+                                AND 'A' = B.CETC_CUMT_GUBN
+                                AND (NVL(B.CETC_PDAB_RATE,0) <> 0 OR NVL(B.CETC_PDAB_COST,0) <> 0)
+                                AND #coms_corp_code# IS NULL 
+						)                          
+			          )
+			          -- 서브집계시 동적 추가
+			         [AND PREI_CORP_CODE = #coms_corp_code#]
+			         [AND PREI_PART_NO   = #coms_part_no#  ]
+			         [AND PREI_EONO      = #coms_eono#     ]
+			         [AND PREI_CUMT_NO   = #coms_cumt_no#  ]
+			     )
+			 )  
+        ]]>
+	</sql>
+
+	<sql id="get.transPaltInfo.select" comment="운반비/파렛트비  기본조회">
+        <![CDATA[
+			SELECT A.TRPT_CORP_CODE
+			      ,A.TRPT_PART_NO
+			      ,A.TRPT_EONO
+			      ,A.TRPT_CUMT_NO
+			      ,A.TRPT_AREA_LEAV
+			      ,A.TRPT_AREA_ARVL
+			      ,A.TRPT_SING_DIST
+			      ,A.TRPT_SNDS_APDT
+			      ,A.TRPT_CARS_TON0
+			      ,A.TRPT_DIST_CARG
+			      ,A.TRPT_CARY_QTY0
+			      ,A.TRPT_PALT_KIND
+			      ,A.TRPT_PROD_YEAR
+			      ,A.TRPT_PROD_CONT
+			      ,A.TRPT_PROD_5CNT
+			      ,A.TRPT_PALT_PRIC
+			      ,A.TRPT_PTSZ_LENG
+			      ,A.TRPT_PTSZ_WIDT
+			      ,A.TRPT_PTSZ_HEIG
+			      ,A.TRPT_PALT_QTY0
+			      ,A.TRPT_PART_CARG
+			      ,A.TRPT_PALT_DAYS
+			      ,A.TRPT_PALT_PROD
+			      ,A.TRPT_PART_PALT
+			      ,A.TRPT_APPL_CARG
+			      ,A.TRPT_APPL_PALT
+			      ,A.TRPT_APPL_CNT0
+			      ,C.TRPR_COST       TRPT_COST
+			      ,A.TRPT_ADEL_FACT
+			FROM CRTBTRPT A
+			    ,CRTBEMST B
+			    ,CITBTRPR C
+			WHERE A.TRPT_CORP_CODE = B.EMST_CORP_CODE
+			  AND A.TRPT_PART_NO   = B.EMST_PART_NO
+			  AND A.TRPT_EONO      = B.EMST_EONO
+			  AND A.TRPT_CUMT_NO   = B.EMST_CUMT_NO
+			  AND A.TRPT_CORP_CODE = C.TRPR_CORP_CODE
+			  AND A.TRPT_CARS_TON0 = C.TRPR_TON0
+			  AND A.TRPT_SNDS_APDT = C.TRPR_APPL_DATE
+			  AND B.EMST_CORP_CODE = C.TRPR_CORP_CODE
+			  AND B.EMST_STND_GUBN = C.TRPR_STND_GUBN
+			  AND A.TRPT_CORP_CODE = #corp_code#
+			  AND A.TRPT_PART_NO   = #part_no#
+			  AND A.TRPT_EONO      = #eono#
+			  AND A.TRPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+	</sql>
+	
+	<sql id="get.transPaltInfo.select.sub" comment="운반비/파렛트비  기본조회(sub 기준)">
+        <![CDATA[
+			SELECT A.TRPT_CORP_CODE
+			      ,A.TRPT_PART_NO
+			      ,A.TRPT_EONO
+			      ,A.TRPT_CUMT_NO
+			      ,A.TRPT_AREA_LEAV
+			      ,A.TRPT_AREA_ARVL
+			      ,A.TRPT_SING_DIST
+			      ,A.TRPT_SNDS_APDT
+			      ,A.TRPT_CARS_TON0
+			      ,A.TRPT_DIST_CARG
+			      ,A.TRPT_CARY_QTY0
+			      ,A.TRPT_PALT_KIND
+			      ,A.TRPT_PROD_YEAR
+			      ,A.TRPT_PROD_CONT
+			      ,A.TRPT_PROD_5CNT
+			      ,A.TRPT_PALT_PRIC
+			      ,A.TRPT_PTSZ_LENG
+			      ,A.TRPT_PTSZ_WIDT
+			      ,A.TRPT_PTSZ_HEIG
+			      ,A.TRPT_PALT_QTY0
+			      ,A.TRPT_PART_CARG
+			      ,A.TRPT_PALT_DAYS
+			      ,A.TRPT_PALT_PROD
+			      ,A.TRPT_PART_PALT
+			      ,A.TRPT_APPL_CARG
+			      ,A.TRPT_APPL_PALT
+			      ,A.TRPT_APPL_CNT0
+			      ,C.TRPR_COST       TRPT_COST
+			      ,A.TRPT_ADEL_FACT
+			FROM CRTBTRPT A
+			    ,CRTBSPMS B
+			    ,CITBTRPR C
+			WHERE A.TRPT_CORP_CODE = B.SPMS_CORP_CODE
+			  AND A.TRPT_PART_NO   = B.SPMS_PART_NO
+			  AND A.TRPT_EONO      = B.SPMS_EONO
+			  AND A.TRPT_CUMT_NO   = B.SPMS_CUMT_NO
+			  AND A.TRPT_CORP_CODE = C.TRPR_CORP_CODE
+			  AND A.TRPT_CARS_TON0 = C.TRPR_TON0
+			  AND A.TRPT_SNDS_APDT = C.TRPR_APPL_DATE
+			  AND B.SPMS_CORP_CODE = C.TRPR_CORP_CODE
+			  AND C.TRPR_STND_GUBN = #stnd_gubn#
+			  AND A.TRPT_CORP_CODE = #corp_code#
+			  AND A.TRPT_PART_NO   = #part_no#
+			  AND A.TRPT_EONO      = #eono#
+			  AND A.TRPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+	</sql>	
+
+	<sql id="TnszInfo.list.select" comment="운반차량 파렛트비 조회">
+        <![CDATA[
+			SELECT TNSZ_TON0
+			      ,TNSZ_WIDT
+			      ,TNSZ_LENG
+			      ,TNSZ_HEIG 
+			  FROM CITBTNSZ
+			 WHERE TNSZ_CORP_CODE = TO_CHAR(#corp_code#)
+			 --AND TNSZ_MACH_GUBN = 'V'
+			   AND TNSZ_APPL_DATE = #tnsz_appl_date#
+        ]]>
+	</sql>
+
+	<!-- 기타비 R and D 적용구분 -->
+	<sql id="rdgbtype.list.select" comment="기타비 R and D콤보 목록 조회">
+        <![CDATA[
+			SELECT D.GRP_CD
+			      ,D.DTL_CD     CODE
+			      ,DL.DTL_CD_NM CODE_NAME
+			      ,D.SORT_ORD
+			  FROM ESACDDT D
+			      ,ESALANG L
+			      ,ESACDDL DL
+			 WHERE D.SYS_ID   = '100'
+			   AND D.GRP_CD   = 'CW_RND0APPL'
+			   AND D.SYS_ID   = DL.SYS_ID
+			   AND D.GRP_CD   = DL.GRP_CD
+			   AND D.DTL_CD   = DL.DTL_CD
+			   AND DL.LANG_CD = 'ko_KR'
+			   AND DL.SYS_ID  = L.SYS_ID
+			   AND DL.LANG_CD = L.LANG_CD 
+        ]]>
+	</sql>
+	
+	<!-- 기타비 RYT 적용구분 -->
+	<sql id="rtgbtype.list.select" comment="기타비 RTY 콤보 목록 조회">
+        <![CDATA[
+			SELECT D.GRP_CD
+			      ,D.DTL_CD     CODE
+			      ,DL.DTL_CD_NM CODE_NAME
+			      ,D.SORT_ORD
+			  FROM ESACDDT D
+			      ,ESALANG L
+			      ,ESACDDL DL
+			 WHERE D.SYS_ID   = '100'
+			   AND D.GRP_CD   = 'CW_RYT0APPL'
+			   AND D.SYS_ID   = DL.SYS_ID
+			   AND D.GRP_CD   = DL.GRP_CD
+			   AND D.DTL_CD   = DL.DTL_CD
+			   AND DL.LANG_CD = 'ko_KR'
+			   AND DL.SYS_ID  = L.SYS_ID
+			   AND DL.LANG_CD = L.LANG_CD
+        ]]>
+	</sql>
+	
+	<!-- 기타비 불량비 적용구분 -->
+	<sql id="pdgbtype.list.select" comment="기타비 불량비 콤보 목록 조회">
+        <![CDATA[
+			SELECT D.GRP_CD
+			      ,D.DTL_CD     CODE
+			      ,DL.DTL_CD_NM CODE_NAME
+			      ,D.SORT_ORD
+			  FROM ESACDDT D
+			      ,ESALANG L
+			      ,ESACDDL DL
+			 WHERE D.SYS_ID   = '100'
+			   AND D.GRP_CD   = 'CW_PDABAPPL'
+			   AND D.SYS_ID   = DL.SYS_ID
+			   AND D.GRP_CD   = DL.GRP_CD
+			   AND D.DTL_CD   = DL.DTL_CD
+			   AND DL.LANG_CD = 'ko_KR'
+			   AND DL.SYS_ID  = L.SYS_ID
+			   AND DL.LANG_CD = L.LANG_CD
+        ]]>
+	</sql>
+
+	<!-- 최초 기본 데이터 조회 -->
+	<sql id="get.basic.select1" comment="최초 기본데이터 조회 END">
+        <![CDATA[
+		 SELECT TO_CHAR(ESUM_MTLP_COST, 'fm999,999,999,999,999.00')      SUM_MTLP_COST  --ESUM_MATL_COST 재료비계
+		       ,TO_CHAR(ESUM_MTKD_COST, 'fm999,999,999,999,999.00')      SUM_MTKD_COST  --ESUM_MTLP_COST 재료비계_LP
+		       ,TO_CHAR(ESUM_MATL_COST, 'fm999,999,999,999,999.00')      SUM_MATL_COST  --ESUM_MTKD_COST 재료비계_KD
+		       ,TO_CHAR(ESUM_IBR0_COST, 'fm999,999,999,999,999.00')      SUM_IBR0_COST  --ESUM_IBR0_COST 노무비
+		       ,TO_CHAR(ESUM_EXPM_COST, 'fm999,999,999,999,999.00')      SUM_EXPM_COST  --ESUM_EXPM_COST 경비
+		       ,TO_CHAR(ESUM_PROC_COST, 'fm999,999,999,999,999.00')      SUM_PROC_COST  --ESUM_PROC_COST 가공비
+		       ,TO_CHAR(ESUM_MANU_COST, 'fm999,999,999,999,999.00')      SUM_MANU_COST  --ESUM_MANU_COST 제조원가
+		       ,TO_CHAR(ESUM_GME0_COST, 'fm999,999,999,999,999.00')      SUM_GME0_COST  --ESUM_BMGT_COST 일반관리비
+		       ,TO_CHAR(ESUM_PROF_COST, 'fm999,999,999,999,999.00')      SUM_PROF_COST  --ESUM_PRFT_PRIC 이윤
+		       ,TO_CHAR(ESUM_MATL_MACT, 'fm999,999,999,999,999.00')      SUM_MATL_MACT  --ESUM_MATL_MGCT 재료관리비
+		       ,TO_CHAR(ESUM_EXMT_MGCT, 'fm999,999,999,999,999.00')      SUM_EXMT_MGCT  --ESUM_EXMT_MGCT 외주재료관리비
+		       ,TO_CHAR(ESUM_TOTL_COST, 'fm999,999,999,999,999.00')      SUM_TOTL_COST  --ESUM_TOTL_COST 총원가
+		       ,ESUM_RND0_TTAT                                           SUM_RND0_TTAT  --ESUM_RND0_TTAT 총합_R&D비_적용원가
+		       ,ESUM_RYLT_TTAT                                           SUM_RYLT_TTAT  --ESUM_RYLT_TTAT 총합_ROYALTY비_적용원가
+		       ,ESUM_PDAB_TTAT                                           SUM_PDAB_TTAT  --ESUM_PDAB_TTAT 총합_불량비_적용원가
+		       ,ESUM_TRAP_TTAT                                           SUM_TRAP_TTAT  --ESUM_TRAP_TTAT 총합_운반비-적용원가
+		       ,ESUM_PALT_TTAT                                           SUM_PALT_TTAT  --ESUM_PALT_TTAT 총합_파렛트비_적용원가
+		       ,ESUM_FEED_TTCT                                           SUM_FEED_TTCT  --ESUM_FEED_TTCT 총합_서열비
+		       ,ESUM_REPY_TTCT                                           SUM_REPY_TTCT  --ESUM_REPY_TTCT 총합_영구상각비
+		       ,ESUM_EXIT_TTCT                                           SUM_EXIT_TTCT  --ESUM_EXIT_TTCT 총합_기타비
+		       ,ESUM_ETC0_TTCT                                           SUM_ETC0_TTCT  --ESUM_ETC0_TTCT 총합_기타비계
+		       ,EETC_RND0_RATE                                           ETC_RND0_RATE  --EETC_RND0_RATE R&D율
+		       ,EETC_RND0_COST                                           ETC_RND0_COST  --EETC_RND0_COST R&D비
+		       ,EETC_RND0_APPL                                           ETC_RND0_APPL  --EETC_RND0_APPL R&D비_적용조건
+		       ,EETC_RND0_APCT                                           ETC_RND0_APCT  --EETC_RND0_APCT R&D비_적용원가
+		       ,EETC_RYLT_RATE                                           ETC_RYLT_RATE  --EETC_RYLT_RATE 로열티율
+		       ,EETC_RYLT_COST                                           ETC_RYLT_COST  --EETC_RYLT_COST 로열티비
+		       ,EETC_RYLT_APPL                                           ETC_RYLT_APPL  --EETC_RYLT_APPL 로열티비_적용조건
+		       ,EETC_RYLT_APCT                                           ETC_RYLT_APCT  --EETC_RYLT_APCT 로열티비_적용원가
+		       ,EETC_PDAB_GUBN                                           ETC_PDAB_GUBN  --EETC_PDAB_GUBN 불량비_적용조건
+		       ,EETC_PDAB_RATE                                           ETC_PDAB_RATE  --EETC_PDAB_RATE 불량율
+		       ,EETC_PDAB_COST                                           ETC_PDAB_COST  --EETC_PDAB_COST 불량비
+		       ,EETC_PDAB_APCT                                           ETC_PDAB_APCT  --EETC_PDAB_APCT 불량비_적용원가
+		       ,EETC_TRAP_COST                                           ETC_TRAP_COST  --EETC_TRAP_COST 운반비
+		       ,EETC_TRAP_APCT                                           ETC_TRAP_APCT  --EETC_TRAP_APCT 운반비_적용원가
+		       ,EETC_PALT_COST                                           ETC_PALT_COST  --EETC_PALT_COST 파렛트비
+		       ,EETC_PALT_APCT                                           ETC_PALT_APCT  --EETC_PALT_APCT 파렛트비_적용원가
+		       ,EETC_FEED_COST                                           ETC_FEED_COST  --EETC_FEED_COST 서열비
+		       --,EETC_EXIT_APPL                                         ETC_EXIT_APPL  --EETC_EXIT_APPL 추가비_적용조건
+		       --,EETC_EXIT_RATE                                         ETC_EXIT_RATE  --EETC_EXIT_RATE 추가율
+		       ,NVL2(EETC_EXIT_COST, 'E1', NULL)                         ETC_EXIT_GUBN  --EETC_EXIT_GUBN 추가비 적용구분(151125 HWCHO 컬럼 없어서 추가비 값이 있으면 직접입력:E1 강제적용)
+		       ,EETC_EXIT_COST                                           ETC_EXIT_COST  --EETC_EXIT_COST 추가비
+		       --,EETC_EXIT_APCT                                         ETC_EXIT_APCT  --EETC_EXIT_APCT 추가비_적용원가
+		       ,EETC_REPY_COST                                           ETC_REPY_COST  --EETC_REPY_COST 영구상각비
+		       ,EETC_REPY_INPT                                           ETC_REPY_INPT  --EETC_REPY_INPT 영구상각비_직접입력
+		       ,EETC_REPY_APCT                                           ETC_REPY_APCT  --EETC_REPY_APCT 영구상각비_적용원가
+		       ,0                                                        ETC_MOLD_COST  --EETC_MOLD_COST 금형비
+		       ,0                                                        ETC_MOLD_REPY  --EETC_MOLD_REPY 금형상각갯수
+		       ,0                                                        ETC_INSP_COST  --EETC_INSP_COST 검사구비
+		       ,0                                                        ETC_INSP_REPY  --EETC_INSP_REPY 검사상각갯수
+		       ,EETC_ETC0_COST                                           ETC_ETC0_COST  --EETC_ETC0_COST 기타비계
+		       ,ESUM_REPY_COST  --금형상각비
+		       ,ESUM_CUMT_PRIC  --계산단가
+		       ,nvl(ESUM_ETC0_TTCT,0)-nvl(ESUM_REPY_TTCT,0)  ETC_ETC0_COST2 --기타 상각외
+		       
+		       ,CASE
+		            WHEN EETC_COST_GUBN IS NULL THEN 'N'
+		            ELSE                             'Y'
+		        END ETC_ORIGIN_YN
+		       ,EMST_PASS_STAT
+		   FROM CRTBESUM
+		          LEFT OUTER JOIN
+		        CRTBEETC
+		            ON ESUM_CORP_CODE = EETC_CORP_CODE
+		           AND ESUM_COST_GUBN = EETC_COST_GUBN
+		           AND ESUM_PART_NO   = EETC_PART_NO
+		           AND ESUM_EONO      = EETC_EONO
+		           AND ESUM_CUMT_NO   = EETC_CUMT_NO
+		           AND ESUM_CUMT_GUBN = EETC_CUMT_GUBN
+		          INNER JOIN
+		        CRTBEMST
+		            ON EMST_CORP_CODE = ESUM_CORP_CODE
+		           AND EMST_COST_GUBN = ESUM_COST_GUBN
+		           AND EMST_PART_NO   = ESUM_PART_NO
+		           AND EMST_EONO      = ESUM_EONO
+		           AND EMST_CUMT_NO   = ESUM_CUMT_NO
+		  WHERE ESUM_CORP_CODE = #comd_corp_code#
+		    AND ESUM_COST_GUBN = #comd_cost_gubn#
+		    AND ESUM_PART_NO   = #comd_part_no#
+		    AND ESUM_EONO      = #comd_eono#
+		    AND ESUM_CUMT_NO   = #comd_cumt_no#
+		    AND ESUM_CUMT_GUBN = 'A'
+        ]]>
+	</sql>
+
+	<!-- 최초 기본 데이터 조회 -->
+	<sql id="get.basic.select1_1" comment="금형 총 투자비 END">
+        <![CDATA[
+		    SELECT TO_CHAR(NVL((MMMM_MOLD_COST + TTTT_MOLD_COST), 0), 'fm999,999,999,999,999.00')  SSSS_MOLD_COST                                                          
+			      ,TO_CHAR(NVL(MMMM_MOLD_COST, 0), 'fm999,999,999,999,999.00')    MMMM_MOLD_COST                                                         
+			      ,TO_CHAR(NVL(TTTT_MOLD_COST, 0), 'fm999,999,999,999,999.00')    TTTT_MOLD_COST                                                        
+			  FROM (                                                                          
+			        SELECT SUM(                                                               
+			                   CASE REPY_MOLD_TYPE                                            
+			                        WHEN 'M' THEN  REPY_MOLD_COST * 1000                      
+			                        ELSE           0                                           
+			                   END                                                            
+			               ) MMMM_MOLD_COST                                                   
+			              ,SUM(                                                               
+			                   CASE REPY_MOLD_TYPE                                            
+			                        WHEN 'T' THEN  REPY_MOLD_COST * 1000
+			                        ELSE               0                                       
+			                   END                                                            
+			               ) TTTT_MOLD_COST                                                   
+			         FROM (                                                                   
+			               SELECT REPY_MOLD_TYPE                                              
+			                     ,REPY_MOLD_COST                                              
+			                 FROM (                                                           
+			                       SELECT DISTINCT                                            
+			                              SPMS_CORP_CODE                                      
+			                             ,SPMS_PART_NO                                        
+			                             ,SPMS_EONO                                           
+			                             ,SPMS_CUMT_NO                                        
+			                         FROM LFTBCHIN                                     
+			                        WHERE EMST_CORP_CODE = #comd_corp_code#       
+			                          AND EMST_COST_GUBN = #comd_cost_gubn#        
+			                          AND EMST_PART_NO   = #comd_part_no#
+			                          AND EMST_EONO      = #comd_eono#   
+			                          AND EMST_CUMT_NO   = #comd_cumt_no#
+			                      ) C                                                         
+			                        INNER JOIN                                                
+			                      CRTBREPY                                             
+			                          ON REPY_CORP_CODE = SPMS_CORP_CODE                      
+			                         AND REPY_PART_NO   = SPMS_PART_NO                        
+			                         AND REPY_EONO      = SPMS_EONO                           
+			                         AND REPY_CUMT_NO   = SPMS_CUMT_NO                        
+			                WHERE REPY_CORP_CODE = #comd_corp_code#  
+			                  AND REPY_MOLD_TYPE IN('M','T')                                  
+			              ) B                                                                 
+			      ) D
+        ]]>
+	</sql>
+
+	<!-- 최초 기본 데이터 조회 -->
+	<sql id="get.basic.select2" comment="최초 기본데이터 조회 SUB">
+        <![CDATA[
+		SELECT TO_CHAR(A.SPSM_MTLP_COST, 'fm999,999,999,999,999.00')          SUM_MTLP_COST    
+		      ,TO_CHAR(A.SPSM_MTKD_COST, 'fm999,999,999,999,999.00')          SUM_MTKD_COST 
+		      ,TO_CHAR(A.SPSM_MATL_COST, 'fm999,999,999,999,999.00')          SUM_MATL_COST 
+		      ,TO_CHAR(A.SPSM_IBR0_COST, 'fm999,999,999,999,999.00')          SUM_IBR0_COST 
+		      ,TO_CHAR(A.SPSM_EXPM_COST, 'fm999,999,999,999,999.00')          SUM_EXPM_COST 
+		      ,TO_CHAR((A.SPSM_IBR0_COST + SPSM_EXPM_COST) , 'fm999,999,999,999,999.00')          SUM_PROC_COST 
+		      ,TO_CHAR(A.SPSM_MANU_COST, 'fm999,999,999,999,999.00')          SUM_MANU_COST 
+		      ,TO_CHAR(A.SPSM_GME0_COST, 'fm999,999,999,999,999.00')          SUM_GME0_COST 
+		      ,TO_CHAR(A.SPSM_PROF_COST, 'fm999,999,999,999,999.00')          SUM_PROF_COST 
+		      ,TO_CHAR(A.SPSM_MATL_MACT, 'fm999,999,999,999,999.00')          SUM_MATL_MACT 
+		      ,0                                                              SUM_EXMT_MGCT 
+		      ,TO_CHAR(A.SPSM_TOTL_COST, 'fm999,999,999,999,999.00')          SUM_TOTL_COST 
+		      ,B.CETC_RND0_RATE                              ETC_RND0_RATE 
+		      ,B.CETC_RND0_COST                              ETC_RND0_COST 
+		      ,B.CETC_RND0_APPL                              ETC_RND0_APPL 
+		      ,B.CETC_RND0_APCT                              ETC_RND0_APCT 
+		      ,B.CETC_RYLT_RATE                              ETC_RYLT_RATE 
+		      ,B.CETC_RYLT_COST                              ETC_RYLT_COST 
+		      ,B.CETC_RYLT_APPL                              ETC_RYLT_APPL 
+		      ,B.CETC_RYLT_APCT                              ETC_RYLT_APCT 
+		      ,B.CETC_PDAB_GUBN                              ETC_PDAB_GUBN 
+		      ,B.CETC_PDAB_RATE                              ETC_PDAB_RATE 
+		      ,B.CETC_PDAB_COST                              ETC_PDAB_COST 
+		      ,B.CETC_PDAB_APCT                              ETC_PDAB_APCT 
+		      ,B.CETC_TRAP_COST                              ETC_TRAP_COST 
+		      ,B.CETC_TRAP_APCT                              ETC_TRAP_APCT 
+		      ,B.CETC_PALT_COST                              ETC_PALT_COST 
+		      ,B.CETC_PALT_APCT                              ETC_PALT_APCT 
+		      ,B.CETC_FEED_COST                              ETC_FEED_COST 
+		      ,B.CETC_REPY_COST                              ETC_REPY_COST 
+		      ,NVL(B.CETC_REPY_INPT,0.00)                    ETC_REPY_INPT 
+		      ,B.CETC_REPY_APCT                              ETC_REPY_APCT 
+		      ,B.CETC_MOLD_COST                              ETC_MOLD_COST 
+		      --,B.CETC_MOLD_REPY                            ETC_MOLD_REPY 
+		      --,B.CETC_INSP_COST                            ETC_INSP_COST 
+		      --,B.CETC_INSP_REPY                            ETC_INSP_REPY 
+		      ,B.CETC_EXIT_COST                              ETC_EXIT_COST 
+		      ,B.CETC_ETC0_COST                              ETC_ETC0_COST 
+		      ,CASE                                                      
+		         WHEN B.CETC_PART_NO IS NULL THEN 'N'                      
+		         ELSE 'Y'                                                
+		       END ETC_ORIGIN_YN                                         
+		      --,CRFT_SPMS_PASS_STAT(A.SPSM_CORP_CODE, A.SPSM_PART_NO, A.SPSM_EONO, A.SPSM_CUMT_NO) SPMS_PASS_STAT
+		      ,B.CETC_EXIT_GUBN                              ETC_EXIT_GUBN
+		      ,CASE
+		         WHEN CMMS_COME_CODE IS NULL THEN 'N'
+		         ELSE 'Y'
+		       END                                           PRES_USE_YN
+		      ,C.CMMS_PROD_CNT0
+		      ,D.SPCR_TOTL_COST                              SPCR_TOTL_COST
+		      ,E.PREI_PROD_CODE                              PREI_PROD_CODE
+		      ,F.CMPK_APPL_RATE3                             CMPK_APPL_RATE                           
+		  FROM CRTBSPSM A                                           
+		      LEFT OUTER JOIN 
+		       CRTBCETC B
+		        ON A.SPSM_CORP_CODE = B.CETC_CORP_CODE                       
+		       AND A.SPSM_PART_NO   = B.CETC_PART_NO                         
+		       AND A.SPSM_EONO      = B.CETC_EONO                            
+		       AND A.SPSM_CUMT_NO   = B.CETC_CUMT_NO                         
+		       AND A.SPSM_CUMT_GUBN = B.CETC_CUMT_GUBN
+		      LEFT OUTER JOIN
+		       CRTBCMMS C
+		      ON    C.CMMS_CORP_CODE = A.SPSM_CORP_CODE
+		        AND C.CMMS_PART_NO   = A.SPSM_PART_NO
+		        AND C.CMMS_EONO      = A.SPSM_EONO
+		        AND C.CMMS_CUMT_NO   = A.SPSM_CUMT_NO
+		        AND C.CMMS_METH_GUBN = 'A'
+		        AND C.CMMS_COME_CODE = 'PRES'
+		      LEFT OUTER JOIN
+		       CRTBSPCR D
+		      ON    D.SPCR_CORP_CODE = C.CMMS_CORP_CODE
+		        AND D.SPCR_PART_NO   = C.CMMS_PART_NO
+		        AND D.SPCR_EONO      = C.CMMS_EONO
+		        AND D.SPCR_CUMT_NO   = C.CMMS_CUMT_NO
+		        AND D.SPCR_CUMT_GUBN = C.CMMS_CUMT_GUBN
+		        AND D.SPCR_COME_CODE = 'PRES'
+		      LEFT OUTER JOIN 
+		       CATBPREI E
+		      ON    E.PREI_CORP_CODE = C.CMMS_CORP_CODE
+		        AND E.PREI_PART_NO   = C.CMMS_PART_NO
+		        AND E.PREI_EONO      = C.CMMS_EONO
+		        AND E.PREI_CUMT_NO   = C.CMMS_CUMT_NO
+		      LEFT OUTER JOIN
+		       CATBCMPK F
+		      ON    F.CMPK_CORP_CODE = C.CMMS_CORP_CODE
+		        AND F.CMPK_STND_GUBN = C.CMMS_STND_GUBN
+		        AND F.CMPK_STND_DEGR = C.CMMS_STND_DEGR
+		        AND F.CMPK_GUBN_CODE = 'PRES01'
+		        AND F.CMPK_CODE      = E.PREI_PROD_CODE
+		  WHERE A.SPSM_CORP_CODE = #comd_corp_code#
+			AND A.SPSM_PART_NO   = #comd_part_no#       
+			AND A.SPSM_EONO      = #comd_eono#      
+			AND A.SPSM_CUMT_NO   = #comd_cumt_no#      
+			AND A.SPSM_CUMT_GUBN = 'A'
+        ]]>
+	</sql>
+
+	<!-- 최초 기본 데이터 조회 -->
+	<sql id="get.basic.select2_1" comment="금형 총 투자비 조회 SUB">
+        <![CDATA[
+		SELECT TO_CHAR( NVL((MMMM_MOLD_COST + TTTT_MOLD_COST),0), 'fm999,999,999,999,999.00')  SSSS_MOLD_COST
+		      ,TO_CHAR( NVL(MMMM_MOLD_COST,0), 'fm999,999,999,999,999.00')  MMMM_MOLD_COST
+		      ,TO_CHAR( NVL(TTTT_MOLD_COST,0), 'fm999,999,999,999,999.00')  TTTT_MOLD_COST
+		  FROM (
+		        SELECT SUM(
+		                   CASE REPY_MOLD_TYPE
+		                        WHEN 'M' THEN  REPY_MOLD_COST * 1000   
+		                        ELSE           0
+		                   END
+		               ) MMMM_MOLD_COST
+		              ,SUM(
+		                   CASE REPY_MOLD_TYPE
+		                        WHEN 'T' THEN  REPY_MOLD_COST * 1000   
+		                        ELSE               0
+		                   END
+		               ) TTTT_MOLD_COST
+		          FROM CRTBREPY
+		         WHERE REPY_CORP_CODE = #comd_corp_code#
+		           AND REPY_PART_NO   = #comd_part_no#
+		           AND REPY_EONO      = #comd_eono#
+		           AND REPY_CUMT_NO   = #comd_cumt_no#
+		           AND REPY_MOLD_TYPE IN('M','T')
+		       ) A
+        ]]>
+	</sql>
+
+	<!-- 계산실행 -->
+	<sql id="calc.cost.end.insert" comment="계산실행">
+        <![CDATA[
+			 BEGIN
+			 
+			 	DELETE                                                      
+				  FROM CRTBEETC                                      
+				 WHERE EETC_CORP_CODE = #comd_corp_code# 
+				   AND EETC_COST_GUBN = #comd_cost_gubn# 
+				   AND EETC_PART_NO   = #comd_part_no# 
+				   AND EETC_EONO      = #comd_eono# 
+				   AND EETC_CUMT_NO   = #comd_cumt_no# 
+				   AND EETC_CUMT_GUBN = 'A'          
+				   ;
+				
+				INSERT INTO CRTBEETC
+				(
+					 EETC_CORP_CODE
+					,EETC_COST_GUBN
+					,EETC_PART_NO
+					,EETC_EONO
+					,EETC_CUMT_NO
+					,EETC_CUMT_GUBN
+					
+					,EETC_RND0_APPL
+					,EETC_RND0_RATE
+					,EETC_RND0_COST
+					
+					,EETC_RYLT_APPL
+					,EETC_RYLT_RATE
+					,EETC_RYLT_COST
+					
+					,EETC_PDAB_GUBN
+					,EETC_PDAB_RATE
+					,EETC_PDAB_COST
+					,EETC_TRAP_COST
+					,EETC_PALT_COST
+					,EETC_FEED_COST
+					
+					,EETC_EXIT_COST
+					
+					,EETC_REPY_COST
+					,EETC_REPY_INPT
+					,EETC_REPY_APCT
+					,EETC_MOLD_COST
+					
+					,EETC_UPDT_DATE
+					,EETC_UPDT_CMAN
+					,EETC_INIT_DATE
+					,EETC_INIT_CMAN
+				) VALUES (
+					 #comd_corp_code#
+					,#comd_cost_gubn#
+					,#comd_part_no#
+					,#comd_eono#
+					,#comd_cumt_no#
+					,'A'
+					
+					,#sb_rnd0_appl#
+					,NVL(#ti_rnd0_rate#, 0)
+					,NVL(#ti_rnd0_cost#, 0)
+					
+					,#sb_rylt_appl#
+					,NVL(#ti_rylt_rate#, 0)
+					,NVL(#ti_rylt_cost#, 0)
+					
+					,#sb_pdab_appl#
+					,NVL(#ti_pdab_rate#, 0)
+					,NVL(#ti_pdab_cost#, 0)
+					,NVL(#ti_trap_cost#, 0)
+					,NVL(#ti_palt_cost#, 0)
+					,NVL(#ti_feed_cost#, 0)
+					
+					
+					,NVL(#ti_exit_cost#, 0)
+					
+					,NVL(#etc_repy_cost#, 0)
+					,0
+					,NVL(#etc_repy_cost#, 0)
+					,NVL(#etc_mold_cost#, 0)
+					
+					,TO_CHAR(SYSDATE, 'YYYYMMDD')
+					,#reg_id#
+					,TO_CHAR(SYSDATE, 'YYYYMMDD')
+					,#reg_id#
+				)                                             
+				;
+
+			 END;
+        ]]>
+	</sql>
+
+	<sql id="calc.cost.end.update" comment="계산실행">
+        <![CDATA[
+			 UPDATE CRTBEETC
+			    SET EETC_RND0_APPL = #sb_rnd0_appl#
+			       ,EETC_RND0_RATE = NVL(#ti_rnd0_rate#, 0)
+			       ,EETC_RND0_COST = NVL(#ti_rnd0_cost#, 0)
+			
+			       ,EETC_RYLT_APPL = #sb_rylt_appl#
+			       ,EETC_RYLT_RATE = NVL(#ti_rylt_rate#, 0)
+			       ,EETC_RYLT_COST = NVL(#ti_rylt_cost#, 0)
+			
+			       ,EETC_PDAB_GUBN = #sb_pdab_appl#
+			       ,EETC_PDAB_RATE = NVL(#ti_pdab_rate#, 0)
+			       ,EETC_PDAB_COST = NVL(#ti_pdab_cost#, 0)
+			       ,EETC_TRAP_COST = NVL(#ti_trap_cost#, 0)
+			       ,EETC_PALT_COST = NVL(#ti_palt_cost#, 0)
+			       ,EETC_FEED_COST = NVL(#ti_feed_cost#, 0)
+			
+			       ,EETC_EXIT_COST = NVL(#ti_exit_cost#, 0)
+			
+			       ,EETC_REPY_COST = NVL(#etc_repy_cost#, 0)
+			       ,EETC_REPY_INPT = 0
+			       ,EETC_REPY_APCT = NVL(#etc_repy_cost#, 0)
+			       ,EETC_MOLD_COST = NVL(#etc_mold_cost#, 0)
+			       ,EETC_UPDT_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+			       ,EETC_UPDT_CMAN = #reg_id#
+			
+			  WHERE EETC_CORP_CODE = #comd_corp_code#
+			    AND EETC_COST_GUBN = #comd_cost_gubn#
+			    AND EETC_PART_NO   = #comd_part_no#
+			    AND EETC_EONO      = #comd_eono#
+			    AND EETC_CUMT_NO   = #comd_cumt_no#
+			    AND EETC_CUMT_GUBN = 'A' 
+        ]]>
+	</sql>
+
+	<!-- 계산실행 SUB -->
+	<sql id="calc.cost.sub.insert" comment="계산실행">
+        <![CDATA[
+			 BEGIN
+			 
+			 	DELETE                                                      
+				  FROM CRTBCETC                                      
+				 WHERE CETC_CORP_CODE = #comd_corp_code# 
+				   AND CETC_PART_NO   = #comd_part_no# 
+				   AND CETC_EONO      = #comd_eono# 
+				   AND CETC_CUMT_NO   = #comd_cumt_no# 
+				   AND CETC_CUMT_GUBN = 'A'          
+				;
+				
+				INSERT INTO CRTBCETC
+				 (      CETC_CORP_CODE
+				       ,CETC_PART_NO
+				       ,CETC_EONO
+				       ,CETC_CUMT_NO
+				       ,CETC_CUMT_GUBN
+				
+				       ,CETC_RND0_APPL
+				       ,CETC_RND0_RATE
+				       ,CETC_RND0_COST
+				
+				       ,CETC_RYLT_APPL
+				       ,CETC_RYLT_RATE
+				       ,CETC_RYLT_COST
+				
+				       ,CETC_PDAB_GUBN
+				       ,CETC_PDAB_RATE
+				       ,CETC_PDAB_COST
+				
+				       ,CETC_FEED_COST
+				       ,CETC_EXIT_GUBN
+				       ,CETC_EXIT_COST
+				       ,CETC_REPY_COST
+				       ,CETC_REPY_INPT
+				       ,CETC_REPY_APCT
+				       ,CETC_MOLD_COST
+				       ,CETC_UPDT_DATE
+				       ,CETC_UPDT_CMAN
+				       ,CETC_INIT_DATE
+				       ,CETC_INIT_CMAN
+				 ) VALUES (
+				        #comd_corp_code#
+				       ,#comd_part_no#
+				       ,#comd_eono#
+				       ,#comd_cumt_no#
+				       , 'A'
+				
+				       ,#sb_rnd0_appl#
+				       ,NVL(#ti_rnd0_rate#, 0)
+				       ,NVL(#ti_rnd0_cost#, 0)
+				
+				       ,#sb_rylt_appl#
+				       ,NVL(#ti_rylt_rate#, 0)
+				       ,NVL(#ti_rylt_cost#, 0)
+				
+				       ,#sb_pdab_appl#
+				       ,NVL(#ti_pdab_rate#, 0)
+				       ,NVL(#ti_pdab_cost#, 0)
+				
+				
+				       ,#ti_feed_cost#
+				       ,#ti_exit_gubn#
+				       ,#ti_exit_cost#
+				       ,#etc_repy_cost#
+				       ,0
+				       ,#etc_repy_cost#
+				       ,#etc_mold_cost#
+				
+				       ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+				       ,#reg_id#
+				       ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+				       ,#reg_id#
+				 )                                
+				;
+
+			 END;
+        ]]>
+	</sql>
+
+	<sql id="calc.cost.sub.update" comment="계산실행">
+        <![CDATA[
+			UPDATE CRTBCETC
+			   SET CETC_RND0_APPL = #sb_rnd0_appl#
+			      ,CETC_RND0_RATE = NVL(#ti_rnd0_rate#, 0)
+			      ,CETC_RND0_COST = NVL(#ti_rnd0_cost#, 0)
+			
+			      ,CETC_RYLT_APPL = #sb_rylt_appl#
+			      ,CETC_RYLT_RATE = NVL(#ti_rylt_rate#, 0)
+			      ,CETC_RYLT_COST = NVL(#ti_rylt_cost#, 0)
+			
+			      ,CETC_PDAB_GUBN = #sb_pdab_appl#
+			      ,CETC_PDAB_RATE = NVL(#ti_pdab_rate#, 0)
+			      ,CETC_PDAB_COST = NVL(#ti_pdab_cost#, 0)
+
+			      ,CETC_TRAP_COST =  NVL(#ti_trap_cost#, 0)
+			      ,CETC_PALT_COST =  NVL(#ti_palt_cost#, 0)
+			      ,CETC_FEED_COST =  NVL(#ti_feed_cost#, 0)
+			      ,CETC_REPY_COST =  NVL(#etc_repy_cost#, 0)
+			      ,CETC_REPY_INPT =  0
+			      ,CETC_REPY_APCT =  NVL(#etc_repy_cost#, 0)
+			      ,CETC_MOLD_COST =  NVL(#etc_mold_cost#, 0)
+			      ,CETC_EXIT_GUBN = #ti_exit_gubn#
+			      ,CETC_EXIT_COST =  NVL(#ti_exit_cost#, 0)
+
+				  ,CETC_UPDT_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD')
+			      ,CETC_UPDT_CMAN = #reg_id#
+			
+			 WHERE CETC_CORP_CODE = #comd_corp_code#
+			   AND CETC_PART_NO   = #comd_part_no#
+			   AND CETC_EONO      = #comd_eono#
+			   AND CETC_CUMT_NO   = #comd_cumt_no#
+			   AND CETC_CUMT_GUBN = 'A'
+        ]]>
+	</sql>
+
+	<sql id="calc.cost.exec" comment="계산실행 (프로시저) " callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPETC0_C01(
+			         	  	 SUBSTR(#comd_etc0_gubn:varchar:in#, 1,1)
+							,#comd_corp_code:varchar:in#
+							,#comd_cost_gubn:varchar:in#
+							,#comd_part_no:varchar:in#
+							,#comd_eono:varchar:in#
+							,#comd_cumt_no:varchar:in#
+							,#reg_id#
+							
+							,#RND0_APCT:varchar:out#
+							,#RYLT_APCT:varchar:out#
+							,#PDAB_APCT:varchar:out#
+							,#TRAP_APCT:varchar:out#
+							,#PALT_APCT:varchar:out#
+							,#FEED_COST:varchar:out#
+							,#REPY_APCT:varchar:out#
+							,#EXIT_COST:varchar:out#
+							,#ETC0_COST:varchar:out#
+							,#RND0_TTAT:varchar:out#
+							,#RYLT_TTAT:varchar:out#
+							,#PDAB_TTAT:varchar:out#
+							,#TRAP_TTAT:varchar:out#
+							,#PALT_TTAT:varchar:out#
+							,#FEED_TTCT:varchar:out#
+							,#REPY_TTCT:varchar:out#
+							,#EXIT_TTCT:varchar:out#
+							,#ETC0_TTCT:varchar:out#
+							
+							,#MESG_CODE:varchar:out#
+							,#MESG:varchar:out#
+							,#SQL0_CODE:varchar:out#
+							,#PRGM_ID:varchar:out#
+							,#LINE_NO:varchar:out#
+				)
+         ]]>
+	</sql>
+
+	<sql id="check.spms" comment="기타비 입력전 check" callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPCOMM_S01(
+			         	  	 #reg_id:varchar:in#
+							,#comd_corp_code:varchar:in#
+							,#comd_cost_gubn:varchar:in#
+							,#comd_part_sub0:varchar:in#
+							,#comd_eono_sub0:varchar:in#
+							,#comd_cumt_sub0:varchar:in#
+							
+							,#MESG_CODE:varchar:out#
+							,#MESG:varchar:out#
+							,#SQL0_CODE:varchar:out#
+							,#PRGM_ID:varchar:out#
+							,#LINE_NO:varchar:out#
+				)
+         ]]>
+	</sql>
+
+	<sql id="exec.esum" comment="END 집계" callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPESUM_C01(
+							 #emst_corp_code:varchar:in#
+							,#emst_cost_gubn:varchar:in#
+							,#emst_part_no:varchar:in#
+							,#emst_eono:varchar:in#
+							,#emst_cumt_no:varchar:in#
+							,#reg_id:varchar:in#        
+							
+							,#MESG_CODE:varchar:out#
+							,#MESG:varchar:out#
+							,#SQL0_CODE:varchar:out#
+							,#PRGM_ID:varchar:out#
+							,#LINE_NO:varchar:out#
+				)
+         ]]>
+	</sql>
+	<sql id="transPalt.insert" comment="운반비/파렛트 비 저장" callable="true"> 
+        <![CDATA[
+			CALL CRSPTRPT_S03(
+			                   #trpt_corp_code:char:in#
+			                  ,#trpt_part_no:varchar:in#
+			                  ,#trpt_eono:varchar:in#
+			                  ,#trpt_cumt_no:numeric:in#
+			                  
+			                  ,#trpt_area_leav:varchar:in#
+			                  ,#trpt_area_arvl:varchar:in#
+			                  
+			                  ,#trpt_sing_dist:numeric:in#
+			                  ,#trpt_snds_apdt:varchar:in#
+			                  ,#trpt_cars_ton0:numeric:in#
+			                  ,#trpt_dist_carg:numeric:in#
+			                  ,#trpt_cary_qty0:numeric:in#
+			                  ,#trpt_palt_kind:varchar:in#
+			                  ,#trpt_prod_year:numeric:in#
+			                  ,#trpt_prod_cont:numeric:in#
+			                  ,#trpt_prod_5cnt:numeric:in#
+			                  ,#trpt_palt_pric:numeric:in#
+			                  ,#trpt_ptsz_leng:numeric:in#
+			                  ,#trpt_ptsz_widt:numeric:in#
+			                  ,#trpt_ptsz_heig:numeric:in#
+			                  ,#trpt_palt_qty0:numeric:in#
+			                  ,#trpt_part_carg:numeric:in#
+			                  ,#trpt_palt_days:numeric:in#
+			                  ,#trpt_palt_prod:numeric:in#
+			                  ,#trpt_part_palt:numeric:in#
+			                  ,#trpt_appl_carg:numeric:in#
+			                  ,#trpt_appl_palt:numeric:in#
+			                  ,#trpt_appl_cnt0:numeric:in#
+			                  ,#trpt_adel_fact:numeric:in#
+			                  ,#reg_id:varchar:in#
+			                  
+			                  ,#MESG_CODE:varchar:out#
+			                  ,#MESG:varchar:out#
+			                  ,#SQL0_CODE:varchar:out#
+			                  ,#PRGM_ID:varchar:out#
+			                  ,#LINE_NO:varchar:out#
+			                 )
+        ]]>
+	</sql>
+
+	<sql id="get.transCalcRes" comment="운반비/파렛트 비 계산 및 결과값 저장"
+		callable="true">
+        <![CDATA[
+		    CALL CRSPTRPT_C01(
+		    				   #trpt_corp_code:char:in#
+		    				  ,#trpt_cost_gubn:varchar:in#
+		    				  ,#trpt_part_no:varchar:in#
+		    				  ,#trpt_eono:varchar:in#
+		    				  ,#trpt_cumt_no:numeric:in#
+		    				  ,#proc_type:varchar:in#
+		    				  ,#reg_id:varchar:in#
+		    				  ,#MESG_CODE:varchar:out#
+		    				  ,#MESG:varchar:out#
+		    				  ,#SQL0_CODE:varchar:out#
+		    				  ,#PRGM_ID:varchar:out#
+		    				  ,#LINE_NO:varchar:out#
+		    				 )
+        ]]>
+	</sql>
+
+	<sql id="delete.TransPalt" comment="운반비/파렛트 비 초기화">
+        <![CDATA[
+	    	DELETE
+			  FROM CRTBTRPT
+			 WHERE TRPT_CORP_CODE = #trpt_corp_code#
+			   AND TRPT_PART_NO   = #trpt_part_no#  
+			   AND TRPT_EONO      = #trpt_eono#     
+			   AND TRPT_CUMT_NO   = #trpt_cumt_no#
+        ]]>
+	</sql>
+
+	<sql id="periodlist.select" comment="주기정보 조회">
+        <![CDATA[
+	        SELECT   REMK_REM1, REMK_REM2
+	         FROM CRTBREMK
+	          WHERE REMK_CORP_CODE = #corp_cd#
+	            AND REMK_COST_GUBN = #remk_cost_gubn#
+	            AND REMK_PART_NO   = #remk_part_no#
+	            AND REMK_EONO      = #remk_eono#
+	            AND REMK_CUMT_NO   = TO_NUMBER(#remk_cumt_no#) 
+	            AND REMK_SEQ0      = TO_NUMBER(#remk_seq0#)
+	            AND REMK_METH_GUBN IN ('E','S')         
+        ]]>
+	</sql>
+
+	<sql id="periodlist_endpart.select" comment="END PART 별 주기정보 조회">
+        <![CDATA[
+			SELECT 0                                                 COMD_SORT_KEY 
+			      ,DECODE(REMK_SEQ0,0,#remk_part_no#,CHIN_PART_SUB0) CHIN_PART_SUB0
+			      ,'END'                                             CHIN_LEVL
+			      ,0                                                 CHIN_SORT_KEY0
+			      ,DECODE(REMK_SEQ0,0,CRFT_IMST_PART_NAME(#remk_corp_code#,#remk_part_no#,#remk_eono#)
+			      ,CRFT_IMST_PART_NAME(CHIN_CORP_SUB0,CHIN_PART_SUB0,CHIN_EONO_SUB0))CHIN_PART_NAME
+			      ,REMK_REM1 REMK1
+                  ,REMK_REM2 REMK2
+			  FROM CRTBREMK ,CRTBCHIN 
+			 WHERE  REMK_CORP_CODE = CHIN_CORP_CODE(+) 
+			   AND REMK_COST_GUBN = CHIN_COST_GUBN(+)
+			   AND REMK_PART_NO   = CHIN_PART_NO(+)
+			   AND REMK_EONO      = CHIN_EONO(+)
+			   AND REMK_CUMT_NO   = CHIN_CUMT_NO(+)
+			   AND REMK_SEQ0      = CHIN_SEQ0(+)
+			   AND REMK_CORP_CODE = #remk_corp_code#
+			   AND REMK_COST_GUBN = #remk_cost_gubn#
+			   AND REMK_PART_NO   = #remk_part_no#
+			   AND REMK_EONO      = #remk_eono#
+			   AND REMK_CUMT_NO   = TO_NUMBER(#remk_cumt_no#)
+			   AND REMK_METH_GUBN IN ('E')
+			   AND CHIN_LEVL      IS NULL
+			 UNION ALL
+			SELECT 1                                                 COMD_SORT_KEY 
+			      ,DECODE(REMK_SEQ0,0,#remk_part_no#,CHIN_PART_SUB0) CHIN_PART_SUB0
+			      ,TO_CHAR(CHIN_LEVL)                                CHIN_LEVL
+			      ,CHIN_SORT_KEY0                                    CHIN_SORT_KEY0
+			      ,DECODE(REMK_SEQ0,0,CRFT_IMST_PART_NAME(#remk_corp_code#,#remk_part_no#,#remk_eono#)
+			      ,CRFT_IMST_PART_NAME(CHIN_CORP_SUB0,CHIN_PART_SUB0,CHIN_EONO_SUB0)) CHIN_PART_NAME
+			      ,REMK_REM1 REMK1
+                  ,REMK_REM2 REMK2
+			  FROM CRTBREMK ,CRTBCHIN 
+			 WHERE  REMK_CORP_CODE = CHIN_CORP_CODE(+) 
+			   AND REMK_COST_GUBN = CHIN_COST_GUBN(+)
+			   AND REMK_PART_NO   = CHIN_PART_NO(+)
+			   AND REMK_EONO      = CHIN_EONO(+)
+			   AND REMK_CUMT_NO   = CHIN_CUMT_NO(+)
+			   AND REMK_SEQ0      = CHIN_SEQ0(+)
+			   AND REMK_CORP_CODE = #remk_corp_code#
+			   AND REMK_COST_GUBN = #remk_cost_gubn#
+			   AND REMK_PART_NO   = #remk_part_no#
+			   AND REMK_EONO      = #remk_eono#
+			   AND REMK_CUMT_NO   = TO_NUMBER(#remk_cumt_no#)
+			   AND REMK_METH_GUBN IN ('S')
+			   AND CHIN_LEVL      > 0
+			 ORDER BY COMD_SORT_KEY
+			         ,CHIN_LEVL
+			         ,CHIN_SORT_KEY0
+        ]]>
+	</sql>
+
+	<sql id="periodlist.insert" comment="주기정보 추가">
+		<![CDATA[
+			INSERT INTO CRTBREMK (
+			     REMK_CORP_CODE
+			    ,REMK_COST_GUBN
+			    ,REMK_PART_NO
+			    ,REMK_EONO
+			    ,REMK_CUMT_NO
+			    ,REMK_SEQ0
+			    ,REMK_METH_GUBN
+			    ,REMK_COME_CODE
+			    ,REMK_REM1
+			    ,REMK_REM2
+			    ,REMK_FLAG
+			    ,REMK_UPDT_DATE
+			    ,REMK_UPDT_CMAN
+			) VALUES (
+			     TRIM(#corp_cd#)
+			    ,TRIM(#remk_cost_gubn#)
+			    ,TRIM(#remk_part_no#)
+			    ,TRIM(#remk_eono#)
+			    ,TRIM(TO_NUMBER(#remk_cumt_no#))
+			    ,TO_NUMBER(#remk_seq0#)
+			    ,#remk_gubn#
+			    ,#remk_code#
+			    ,#remk_rem1#
+			    ,#remk_rem2#
+			    ,'Y'
+			    ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			    ,#reg_id#
+			)
+		]]>
+	</sql>
+	
+	<sql id="periodlist.update" comment="주기정보 수정">
+		<![CDATA[
+			UPDATE CRTBREMK
+			   SET REMK_REM1      = #remk_rem1#
+			      ,REMK_REM2      = #remk_rem2#
+			      ,REMK_UPDT_DATE = TO_CHAR(SYSDATE,'YYYYMMDD')
+			      ,REMK_UPDT_CMAN = #reg_id#
+			      ,REMK_FLAG      = 'Y'
+			 WHERE REMK_CORP_CODE = #corp_cd#
+			   AND REMK_COST_GUBN = #remk_cost_gubn#
+			   AND REMK_PART_NO   = #remk_part_no#
+			   AND REMK_EONO	  = #remk_eono#
+			   AND REMK_CUMT_NO   = TO_NUMBER(#remk_cumt_no#)
+			   AND REMK_SEQ0	  = TO_NUMBER(#remk_seq0#)
+			   AND REMK_METH_GUBN = #remk_gubn#
+			   AND REMK_COME_CODE = #remk_code#
+		]]>
+	</sql>
+	
+	<sql id="periodlist.delete" comment="주기정보 수정">
+		<![CDATA[
+			DELETE
+			  FROM CRTBREMK
+			 WHERE REMK_CORP_CODE = #corp_cd#
+			   AND REMK_COST_GUBN = #remk_cost_gubn#
+			   AND REMK_PART_NO   = #remk_part_no#
+			   AND REMK_EONO	  = #remk_eono#
+			   AND REMK_CUMT_NO   = TO_NUMBER(#remk_cumt_no#)
+			   AND REMK_SEQ0	  = TO_NUMBER(#remk_seq0#)
+			   AND REMK_METH_GUBN = #remk_gubn#
+			   AND REMK_COME_CODE = #remk_code#
+		]]>
+	</sql>	
+
+	<!-- 엑셀 업로드 -->
+	<sql id="get.delete.data" comment="삭제할 데이터 구하기">
+        <![CDATA[
+	        SELECT CHIN_CORP_CODE  AS COMD_CORP_CODE
+			      ,CHIN_COST_GUBN  AS COMD_COST_GUBN
+			      ,CHIN_PART_NO    AS COMD_PART_ENDI
+			      ,CHIN_EONO       AS COMD_EONO_ENDI
+			      ,CHIN_CUMT_NO    AS COMD_CUMT_ENDI
+			      ,CHIN_SEQ0       AS COMD_SEQ0
+			      ,CHIN_LEVL       AS COMD_LEVL
+			  FROM CRTBCHIN
+			 WHERE 1=1
+			   AND CHIN_CORP_CODE = #emst_corp_code#
+			   AND CHIN_COST_GUBN = #emst_cost_gubn#
+			   AND CHIN_PART_NO   = #emst_part_no#
+			   AND CHIN_EONO      = #emst_eono#
+			   AND CHIN_CUMT_NO	  = #emst_cumt_no#
+			   AND CHIN_LEVL      = 2
+        ]]>
+	</sql>
+
+	<sql id="start.verify" comment="검증(표준구분, 차종, 업종, 업체, SRC, 외관비구분)"
+		callable="true">
+        <![CDATA[
+         	CALL CRSPEXCL_C01(
+                 #emst_corp_code:varchar:in#
+                ,#stnd_gubn:varchar:in#
+                ,#cars_code:varchar:in#
+                ,#inds_code:varchar:in#
+                ,#vend_code:varchar:in#
+                ,#src0:varchar:in#
+			    ,#omgt_gubn:varchar:in#
+
+			    ,#MESG_CODE:varchar:out#
+                ,#MESG:varchar:out#
+                ,#SQL0_CODE:varchar:out#
+                ,#PRGM_ID:varchar:out#
+                ,#LINE_NO:varchar:out#
+				)
+        ]]>
+	</sql>
+
+	<sql id="insert.chinlist.excel" comment="체인 추가" callable="true">
+        <![CDATA[
+         	CALL CRSPCHIN_I01(
+         		 #reg_id:varchar:in#
+                ,#emst_corp_code:varchar:in#
+                ,#emst_cost_gubn:varchar:in#
+                ,#emst_part_no:varchar:in#
+                ,#emst_eono:varchar:in#
+                ,#emst_cumt_no:varchar:in#
+                ,0
+			    ,#level:varchar:in#
+			    ,#sort_key0:varchar:in#
+			    ,#part_no:varchar:in#
+			    ,#eono:varchar:in#
+			    ,#usg0:varchar:in#
+			    ,#stnd_gubn:varchar:in#
+			    ,#base_date:varchar:in#
+			    ,#cars_code:varchar:in#
+			    ,#inds_code:varchar:in#
+			    ,#vend_code:varchar:in#
+			    ,#vend_apfr:varchar:in#
+			    ,#vend_degr:varchar:in#
+			    ,#att_grp_cd:varchar:in#
+			    ,NVL(#src0:varchar:in#,'')
+			    ,#comd_lows_gubn:varchar:in#
+			    ,NVL(#omgt_gubn:varchar:in#,'')
+			    ,#exmt_mgct:varchar:in#			    
+			    ,#trif_apct:varchar:in#
+
+			    ,#MESG_CODE:varchar:out#
+                ,#MESG:varchar:out#
+                ,#SQL0_CODE:varchar:out#
+                ,#PRGM_ID:varchar:out#
+                ,#LINE_NO:varchar:out#
+				)
+        ]]>
+	</sql>
+
+	<!-- 업체 조회 -->
+	<sql id="get.vendlist" comment="업체 조회">
+        <![CDATA[
+        SELECT *
+          FROM (
+		        SELECT VEND_CODE				COMD_VEND_CODE
+				      ,VEND_NAME				COMD_VEND_NAME
+				      ,TO_CHAR(VEND_DEGR)		COMD_VEND_DEGR
+				      ,VEND_APPL_DATE			COMD_APPL_DATE
+				      ,VEND_INDS_CODE			COMD_INDS_CODE
+				      ,TO_CHAR(VEND_PAY0_RATE)	COMD_PAY0_RATE
+				      ,'※ 특수업체 임율 적용대상'	COMD_SPCL_MEMO
+				  FROM CITBVEND
+				 WHERE 1 = 1
+				   AND VEND_CORP_CODE = #corp_cd#
+				   AND VEND_CODE   LIKE #tb_vend_code# || '%' 
+				   AND VEND_NAME   LIKE #tb_vend_name# || '%' 
+				  {
+				  	var s = "";
+				  	
+				  	if ($data.curr_flag == 'Y') {
+				  		s  = "AND (VEND_CORP_CODE, VEND_CODE, VEND_APPL_DATE) IN ( ";
+				  		s += "SELECT VEND_CORP_CODE                                ";
+				  		s += "      ,VEND_CODE                                     ";
+				  		s += "      ,MAX(VEND_APPL_DATE) VEND_APPL_DATE            ";
+				  		s += "  FROM CITBVEND                                      ";
+				  		s += " WHERE VEND_APPL_DATE <= TO_CHAR(SYSDATE, 'YYYYMMDD')";
+				  		s += " GROUP BY VEND_CORP_CODE                             ";
+				  		s += "         ,VEND_CODE                                  ";
+				  		s += "         ,VEND_NAME                                 )";
+				  	} 
+				  	
+				  	s;
+				  }
+				UNION ALL
+				SELECT VD_CD
+				      ,VD_NM_LOC
+				      ,CASE WHEN HKMC_YN = 'Y' THEN '1' ELSE '2' END
+				      ,''
+				      ,''
+				      ,''
+				      ,''
+				  FROM ESMVDGL  
+				 WHERE 1 = 1
+				   AND VD_CD NOT IN (SELECT VEND_CODE
+				                       FROM CITBVEND
+				                     )
+				   AND VD_CD       LIKE #tb_vend_code# || '%'
+				   AND VD_NM_LOC   LIKE #tb_vend_name# || '%'
+				  [AND VD_CD       =    #spcl_flag#]
+				  
+			)
+	   WHERE 1 = 1 
+	    [AND COMD_VEND_DEGR   =    #sb_vend_degr#]
+	   ORDER BY COMD_SPCL_MEMO
+		       ,COMD_VEND_CODE
+		       ,COMD_APPL_DATE
+        ]]>
+	</sql>
+	
+	<!-- 업체명 조회 -->
+	<sql id="get.vendNameInfo.select" comment="업체 조회">
+        <![CDATA[
+        SELECT A.*
+          FROM (
+		        SELECT VEND_CODE				COMD_VEND_CODE
+				      ,VEND_NAME				COMD_VEND_NAME
+				  FROM CITBVEND
+				 WHERE 1 = 1
+				   AND VEND_CORP_CODE = #corp_cd#
+				   AND VEND_CODE = #comd_vend_code# 
+				UNION ALL
+				SELECT VD_CD                    COMD_VEND_CODE
+				      ,VD_NM_LOC                COMD_VEND_NAME
+				  FROM ESMVDGL  
+				 WHERE 1 = 1
+				   AND VD_CD = #comd_vend_code# 
+				  
+			) A
+	   WHERE ROWNUM = 1 
+        ]]>
+	</sql>	
+
+	<sql id="check.checkCMMS" comment="공법체크">
+        <![CDATA[
+            SELECT COUNT(*)+(SELECT COUNT(*) AA FROM CRTBESTI
+			WHERE ESTI_CORP_ENDI =#chin_corp_code#
+			AND ESTI_COST_ENDI   =#chin_cost_gubn#
+			AND ESTI_PART_ENDI   =#chin_part_no#
+			AND ESTI_EONO_ENDI   =#chin_eono#
+			AND ESTI_CUMT_ENDI   =#chin_seq0#
+			AND ESTI_PASS_STAT   ='50'
+			) cnt
+			
+			FROM CRVTEMST
+			WHERE CHIN_CORP_CODE=#chin_corp_code#
+			AND CHIN_COST_GUBN=#chin_cost_gubn#
+			@sql@
+			GROUP BY CHIN_PART_SUB0,CHIN_EONO_SUB0,CHIN_CUMT_SUB0;
+        ]]>
+	</sql>
+	
+	<sql id="update.eonoChange" comment="end item insert (프로시저) EONO 수정 "
+		callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPEMST_I06(
+    			 #reg_id:varchar:in#
+				,#emst_corp_code:varchar:in#
+				,#emst_cost_gubn:varchar:in#
+				,#emst_part_no:varchar:in#
+				,#emst_eono:varchar:in#
+				,#emst_cumt_no:varchar:in#
+				,#eono_to:varchar:in#
+	            ,#emst_cumt_no:varchar:out#
+	            ,#MESG_CODE:varchar:out#
+	            ,#MESG:varchar:out#
+	            ,#SQL0_CODE:varchar:out#
+	            ,#PRGM_ID:varchar:out#
+	            ,#LINE_NO:varchar:out#
+                 ) 
+         ]]>
+	</sql>
+
+	<sql id="update.chineono" comment="CHIN EONO 수정" callable="true">
+        <![CDATA[
+	       CALL CRSPCHIN_I02(
+         		 #reg_id:varchar:in#
+                ,#comd_corp_code:varchar:in#
+                ,#comd_cost_gubn:varchar:in#
+                ,#comd_part_endi:varchar:in#
+                ,#comd_eono_endi:varchar:in#
+                ,#comd_cumt_endi:varchar:in#
+                ,#comd_seq0:varchar:in#
+			    ,#comd_levl:varchar:in#
+			    ,#comd_sort_key0:varchar:in#
+			    ,#comd_part_sub0:varchar:in#
+			    ,#comd_eono_old:varchar:in#
+			    
+			    ,#comd_cumt_sub0:varchar:in#
+			    ,#comd_eono_sub0:varchar:in#
+			    
+			    ,#comd_usg0:varchar:in#
+			    ,#comd_stnd_gubn:varchar:in#
+			    ,#comd_base_date:varchar:in#
+			    ,#comd_cars_code:varchar:in#
+			    ,#comd_inds_code:varchar:in#
+			    ,#comd_vend_code:varchar:in#
+			    ,#comd_vend_apfr:varchar:in#
+			    ,#comd_vend_degr:varchar:in#
+			    ,#comd_att_grp_cd:varchar:in#
+			    ,NVL(#comd_src0:varchar:in#, '')
+			    ,#comd_lows_gubn:varchar:in#
+			    ,#comd_omgt_gubn:varchar:in#
+			    ,#comd_exmt_mgct:varchar:in#			    
+			    ,#comd_trif_apct:varchar:in#
+			    ,#comd_pims_appl:varchar:in#
+			    ,#comd_pims_pric:varchar:in#
+			    ,#pims_vend_code:varchar:in#
+			    ,#comd_pims_srdt:varchar:in#
+
+			    ,#MESG_CODE:varchar:out#
+                ,#MESG:varchar:out#
+                ,#SQL0_CODE:varchar:out#
+                ,#PRGM_ID:varchar:out#
+                ,#LINE_NO:varchar:out#
+				)
+        ]]>
+	</sql>
+
+	<sql id="getList.upload" comment="업로드 데이터 조회">
+        <![CDATA[
+			SELECT CHIN_INIT_CMAN              COMD_INIT_CMAN 
+			      ,CHIN_CORP_CODE              COMD_CORP_CODE 
+			      ,CHIN_COST_GUBN              COMD_COST_GUBN 
+			      ,CHIN_PART_NO                COMD_PART_NO   
+			      ,CHIN_EONO                   COMD_EONO      
+			      ,CHIN_CUMT_NO                COMD_CUMT_NO   
+			      ,CHIN_SEQ0                   COMD_SEQ0      
+			      ,CHIN_COL1                   COMD_COL1      
+			      ,CHIN_COL2                   COMD_COL2      
+			      ,CHIN_COL3                   COMD_COL3      
+			      ,CHIN_COL4                   COMD_COL4      
+			      ,CHIN_COL5                   COMD_COL5      
+			      ,CHIN_COL6                   COMD_COL6      
+			      ,CHIN_ERR1                   COMD_ERR1      
+			      ,CHIN_ERR2                   COMD_ERR2      
+			      ,CHIN_ERR3                   COMD_ERR3      
+			      ,CHIN_ERR4                   COMD_ERR4      
+			      ,CHIN_ERR5                   COMD_ERR5      
+			      ,CHIN_ERR6                   COMD_ERR6      
+			      ,CHIN_INIT_DATE              COMD_INIT_DATE
+			  FROM CXTBCHIN      
+			 WHERE CHIN_INIT_CMAN = #reg_id# 
+			   AND CHIN_CORP_CODE = #comc_corp_code#
+			   AND CHIN_COST_GUBN = #comc_cost_gubn#
+			   AND CHIN_PART_NO   = #comc_part_no#
+			   AND CHIN_EONO      = #comc_eono#
+			   AND CHIN_CUMT_NO   = #comc_cumt_no#
+             ORDER BY CHIN_SEQ0			   
+        ]]>
+	</sql>
+
+	<sql id="delete.upload" comment="업로드 데이터 삭제">
+        <![CDATA[
+			DELETE 
+			  FROM CXTBCHIN
+			 WHERE CHIN_INIT_CMAN = #reg_id# 
+        ]]>
+	</sql>
+
+	<sql id="insert.upload.origin" comment="업로드 데이터 저장">
+        <![CDATA[
+			INSERT INTO CXTBCHIN
+			     ( CHIN_INIT_CMAN
+			      ,CHIN_CORP_CODE
+			      ,CHIN_COST_GUBN
+			      ,CHIN_PART_NO
+			      ,CHIN_EONO
+			      ,CHIN_CUMT_NO
+			      ,CHIN_SEQ0
+			      ,CHIN_COL1
+			      ,CHIN_COL2
+			      ,CHIN_COL3
+			      ,CHIN_COL4
+			      ,CHIN_COL5
+			      ,CHIN_COL6
+			     ) VALUES ( #reg_id#
+			               ,#comc_corp_code#
+			               ,#comc_cost_gubn#
+			               ,#comc_part_no#
+			               ,#comc_eono#
+			               ,#comc_cumt_no#
+			               ,(SELECT NVL(MAX(CHIN_SEQ0), 0) + 1 FROM CXTBCHIN WHERE CHIN_INIT_CMAN = #reg_id#)
+			               ,#value0#
+			               ,#value1#
+			               ,#value2#
+			               ,#value3#
+			               ,#value4#
+			               ,#value5#
+			              )		
+        ]]>
+	</sql>
+	
+	<sql id="insert.upload" comment="업로드 데이터 저장">
+        <![CDATA[
+			INSERT INTO CXTBCHIN
+			     ( CHIN_INIT_CMAN
+			      ,CHIN_CORP_CODE
+			      ,CHIN_COST_GUBN
+			      ,CHIN_PART_NO
+			      ,CHIN_EONO
+			      ,CHIN_CUMT_NO
+			      ,CHIN_SEQ0
+			      ,CHIN_COL1
+			      ,CHIN_COL2
+			      ,CHIN_COL3
+			      ,CHIN_COL4
+			      ,CHIN_COL5
+			      ,CHIN_COL6
+			     ) VALUES ( #reg_id#
+			               ,#comc_corp_code#
+			               ,#comc_cost_gubn#
+			               ,#comc_part_no#
+			               ,#comc_eono#
+			               ,#comc_cumt_no#
+			               ,(SELECT NVL(MAX(CHIN_SEQ0), 0) + 1 FROM CXTBCHIN WHERE CHIN_INIT_CMAN = #reg_id#)
+			               ,#comd_col1#
+			               ,#comd_col2#
+			               ,#comd_col3#
+			               ,#comd_col4#
+			               ,#comd_col5#
+			               ,#comd_col6#
+			              )		
+        ]]>
+	</sql>
+	
+	<sql id="make.chain" comment="체인 생성" callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPCHUP_P01(
+                 #comc_corp_code:varchar:in#
+                ,#comc_cost_gubn:varchar:in#                
+                ,#comc_part_no:varchar:in#
+                ,#comc_eono:varchar:in#
+                ,#comc_cumt_no:varchar:in#
+         		,#reg_id:varchar:in#                
+
+			    ,#MESG_CODE:varchar:out#
+                ,#MESG:varchar:out#
+                ,#SQL0_CODE:varchar:out#
+                ,#PRGM_ID:varchar:out#
+                ,#LINE_NO:varchar:out#
+				)
+         ]]>
+	</sql>
+	
+	<sql id="trpr.select" comment="운반비 차량TON 조회">
+         <![CDATA[ 
+			SELECT DISTINCT
+			       TRPR_TON0 DATA
+			      ,(
+			        SELECT DL.DTL_CD_NM
+			          FROM ESACDDT D
+			              ,ESACDDL DL
+			         WHERE 1=1
+			           AND D.SYS_ID   = DL.SYS_ID
+			           AND D.GRP_CD   = DL.GRP_CD
+			           AND D.DTL_CD   = DL.DTL_CD
+			           AND DL.LANG_CD = 'ko_KR'
+			           AND d.grp_cd   = 'CH_CARSTON0'
+			           AND D.DTL_CD   = TRPR_TON0
+			       ) LABEL
+			      ,TRPR_TON0      COMD_TON0
+			      ,TNSZ_LENG      COMD_LENG
+			      ,TNSZ_WIDT      COMD_WIDT
+			      ,TNSZ_HEIG      COMD_HEIG
+			      ,TRPR_APPL_DATE COMD_APPL_DATE
+			  FROM (
+			        SELECT TRPR_CORP_CODE
+			              ,TRPR_STND_GUBN
+			              ,TRPR_TON0
+			              ,MAX(TRPR_APPL_DATE) TRPR_APPL_DATE
+			          FROM CITBTRPR
+			         WHERE TRPR_APPL_DATE <= #base_date#
+			         GROUP BY TRPR_CORP_CODE
+			                 ,TRPR_STND_GUBN
+			                 ,TRPR_TON0
+			       ) A
+			      LEFT JOIN
+			       (
+			        SELECT TNSZ_CORP_CODE
+			              ,TNSZ_STND_GUBN
+			              ,TNSZ_TON0
+			              ,MAX(TNSZ_LENG)      TNSZ_LENG
+			              ,MAX(TNSZ_WIDT)      TNSZ_WIDT
+			              ,MAX(TNSZ_HEIG)      TNSZ_HEIG
+			              ,MAX(TNSZ_APPL_DATE) TNSZ_APPL_DATE
+			          FROM CITBTNSZ
+			         WHERE TNSZ_APPL_DATE <= #base_date#
+			         GROUP BY TNSZ_CORP_CODE
+			                 ,TNSZ_STND_GUBN
+			                 ,TNSZ_TON0
+			       ) B
+			      ON     A.TRPR_CORP_CODE = B.TNSZ_CORP_CODE
+			         AND A.TRPR_STND_GUBN = B.TNSZ_STND_GUBN
+			         AND A.TRPR_TON0      = B.TNSZ_TON0
+			 ORDER BY TO_NUMBER(TRPR_TON0)
+         ]]>
+	</sql>
+	
+	<sql id="select.MPRICInfo" comment="부품구입가 조회">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT 'K1' AS PIMS_CORP_CODE
+					        ,PIMS_SRC0_GUBN
+					        ,PIMS_SRC0_TEXT
+					        ,PIMS_PART_NO
+					        ,PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(PIMS_CORP_CODE,PIMS_VEND_CODE,PIMS_APPL_DATE) PIMS_VEND_NAME
+					        ,PIMS_APPL_SEQ0
+					        ,PIMS_PART_PRIC
+					        ,PIMS_TRIF_PRIC
+					        ,PIMS_CURR_CODE
+					        ,PIMS_APPL_DATE
+					        ,PIMS_CFRM_DATE
+					    FROM ESS.IF_CRVTPIMS
+					   WHERE PIMS_CORP_CODE = '1000'
+                       AND (   (     (SUBSTR(#comd_part_no#,1,1) <> '1' AND SUBSTR(#comd_part_no#,1,2) <> 'S1')
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                 )  
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,1) =  '1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                      OR PIMS_PART_NO = 'S' || REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = 'S' || SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                     )
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,2) =  'S1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,6) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2)
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                     )
+                               )
+                           )
+					     [AND PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					     AND PIMS_SRC0_GUBN = 'M'
+					     AND PIMS_RES1_CODE NOT LIKE 'X%'
+					   --AND PIMS_APPL_DATE >= '20100101' (전체처리해 놓음)
+					   ORDER BY PIMS_SRC0_GUBN
+					           ,PIMS_VEND_CODE
+					           ,PIMS_APPL_DATE DESC
+					           ,PIMS_CFRM_DATE DESC
+					           ,PIMS_APPL_SEQ0 DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>
+	
+	<sql id="select.MPRICInfo2" comment="부품구입가 조회">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT 'K1' AS PIMS_CORP_CODE
+					        ,A.PIMS_SRC0_GUBN
+					        ,A.PIMS_SRC0_TEXT
+					        ,A.PIMS_PART_NO
+					        ,A.PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(A.PIMS_CORP_CODE,A.PIMS_VEND_CODE,A.PIMS_APPL_DATE) PIMS_VEND_NAME
+					        ,A.PIMS_APPL_SEQ0
+					        ,A.PIMS_PART_PRIC
+					        ,A.PIMS_TRIF_PRIC
+					        ,A.PIMS_CURR_CODE
+					        ,A.PIMS_APPL_DATE
+					        ,A.PIMS_CFRM_DATE
+					    FROM ESS.IF_CRVTPIMS A
+					   WHERE A.PIMS_CORP_CODE = '1000'
+                       AND (   (     (SUBSTR(#comd_part_no#,1,1) <> '1' AND SUBSTR(#comd_part_no#,1,2) <> 'S1')
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                 )  
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,1) =  '1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                      OR PIMS_PART_NO = 'S' || REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = 'S' || SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                     )
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,2) =  'S1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,6) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2)
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                     )
+                               )
+                           )
+					     [AND A.PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					     AND A.PIMS_SRC0_GUBN = 'M'
+					     AND A.PIMS_RES1_CODE NOT LIKE 'X%'
+					     AND A.PIMS_APPL_DATE = (
+					                           SELECT MAX(B.PIMS_APPL_DATE)
+					                             FROM ESS.IF_CRVTPIMS B
+					                            WHERE B.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+					                              AND B.PIMS_PART_NO   = A.PIMS_PART_NO
+					                              AND B.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+					                          )  
+					                          
+					     AND A.PIMS_APPL_SEQ0 = (
+					                           SELECT MAX(C.PIMS_APPL_SEQ0)
+					                             FROM ESS.IF_CRVTPIMS C
+					                            WHERE C.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+					                              AND C.PIMS_PART_NO   = A.PIMS_PART_NO
+					                              AND C.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+					                          )					     
+					   ORDER BY A.PIMS_PART_NO
+					           ,A.PIMS_APPL_DATE DESC
+					           ,A.PIMS_CFRM_DATE DESC
+					           ,A.PIMS_APPL_SEQ0 DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>	
+	
+	<sql id="select.MPRICInfo.total" comment="부품구입가 전체 COUNT 조회">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+		      FROM ESS.IF_CRVTPIMS
+		     WHERE PIMS_CORP_CODE = '1000'
+                       AND (   (     (SUBSTR(#comd_part_no#,1,1) <> '1' AND SUBSTR(#comd_part_no#,1,2) <> 'S1')
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                 )  
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,1) =  '1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                      OR PIMS_PART_NO = 'S' || REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = 'S' || SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                     )
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,2) =  'S1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,6) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2)
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                     )
+                               )
+                           )
+			   AND PIMS_SRC0_GUBN = 'M'
+			   AND PIMS_RES1_CODE NOT LIKE 'X%'
+			   [AND PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>
+	
+	<sql id="select.MPRICInfo.total2" comment="부품구입가 전체 COUNT 조회">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+		      FROM ESS.IF_CRVTPIMS A
+		     WHERE A.PIMS_CORP_CODE = '1000'
+                       AND (   (     (SUBSTR(#comd_part_no#,1,1) <> '1' AND SUBSTR(#comd_part_no#,1,2) <> 'S1')
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                 )  
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,1) =  '1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                      OR PIMS_PART_NO = 'S' || REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = 'S' || SUBSTR(REPLACE(#comd_part_no#,'-',''),1,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),6) 
+                                     )
+                               )
+                            OR (      SUBSTR(#comd_part_no#,1,2) =  'S1' 
+                                 AND (   PIMS_PART_NO = REPLACE(#comd_part_no#,'-','')
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),1,6) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2)
+                                      OR PIMS_PART_NO = SUBSTR(REPLACE(#comd_part_no#,'-',''),2,5) || '-' || SUBSTR(REPLACE(#comd_part_no#,'-',''),7) 
+                                     )
+                               )
+                           )
+			   AND A.PIMS_SRC0_GUBN = 'M'
+			   AND A.PIMS_RES1_CODE NOT LIKE 'X%'
+			   AND A.PIMS_APPL_DATE = (
+			                           SELECT MAX(B.PIMS_APPL_DATE)
+			                             FROM IF_CRVTPIMS B
+			                            WHERE B.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+			                              AND B.PIMS_PART_NO   = A.PIMS_PART_NO
+			                              AND B.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+			                          )  
+			                        
+			   AND A.PIMS_APPL_SEQ0 = (
+			                           SELECT MAX(C.PIMS_APPL_SEQ0)
+			                             FROM IF_CRVTPIMS C
+			                            WHERE C.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+			                              AND C.PIMS_PART_NO   = A.PIMS_PART_NO
+			                              AND C.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+			                          ) 			   
+			   [AND A.PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>	
+	
+	<sql id="select.UPRICInfo" comment="사급판매가 조회">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT 'K1' PIMS_CORP_CODE
+					        ,PIMS_SRC0_GUBN
+					        ,PIMS_SRC0_TEXT
+					        ,PIMS_PART_NO
+					        ,PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(PIMS_CORP_CODE,PIMS_VEND_CODE,PIMS_APPL_DATE) PIMS_VEND_NAME
+					        ,PIMS_APPL_SEQ0
+					        ,PIMS_PART_PRIC
+					        ,PIMS_TRIF_PRIC
+					        ,PIMS_CURR_CODE
+					        ,PIMS_APPL_DATE
+					        ,PIMS_CFRM_DATE
+					    FROM IF_CRVTPIMS
+					   WHERE PIMS_CORP_CODE = '1000'
+					     AND (
+					             PIMS_PART_NO = #comd_part_no#
+					          OR PIMS_PART_NO = #comd_part_no1#
+					         )
+					     [AND PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					     AND PIMS_SRC0_GUBN = 'U'
+					   ORDER BY PIMS_SRC0_GUBN
+					           ,PIMS_VEND_CODE
+					           ,PIMS_APPL_DATE DESC
+					           ,PIMS_CFRM_DATE DESC
+					           ,PIMS_APPL_SEQ0 DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>
+	
+	<sql id="select.UPRICInfo2" comment="사급판매가 조회">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT 'K1' AS PIMS_CORP_CODE
+					        ,A.PIMS_SRC0_GUBN
+					        ,A.PIMS_SRC0_TEXT
+					        ,A.PIMS_PART_NO
+					        ,A.PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(A.PIMS_CORP_CODE,A.PIMS_VEND_CODE,A.PIMS_APPL_DATE) PIMS_VEND_NAME
+					        ,A.PIMS_APPL_SEQ0
+					        ,A.PIMS_PART_PRIC
+					        ,A.PIMS_TRIF_PRIC
+					        ,A.PIMS_CURR_CODE
+					        ,A.PIMS_APPL_DATE
+					        ,A.PIMS_CFRM_DATE
+					    FROM IF_CRVTPIMS
+					   WHERE A.PIMS_CORP_CODE = '1000'
+					     AND (
+					             A.PIMS_PART_NO = #comd_part_no#
+					          OR A.PIMS_PART_NO = #comd_part_no1#
+					         )
+					     [AND A.PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					     AND A.PIMS_SRC0_GUBN = 'U'
+					     AND A.PIMS_APPL_DATE = (
+					                           SELECT MAX(B.PIMS_APPL_DATE)
+					                             FROM IF_CRVTPIMS B
+					                            WHERE B.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+					                              AND B.PIMS_PART_NO   = A.PIMS_PART_NO
+					                              AND B.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+					                          )  
+					                          
+					     AND A.PIMS_APPL_SEQ0 = (
+					                           SELECT MAX(C.PIMS_APPL_SEQ0)
+					                             FROM IF_CRVTPIMS C
+					                            WHERE C.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+					                              AND C.PIMS_PART_NO   = A.PIMS_PART_NO
+					                              AND C.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+					                          )	
+					   ORDER BY A.PIMS_SRC0_GUBN
+					           ,A.PIMS_VEND_CODE
+					           ,A.PIMS_APPL_DATE DESC
+					           ,A.PIMS_CFRM_DATE DESC
+					           ,A.PIMS_APPL_SEQ0 DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>	
+	
+	<sql id="select.UPRICInfo.total" comment="사급판매가 전체 COUNT 조회">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+		      FROM IF_CRVTPIMS
+		     WHERE PIMS_CORP_CODE = #corp_cd#
+			   AND (
+			           PIMS_PART_NO   = #comd_part_no#
+			        OR PIMS_PART_NO   = #comd_part_no1#
+			       ) 
+			   AND PIMS_SRC0_GUBN = 'U'
+			   [AND PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>
+	
+	<sql id="select.UPRICInfo.total2" comment="사급판매가 전체 COUNT 조회">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+		      FROM IF_CRVTPIMS A
+		     WHERE A.PIMS_CORP_CODE = '1000'
+			   AND (
+			           A.PIMS_PART_NO   = #comd_part_no#
+			        OR A.PIMS_PART_NO   = #comd_part_no1#
+			       ) 
+			   AND A.PIMS_SRC0_GUBN = 'U'
+			   AND A.PIMS_APPL_DATE = (
+			                           SELECT MAX(B.PIMS_APPL_DATE)
+			                             FROM IF_CRVTPIMS B
+			                            WHERE B.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+			                              AND B.PIMS_PART_NO   = A.PIMS_PART_NO
+			                              AND B.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+			                          )  
+			                        
+			   AND A.PIMS_APPL_SEQ0 = (
+			                           SELECT MAX(C.PIMS_APPL_SEQ0)
+			                             FROM IF_CRVTPIMS C
+			                            WHERE C.PIMS_CORP_CODE = A.PIMS_CORP_CODE
+			                              AND C.PIMS_PART_NO   = A.PIMS_PART_NO
+			                              AND C.PIMS_VEND_CODE = A.PIMS_VEND_CODE
+			                          ) 			   
+			   [AND A.PIMS_VEND_CODE LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>	
+	
+	<sql id="select.HKSRInfo" comment="OEM부품가(HPT 미품의) 조회">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT HKSR_CORP                         PIMS_CORP
+					        ,HKSR_PART_NO                      PIMS_PART_NO
+					        ,HKSR_VEND_CD                      PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(HKSR_CORP,HKSR_VEND_CD,HKSR_APPL_DATE) PIMS_VEND_NAME
+					        ,HKSR_SEQ                          PIMS_APPL_SEQ0
+					        ,HKSR_PRICE                        PIMS_PART_PRIC
+					        ,HKSR_TAX                          PIMS_TRIF_PRIC
+					        ,HKSR_CURR_CD                      PIMS_CURR_CD
+					        ,HKSR_APPL_DATE                    PIMS_APPL_DATE
+					        ,HKSR_ACPT_DATE                    PIMS_ACPT_DATE
+					    FROM CLVTHKSR
+					   WHERE HKSR_CORP = #corp_cd#
+					     AND (
+					           HKSR_PART_NO   = #comd_part_no#
+					        OR HKSR_PART_NO   = #comd_part_no1#
+					         )  
+					     [AND HKSR_VEND_CD LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					   ORDER BY HKSR_VEND_CD
+					           ,HKSR_APPL_DATE DESC
+					           ,HKSR_ACPT_DATE DESC
+					           ,HKSR_SEQ DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>
+	
+	<sql id="select.HKSRInfo2" comment="OEM부품가(HPT 미품의) 조회(현재적용)">
+         <![CDATA[ 
+			SELECT A.*
+			FROM (
+				SELECT ROWNUM AS ROWNUM1
+					,B.*
+				FROM (
+					  SELECT HKSR_CORP                         PIMS_CORP
+					        ,HKSR_PART_NO                      PIMS_PART_NO
+					        ,HKSR_VEND_CD                      PIMS_VEND_CODE
+					        ,CRFT_SPMS_VEND_NAME(HKSR_CORP,HKSR_VEND_CD,HKSR_APPL_DATE) PIMS_VEND_NAME
+					        ,HKSR_SEQ                          PIMS_APPL_SEQ0
+					        ,HKSR_PRICE                        PIMS_PART_PRIC
+					        ,HKSR_TAX                          PIMS_TRIF_PRIC
+					        ,HKSR_CURR_CD                      PIMS_CURR_CD
+					        ,HKSR_APPL_DATE                    PIMS_APPL_DATE
+					        ,HKSR_ACPT_DATE                    PIMS_ACPT_DATE
+					    FROM CLVTHKSR A
+					   WHERE HKSR_CORP = #corp_cd#
+					     AND (
+					           A.HKSR_PART_NO   = #comd_part_no#
+					        OR A.HKSR_PART_NO   = #comd_part_no1#
+					         )
+        			     AND A.HKSR_APPL_DATE = (
+        			                           SELECT MAX(B.HKSR_APPL_DATE)
+        			                             FROM CLVTHKSR B
+        			                            WHERE B.HKSR_CORP    = A.HKSR_CORP
+        			                              AND B.HKSR_PART_NO = A.HKSR_PART_NO
+        			                              AND B.HKSR_VEND_CD = A.HKSR_VEND_CD
+        			                          )  
+        			                        
+        			     AND A.HKSR_SEQ = (
+        			                       SELECT MAX(C.HKSR_SEQ)
+        			                         FROM CLVTHKSR C
+        			                        WHERE C.HKSR_CORP    = A.HKSR_CORP
+        			                          AND C.HKSR_PART_NO = A.HKSR_PART_NO
+        			                          AND C.HKSR_VEND_CD = A.HKSR_VEND_CD
+        			                      ) 			   
+					     [AND HKSR_VEND_CD LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+					   ORDER BY HKSR_VEND_CD
+					           ,HKSR_APPL_DATE DESC
+					           ,HKSR_ACPT_DATE DESC
+					           ,HKSR_SEQ DESC
+				) B
+				WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+			) A
+			WHERE ROWNUM1 >= (#endRowNum#+1)
+			AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+         ]]>
+	</sql>	
+	
+	<sql id="select.HKSRInfo.total" comment="OEM부품가(HPT 미품의) 전체 COUNT 조회">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+			  FROM CLVTHKSR
+			 WHERE HKSR_CORP = #corp_cd#
+			   AND (
+			         HKSR_PART_NO   = #comd_part_no#
+			      OR HKSR_PART_NO   = #comd_part_no1#
+			       )  
+			  [AND HKSR_VEND_CD LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>
+	
+	<sql id="select.HKSRInfo.total2" comment="OEM부품가(HPT 미품의) 전체 COUNT 조회(현재적용)">
+         <![CDATA[ 
+			SELECT COUNT(*) total_row_num
+			  FROM CLVTHKSR A
+			 WHERE HKSR_CORP = #corp_cd#
+			   AND (
+			         A.HKSR_PART_NO   = #comd_part_no#
+			      OR A.HKSR_PART_NO   = #comd_part_no1#
+			       )
+			   AND A.HKSR_APPL_DATE = (
+			                           SELECT MAX(B.HKSR_APPL_DATE)
+			                             FROM CLVTHKSR B
+			                            WHERE B.HKSR_CORP    = A.HKSR_CORP
+			                              AND B.HKSR_PART_NO = A.HKSR_PART_NO
+			                              AND B.HKSR_VEND_CD = A.HKSR_VEND_CD
+			                          )  
+			                        
+			   AND A.HKSR_SEQ = (
+			                     SELECT MAX(C.HKSR_SEQ)
+			                       FROM CLVTHKSR C
+			                      WHERE C.HKSR_CORP    = A.HKSR_CORP
+			                        AND C.HKSR_PART_NO = A.HKSR_PART_NO
+			                        AND C.HKSR_VEND_CD = A.HKSR_VEND_CD
+			                    ) 			   
+			     [AND HKSR_VEND_CD LIKE CASE WHEN TRIM(#comd_vend_cd#) > ' ' THEN #comd_vend_cd# ELSE '%' END]
+         ]]>
+	</sql>	
+	
+	<sql id="get.getExchGubn.select" comment="코드 조회">
+		<![CDATA[
+			SELECT A.EXCH_CORP_CODE
+			      ,A.EXCH_STND_GUBN
+			      ,A.MONY_GUBN
+			      ,A.EXCH_GUBN
+			      ,A.APPL_DATE
+			      ,A.MONY_RATE
+			      ,A.DATA
+			      ,A.LABEL
+			 FROM (
+			       SELECT EXCH_CORP_CODE
+			             ,EXCH_STND_GUBN
+			             ,EXCH_MONY_GUBN MONY_GUBN
+			             ,EXCH_EXCH_GUBN EXCH_GUBN
+			             ,EXCH_APPL_DATE APPL_DATE
+			             ,EXCH_MONY_RATE MONY_RATE
+			             ,EXCH_CORP_CODE || EXCH_STND_GUBN || EXCH_MONY_GUBN || EXCH_EXCH_GUBN || EXCH_APPL_DATE || EXCH_MONY_RATE AS DATA
+			             ,EXCH_APPL_DATE || ':' || EXCH_MONY_RATE AS LABEL 
+			         FROM CITBEXCH
+			        WHERE EXCH_CORP_CODE = #corp_code#
+			          AND EXCH_STND_GUBN = #stnd_gubn#
+			          AND EXCH_MONY_GUBN = #mony_gubn#
+			          AND EXCH_EXCH_GUBN = #exch_gubn#
+			          AND EXCH_APPL_DATE = (
+			                                SELECT MAX(EXCH_APPL_DATE)
+			                                  FROM CITBEXCH
+			                                 WHERE EXCH_CORP_CODE  = #corp_code#
+			                                   AND EXCH_STND_GUBN  = #stnd_gubn#
+			                                   AND EXCH_MONY_GUBN  = #mony_gubn#
+			                                   AND EXCH_EXCH_GUBN  = #exch_gubn#
+			                                   AND EXCH_APPL_DATE <= #exch_appl_date#
+			                               )
+			       UNION ALL
+			       SELECT EXLN_CORP_CODE EXCH_CORP_CODE
+			             ,EXLN_STND_GUBN EXCH_STND_GUBN
+			             ,EXLN_MONY_GUBN MONY_GUBN
+			             ,EXLN_EXCH_GUBN EXCH_GUBN
+			             ,EXLN_APPL_DATE APPL_DATE
+			             ,EXLN_MONY_RATE MONY_RATE
+			             ,EXLN_CORP_CODE || EXLN_STND_GUBN || EXLN_MONY_GUBN || EXLN_EXCH_GUBN || EXLN_APPL_DATE || EXLN_MONY_RATE AS DATA
+			             ,EXLN_APPL_DATE || ':' || EXLN_MONY_RATE AS LABEL 
+			         FROM CITBEXLN
+			        WHERE TRIM(EXLN_CORP_CODE) = #corp_code#
+			          AND EXLN_STND_GUBN = #stnd_gubn#
+			          AND EXLN_MONY_GUBN = #mony_gubn#
+			          AND EXLN_EXCH_GUBN = #exch_gubn#
+			          AND EXLN_APPL_DATE = (
+			                                SELECT MAX(EXLN_APPL_DATE)
+			                                  FROM CITBEXLN
+			                                 WHERE TRIM(EXLN_CORP_CODE)  = #corp_code#
+			                                   AND EXLN_STND_GUBN  = #stnd_gubn#
+			                                   AND EXLN_MONY_GUBN  = #mony_gubn#
+			                                   AND EXLN_EXCH_GUBN  = #exch_gubn#
+			                                   AND EXLN_APPL_DATE <= #exch_appl_date#
+			                               )
+			      ) A
+         ]]>
+	</sql>
+	
+	<sql id="get.getLdcGubn.select" comment="코드 조회">
+         <![CDATA[
+			SELECT LDCR_CORP_CODE
+			      ,LDCR_STND_GUBN
+			      ,LDCR_CODE           LDCR_CODE --LDC율코드
+			      ,LDCR_APPL_DATE      LABEL     --적용일
+			      ,LDCR_AREA_CODE      AREA_CODE --지역코드
+			      ,LDCR_IMPT_COND      IMPT_COND --수입조건
+			      ,LDCR_CARR_RATE      CARR_RATE --선임율
+			      ,LDCR_INSU_RATE      INSU_RATE --보험율
+			      ,LDCR_EXPE_RATE      EXPE_RATE --부대비율
+			      ,LDCR_TRIF_RATE      TRIF_RATE --관세율
+			      ,LDCR_ADTF_RATE      ADTF_RATE --추가관세율
+			      ,LDCR_LDCR_RATE      LDCR_RATE --LDC율
+			      ,LDCR_CORP_CODE || LDCR_STND_GUBN || LDCR_CODE || LDCR_APPL_DATE AS DATA      --LDC율코드
+			  FROM CITBLDCR
+			 WHERE LDCR_CORP_CODE = #corp_code# 
+			   AND LDCR_STND_GUBN = #ldcr_stnd_gubn#
+			   AND LDCR_CODE      = #ldcr_code#
+			   AND LDCR_APPL_DATE = (
+			                         SELECT MAX(LDCR_APPL_DATE)
+			                           FROM CITBLDCR
+			                          WHERE LDCR_CORP_CODE  = #corp_code#
+			                            AND LDCR_STND_GUBN  = #ldcr_stnd_gubn#
+			                            AND LDCR_CODE       = #ldcr_code#
+			                            AND LDCR_APPL_DATE <= #ldcr_appl_date#
+			                        )
+         ]]>
+	</sql>	
+
+	<sql id="get.getBEARGubn.select" comment="메탈베어링 공통구분(지역,조건,화폐단위) 조회">
+         <![CDATA[
+				SELECT A.GRP_CD
+				      ,A.DTL_CD
+				      ,A.SORT_ORD
+				  FROM ESACDDT A
+				      LEFT OUTER JOIN
+				       ESACDDL B
+				      ON    B.SYS_ID = A.SYS_ID
+				        AND B.GRP_CD = A.GRP_CD
+				        AND B.DTL_CD = A.DTL_CD
+				 WHERE A.GRP_CD      IN (#comd_area_gubn#, #comd_deal_gubn#, #comd_mony_gubn#)
+				   AND A.USE_YN      = 'Y'
+				   AND B.DTL_CD_USE1 = 'Y'
+				 ORDER BY GRP_CD
+				         ,SORT_ORD
+         ]]>
+	</sql>
+	
+	<sql id="check.eetc" comment="기타비 입력전 check">
+		<![CDATA[
+			SELECT SPMS_PART_NO            COMD_PART_SUB0
+			      ,NVL(SPMS_PIMS_APPL,'X') COMD_PIMS_APPL
+			      ,NVL(SPMS_PIMS_PRIC,0)   COMD_PIMS_PRIC
+			      ,(SELECT COUNT(*)
+			          FROM CRTBCMMS
+			         WHERE CMMS_CORP_CODE = SPMS_CORP_CODE
+			           AND CMMS_PART_NO   = SPMS_PART_NO
+			           AND CMMS_EONO      = SPMS_EONO
+			           AND CMMS_CUMT_NO   = SPMS_CUMT_NO
+			       )                       COMD_CMMS_CNT0
+			  FROM CRTBCHIN
+			      INNER JOIN
+			       CRTBSPMS
+			      ON    SPMS_CORP_CODE = CHIN_CORP_SUB0
+			        AND SPMS_PART_NO   = CHIN_PART_SUB0
+			        AND SPMS_EONO      = CHIN_EONO_SUB0
+			        AND SPMS_CUMT_NO   = CHIN_CUMT_SUB0
+			 WHERE CHIN_CORP_CODE = #comd_corp_code#
+			   AND CHIN_COST_GUBN = #comd_cost_gubn#
+			   AND CHIN_PART_NO   = #comd_part_sub0#
+			   AND CHIN_EONO      = #comd_eono_sub0#
+			   AND CHIN_CUMT_NO   = #comd_cumt_sub0#
+			 ORDER BY CHIN_SORT_KEY0
+		]]>
+	</sql>
+	
+	<sql id="get.emstInfo" comment="진행상태, 결재자ID, 결재번호 조회">
+	    <![CDATA[
+			SELECT EMST_APRV_ID   AS APRV_ID
+			      ,EMST_APRV_NO   AS APRV_NO
+			  FROM CRTBSPMS
+			      ,CRTBEMST
+			 WHERE SPMS_CORP_ENDI = EMST_CORP_CODE
+			   AND SPMS_COST_ENDI = EMST_COST_GUBN
+			   AND SPMS_PART_ENDI = EMST_PART_NO
+			   AND SPMS_EONO_ENDI = EMST_EONO
+			   AND SPMS_CUMT_ENDI = EMST_CUMT_NO
+			   AND SPMS_CORP_CODE = #corp_code#
+			   AND SPMS_PART_NO   = #part_no# 
+			   AND SPMS_EONO      = #eono# 
+			   AND SPMS_CUMT_NO   = #cumt_no# 
+			   AND SPMS_COST_ENDI = #cost_gubn#       
+		]]>
+	</sql>
+	
+	<sql id="set.return.stat" comment="진행상태 작성중으로 되돌리고, 결재문서 삭제">
+	    <![CDATA[
+			BEGIN
+				
+			  -- 진행상태 되돌리기
+			  UPDATE CRTBEMST
+			     SET EMST_PASS_STAT = '20'
+			        ,EMST_APRV_ID   = NULL
+			        ,EMST_APRV_NO   = NULL
+			   WHERE EMST_CORP_CODE = #corp_code#
+			     AND EMST_COST_GUBN = #cost_gubn#
+			     AND EMST_PART_NO   = #part_no#
+			     AND EMST_EONO      = #eono#
+			     AND EMST_CUMT_NO   = #cumt_no#
+			  ;
+			  
+			  --결재마스터 삭제
+			  DELETE
+			    FROM ESGMSTR
+			   WHERE SYS_ID     = #aprv_id#
+			     AND APRV_DOCNO = #aprv_no#
+			  ;
+			  
+			  --결재라인 삭제
+			  DELETE
+			    FROM ESGLINE
+			   WHERE SYS_ID     = #aprv_id#
+			     AND APRV_DOCNO = #aprv_no#
+			  ;
+			
+			END;      
+		]]>
+	</sql>
+	
+	<sql id="get.cmctlist" comment="다이캐스팅 불량비 조회">
+	    <![CDATA[
+			SELECT CMCT_CORP_CODE	
+			      ,CMCT_PART_NO	
+			      ,CMCT_EONO	
+			      ,CMCT_CUMT_NO	
+			      ,CMCT_COME_CODE	
+			      ,CMCT_CUMT_GUBN	
+			      ,CMCT_CETC_GUBN	
+			      ,CMCT_CETC_SEQ0	
+			      ,CMCT_PDAB_GUBN	
+			      ,CMCT_PDAB_RATE	
+			      ,CMCT_PDAB_MATL	
+			      ,CMCT_PDAB_PROC	
+			      ,CMCT_PDAB_TOTL	
+			      ,CMCT_PDAB_COST	
+			      ,CMCT_MOLD_CRUD	
+			      ,CMCT_REPY_GUBN	
+			      ,CMCT_MOLD_TYPE	
+			      ,CMCT_IVST_YN	
+			      ,CMCT_1SET_MDCT	
+			      ,CMCT_TSET_CNT0	
+			      ,CMCT_MOLD_COST	
+			      ,CMCT_MDLF_QTY0	
+			      ,CMCT_USG0	
+			      ,CMCT_CAOV_QTY0	
+			      ,CMCT_ADJT_RATE	
+			      ,CMCT_QTY1	
+			      ,CMCT_MDLF_CORP	
+			      ,CMCT_MDLF_STND	
+			      ,CMCT_MDLF_MACH	
+			      ,CMCT_MDLF_METH	
+			      ,CMCT_MDLF_DATE	
+			      ,CMCT_MDLF_LIFE	
+			      ,CMCT_MDLF_UNIT	
+			      ,CMCT_CAVT	
+			      ,CMCT_PROD_LENG	
+			      ,CMCT_QTY2	
+			      ,CMCT_AUTO_MANU	
+			      ,CMCT_MOLD_CQTY	
+			      ,CMCT_MOLD_IQTY	
+			      ,CMCT_MOLD_AQTY	
+			      ,CMCT_REPY_COST	
+			      ,CMCT_APPL_YN	
+			      ,CMCT_REMK_0001	
+			      ,CMCT_REMK_0002	
+			      ,CMCT_UPDT_DATE	
+			      ,CMCT_UPDT_CMAN	
+			      ,CMCT_INIT_DATE	
+			      ,CMCT_INIT_CMAN
+			  FROM CRTBCMCT
+			 WHERE CMCT_CORP_CODE = #comd_corp_code#
+			   AND CMCT_PART_NO   = #comd_part_no#
+			   AND CMCT_EONO      = #comd_eono#
+			   AND CMCT_CUMT_NO   = #comd_cumt_no#
+			   AND CMCT_CUMT_GUBN = 'A'
+			   AND CMCT_APPL_YN   = 'Y'     
+		]]>
+	</sql>
+	
+	<sql id="get.moldList" comment="금형비 조회">
+	    <![CDATA[
+         SELECT NULL                                                           COMD_CMMS_NUMB
+		       ,''                                                             COMD_CORP_CODE
+		       ,''                                                             COMD_PART_NO
+		       ,''                                                             COMD_PART_NM
+		       ,''                                                             COMD_EONO
+		       ,NULL                                                           COMD_CUMT_NO
+		       ,''                                                             COMD_METH_GUBN
+		       ,''                                                             COMD_COME_CODE  -- 금형공법
+		       ,''                                                             COMD_MOLD_CODE  -- 금형코드
+		       ,''                                                             COMD_STND_DEGR  -- 차수코드
+		       ,NULL                                                           COMD_SORT_KEY0  -- 정렬 순서
+		       ,'합 계'                                                          COMD_METH_NAME  -- 공법명
+		       ,''                                                             COMD_INDS_CODE
+		       ,''                                                             COMD_DEGR_DESC  -- 차수
+		       ,''                                                             COMD_RPAY_GUBN  -- 상각구분
+		       ,''                                                             COMD_STND_MAN1
+		       ,''                                                             COMD_MXML_PATH
+		       ,''                                                             COMD_MENU_ID
+		       ,''                                                             COMD_DEGR_CONT
+		       ,''                                                             COMD_CUMT_GUBN
+		       ,NULL                                                           COMD_MOLD_SEQ0
+		       ,TO_CHAR(SUM(NVL(D.MSUM_TMLD_COST,0)), 'fm999,999,999,999.00')  COMD_TMLD_COST  -- 계산 금형비
+		       ,TO_CHAR(SUM(NVL(D.MSUM_ADEL_PRIC,0)), 'fm999,999,999,999.00')  COMD_ADEL_PRIC  -- 조정금액
+		       ,TO_CHAR(SUM(NVL(D.MSUM_LAST_COST,0)), 'fm999,999,999,999.00')  COMD_TOTL_COST  -- 결정 금형비
+		       ,NULL                                                           COMD_CAVT       -- cavity
+		       ,NULL                                                           COMD_RPAY_CONT  -- 상각 수량
+		       ,TO_CHAR(SUM(NVL(D.MSUM_DMLD_COST,0)), 'fm999,999,999.00')      COMD_DMLD_COST  -- 상각금형비
+		       ,''                                                             COMD_STND_GUBN
+		       ,''                                                             COMD_BASE_DATE
+		       ,''                                                             COMD_INIT_CMAN
+		       ,''                                                             COMD_UPDT_DATE
+		       ,''                                                             COMD_INIT_DATE
+		       ,''                                                             COMD_COST_GUBN
+		       ,''                                                             COMD_EMST_CUMT
+		       ,0                                                              CHIN_SORT_KEY0
+		   FROM CRTBCMMS A
+		       ,CITBMTCD B
+		       ,CITBMTDG C
+		       ,CRTBMSUM D
+		       ,CRTBSPMS E
+		       ,CRTBCHIN F
+		  WHERE A.CMMS_CORP_CODE = #emst_corp_code#
+		    AND A.CMMS_CORP_CODE = C.MTDG_CORP_CODE
+		    AND A.CMMS_METH_GUBN = C.MTDG_METH_GUBN
+		    AND A.CMMS_COME_CODE = C.MTDG_COME_CODE
+		    AND A.CMMS_STND_DEGR = C.MTDG_STND_DEGR
+		    AND C.MTDG_CORP_CODE = B.MTCD_CORP_CODE
+		    AND C.MTDG_COME_CODE = B.MTCD_COME_CODE
+		    AND C.MTDG_METH_GUBN = B.MTCD_METH_GUBN
+		    AND C.MTDG_APPL_DATE <= TO_CHAR(SYSDATE, 'YYYYMMDD')
+		    AND C.MTDG_APPL_YN   = 'Y'
+		    AND A.CMMS_RPAY_GUBN ='P'
+		    AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		    AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		    AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		    AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		    AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		    AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		    AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		    AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		    AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		    AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		    AND NVL(D.MSUM_DMLD_COST,0) > 0
+		    AND A.CMMS_CORP_CODE = E.SPMS_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = E.SPMS_PART_NO(+)
+		    AND A.CMMS_EONO      = E.SPMS_EONO(+)
+		    AND A.CMMS_CUMT_NO   = E.SPMS_CUMT_NO(+)
+		    AND E.SPMS_CORP_CODE = F.CHIN_CORP_SUB0(+)
+		    AND E.SPMS_PART_NO   = F.CHIN_PART_SUB0(+)
+		    AND E.SPMS_EONO      = F.CHIN_EONO_SUB0(+)
+		    AND E.SPMS_CUMT_NO   = F.CHIN_CUMT_SUB0(+)
+		    AND F.CHIN_CORP_CODE = #emst_corp_code#
+		    AND F.CHIN_COST_GUBN = #emst_cost_gubn#
+		    AND F.CHIN_PART_NO   = #emst_part_no#
+		    AND F.CHIN_EONO      = #emst_eono#
+		    AND F.CHIN_CUMT_NO   = #emst_cumt_no#
+		UNION ALL
+		 SELECT ROWNUM COMD_CMMS_NUMB
+		       ,A.*
+		   FROM (
+		         SELECT A.CMMS_CORP_CODE COMD_CORP_CODE
+		               ,A.CMMS_PART_NO   COMD_PART_NO
+		               ,CRFT_IMST_PART_NAME(A.CMMS_CORP_CODE, A.CMMS_PART_NO, null) COMD_PART_NM
+		               ,A.CMMS_EONO      COMD_EONO
+		               ,A.CMMS_CUMT_NO   COMD_CUMT_NO
+		               ,A.CMMS_METH_GUBN COMD_METH_GUBN
+		               ,A.CMMS_COME_CODE                                         COMD_COME_CODE  -- 금형공법
+		               ,D.MSUM_MOLD_CODE                                         COMD_MOLD_CODE  -- 금형코드
+		               ,A.CMMS_STND_DEGR                                         COMD_STND_DEGR  -- 차수코드
+		               ,D.MSUM_SORT_KEY0                                         COMD_SORT_KEY0  -- 정렬 순서
+		               ,B.MTCD_METH_NAME                                         COMD_METH_NAME  -- 공법명
+		               ,NVL(B.MTCD_INDS_CODE,'')                                 COMD_INDS_CODE
+		               ,C.MTDG_STND_DEGR                                         COMD_DEGR_DESC  -- 차수
+		               ,CASE 
+		                   WHEN NVL(A.CMMS_RPAY_GUBN,'') ='P' THEN '영구상각'
+		                   WHEN NVL(A.CMMS_RPAY_GUBN,'') ='L' THEN '일시불'
+		                   ELSE ''
+		                END                                                      COMD_RPAY_GUBN  -- 상각구분
+		               ,C.MTDG_STND_MAN1 ||'('||C.MTDG_PHON_NO1||')'             COMD_STND_MAN1
+		               ,NVL(C.MTDG_MXML_PATH,'')                                 COMD_MXML_PATH
+		               ,NVL(C.MTDG_MENU_ID,'')                                   COMD_MENU_ID
+		               ,NVL(C.MTDG_DEGR_CONT,'|')                                COMD_DEGR_CONT --개정내용
+		               ,A.CMMS_CUMT_GUBN                                         COMD_CUMT_GUBN
+		               ,D.MSUM_MOLD_SEQ0                                         COMD_MOLD_SEQ0
+		               ,TO_CHAR(NVL(D.MSUM_TMLD_COST,0), 'fm999,999,999,999.00') COMD_TMLD_COST  -- 계산 금형비
+		               ,TO_CHAR(NVL(D.MSUM_ADEL_PRIC,0), 'fm999,999,999,999.00') COMD_ADEL_PRIC  -- 조정금액
+		               ,TO_CHAR(NVL(D.MSUM_LAST_COST,0), 'fm999,999,999,999.00') COMD_TOTL_COST  -- 결정 금형비
+		               ,NVL(D.MSUM_CAVT,0)                                       COMD_CAVT       -- cavity
+		               ,NVL(D.MSUM_RPAY_CONT,0)                                  COMD_RPAY_CONT  -- 상각 수량
+		               ,TO_CHAR(NVL(D.MSUM_DMLD_COST,0), 'fm999,999,999,999.00') COMD_DMLD_COST  -- 상각금형비
+		               ,NVL(E.SPMS_STND_GUBN,'')                                 COMD_STND_GUBN
+		               ,NVL(E.SPMS_BASE_DATE,'')                                 COMD_BASE_DATE
+		               ,NVL(A.CMMS_INIT_CMAN,'|')                                COMD_INIT_CMAN
+		               ,A.CMMS_UPDT_DATE                                         COMD_UPDT_DATE
+		               ,A.CMMS_INIT_DATE                                         COMD_INIT_DATE
+		               ,E.SPMS_COST_ENDI                                         COMD_COST_GUBN
+		               ,TO_CHAR(E.SPMS_CUMT_ENDI)                                COMD_EMST_CUMT
+		               ,CHIN_SORT_KEY0                                           CHIN_SORT_KEY0
+		           FROM CRTBCMMS A
+		               ,CITBMTCD B
+		               ,CITBMTDG C
+		               ,CRTBMSUM D
+		               ,CRTBSPMS E
+		               ,CRTBCHIN F
+		          WHERE A.CMMS_CORP_CODE = #emst_corp_code#
+		            AND A.CMMS_CORP_CODE = C.MTDG_CORP_CODE
+		            AND A.CMMS_METH_GUBN = C.MTDG_METH_GUBN
+		            AND A.CMMS_COME_CODE = C.MTDG_COME_CODE
+		            AND A.CMMS_STND_DEGR = C.MTDG_STND_DEGR
+		            AND C.MTDG_CORP_CODE = B.MTCD_CORP_CODE
+		            AND C.MTDG_COME_CODE = B.MTCD_COME_CODE
+		            AND C.MTDG_METH_GUBN = B.MTCD_METH_GUBN
+		            AND C.MTDG_APPL_DATE <= TO_CHAR(SYSDATE, 'YYYYMMDD')
+		            AND C.MTDG_APPL_YN   = 'Y'
+		            AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		            AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		            AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		            AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		            AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		            AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		            AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		            AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		            AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		            AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		            AND NVL(D.MSUM_DMLD_COST,0) > 0
+		            AND A.CMMS_CORP_CODE = E.SPMS_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = E.SPMS_PART_NO(+)
+		            AND A.CMMS_EONO      = E.SPMS_EONO(+)
+		            AND A.CMMS_CUMT_NO   = E.SPMS_CUMT_NO(+)
+		            AND E.SPMS_CORP_CODE = F.CHIN_CORP_SUB0(+)
+		            AND E.SPMS_PART_NO   = F.CHIN_PART_SUB0(+)
+		            AND E.SPMS_EONO      = F.CHIN_EONO_SUB0(+)
+		            AND E.SPMS_CUMT_NO   = F.CHIN_CUMT_SUB0(+)
+		            AND F.CHIN_CORP_CODE = #emst_corp_code#
+		            AND F.CHIN_COST_GUBN = #emst_cost_gubn#
+		            AND F.CHIN_PART_NO   = #emst_part_no#
+		            AND F.CHIN_EONO      = #emst_eono#
+		            AND F.CHIN_CUMT_NO   = #emst_cumt_no#		            
+		          ORDER BY CHIN_SORT_KEY0
+		                  ,COMD_COME_CODE
+		                  ,COMD_SORT_KEY0
+		        ) A			   
+		]]>
+	</sql>
+	
+	<sql id="get.wonm.moldList" comment="원단위 금형비 조회">
+	    <![CDATA[
+         SELECT NULL                                                           COMD_CMMS_NUMB
+		       ,''                                                             COMD_CORP_CODE
+		       ,''                                                             COMD_PART_NO
+		       ,''                                                             COMD_PART_NM
+		       ,''                                                             COMD_EONO
+		       ,NULL                                                           COMD_CUMT_NO
+		       ,''                                                             COMD_METH_GUBN
+		       ,''                                                             COMD_COME_CODE  -- 금형공법
+		       ,''                                                             COMD_MOLD_CODE  -- 금형코드
+		       ,''                                                             COMD_STND_DEGR  -- 차수코드
+		       ,NULL                                                           COMD_SORT_KEY0  -- 정렬 순서
+		       ,'합 계'                                                          COMD_METH_NAME  -- 공법명
+		       ,''                                                             COMD_INDS_CODE
+		       ,''                                                             COMD_DEGR_DESC  -- 차수
+		       ,''                                                             COMD_RPAY_GUBN  -- 상각구분
+		       ,''                                                             COMD_STND_MAN1
+		       ,''                                                             COMD_MXML_PATH
+		       ,''                                                             COMD_MENU_ID
+		       ,''                                                             COMD_DEGR_CONT
+		       ,''                                                             COMD_CUMT_GUBN
+		       ,NULL                                                           COMD_MOLD_SEQ0
+		       ,TO_CHAR(SUM(NVL(D.MSUM_TMLD_COST,0)), 'fm999,999,999,999.00')  COMD_TMLD_COST  -- 계산 금형비
+		       ,TO_CHAR(SUM(NVL(D.MSUM_ADEL_PRIC,0)), 'fm999,999,999,999.00')  COMD_ADEL_PRIC  -- 조정금액
+		       ,TO_CHAR(SUM(NVL(D.MSUM_LAST_COST,0)), 'fm999,999,999,999.00')  COMD_TOTL_COST  -- 결정 금형비
+		       ,NULL                                                           COMD_CAVT       -- cavity
+		       ,NULL                                                           COMD_RPAY_CONT  -- 상각 수량
+		       ,TO_CHAR(SUM(NVL(D.MSUM_DMLD_COST,0)), 'fm999,999,999.00')      COMD_DMLD_COST  -- 상각금형비
+		       ,''                                                             COMD_STND_GUBN
+		       ,''                                                             COMD_BASE_DATE
+		       ,''                                                             COMD_INIT_CMAN
+		       ,''                                                             COMD_UPDT_DATE
+		       ,''                                                             COMD_INIT_DATE
+		       ,''                                                             COMD_COST_GUBN
+		       ,''                                                             COMD_EMST_CUMT
+		       ,0                                                              CHIN_SORT_KEY0
+		   FROM CRTBCMMS A
+		       ,CITBMTCD B
+		       ,CITBMTDG C
+		       ,CRTBMSUM D
+		       ,CRTBSPMS E
+		       ,CRTBCHIN F
+		  WHERE A.CMMS_CORP_CODE = #emst_corp_code#
+		    AND A.CMMS_CORP_CODE = C.MTDG_CORP_CODE
+		    AND A.CMMS_METH_GUBN = C.MTDG_METH_GUBN
+		    AND A.CMMS_COME_CODE = C.MTDG_COME_CODE
+		    AND A.CMMS_STND_DEGR = C.MTDG_STND_DEGR
+		    AND C.MTDG_CORP_CODE = B.MTCD_CORP_CODE
+		    AND C.MTDG_COME_CODE = B.MTCD_COME_CODE
+		    AND C.MTDG_METH_GUBN = B.MTCD_METH_GUBN
+		    AND C.MTDG_APPL_DATE <= TO_CHAR(SYSDATE, 'YYYYMMDD')
+		    AND C.MTDG_APPL_YN   = 'Y'
+		    AND A.CMMS_RPAY_GUBN ='P'
+		    AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		    AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		    AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		    AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		    AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		    AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		    AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		    AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		    AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		    AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		    AND NVL(D.MSUM_DMLD_COST,0) > 0
+		    AND A.CMMS_CORP_CODE = E.SPMS_CORP_CODE(+)
+		    AND A.CMMS_PART_NO   = E.SPMS_PART_NO(+)
+		    AND A.CMMS_EONO      = E.SPMS_EONO(+)
+		    AND A.CMMS_CUMT_NO   = E.SPMS_CUMT_NO(+)
+		    AND E.SPMS_CORP_CODE = F.CHIN_CORP_SUB0(+)
+		    AND E.SPMS_PART_NO   = F.CHIN_PART_SUB0(+)
+		    AND E.SPMS_EONO      = F.CHIN_EONO_SUB0(+)
+		    AND E.SPMS_CUMT_NO   = F.CHIN_CUMT_SUB0(+)
+		    AND (
+		          F.CHIN_CORP_SUB0
+		         ,F.CHIN_PART_SUB0
+		         ,F.CHIN_EONO_SUB0
+		         ,F.CHIN_CUMT_SUB0
+		        ) IN (
+		              SELECT DISTINCT CHIN_CORP_SUB0
+		                    ,CHIN_PART_SUB0
+		                    ,CHIN_EONO_SUB0
+		                    ,CHIN_CUMT_SUB0
+		                FROM CRTBCHIN
+		               WHERE 1 = 1 
+		                 AND ( CHIN_CORP_CODE
+		                      ,CHIN_COST_GUBN
+		                      ,CHIN_PART_NO
+		                      ,CHIN_EONO
+		                      ,CHIN_CUMT_NO) IN (
+		                                         SELECT DISTINCT WONM_CORP_01
+		                                               ,WONM_COST_01
+		                                               ,WONM_PART_01
+		                                               ,WONM_EONO_01
+		                                               ,WONM_CUMT_01
+		                                           FROM CWTBWONM
+		                                          WHERE WONM_CORP_CODE = #corp_cd#	
+		                                            AND WONM_PROJ_MGNO = #proj_mgno#
+		                                            AND WONM_CORP_01 IS NOT NULL
+		                                            AND WONM_COST_01 IS NOT NULL
+		                                        )
+		             UNION
+		              SELECT DISTINCT WONM_CORP_01 AS CHIN_CORP_SUB0
+		                    ,WONM_PART_01          AS CHIN_PART_SUB0
+		                    ,WONM_EONO_01          AS CHIN_EONO_SUB0
+		                    ,WONM_CUMT_01          AS CHIN_CUMT_SUB0
+		                FROM CWTBWONM
+		               WHERE WONM_CORP_CODE = #corp_cd#	
+		                 AND WONM_PROJ_MGNO = #proj_mgno#
+		                 AND WONM_CORP_01 IS NOT NULL
+		                 AND WONM_COST_01 IS NULL
+		                 AND WONM_END1 = 'S' 
+		             )
+		UNION ALL
+		 SELECT ROWNUM COMD_CMMS_NUMB
+		       ,A.*
+		   FROM (
+		         SELECT A.CMMS_CORP_CODE COMD_CORP_CODE
+		               ,A.CMMS_PART_NO   COMD_PART_NO
+		               ,CRFT_IMST_PART_NAME(A.CMMS_CORP_CODE, A.CMMS_PART_NO, null) COMD_PART_NM
+		               ,A.CMMS_EONO      COMD_EONO
+		               ,A.CMMS_CUMT_NO   COMD_CUMT_NO
+		               ,A.CMMS_METH_GUBN COMD_METH_GUBN
+		               ,A.CMMS_COME_CODE                                         COMD_COME_CODE  -- 금형공법
+		               ,D.MSUM_MOLD_CODE                                         COMD_MOLD_CODE  -- 금형코드
+		               ,A.CMMS_STND_DEGR                                         COMD_STND_DEGR  -- 차수코드
+		               ,D.MSUM_SORT_KEY0                                         COMD_SORT_KEY0  -- 정렬 순서
+		               ,B.MTCD_METH_NAME                                         COMD_METH_NAME  -- 공법명
+		               ,NVL(B.MTCD_INDS_CODE,'')                                 COMD_INDS_CODE
+		               ,C.MTDG_STND_DEGR                                         COMD_DEGR_DESC  -- 차수
+		               ,CASE 
+		                   WHEN NVL(A.CMMS_RPAY_GUBN,'') ='P' THEN '영구상각'
+		                   WHEN NVL(A.CMMS_RPAY_GUBN,'') ='L' THEN '일시불'
+		                   ELSE ''
+		                END                                                      COMD_RPAY_GUBN  -- 상각구분
+		               ,C.MTDG_STND_MAN1 ||'('||C.MTDG_PHON_NO1||')'             COMD_STND_MAN1
+		               ,NVL(C.MTDG_MXML_PATH,'')                                 COMD_MXML_PATH
+		               ,NVL(C.MTDG_MENU_ID,'')                                   COMD_MENU_ID
+		               ,NVL(C.MTDG_DEGR_CONT,'|')                                COMD_DEGR_CONT --개정내용
+		               ,A.CMMS_CUMT_GUBN                                         COMD_CUMT_GUBN
+		               ,D.MSUM_MOLD_SEQ0                                         COMD_MOLD_SEQ0
+		               ,TO_CHAR(NVL(D.MSUM_TMLD_COST,0), 'fm999,999,999,999.00') COMD_TMLD_COST  -- 계산 금형비
+		               ,TO_CHAR(NVL(D.MSUM_ADEL_PRIC,0), 'fm999,999,999,999.00') COMD_ADEL_PRIC  -- 조정금액
+		               ,TO_CHAR(NVL(D.MSUM_LAST_COST,0), 'fm999,999,999,999.00') COMD_TOTL_COST  -- 결정 금형비
+		               ,NVL(D.MSUM_CAVT,0)                                       COMD_CAVT       -- cavity
+		               ,NVL(D.MSUM_RPAY_CONT,0)                                  COMD_RPAY_CONT  -- 상각 수량
+		               ,TO_CHAR(NVL(D.MSUM_DMLD_COST,0), 'fm999,999,999,999.00') COMD_DMLD_COST  -- 상각금형비
+		               ,NVL(E.SPMS_STND_GUBN,'')                                 COMD_STND_GUBN
+		               ,NVL(E.SPMS_BASE_DATE,'')                                 COMD_BASE_DATE
+		               ,NVL(A.CMMS_INIT_CMAN,'|')                                COMD_INIT_CMAN
+		               ,A.CMMS_UPDT_DATE                                         COMD_UPDT_DATE
+		               ,A.CMMS_INIT_DATE                                         COMD_INIT_DATE
+		               ,E.SPMS_COST_ENDI                                         COMD_COST_GUBN
+		               ,TO_CHAR(E.SPMS_CUMT_ENDI)                                COMD_EMST_CUMT
+		               ,CHIN_SORT_KEY0                                           CHIN_SORT_KEY0
+		           FROM CRTBCMMS A
+		               ,CITBMTCD B
+		               ,CITBMTDG C
+		               ,CRTBMSUM D
+		               ,CRTBSPMS E
+		               ,CRTBCHIN F
+		          WHERE A.CMMS_CORP_CODE = #emst_corp_code#
+		            AND A.CMMS_CORP_CODE = C.MTDG_CORP_CODE
+		            AND A.CMMS_METH_GUBN = C.MTDG_METH_GUBN
+		            AND A.CMMS_COME_CODE = C.MTDG_COME_CODE
+		            AND A.CMMS_STND_DEGR = C.MTDG_STND_DEGR
+		            AND C.MTDG_CORP_CODE = B.MTCD_CORP_CODE
+		            AND C.MTDG_COME_CODE = B.MTCD_COME_CODE
+		            AND C.MTDG_METH_GUBN = B.MTCD_METH_GUBN
+		            AND C.MTDG_APPL_DATE <= TO_CHAR(SYSDATE, 'YYYYMMDD')
+		            AND C.MTDG_APPL_YN   = 'Y'
+		            AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		            AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		            AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		            AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		            AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		            AND A.CMMS_CORP_CODE = D.MSUM_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = D.MSUM_PART_NO(+)
+		            AND A.CMMS_EONO      = D.MSUM_EONO(+)
+		            AND A.CMMS_CUMT_NO   = D.MSUM_CUMT_NO(+)
+		            AND A.CMMS_CUMT_GUBN = D.MSUM_CUMT_GUBN(+)
+		            AND A.CMMS_COME_CODE = D.MSUM_COME_CODE(+)
+		            AND NVL(D.MSUM_DMLD_COST,0) > 0
+		            AND A.CMMS_CORP_CODE = E.SPMS_CORP_CODE(+)
+		            AND A.CMMS_PART_NO   = E.SPMS_PART_NO(+)
+		            AND A.CMMS_EONO      = E.SPMS_EONO(+)
+		            AND A.CMMS_CUMT_NO   = E.SPMS_CUMT_NO(+)
+		            AND E.SPMS_CORP_CODE = F.CHIN_CORP_SUB0(+)
+		            AND E.SPMS_PART_NO   = F.CHIN_PART_SUB0(+)
+		            AND E.SPMS_EONO      = F.CHIN_EONO_SUB0(+)
+		            AND E.SPMS_CUMT_NO   = F.CHIN_CUMT_SUB0(+)
+		            AND (
+		                  F.CHIN_CORP_SUB0
+		                 ,F.CHIN_PART_SUB0
+		                 ,F.CHIN_EONO_SUB0
+		                 ,F.CHIN_CUMT_SUB0
+		                ) IN (
+		                      SELECT DISTINCT CHIN_CORP_SUB0
+		                            ,CHIN_PART_SUB0
+		                            ,CHIN_EONO_SUB0
+		                            ,CHIN_CUMT_SUB0
+		                        FROM CRTBCHIN
+		                       WHERE 1 = 1 
+		                         AND ( CHIN_CORP_CODE
+		                              ,CHIN_COST_GUBN
+		                              ,CHIN_PART_NO
+		                              ,CHIN_EONO
+		                              ,CHIN_CUMT_NO) IN (
+		                                                 SELECT DISTINCT WONM_CORP_01
+		                                                       ,WONM_COST_01
+		                                                       ,WONM_PART_01
+		                                                       ,WONM_EONO_01
+		                                                       ,WONM_CUMT_01
+		                                                   FROM CWTBWONM
+		                                                  WHERE WONM_CORP_CODE = #corp_cd#	
+		                                                    AND WONM_PROJ_MGNO = #proj_mgno#
+		                                                    AND WONM_CORP_01 IS NOT NULL
+		                                                    AND WONM_COST_01 IS NOT NULL
+		                                                )
+		                     UNION
+		                      SELECT DISTINCT WONM_CORP_01 AS CHIN_CORP_SUB0
+		                            ,WONM_PART_01          AS CHIN_PART_SUB0
+		                            ,WONM_EONO_01          AS CHIN_EONO_SUB0
+		                            ,WONM_CUMT_01          AS CHIN_CUMT_SUB0
+		                        FROM CWTBWONM
+		                       WHERE WONM_CORP_CODE = #corp_cd#	
+		                         AND WONM_PROJ_MGNO = #proj_mgno#
+		                         AND WONM_CORP_01 IS NOT NULL
+		                         AND WONM_COST_01 IS NULL
+		                         AND WONM_END1 = 'S' 
+		                     )		            
+		                  ORDER BY CHIN_SORT_KEY0
+		                  ,COMD_COME_CODE
+		                  ,COMD_SORT_KEY0
+		        ) A			   
+		]]>
+	</sql>
+	
+</sql-descriptor>

@@ -1,0 +1,1244 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/cd/cd02">
+    <service id="get.codeInfo" label="코드정보 조회">
+		<select descriptor="bp/tcams/cd/cd02" sql-id="get.CodeInfo.select"
+			parameter-name="param" result-class="list" result-name="palt_kind_list" />
+	</service>
+	
+	<service id="get.vendNameInfo" label="업체명 조회">
+		<script>
+			<![CDATA[
+			System.out.println("#### comd_vend_code#### : " +  $data.param.comd_vend_code);		
+				$data.vend_name  = $jdbc.query("bp/tcams/cd/cd02", "get.vendNameInfo.select", $data.param);
+			]]>
+		</script>
+	</service>	
+		
+	<service id="get.chinlist" label="체인 목록 조회">
+		<script>
+			<![CDATA[
+			var spmsCnt = $jdbc.query("bp/tcams/cd/cd02", "chinlist.spmsCount", $data.searchParam);
+			var chinCnt = $jdbc.query("bp/tcams/cd/cd02", "chinlist.chinCount", $data.searchParam);
+			  
+			// 조회전 체크 : 체인이 구성되어있는가? 구성되지 않았으면 체인구성.
+			if ($data.searchParam.chin_yn == "N" || spmsCnt < 1 || chinCnt < 1) {
+				System.out.println("체인 구성이 없는 경우 IN!!!!!!!!");
+				// 1level 서브파트가 구성되어있는가?
+				if (spmsCnt < 1) {
+					$jdbc.update("bp/tcams/cd/cd02", "chinlist.insert1Lv", $data.searchParam);
+				}
+				
+				// CHIN이 구성되어 있는가?
+				if (chinCnt < 1) {
+					$jdbc.update("bp/tcams/cd/cd02", "chinlist.insertChin1Lv", $data.searchParam);
+				}
+				 
+			}
+			
+			$data.chinList = $jdbc.queryList("bp/tcams/cd/cd02", "chinlist.select", $data.searchParam);
+			
+			
+			var row_use_yn = new Boolean();
+			var row_chk = new Boolean();
+			var org_sort_key0 = 0; 
+			var org_levl = 0;
+			
+			var new_sort_key0 = 0; 
+			var new_levl = 0;				
+			row_use_yn = true;
+			row_chk    = false;
+			
+			// 레벨 체크[단가구분이 존재하는 경우 리스트에서 컨트롤 막기 위한 처리]
+			for (var i=0; i < $data.chinList.size(); i++ ) {
+				// 각 row별 정보 기록(비교를 위해서)
+				new_levl      = parseInt($data.chinList[i].comd_levl);
+				new_sort_key0 = parseInt($data.chinList[i].comd_sort_key0);
+				/*
+				 * 1레벨도 단가구분 선택 가능 하도록 수정 처리
+				if (i == 0) {
+					$data.chinList[i].comd_use_yn = 'Y';
+					continue;
+				}
+				*/
+				// row check가 시작되면 하위 레벨에 있는 단가 구분은 무시하도록 처리
+				if (row_chk == false && ($data.chinList[i].comd_pims_appl == 'A' || $data.chinList[i].comd_pims_appl == 'M' || $data.chinList[i].comd_pims_appl == 'U') ) {
+					row_use_yn = false;
+					//row check 시작
+					row_chk    = true;
+					org_levl      = parseInt($data.chinList[i].comd_levl);
+					org_sort_key0 = parseInt($data.chinList[i].comd_sort_key0);
+					$data.chinList[i].comd_use_yn = 'Y'; 
+					continue;
+				}
+				if (row_use_yn == false) {
+					if (new_levl > org_levl && new_sort_key0 > org_sort_key0) {
+						$data.chinList[i].comd_use_yn = 'N';
+					} else if (new_levl <= org_levl) {
+						row_use_yn = true;
+						//row check 해제처리 
+						row_chk    = false;
+						$data.chinList[i].comd_use_yn = 'Y';
+					}
+				} else {
+					$data.chinList[i].comd_use_yn = 'Y';
+				}
+			}			
+			
+			System.out.println("$data.chinList : " + $data.chinList.size());
+			]]>
+		</script>
+	</service>
+
+	<service id="update.RequiredInfo" label="필수 정보 업데이트 ">
+		<script>
+			<![CDATA[
+			try {
+				$data.result = new Map();
+				
+				// 1레벨의 경우 무조건 END의 정보로 필수 입력정보를 갱신한다. 
+				var updateCount1 = $jdbc.update("bp/tcams/cd/cd02", "update.RequiredInfo1Lv", $data.updates);
+				
+				if (updateCount1 == 0) {
+					System.out.println("update.RequiredInfo updateCount1 == 0");
+				}
+			
+				// 1레벨 이상의 경우 체인에 공법에 필요한 필수 입력정보가 누락되어있는 경우 END에서 가져온다. 
+				var updateCount2 = $jdbc.update("bp/tcams/cd/cd02", "update.RequiredInfo", $data.updates);
+				
+				if (updateCount2 == 0) {
+					System.out.println("update.RequiredInfo updateCount2 == 0");
+				}				
+				$data.result.MESG_CODE = "SA-001";
+			} catch (e) {
+				var rollback = new Map();
+				$data.result.MESG_CODE = 'SA-002';
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+			]]>
+		</script>
+	</service>
+
+	<!-- 추가 -->
+	<service id="insert.chinlist" label="CHIN INSERT">
+		<script>
+		<![CDATA[
+			$data.result = new Map();
+			var result="";
+			try {
+			
+			    $logger.info($data.param);
+			    
+				// INSERT 먼저 처리시 SORT_KEY0 겹치는 문제발생
+				// UPDATE 먼저 처리후 INSERT 처리할 것(INSERT먼저 처리해야할 경우 프로시저 수정)
+				
+				// UPDATE
+				for (var i=0; $data.param.size() > i ; i++) {
+					if(i>0 && $data.param[i].eono_check=='Y'){  //EONO 변경시
+						result = $jdbc.call("bp/tcams/cd/cd02", "update.chineono", $data.param[i]);
+					}else{	
+						if($data.param[i].eono_check!='Y'){
+							if($data.param[i].editstatus == 'updated' || $data.param[i].editstatus == 'deleted'){//UPDATE
+								result = $jdbc.call("bp/tcams/cd/cd02", "update.chinlist", $data.param[i]);					
+							}
+						}
+					}
+					
+					$data.result = result;
+					if(result.MESG_CODE == 'SA-002') throw e;
+					
+				}
+				// INSERT
+				for (var i=0; $data.param.size() > i ; i++) {
+					if(i>0 && $data.param[i].eono_check=='Y'){  //EONO 변경시
+						result = $jdbc.call("bp/tcams/cd/cd02", "update.chineono", $data.param[i]);
+					}else{	
+						if($data.param[i].eono_check!='Y'){
+							if($data.param[i].editstatus == 'created'){//INSERT
+								result = $jdbc.call("bp/tcams/cd/cd02", "insert.chinlist", $data.param[i]);						
+							}
+						}
+					}
+					
+					$data.result = result;
+					if(result.MESG_CODE == 'SA-002') throw e;
+					
+				}
+				// DELETE
+				for (var i=0; $data.param.size() > i ; i++) {
+					if($data.param[i].eono_check!='Y'){
+						if($data.param[i].editstatus == 'deleted'){//DELETE
+							result = $jdbc.call("bp/tcams/ct/ct02", "delete.chinlist", $data.param[i]);
+						}
+					}
+					$data.result = result;
+					if(result.MESG_CODE == 'SA-002') throw e;
+				}
+			} catch (e) {
+				//System.out.println(e);			
+					
+				if(result.MESG_CODE == 'SA-002'){
+					$data.result.MESG_CODE = result.MESG_CODE;
+					$data.result.MESG      = result.MESG;
+					$data.result.SQL0_CODE = result.SQL0_CODE;
+					$data.result.PRGM_ID   = result.PRGM_ID;
+					$data.result.LINE_NO   = result.LINE_NO;
+				}else{
+				
+					$data.result.MESG = '계산을 실패하였습니다.';
+					$data.result.MESG_CODE = 'SA-002';
+					$data.result.PRGM_ID = 'CHIN';		
+					$data.result.LINE_NO = 0;
+					
+					var index = e.message.indexOf('JDBC');
+					if ("JDBC-11048" == e.message.substr(index, 10)) {
+						$data.result.SQL0_CODE='JDBC-11048';
+						$data.result.MESG="수치 또는 값 오류<br>* 숫자 정도가 너무 큽니다<br>* 입력값을 다시 확인 하시길 바랍니다!";
+					} else if ("JDBC-10005" == e.message.substr(index, 10)) {
+						$data.result.SQL0_CODE='JDBC-10005';
+						$data.result.MESG="NULL을 입력할 수 없습니다.";
+					} else if ("JDBC-10007" == e.message.substr(index, 10)) {
+						$data.result.MESG = "중복된 데이터가 존재합니다.";
+					} else if ("JDBC-8030" == e.message.substr(index, 9)) {
+						$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+					} else {
+						$data.result.MESG = e.message;
+					}
+										
+				}
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+		]]>
+		</script>
+	</service>
+
+	<service id="eo.saveEONO" label="EONO변경">
+		<script>
+		<![CDATA[
+			$data.result = new Map();
+			var result;
+			try{			
+				result = $jdbc.call("bp/tcams/cd/cd02", "update.eonoChange", $data.param);
+				if(result.MESG_CODE == 'SA-002') throw e;
+				$data.result = result;
+				var cumt_no = result.emst_cumt_no;
+				System.out.println("#### O_CUMT_NO#### : " + result.emst_cumt_no);			
+				for (var i=1; $data.list.size() > i ; i++) {//레벨2부터 CHIN 생성
+					$data.list[i].comd_eono_endi = $data.list[0].comd_eono_sub0;
+					$data.list[i].comd_cumt_endi = $data.result.emst_cumt_no;
+					System.out.println("#### O_CUMT_NO222#### : " + $data.list[i].emst_cumt_no);	
+					result = $jdbc.call("bp/tcams/cd/cd02", "insert.chinlist", $data.list[i]);
+					if(result.MESG_CODE == 'SA-002') throw e;	
+				}
+				$data.result = result;
+				$data.result.emst_cumt_no = cumt_no;
+			}catch(e){
+					
+				if(result.MESG_CODE == 'SA-002'){
+				    $data.result.MESG_CODE = result.MESG_CODE;
+				    $data.result.MESG      = result.MESG;
+				    $data.result.SQL0_CODE = result.SQL0_CODE;
+				    $data.result.PRGM_ID   = result.PRGM_ID;
+				    $data.result.LINE_NO   = result.LINE_NO;
+				}else{									
+					$data.result.MESG = 'EONO변경을 실패하였습니다.';
+					$data.result.MESG_CODE = 'SA-002';
+					$data.result.PRGM_ID = 'CHIN';		
+					$data.result.LINE_NO = 0;
+					var index = e.message.indexOf('JDBC');
+					if ("JDBC-11048" == e.message.substr(index, 10)) {
+						$data.result.SQL0_CODE='ORA-06502';
+						$data.result.MESG="수치 또는 값 오류\n* 숫자 정도가 너무 큽니다\n* 입력값을 다시 확인 하시길 바랍니다!";
+					}
+					/*
+					 * G_Y_D 오류 코드 매칭이 어려워 임시로 주석처리
+					if ("ORA-06550" == e.message.substr(index, 9) || "ORA-00936" == e.message.substr(index, 9)) {
+						$data.calc_Result.SQL0_CODE='ORA-06550';
+						$data.calc_Result.MESG="누락된 표현식\n필수값을 확인하십시오!";
+					}
+					*/
+				}
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);			
+			}
+		]]>
+		</script>
+	</service>
+
+	<!-- 삭제 -->
+	<service id="delete.chinlist" label="CHIN DELETE">
+		<script>
+		<![CDATA[
+			try {
+				
+				// DELETE
+				for (var i=0; $data.paramD.size() > i ; i++) {
+					
+					var result = $jdbc.call("bp/tcams/cd/cd02", "delete.chinlist", $data.paramD[i]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.paramD[i].comd_part_sub0;
+					$data.result.CURR_ROW  = i;
+					
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+				} // end for
+				
+			} catch (e) {
+				var rollback = new Map();
+				System.out.println("#### ERROR PRGM_ID #### : " + result.PRGM_ID);				
+				System.out.println("#### ERROR MESG    #### : " + result.LINE_NO);
+				System.out.println("#### ERROR MESG    #### : " + result.MESG);
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			} finally {
+				// 저장이 모두 성공했을 경우 여기로 타야한다.
+				//System.out.println("#### FINALLY #### : " + result.MESG_CODE);  
+				//System.out.println("#### FINALLY #### : " + result.LINE_NO);
+			
+			}
+		]]>
+		</script>
+	</service>
+
+	<service id="get.repylist" label="금형비 계산 조회">
+		<script>
+			<![CDATA[
+				$data.repyList = $jdbc.queryList("bp/tcams/cd/cd02", "repylist.select", $data.searchParam);
+				
+				$data.repySum = $jdbc.query("bp/tcams/cd/cd02", "repylist.select2", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<!-- 저장 -->
+
+	<service id="save.repylist" label="금형비 저장">
+		<script>
+		<![CDATA[
+			
+			try {
+				
+				// INSERT
+				for (var i=0; $data.paramI.size() > i ; i++) {
+					
+					var result = $jdbc.call("bp/tcams/cd/cd02", "insert.repylist", $data.paramI[i]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.paramI[i].comd_part_no;
+					$data.result.CURR_ROW  = i;
+					
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+				}
+				
+				
+				// UPDATE
+				for (var j=0; $data.paramU.size() > j ; j++) {
+
+					var result = $jdbc.call("bp/tcams/cd/cd02", "update.repylist", $data.paramU[j]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.paramU[j].comd_part_no;
+					$data.result.CURR_ROW  = j;
+
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+				} //end for
+				
+				
+				// 기타비 재계산 프로시저 자리 
+				
+				
+				
+			} catch (e) {
+				var rollback = new Map();
+				System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+				System.out.println("#### ERROR MESG #### : " + result.MESG);
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+						
+		]]>
+		</script>
+	</service>
+
+	<!-- 삭제 -->
+	<service id="delete.repylist" label="금형비 삭제">
+		<script>
+		<![CDATA[
+			
+			try {
+				
+				// DELETE
+				for (var j=0; $data.param.size() > j ; j++) {
+					
+					var result = $jdbc.call("bp/tcams/cd/cd02", "delete.repylist", $data.param[j]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.param[j].comd_part_no;
+					$data.result.CURR_ROW  = j;
+					
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+				} // end for
+
+				// 기타비 재계산 프로시저 자리 
+								
+			} catch (e) {
+				var rollback = new Map();
+				System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+				System.out.println("#### ERROR MESG #### : " + result.MESG   );
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+						
+		]]>
+		</script>
+	</service>
+
+	<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+	<service id="get.transPaltInfo" label="운반비 / 파렛트 비 데이터 조회">
+		<script>
+			<![CDATA[
+				if ($data.params.proc_type == "E") {
+					$data.transPalt_info = $jdbc.query("bp/tcams/cd/cd02", "get.transPaltInfo.select", $data.params);
+				} else {
+					$data.transPalt_info = $jdbc.query("bp/tcams/cd/cd02", "get.transPaltInfo.select.sub", $data.params);
+				}
+				
+			]]>
+		</script>
+	</service>
+
+	<service id="get.transPaltInfoCount" label="운반비 / 파렛트 비 입력데이터조회">
+		<select descriptor="bp/tcams/cd/cd02" sql-id="get.transPaltInfo.count"
+			parameter-name="params" result-class="map" result-name="transPalt_count" />
+	</service>
+	
+	<service id="get.transPaltCheckInfo" label="불량비 적용공정 조회">
+		<select descriptor="bp/tcams/cd/cd02" sql-id="get.transPaltCheckInfo.select"
+			parameter-name="params" result-class="map" result-name="transPalt_check" />
+	</service>	
+
+	<service id="get.combo_rnd0.list" label="기타비  R&#xa;D콤보박스 목록조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/tcams/cd/cd02", "rdgbtype.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.combo_ryt0.list" label="기타비  RTY 콤보박스 목록조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/tcams/cd/cd02", "rtgbtype.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+
+	<service id="get.basic.select" label="기타비 조회 (종민)">
+		<script>
+			<![CDATA[
+			
+				if ($data.param.comd_etc0_gubn == 'END') {
+					$data.result = $jdbc.query("bp/tcams/cd/cd02", "get.basic.select1", $data.param)
+					
+					//$data.resultSum = $jdbc.query("bp/tcams/cd/cd02", "get.basic.select1_1", $data.param)
+					
+					
+				} else if ($data.param.comd_etc0_gubn == 'SUB') {
+					$data.result = $jdbc.query("bp/tcams/cd/cd02", "get.basic.select2", $data.param)
+					
+					//$data.resultSum = $jdbc.query("bp/tcams/cd/cd02", "get.basic.select1_1", $data.param)
+					
+				}
+			
+			]]>
+		</script>
+	</service>
+
+	<service id="get.basic.select1" label="기타비 조회 (재현)">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.query("bp/tcams/cd/cd02", "get.basic.select1", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="calc.cost.insert" label="계산실행전 insert(종민)">
+		<script>
+			<![CDATA[
+				
+				// END 기타비 경우
+				//System.out.println("#### data.param.comd_etc0_gubn: " + $data.param.comd_etc0_gubn);
+				//System.out.println("#### $data.param.etc_origin_yn: " + $data.param.etc_origin_yn);
+
+				if ($data.param.etc_origin_yn == null) {
+					$data.param.etc_origin_yn = "N";
+				}
+				
+				if ($data.param.comd_etc0_gubn == 'END') {
+				
+					if ($data.param.etc_origin_yn == 'N') {
+						$jdbc.update("bp/tcams/cd/cd02", "calc.cost.end.insert", $data.param)
+					} else {
+						$jdbc.update("bp/tcams/cd/cd02", "calc.cost.end.update", $data.param)
+					}
+				
+				// SUB 기타비 경우	
+				} else if ($data.param.comd_etc0_gubn == 'SUB') {
+					
+					if ($data.param.etc_origin_yn == 'N') {
+						$jdbc.update("bp/tcams/cd/cd02", "calc.cost.sub.insert", $data.param)
+					} else {
+						$jdbc.update("bp/tcams/cd/cd02", "calc.cost.sub.update", $data.param)
+					}
+					
+				} else {
+					//System.out.println("#### ERROR : 유효하지 않은 END/SUB 구분값 입니다. ");
+					
+				} 
+			]]>
+		</script>
+	</service>
+
+	<service id="calc.cost.exec" label="계산실행(종민)">
+		<script>
+			<![CDATA[
+				try {
+				
+					var result = $jdbc.call("bp/tcams/cd/cd02", "calc.cost.exec", $data.param);
+					
+					$data.result = result;
+					
+				} catch (e) {
+					var rollback = new Map();
+					System.out.println("##########################################");
+					System.out.println("#### LINE_NO   : " + result.LINE_NO);
+					System.out.println("#### MESG_CODE : " + result.MESG_CODE);
+					System.out.println("#### MESG      : " + result.MESG);
+					System.out.println("##########################################");
+					
+					$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+				}
+				
+			]]>
+		</script>
+	</service>
+
+	<service id="check.spms" label="기타비 입력전 check">
+		<script>
+			<![CDATA[
+try {
+	var result = $jdbc.call("bp/tcams/cd/cd02", "check.spms", $data.param);
+	
+	$logger.info(result);
+	
+	if (result.MESG_CODE == 'SA-002') {
+		throw e;
+	}
+	
+	if ($data.param.comd_flag_gubn == "END") {                                             // END 기타비 계산 시 추가 로직 이용
+		var chinList = $jdbc.queryList("bp/tcams/cd/cd02", "check.eetc", $data.param);     // CHAIN 건수를 조회
+		
+		for (var i=0; i<chinList.size(); i++) {
+			if (chinList[i].comd_pims_appl == "A") {                                       // 단가구분이 직접입력가 인 경우
+				if (parseInt(chinList[i].comd_pims_pric) == 0) {                           // 적용 단가가 없으면
+				    $logger.info(chinList[i]);
+				    $logger.info("i--> " + i);
+					result.MESG_CODE = "SA-003";
+					result.MESG      = "SUB 집계내역이 존재하지 않는 PART가 존재합니다.</br>(SUB PART : " + chinList[i].comd_part_sub0 + ")";
+					break;
+				} else {                                                                   // 적용 단가가 있고
+					if (parseInt(chinList[i].comd_cmms_cnt0) > 0) {                        // 공법이 매달려 있으면
+						if (chinList.size() == 1) {                                        // SUB PART가 없는 경우
+							result.MESG_CODE = "SA-000";
+							result.MESG      = "공법등록 내용이 존재합니다.\n실행하시겠습니까?";
+						} else {                                                           // SUB PART가 있는 경우
+							result.MESG_CODE = "SA-000";
+							result.MESG      = "SUB 집계내역이 존재하지 않는 PART가 존재합니다.\n(SUB PART : " + chinList[i].comd_part_sub0 + ")";
+						}
+					}
+				}
+			}
+		}
+	}
+	
+} catch (e) {
+    $logger.info("Error--> " + e.message);
+	var rollback = new Map();
+	
+	$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+} finally {
+	$data.result = result;
+}
+			]]>
+		</script>
+	</service>
+
+	<service id="exec.esum" label="end 집계">
+		<script>
+			<![CDATA[
+				try {
+				
+					var result = $jdbc.call("bp/tcams/cd/cd02", "exec.esum", $data.param);
+					
+					$data.result = result;
+					
+					
+					if (result.MESG_CODE == 'SA-002') {
+						throw e;
+					} 
+					System.out.println("##########################################");
+					System.out.println("#### LINE_NO   : " + result.LINE_NO);
+					System.out.println("#### MESG_CODE : " + result.MESG_CODE);
+					System.out.println("#### MESG      : " + result.MESG);
+					System.out.println("##########################################");
+					
+				} catch (e) {
+					var rollback = new Map();
+					System.out.println("##########################################");
+					System.out.println("#### LINE_NO   : " + result.LINE_NO);
+					System.out.println("#### MESG_CODE : " + result.MESG_CODE);
+					System.out.println("#### MESG      : " + result.MESG);
+					System.out.println("##########################################");
+					
+					$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+				}
+				
+			]]>
+		</script>
+	</service>
+	get.TnszInfo
+
+	<!-- 운반비/파렛트비용 -->
+	<service id="get.Tnszlist" label="운반차량  파렛트 비 정보조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/tcams/cd/cd02", "TnszInfo.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="save.TransPalt" label="운반비  파렛트 비 입력데이터 저장">
+		<script>
+		<![CDATA[
+		    $logger.info($data.params);
+			var result = $jdbc.call("bp/tcams/cd/cd02", "transPalt.insert", $data.params);
+			$data.messageCode = result;
+			//System.out.println("저장 결과 메시지 : "+result.MESG_CODE);
+		]]>
+		</script>
+	</service>
+
+	<service id="get.TransCalcRes" label="운반비  파렛트 비 계산 및 결과값 저장">
+		<script>
+		<![CDATA[
+		    $logger.info($data.params);
+		    
+			var result = $jdbc.call("bp/tcams/cd/cd02", "get.transCalcRes", $data.params);
+			$data.messageCode = result;
+			//System.out.println("LINE      : "+result.LINE_NO);
+			//System.out.println("메시지  CODE: "+result.MESG_CODE);
+			//System.out.println("계산결과 메시지 : "+result.MESG);
+			
+			if (result.MESG_CODE == 'SA-002') {
+				var rollback = new Map();			
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+		]]>
+		</script>
+	</service>
+
+	<service id="delete.TransPalt" label="초기화">
+		<script>
+			<![CDATA[
+			$jdbc.update("bp/tcams/cd/cd02", "delete.TransPalt", $data.params)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.periodlist" label="주기정보 조회">
+		<script>
+			<![CDATA[
+				$data.periodList = $jdbc.queryList("bp/tcams/cd/cd02", "periodlist.select", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<service id="get.periodlist_endpart" label="END PART 별 주기정보 조회">
+		<script>
+			<![CDATA[
+				$data.periodList = $jdbc.queryList("bp/tcams/cd/cd02", "periodlist_endpart.select", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<service id="update.periodlist" label="주기정보 저장">
+		<script>
+			<![CDATA[
+				$data.result = new Map();
+				try{
+					var result = $jdbc.update("bp/tcams/cd/cd02", "periodlist.update", $data.updates);
+					$data.result.MESG="저장되었습니다.";
+				} catch (e) {
+					System.out.println(e);
+					var index = e.message.indexOf('ORA');
+					if ("ORA-12899" == e.message.substr(index, 9)) {
+						$data.result.MESG="* 입력값이 너무 큽니다\n* 한글기준100자입니다.";
+					}
+					
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+					
+				}
+		]]>
+		</script>
+	</service>
+	<service id="insert.periodlist" label="주기정보 추가">
+		<script>
+			<![CDATA[
+				$data.result = new Map();
+				try{
+					var result = $jdbc.update("bp/tcams/cd/cd02", "periodlist.insert", $data.inserts);
+					$data.result.MESG="저장되었습니다.";
+				} catch (e) {
+					System.out.println(e);
+					var index = e.message.indexOf('JDBC');
+					if ("JDBC-11048" == e.message.substr(index, 10)) {
+						$data.result.MESG="* 입력값이 너무 큽니다\n* 한글기준100자입니다.";
+					}
+					
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+					
+				}
+		]]>
+		</script>
+	</service>
+	<service id="delete.periodlist" label="주기정보 삭제">
+		<script>
+			<![CDATA[
+				$data.result = new Map();
+				try{
+					var result = $jdbc.update("bp/tcams/cd/cd02", "periodlist.delete", $data.deletes);
+					$data.result.MESG="삭제되었습니다.";
+				} catch (e) {
+					System.out.println(e);
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+				}
+		]]>
+		</script>
+	</service>	
+
+	<!-- 엑셀 업로드 -->
+	<service id="start.verify" label="검증">
+		<script>
+			<![CDATA[
+				//System.out.println("##########################################");
+				//System.out.println("##########################################");
+				//System.out.println("#### : " + $data.param.size());
+				$data.result = new Map();
+				
+				// 레벨 검증
+				var fLevel = null;
+				var bLevel = null;
+				
+				try {
+					$data.result.PGM_ID  = 'service[start.verify]';
+					
+					for(var i=0; i < $data.param.size(); i++) {
+						
+						// 이부분은 존재여부는 차후결정
+						if($data.param[0].level != "1") {
+							$data.result.MESG_CODE = "SA-002";
+							$data.result.MESG      = '최상위에는 1레벨이어야 합니다.';
+							$data.result.LINE_NO   = (i + 1);
+							$data.result.PART_NO   = $data.param[i].part_no;
+							throw e;
+						}
+						
+						if (i == 0) {
+							fLevel = $data.param[0].level;
+						} else {
+							fLevel = $data.param[(i-1)].level;
+							bLevel = $data.param[i].level;
+							
+							if($data.param[i].level == 1) {
+								//System.out.println("#### : " + $data.param[i].level);
+								//System.out.println("#### : " + $data.param[i].part_no);
+								
+								$data.result.MESG_CODE = 'SA-002';
+								$data.result.MESG      = '1레벨은 최상위에만 존재할 수 있습니다.';
+								$data.result.LINE_NO   = (i + 1);
+								$data.result.PART_NO   = $data.param[i].part_no;
+								throw e;
+							}
+							
+							// 뒤에 레벨이 앞에 레벨 보다 큰 값인 경우
+							if(fLevel < bLevel) {
+								//System.out.println("##########################################");
+								//System.out.println("##########################################");
+								//System.out.println("#### : " + (bLevel - fLevel));
+
+								if( (bLevel - fLevel) != 1) {
+									$data.result.MESG_CODE = 'SA-002';
+									$data.result.MESG      = '유효하지 않은 레벨 구조입니다.';
+									$data.result.LINE_NO   = (i + 1);
+									$data.result.PART_NO   = $data.param[i].part_no;
+									throw e;
+								}
+							// 앞에 레벨이 뒤에 레벨 보다 큰 값인 경우
+							} else if(fLevel > bLevel) {
+								//--> 정상	
+							} else {
+								//--> 정상
+							}
+							
+						}
+						
+						// 레벨 체크 정상인경우
+						if ($data.result.MESG_CODE != 'SA-002') {
+							$data.result = $jdbc.call("bp/tcams/cd/cd02", "start.verify", $data.param[i]);
+							
+							if ($data.result.MESG_CODE == 'SA-002') {
+								$data.result.PART_NO   = $data.param[i].part_no;
+								throw e;
+							}
+						}
+						
+						$data.result.MESG_CODE = 'SA-001';
+						$data.result.MESG = '[정상] UPLOAD가 가능한 형태입니다.';
+					} // end for
+				} catch (e) {
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+				}
+				
+				
+			]]>
+		</script>
+	</service>
+
+	<service id="start.upload" label="삭제 후 업로드">
+		<script>
+			<![CDATA[
+				$data.message = new Map();
+				$data.message.PRGM_ID   = 'service';
+				$data.message.LINE_NO   = 'start.upload';
+				$data.message.MESG_CODE = 'SA-002';
+				$data.message.MESG      = '삭제를 실패였습니다.';
+				$data.message.MESG_CODE = 'SA-002';
+				
+				
+				try {
+					// 1. 삭제
+					// 체인 삭제시 하위레벨도 지우므로 2레벨만 추려서 삭제
+					$data.deletes = $jdbc.queryList("bp/tcams/cd/cd02", "get.delete.data", $data.param);
+
+					// 1레벨은 END ITEM 에서 처리해야 하므로 SKIP
+					for(var i=0; i < $data.deletes.size(); i++) {
+						if ($data.deletes[i].comd_levl == '2') {
+							$data.message = $jdbc.call("bp/tcams/cd/cd02", "delete.chinlist", $data.deletes[i]);
+						}
+						
+						$data.message.PRGM_ID   = 'service';
+						$data.message.LINE_NO   = 'start.upload';
+						$data.message.MESG_CODE = 'SA-001';
+						$data.message.MESG      = '정상적으로 처리되었습니다.';
+						$data.message.MESG_CODE = 'SA-001';
+					}
+					
+					// 지울 데이터가 없으면 정상으로 처리
+					if ($data.deletes.size() == 0) {
+						$data.message.MESG_CODE = 'SA-001';
+					}
+					
+					// 2. 삭제가 이상이 없을때 UPLOADE
+					if ($data.message.MESG_CODE != 'SA-002') {
+						
+						for(var j=0; j < $data.upload.size(); j++) {
+							// 1레벨은 END ITEM 에서 처리해야 하므로 SKIP
+							if ($data.upload[j].level != '1') {
+								$data.message = $jdbc.call("bp/tcams/cd/cd02", "insert.chinlist.excel", $data.upload[j]);
+							}
+							
+							$data.message.PRGM_ID   = 'service';
+							$data.message.LINE_NO   = 'start.upload';
+							$data.message.MESG_CODE = 'SA-001';
+							$data.message.MESG      = '정상적으로 처리되었습니다.';
+							$data.message.MESG_CODE = 'SA-001';
+							
+						}
+						
+						if ($data.message.MESG_CODE == 'SA-002') {
+							throw e;
+						}
+						
+					} else {
+						throw e;
+					}
+				} catch (e) {
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+				} finally {
+					//System.out.println("#### : " + $data.message.PRGM_ID);
+					//System.out.println("#### : " + $data.message.LINE_NO);
+					//System.out.println("#### : " + $data.message.MESG_CODE);
+					//System.out.println("#### : " + $data.message.MESG);
+				}
+				
+			]]>
+		</script>
+	</service>
+
+	<!-- 업체코드 조회 -->
+	<service id="get.vendlist" label="주기정보 조회">
+		<script>
+			<![CDATA[
+				
+				if ($data.searchParam.cb_spcl_vend == "Y"	) {
+					$data.searchParam.spcl_flag = "##SPECIAL VEND##";
+				}
+				
+				if ($data.searchParam.cb_curr_appl == "Y"	) {
+					$data.searchParam.curr_flag = "Y";
+				}
+				$data.vendList = $jdbc.queryList("bp/tcams/cd/cd02", "get.vendlist", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+
+	<service id="getList.upload" label="업로드 데이터 조회">
+		<script>
+            <![CDATA[
+                $data.resultList = $jdbc.queryList("bp/tcams/cd/cd02", "getList.upload", $data.searchParam);
+            ]]>
+		</script>
+	</service>
+
+
+	<service id="save.uploadList" label="Excel Data Insert">
+		<script>
+            <![CDATA[
+                /**
+                 * TRIM 처리
+                 */
+                function trim(str) {
+                    if (str == null) {
+                        return "";
+                    }
+
+                    str = str.replace(/(^\s*)|(\s*$)/g,"");
+                    return str;
+                }
+
+                var beginDataIndex = 1;
+                var insertCount = 0;
+                var level = null;
+				var errorGubn = "S";
+				var commit = new Map();
+				
+                try {
+                    $data.result = new Map();
+ 		
+					
+					// ===============================================================
+                    // 최초에인풋테이블 삭제처리
+                    // ===============================================================
+					var deleteCount = $jdbc.update("bp/tcams/cd/cd02", "delete.upload", $data.searchParam);
+					$jdbc.update("bp/tcams/ca/common", "commit", commit);
+					
+					var comc_corp_code = $data.searchParam.comc_corp_code;
+					var comc_cost_gubn = $data.searchParam.comc_cost_gubn;
+					var comc_part_no   = $data.searchParam.comc_part_no;
+					var comc_eono      = $data.searchParam.comc_eono;
+					var comc_cumt_no   = $data.searchParam.comc_cumt_no;
+					
+					System.out.println("##########################################");
+                    System.out.println("## size : " + $data.uploadList.size());
+                    System.out.println("##########################################");
+                    for (var i = 0; i < $data.uploadList.size(); i++) {
+                    
+                    	System.out.println("## i : " + i);
+                    
+                        level = trim($data.uploadList[i].comd_col1);
+                        
+                        // ===============================================================
+                        // END PART NO가 비어있으면 더이상 데이터가 없다고 판단한다.
+                        // ===============================================================
+                        if (level == "") {
+                            break;
+                        }
+
+                        // ===============================================================
+                        // EO NO를 입력하진 않은 경우에는 E01로 저장한다.
+                        // ===============================================================
+                        if ($data.uploadList[i].comd_col3 == "") {
+                            $data.uploadList[i].comd_col3 = "E01";
+                        }
+						
+						$data.uploadList[i].comc_corp_code = comc_corp_code;
+						$data.uploadList[i].comc_cost_gubn = comc_cost_gubn;
+						$data.uploadList[i].comc_part_no   = comc_part_no;
+						$data.uploadList[i].comc_eono      = comc_eono;
+						$data.uploadList[i].comc_cumt_no   = comc_cumt_no;
+						
+                        $jdbc.update("bp/tcams/cd/cd02", "insert.upload", $data.uploadList[i]);
+                        insertCount++;
+                    }
+
+                    if (insertCount == 0) {
+                        throw new Exception("처리할 데이터가 존재하지 않습니다.");
+                    }
+                    
+                    $data.result.MESG_CODE = "SA-001";
+                   	$data.result.MESG      = "총 " + insertCount + "건 저장 되었습니다.";
+					
+                } catch (e) {
+                    var rollback = new Map();
+                    var msg   = e.message;
+                    var index = msg.indexOf('JDBC');
+					
+					$data.result.ERR_ROW = i;
+					$data.result.MESG = msg;
+                    $data.result.MESG_CODE = 'SA-002';
+                    
+                    System.out.println("##########################################");
+                    System.out.println("## ERROR CODE : " + msg);
+                    System.out.println("##########################################");
+					
+					if ("JDBC-10007" == msg.substr(index, 10)) {
+						$data.result.MESG = "중복된 데이터가 존재합니다.";
+					} else if ("JDBC-11048" == msg.substr(index, 10)) {
+						$data.result.MESG = "허용된 자리수를 초과하였습니다.";					
+					} else if ("JDBC-8030" == msg.substr(index, 9)) {
+						$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+					} else if ("JDBC-10005" == msg.substr(index, 10)) {
+						$data.result.MESG = "NULL을 입력할 수 없습니다.";
+                    } else {
+                      	if (errorGubn == "S") {
+                      		$data.result.MESG = i + "행 처리중 문제가 발생하였습니다.";
+                      	}	
+                    }
+                    
+					$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+                }
+            ]]>
+		</script>
+	</service>
+
+
+	<service id="make.chain" label="체인생성">
+		<script>
+			<![CDATA[
+				var errorGubn = "S";
+				
+				try {
+					$data.result = new Map();
+					$data.result.LINE_NO = "ST-10000";
+
+					// ===================================================
+					// 품목검색 프로시저 실행
+					// ===================================================
+					var result = $jdbc.call("bp/tcams/cd/cd02", "make.chain", $data.searchParam);
+					$data.result.MESG_CODE = result.MESG_CODE;
+					$data.result.LINE_NO   = result.LINE_NO;
+					$data.result.MESG      = result.MESG;
+
+					if ($data.result.MESG_CODE == 'SA-002') {
+						errorGubn = "P";
+						throw new Exception($data.result.MESG);
+					}
+								
+					$data.result.MESG_CODE = "SA-001";
+                    $data.result.MESG      = "체인생성을 완료하였습니다.";
+					
+				} catch (e) {
+                    var rollback = new Map();
+                    var msg   = e.message;
+                    var index = msg.indexOf('JDBC');
+
+					$data.result.MESG = msg;
+                    $data.result.MESG_CODE = 'SA-002';
+                    
+                    System.out.println("##########################################");
+                    System.out.println("## ERROR CODE : " + msg);
+                    System.out.println("##########################################");
+
+					
+					if ("JDBC-10007" == msg.substr(index, 10)) {
+						$data.result.MESG = "중복된 데이터가 존재합니다.";
+					} else if ("JDBC-11048" == msg.substr(index, 10)) {
+						$data.result.MESG = "허용된 자리수를 초과하였습니다.";					
+					} else if ("JDBC-8030" == msg.substr(index, 9)) {
+						$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+					} else if ("JDBC-10005" == msg.substr(index, 10)) {
+						$data.result.MESG = "NULL을 입력할 수 없습니다.";
+                    } else {
+                      	if (errorGubn == "S") {
+                      		$data.result.MESG = "처리중 문제가 발생하였습니다.";
+                      	}	
+                    }
+                    
+					$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+				}
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.trpr" label="운반비 차량TON 조회">
+		<script>
+			<![CDATA[
+			$data.list = $jdbc.queryList("bp/tcams/cd/cd02", "trpr.select", $data.searchParam);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.MPRICInfo" label="부품 구입가 조회">
+		<script>
+			<![CDATA[
+				var map;
+				$data.searchParam.pageRowNum = 50;
+				if($data.searchParam.comd_curr_appl == "Y"){
+					$data.resultList1 = $jdbc.queryList("bp/tcams/cd/cd02", "select.MPRICInfo2", $data.searchParam);
+				} else {
+					$data.resultList1 = $jdbc.queryList("bp/tcams/cd/cd02", "select.MPRICInfo", $data.searchParam);
+				}				
+				
+				System.out.println("resultList1 size::" + $data.resultList1.size());
+				if($data.searchParam.endRowNum == "0"){
+					if($data.searchParam.comd_curr_appl == "Y"){
+						map = $jdbc.query("bp/tcams/cd/cd02","select.MPRICInfo.total2",$data.searchParam);
+					}else {
+						map = $jdbc.query("bp/tcams/cd/cd02","select.MPRICInfo.total",$data.searchParam);
+					}
+					$data.total_row_num = map.total_row_num;				
+				}
+							
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.UPRICInfo" label="사급 판매가 조회">
+		<script>
+			<![CDATA[
+				var map;
+				$data.searchParam.pageRowNum = 50;
+				$data.resultList2 = $jdbc.queryList("bp/tcams/cd/cd02", "select.UPRICInfo", $data.searchParam);
+				
+				if($data.searchParam.endRowNum == "0"){
+					map = $jdbc.query("bp/tcams/cd/cd02","select.UPRICInfo.total",$data.searchParam);
+					$data.total_row_num = map.total_row_num;
+				}			
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.HKSRInfo" label="사급 판매가 조회">
+		<script>
+			<![CDATA[
+				var map;
+				$data.searchParam.pageRowNum = 50;
+				if($data.searchParam.comd_curr_appl){
+					$data.resultList2 = $jdbc.queryList("bp/tcams/cd/cd02", "select.HKSRInfo2", $data.searchParam);
+				} else {
+					$data.resultList2 = $jdbc.queryList("bp/tcams/cd/cd02", "select.HKSRInfo", $data.searchParam);
+				}				
+				
+				if($data.searchParam.endRowNum == "0"){
+					if($data.searchParam.comd_curr_appl){
+						map = $jdbc.query("bp/tcams/cd/cd02","select.HKSRInfo.total2",$data.searchParam);
+					}else {
+						map = $jdbc.query("bp/tcams/cd/cd02","select.HKSRInfo.total",$data.searchParam);
+					}				
+					$data.resultList2.setTotalRowNum(map.total_row_num);
+				}			
+			]]>
+		</script>
+	</service>
+	
+	<service id="save.return" label="진행 상태 반송인 경우, 공법 변경이 발생하면 진행중 상태로 리턴">
+		<script>
+		<![CDATA[
+			try {
+			
+				// 결재자 ID, 결재문서 번호  조회
+				var result = $jdbc.query("bp/tcams/cd/cd02", "get.emstInfo", $data.searchParam);
+								
+				// 조회한 결재자ID, 결재문서 번호 파라미터에 담기
+				$data.searchParam.aprv_id = result.aprv_id;
+				$data.searchParam.aprv_no = result.aprv_no;
+				
+				// 진행상태를 '진행중'으로 되돌리고, 결재 문서를 삭제한다.
+				$jdbc.update("bp/tcams/cd/cd02", "set.return.stat", $data.searchParam);
+
+			} catch (e) {
+				System.out.println(e);
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+		]]>
+		</script>
+	</service>
+	
+	<service id="get.getExchGubnInfoRPC" label="환율 상세 콤보 조회">
+		<script>
+			<![CDATA[
+			    if($data.param.corp_code == null) {
+			        $data.param.corp_code = 'K1';
+			    }
+			    if($data.param.stnd_gubn == null) {
+			        $data.param.stnd_gubn = 'H';
+			    }
+			    
+				$data.resultList = $jdbc.query("bp/tcams/cd/cd02", "get.getExchGubn.select", $data.param);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.getLdcGubnInfoRPC" label="ldc율 상세 콤보 조회">
+		<script>
+			<![CDATA[
+			    if($data.param.corp_code == null) {
+			        $data.param.corp_code = 'K1';
+			    }
+			    if($data.param.stnd_gubn == null) {
+			        $data.param.stnd_gubn = 'H';
+			    }
+				$data.resultList = $jdbc.query("bp/tcams/cd/cd02", "get.getLdcGubn.select", $data.param);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.getBearGubnInfoRPC" label="공통코드 지역,조건,화폐단위 조회">
+		<script>
+			<![CDATA[
+				$data.resultList = $jdbc.queryList("bp/tcams/cd/cd02", "get.getBEARGubn.select", $data.param);
+			]]>
+		</script>
+	</service>	
+	
+	<service id="get.cmctlist" label="다이캐스팅 불량비 조회">
+		<script>
+			<![CDATA[
+				$data.resultList = $jdbc.queryList("bp/tcams/cd/cd02", "get.cmctlist", $data.searchParam);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.moldList" label="금형비 조회">
+		<script>
+			<![CDATA[
+				$data.resultList  = $jdbc.queryList("bp/tcams/cd/cd02", "get.moldList", $data.searchParam);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.wonm.moldList" label="원단위 금형비 전체 조회">
+		<script>
+			<![CDATA[
+				$data.resultList  = $jdbc.queryList("bp/tcams/cd/cd02", "get.wonm.moldList", $data.searchParam);
+			]]>
+		</script>
+	</service>
+	
+</service-descriptor>

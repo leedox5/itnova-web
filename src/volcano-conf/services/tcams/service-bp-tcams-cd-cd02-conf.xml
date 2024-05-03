@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/cd/cd02/conf">
+
+ <service id="getOpt1" label="옵션 조회">
+   <script>
+   <![CDATA[
+	var result = new Map();
+	var opt1 = new List();
+			
+    try {
+        if($data.param.trpt_palt_kind == "A") {
+        	result.disabled = "N";
+        } else {
+            result.disabled = "Y";        
+        }
+        opt1 = $jdbc.queryList("bp/tcams/cd/cd02/conf", "get.opt.1", $data.param);
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+    	$logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+    $data.result = result;
+    $data.opt1 = opt1;			
+   ]]>
+  </script>	
+ </service>
+
+ <declare>
+  <job id="functions">
+   <script>
+    <![CDATA[
+    function saveLog(name, mesg) {
+        var log = new Map();
+        
+        log.table_id = name;
+        log.conts = mesg;
+        log.crt_user = $user.usr_id;        
+        $jdbc.update("bp/tcams/common/DLOG", "insert", log);
+    }
+    ]]>   
+   </script>
+  </job>
+ </declare>
+
+</service-descriptor>
