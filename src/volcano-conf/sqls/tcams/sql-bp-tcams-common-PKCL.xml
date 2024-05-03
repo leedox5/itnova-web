@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/common/PKCL" data-source="tcamsDS">
+
+ <sql id="PK" comment="PK 조회">
+  <![CDATA[
+SELECT B.*
+  FROM USER_CONSTRAINTS  A
+      LEFT OUTER JOIN
+       USER_CONS_COLUMNS B
+      ON    B.TABLE_NAME = A.TABLE_NAME
+        AND B.CONSTRAINT_NAME = A.CONSTRAINT_NAME
+ WHERE A.TABLE_NAME = #pkcl_tabl_id#  
+   AND A.CONSTRAINT_TYPE = 'P'  
+  ]]>
+ </sql>
+
+ <sql id="CHK.COL" comment="COLUMN 조회">
+  <![CDATA[
+WITH T1 (C1, C2, C3, C4) AS (
+ SELECT 'K1', #comd_come_code#, #comd_tabl_id#,  #comd_colm_id# FROM DUAL
+)
+SELECT CASE WHEN B.PKCL_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,B.*  
+  FROM T1 A
+      LEFT OUTER JOIN
+       CITBPKCL B
+      ON    PKCL_CORP_CODE = A.C1
+        AND TRIM(PKCL_COME_CODE) = A.C2
+        AND TRIM(PKCL_TABL_ID)   = A.C3
+        AND PKCL_COLM_ID   = A.C4       
+  ]]>
+ </sql>
+
+ <sql id="CHK.DICT" comment="공통 조회">
+  <![CDATA[
+WITH T1 (C1, C2, C3, C4, C5, C6) AS (
+       SELECT 'CORP_CODE', '법인코드', 'VARCHAR',  '8', 'C', '60' FROM DUAL 
+ UNION SELECT 'STND_GUBN', '표준구분', 'CHAR'   ,  '1', 'C', '60' FROM DUAL 
+ UNION SELECT 'STND_DEGR', '개정차수', 'VARCHAR', '10', 'C', '60' FROM DUAL 
+ UNION SELECT 'UPDT_CMAN', '수정자'  , 'VARCHAR',  '8', 'C', '80' FROM DUAL 
+ UNION SELECT 'UPDT_DATE', '수정일'  , 'VARCHAR', '20', 'C', '80' FROM DUAL 
+ UNION SELECT 'INIT_CMAN', '등록자'  , 'VARCHAR',  '8', 'C', '80' FROM DUAL 
+ UNION SELECT 'INIT_DATE', '등록일'  , 'VARCHAR', '20', 'C', '80' FROM DUAL 
+)
+SELECT *  
+  FROM T1 A
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBPKCL (
+  PKCL_CORP_CODE
+ ,PKCL_COME_CODE
+ ,PKCL_TABL_ID
+ ,PKCL_COLM_ID
+ ,PKCL_SORT_NUMB
+ ,PKCL_COLM_NAME
+ ,PKCL_DATA_TYPE
+ ,PKCL_DATA_LENG
+ ,PKCL_COLM_ALGN
+ ,PKCL_WITH_SCRN
+ ,PKCL_DISP_ALLW
+ ,PKCL_UPDT_DATE
+ ,PKCL_UPDT_CMAN
+ ,PKCL_INIT_DATE
+ ,PKCL_INIT_CMAN  
+) VALUES ( 
+  #pkcl_corp_code#
+ ,#pkcl_come_code#
+ ,#pkcl_tabl_id#
+ ,#pkcl_colm_id#
+ ,#pkcl_sort_numb#
+ ,#pkcl_colm_name#
+ ,#pkcl_data_type#
+ ,#pkcl_data_leng#
+ ,#pkcl_colm_algn#
+ ,#pkcl_with_scrn#
+ ,#pkcl_disp_allw#
+ ,#pkcl_updt_date#
+ ,#pkcl_updt_cman#
+ ,#pkcl_init_date#
+ ,#pkcl_init_cman#  
+)
+  ]]>
+ </sql> 
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CITBPKCL
+   SET PKCL_SORT_NUMB = #pkcl_sort_numb#
+      ,PKCL_COLM_NAME = #pkcl_colm_name#
+      ,PKCL_DATA_TYPE = #pkcl_data_type#
+      ,PKCL_DATA_LENG = #pkcl_data_leng#
+      ,PKCL_COLM_ALGN = #pkcl_colm_algn#
+      ,PKCL_WITH_SCRN = #pkcl_with_scrn#
+      ,PKCL_DISP_ALLW = #pkcl_disp_allw#
+      ,PKCL_UPDT_DATE = TO_CHAR(SYSDATE, 'YYYYMMDD HH24:MI:SS')
+      ,PKCL_UPDT_CMAN = 'SYSTEMPG'
+ WHERE PKCL_CORP_CODE = #pkcl_corp_code#
+   AND TRIM(PKCL_COME_CODE) = #pkcl_come_code#
+   AND PKCL_TABL_ID   = #pkcl_tabl_id#  
+   AND PKCL_COLM_ID   = #pkcl_colm_id#    
+  ]]>
+ </sql>
+
+</sql-descriptor> 
