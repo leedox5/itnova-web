@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ci/common/conf">
+
+ <declare>
+  <job id="functions">
+   <script>
+    <![CDATA[
+    function saveLog(name, mesg) {
+        var log = new Map();
+        
+        log.table_id = name;
+        log.conts = mesg;
+        log.crt_user = $user.usr_id;        
+        $jdbc.update("bp/tcams/common/DLOG", "insert", log);
+    }
+    ]]>   
+   </script>
+  </job>
+ </declare>
+
+ <service id="getGrid" label="CONF">
+  <script>
+   <![CDATA[
+    var result = new Map();
+     
+    $data.param.usr_id = $user.usr_id;
+    
+    try {
+		var cols = $jdbc.queryList("bp/tcams/common/PKMS", "COLS" ,null);
+        var chks = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select", null);
+        
+		result.cols = cols;
+		result.devAuth = chks[0].dev_auth;
+
+		result.code = "Y";
+		result.message = "OK";	    
+    } catch(e) {
+    	$logger.info(e.message);
+    	
+    	result.code = "E";
+        result.message = e.message;
+    }
+    
+    $data.result = result;    
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConf" label="CONF">
+  <script>
+   <![CDATA[
+    importPackage(Packages.kr.co.itnova.conf);
+
+    var result = new Map();
+    var param = $data.param;
+     
+    param.usr_id = $user.usr_id;
+    
+    try {
+        $logger.info(param);
+        
+	    result = ConfigLoader(param.conf_id).getObj().check(param);        
+    } catch(e) {
+    	$logger.info(e.message);
+    	
+    	result.code = "E";
+        result.message = e.message;
+    }
+    
+    $data.result = result;    
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConf_" label="CONF">
+  <script>
+   <![CDATA[
+    var result = new Map();
+     
+    result.MESG_CODE = "SA-001";
+    result.MESG = "OK";
+
+    $service.callJob("functions");
+     
+    try {
+        $logger.info($data.param);
+       
+        var come_code = $data.param.pkcl_come_code;
+        var pkcl_tabl_id = $data.param.pkcl_tabl_id;
+
+     	saveLog(come_code + ".PKCL." + pkcl_tabl_id, "START...")
+                
+     	//throw new Exception("Ready to work...")
+		
+		var c_chk = 0;
+		var c_add = 0;
+		var c_upd = 0;
+		var c_cmt_t = 0;
+		var c_cmt_r = 0;
+     	
+        var datas = $jdbc.queryList("bp/tcams/ca/conf/PKCL/" + pkcl_tabl_id, "select", null);
+        for(var j = 0 ; j < datas.size() ; j++) {
+            c_chk++;
+            if(datas[j].chk_yn == "N") {
+                $jdbc.update("bp/tcams/ca/conf/PKCL/" + pkcl_tabl_id, "insert", datas[j]);
+                c_add++;
+            } else {
+                if(datas[j].updated_yn == "N") {
+            	    $jdbc.update("bp/tcams/ca/conf/PKCL/" + pkcl_tabl_id, "update", datas[j]);
+            	    c_upd++;
+                }
+                if(datas[j].comments_yn == "N") {
+                    if(datas[j].pkcl_colm_name == "TBD") {
+                        c_cmt_t++;
+                    } else {
+                        $jdbc.update("bp/tcams/ca/conf/PKCL/" + pkcl_tabl_id, "comment", datas[j]);
+                        c_cmt_r++;
+                    }
+                }
+            }
+        }
+        saveLog(come_code + ".PKCL." + pkcl_tabl_id + ".STAT", "CHK:" + c_chk + " ADD:" + c_add + " UPD:" + c_upd) ;
+        saveLog(come_code + ".PKCL." + pkcl_tabl_id + ".DESC", "TAR:" + c_cmt_t + " RUN:" + c_cmt_r);
+    } catch(e) {
+        $logger.info(e);
+        
+        saveLog(come_code + ".PKCL." + pkcl_tabl_id + ".ERROR", e.message);
+        
+        result.MESG_CODE = "SA-002";
+        result.MESG      = e.message;
+    }
+     
+  	saveLog(come_code + ".PKCL." + pkcl_tabl_id, "FINISH")
+     
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfDescTbl" label="CONF">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    $service.callJob("functions");
+     
+    try {
+    	var row = $data.row;
+       
+     	saveLog("DESC." + row.comd_tabl_id, "START...")
+     	
+        if(row.desc_yn == "N") {
+            if(row.comd_colm_name == "TBD") {
+                saveLog("DESC." + row.comd_tabl_id, "TBD");
+            } else {
+                $jdbc.update("bp/tcams/common/COMMENT", "comment.table", row);
+                saveLog("DESC." + row.comd_tabl_id, row.comd_tabl_name);
+            }
+        } else if(row.desc_yn == "E") {
+            row.comd_tabl_name = row.cmt;
+            $jdbc.update("bp/tcams/common/COMMENT", "comment.table", row);
+            saveLog("DESC." + row.comd_tabl_id, row.comd_tabl_name);
+        } else if(row.desc_yn == "T") {
+            row.comd_tabl_name = row.cmt;
+            $jdbc.update("bp/tcams/common/COMMENT", "comment.table", row);
+            saveLog("DESC." + row.comd_tabl_id, row.comd_tabl_name);
+        }
+        
+        result.code = "Y";
+        result.message = "OK";
+    } catch(e) {
+        $logger.info(e);
+        
+        saveLog("DESC." + row.comd_tabl_id + ".ERROR", e.message);
+        
+        result.code = "E";
+        result.message      = e.message;
+    }
+     
+  	saveLog("DESC." + row.comd_tabl_id, "FINISH")
+     
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfDesc" label="CONF">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    $service.callJob("functions");
+     
+    try {
+    	var rows = $data.items;
+       
+		var c_chk = 0;
+		var c_add = 0;
+		var c_upd = 0;
+		var c_cmt_t = 0;
+		var c_cmt_r = 0;
+
+     	saveLog("DESC." + rows[0].comd_tabl_id, "START...")
+     	
+        for(var j = 0 ; j < rows.size() ; j++) {
+            c_chk++;
+            if(rows[j].desc_yn == "N") {
+                $jdbc.update("bp/tcams/common/COMMENT", "comment", rows[j]);
+                c_cmt_r++;
+            } else if(rows[j].desc_yn == "E") {
+                rows[j].comd_colm_name = rows[j].cmt;
+                $jdbc.update("bp/tcams/common/COMMENT", "comment", rows[j]);
+                c_cmt_r++;
+            } else if(rows[j].desc_yn == "T") {
+                rows[j].comd_colm_name = rows[j].cmt;
+                $jdbc.update("bp/tcams/common/COMMENT", "comment", rows[j]);
+                c_cmt_r++;
+            }
+        }
+        saveLog("DESC." + rows[0].comd_tabl_id, "TAR:" + c_cmt_t + " RUN:" + c_cmt_r);
+        
+        result.code = "Y";
+        result.message = "OK";
+    } catch(e) {
+        $logger.info(e);
+        
+        saveLog("DESC." + rows[0].comd_tabl_id + ".ERROR", e.message);
+        
+        result.code = "E";
+        result.message      = e.message;
+    }
+     
+  	saveLog("DESC." + rows[0].comd_tabl_id, "FINISH")
+     
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfData" label="Conf for data">
+  <script>
+   <![CDATA[
+    var result = new Map();
+     
+    result.MESG_CODE = "SA-001";
+    result.MESG      = "OK";
+     
+    $service.callJob("functions");
+     
+    try {
+        $logger.info($data.param);
+        $logger.info($data.header);
+
+        var come_code = $data.param.mtcd_come_code;
+        var degr      = $data.param.mtcd_stnd_degr;
+        var table_id  = $data.header.comd_tabl_id;
+
+     	saveLog(come_code + "." + table_id + "." + degr, "START...")
+       
+        var sql_id = "bp/tcams/ca/" + come_code + "/" + table_id + "/" + degr;
+        var c_chk = 0;
+        var c_add = 0;
+        var c_upd = 0;
+     	//throw new Exception("Ready to work...")
+     	
+        var datas = $jdbc.queryList(sql_id, "select", null);
+        for(var i = 0 ; i < datas.size() ; i++) {
+            c_chk++;
+            if(datas[i].mg_mode == "I") {
+                $jdbc.update(sql_id, "insert", datas[i]);
+                c_add++;
+            } else if(datas[i].mg_mode == "U") {
+           	    $jdbc.update(sql_id, "update", datas[i]);
+           	    c_upd++;
+            }
+        }
+        saveLog("=STAT", "CHK:" + c_chk + "," + "ADD:" + c_add + "," + "UPD:" + c_upd) ;
+    } catch(e) {
+        $logger.info(e);
+
+        saveLog("=ERROR", e.message);
+
+        result.MESG_CODE = "SA-002";
+        result.MESG      = e.message;
+    }
+   	saveLog(come_code + "." + table_id + "." + degr, "FINISH")
+     
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfPKMS" label="Conf for PKMS">
+  <script>
+   <![CDATA[
+    importPackage(Packages.kr.co.itnova.conf);
+
+    var result = new Map();
+    $data.param.usr_id = $user.usr_id;
+    
+    try {
+        result = ConfigLoader("pkms").getObj().check($data.param);
+
+        $logger.info(result);
+    } catch(e) {
+    	$logger.info(e.message);
+    	
+    	result.code = "E";
+        result.message = e.message;
+    }
+    
+    $data.result = result;    
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfPKMS_" label="Conf for PKMS">
+  <script>
+   <![CDATA[
+    var result = new Map();
+     
+    result.MESG_CODE = "SA-001";
+    result.MESG      = "OK";
+     
+    $service.callJob("functions");
+     
+    try {
+        $logger.info($data.param);
+       
+     	//throw new Exception("Ready to work...")
+
+        var come_code = $data.param.comd_come_code;
+        var sql_id = "bp/tcams/ca/" + come_code + "/PKMS" ;
+
+     	saveLog(come_code + "." + "PKMS", "START...")
+        var stat = "";
+        var datas = $jdbc.queryList(sql_id, "select", null);
+        for(var i = 0 ; i < datas.size() ; i++) {
+            stat = "CHK";
+            if(datas[i].mg_mode == "I") {
+                $jdbc.update(sql_id, "insert", datas[i]);
+                stat += " ADD";
+            } else if(datas[i].mg_mode == "U"){
+           	    $jdbc.update(sql_id, "update", datas[i]);
+           	    stat += " UPD";
+            }
+            saveLog(come_code + "." + "PKMS" + "." + datas[i].pkms_tabl_id, stat);
+        }
+    } catch(e) {
+        $logger.info(e);
+
+        saveLog("=ERROR", e.message);
+
+        result.MESG_CODE = "SA-002";
+        result.MESG      = e.message;
+    }
+  	saveLog(come_code + "." + "PKMS", "FINISH")
+     
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+ 
+ <service id="getOpts" label="grid options">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var message = new Map();
+    var opts = new List();
+      
+    try {
+        opts = $jdbc.queryList("bp/tcams/ci/ci11", "S.230701", null);    
+    
+        result.opts = opts;
+        
+        message.code = "Y";
+        message.mesg = "OK"    
+    } catch(e) {
+    	$logger.info(e.message);
+    	
+    	message.code = "E";
+        message.mesg = e.message;
+    }
+    result.message = message;
+    
+    $data.result = result;    
+   ]]>
+  </script>
+ </service>
+ 
+ <service id="getConf" label="get conf">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var message = new Map();
+    var cols = new List();
+    var sqlId = "";
+    var str = "";
+    
+    try {
+        $logger.info($data.param);
+        cols = $data.param.cols;
+        
+        for(var i = 0 ; i < cols.size() ; i++) {
+            if(i == 0) {
+                str +=        "       SELECT ";
+            } else {
+                str += "\n" + " UNION SELECT ";
+            }
+            str +=  (i + 1) ;
+            str += "," + "'" + cols[i].data_field  + "'";
+            str += "," + "'" + cols[i].header_text + "'";
+            str += ","       + cols[i].width            ;
+            str += "," + "'" + cols[i].text_align  + "'";
+            
+            str += " FROM DUAL";
+        }
+        $logger.info("\n" + str);
+
+        cols = $jdbc.queryList("bp/tcams/ci/ci11", $data.param.sqlId, null);    
+    
+        result.cols = cols;
+
+        message.code = "Y";
+        message.mesg = "OK"    
+    } catch(e) {
+    	$logger.info(e.message);
+    	
+    	message.code = "E";
+        message.mesg = e.message;
+    }
+    result.message = message;
+    
+    $data.result = result;    
+   ]]>
+  </script>
+ </service>
+ 
+</service-descriptor>
