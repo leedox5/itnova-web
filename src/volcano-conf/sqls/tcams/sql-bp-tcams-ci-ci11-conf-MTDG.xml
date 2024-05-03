@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ci/ci11/conf/MTDG" data-source="tcamsDS">
+ <sql id="select.act" comment="ACT 조회">
+  <![CDATA[
+WITH T1 (
+  SYS_ID
+ ,GRP_CD
+ ,DTL_CD
+ ,ACT_DATE
+) AS (
+ SELECT '100', 'CONF', '0002', '99991231' FROM DUAL
+)  
+SELECT CASE WHEN COALESCE(B.REM, A.ACT_DATE) <= TO_CHAR(SYSDATE, 'YYYYMMDD') THEN 'Y' ELSE 'N' END ACT_YN
+      ,COALESCE(B.REM, A.ACT_DATE) ACT_DATE
+  FROM T1 A 
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON    B.SYS_ID = A.SYS_ID
+        AND B.GRP_CD = A.GRP_CD
+        AND B.DTL_CD = A.DTL_CD
+  ]]>
+ </sql>
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  MTDG_CORP_CODE
+ ,MTDG_METH_GUBN
+ ,MTDG_COME_CODE
+ ,MTDG_STND_DEGR
+ ,MTDG_REGT_NO
+ ,MTDG_REVI_DATE
+ ,MTDG_APPL_DATE
+ ,MTDG_HKMC_DEGR
+ ,MTDG_DEGR_CONT
+ ,MTDG_STND_FILE
+ ,MTDG_STND_MAN1
+ ,MTDG_PHON_NO1
+ ,MTDG_STND_MAN2
+ ,MTDG_PHON_NO2
+ ,MTDG_MENU_ID
+ ,MTDG_MXML_PATH
+ ,MTDG_ATT_GRP_CD
+ ,MTDG_APPL_YN
+ ,MTDG_UPDT_DATE
+ ,MTDG_UPDT_CMAN
+ ,MTDG_INIT_DATE
+ ,MTDG_INIT_CMAN
+ ,MTDG_TRAN_DEGR
+) AS ( 
+           SELECT 'K1','A','PLIJ','23'  ,NULL,'20200101','20200103','23'  ,NULL,NULL,'안정환','5374','한창선',NULL,'PCF30190','ui/bp/tcams/ca/plij/em-caplij-p23.html' ,NULL,'Y','20200206','ADMIN'   ,'20200206','ADMIN'   ,'2'  FROM DUAL
+)
+SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,CASE WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'N' ELSE 'Y' END UPDATED_YN
+      ,CASE 
+        WHEN A.MTDG_UPDT_DATE = '00000000' THEN 'D'
+        WHEN B.MTDG_CORP_CODE IS NULL THEN 'I'
+        ELSE 'X'
+       END  MG_MODE
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBMTDG B
+      ON    B.MTDG_CORP_CODE = A.MTDG_CORP_CODE
+        AND B.MTDG_METH_GUBN = A.MTDG_METH_GUBN
+        AND B.MTDG_COME_CODE = A.MTDG_COME_CODE
+        AND B.MTDG_STND_DEGR = A.MTDG_STND_DEGR
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBMTDG (
+  MTDG_CORP_CODE
+ ,MTDG_METH_GUBN
+ ,MTDG_COME_CODE
+ ,MTDG_STND_DEGR
+ ,MTDG_REGT_NO
+ ,MTDG_REVI_DATE
+ ,MTDG_APPL_DATE
+ ,MTDG_HKMC_DEGR
+ ,MTDG_DEGR_CONT
+ ,MTDG_STND_FILE
+ ,MTDG_STND_MAN1
+ ,MTDG_PHON_NO1
+ ,MTDG_STND_MAN2
+ ,MTDG_PHON_NO2
+ ,MTDG_MENU_ID
+ ,MTDG_MXML_PATH
+ ,MTDG_ATT_GRP_CD
+ ,MTDG_APPL_YN
+ ,MTDG_UPDT_DATE
+ ,MTDG_UPDT_CMAN
+ ,MTDG_INIT_DATE
+ ,MTDG_INIT_CMAN
+ ,MTDG_TRAN_DEGR
+) VALUES ( 
+  #mtdg_corp_code#
+ ,#mtdg_meth_gubn#
+ ,#mtdg_come_code#
+ ,#mtdg_stnd_degr#
+ ,#mtdg_regt_no#
+ ,#mtdg_revi_date#
+ ,#mtdg_appl_date#
+ ,#mtdg_hkmc_degr#
+ ,#mtdg_degr_cont#
+ ,#mtdg_stnd_file#
+ ,#mtdg_stnd_man1#
+ ,#mtdg_phon_no1#
+ ,#mtdg_stnd_man2#
+ ,#mtdg_phon_no2#
+ ,#mtdg_menu_id#
+ ,#mtdg_mxml_path#
+ ,#mtdg_att_grp_cd#
+ ,#mtdg_appl_yn#
+ ,#mtdg_updt_date#
+ ,#mtdg_updt_cman#
+ ,#mtdg_init_date#
+ ,#mtdg_init_cman#
+ ,#mtdg_tran_degr#
+)
+  ]]>
+ </sql> 
+ 
+ <sql id="update" comment="저장">
+  <![CDATA[
+UPDATE CITBMTDG
+   SET MTDG_REVI_DATE = #mtdg_revi_date#
+      ,MTDG_APPL_DATE = #mtdg_appl_date#
+      ,MTDG_UPDT_DATE = #mtdg_updt_date#
+      ,MTDG_UPDT_CMAN = #mtdg_updt_cman#
+ WHERE MTDG_CORP_CODE = #mtdg_corp_code#
+   AND MTDG_METH_GUBN = #mtdg_meth_gubn#
+   AND MTDG_COME_CODE = #mtdg_come_code#
+   AND MTDG_STND_DEGR = #mtdg_stnd_degr#      
+  ]]>
+ </sql>
+
+ <sql id="delete" comment="삭제">
+  <![CDATA[
+DELETE CITBMTDG
+ WHERE MTDG_CORP_CODE = #mtdg_corp_code#
+   AND MTDG_METH_GUBN = #mtdg_meth_gubn#
+   AND MTDG_COME_CODE = #mtdg_come_code#
+   AND MTDG_STND_DEGR = #mtdg_stnd_degr#      
+  ]]>
+ </sql>
+ 
+</sql-descriptor>
