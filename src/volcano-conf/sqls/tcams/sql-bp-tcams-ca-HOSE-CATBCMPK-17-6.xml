@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBCMPK/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  CMPK_CORP_CODE
+ ,CMPK_STND_GUBN
+ ,CMPK_STND_DEGR
+ ,CMPK_GUBN_CODE
+ ,CMPK_CODE
+ ,CMPK_SORT_NUMB
+ ,CMPK_GUBN_NAME
+ ,CMPK_CODE_NAME
+ ,CMPK_APPL_VALU
+ ,CMPK_APPL_PRIC
+ ,CMPK_APPL_RATE1
+ ,CMPK_APPL_RATE2
+ ,CMPK_APPL_RATE3
+ ,CMPK_CODE_GRP1
+ ,CMPK_CODE_GRP2
+ ,CMPK_CODE_GRP3
+ ,CMPK_CODE_GRP4
+ ,CMPK_CODE_GRP5
+ ,CMPK_APPL_GUBN
+ ,CMPK_END0_DATE
+ ,CMPK_REMK
+ ,CMPK_UPDT_CMAN
+ ,CMPK_UPDT_DATE
+ ,CMPK_INIT_CMAN
+ ,CMPK_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'HOSE00' ,'GENL' ,'1' ,'HOSE 종류' ,'일반HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE00' ,'PAD' ,'2' ,'HOSE 종류' ,'HOSE용 PAD' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE00' ,'WASHER' ,'3' ,'HOSE 종류' ,'WASHER HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'17차:신규적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE00' ,'DIFF' ,'4' ,'HOSE 종류' ,'DIFF HOSE' ,'0' ,'0' ,'0' ,'2' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'적용율2=불량율' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE00' ,'RETURN' ,'5' ,'HOSE 종류' ,'RETURN HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'S' ,'6' ,'압출방법' ,'단일압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,NULL ,NULL ,NULL ,'Y' ,NULL ,'분류2~5:내,중간,유직,외고무 입력여부' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'SK' ,'7' ,'압출방법' ,'단일압출+편조' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,NULL ,'Y' ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'SKO' ,'8' ,'압출방법' ,'단일+편조+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,NULL ,'Y' ,'Y' ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'STO' ,'9' ,'압출방법' ,'단일+THV+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,'Y' ,NULL ,'Y' ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'D' ,'10' ,'압출방법' ,'이중압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,NULL ,NULL ,'Y' ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'DK' ,'11' ,'압출방법' ,'이중압출+편조' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,'Y' ,'Y' ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'DKO' ,'12' ,'압출방법' ,'이중+편조+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'Y' ,'Y' ,'Y' ,'Y' ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'S' ,'13' ,'압출방법' ,'단일압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,'Y' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'S' ,'14' ,'압출방법' ,'단일압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'PAD' ,'Y' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'S' ,'15' ,'압출방법' ,'단일압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,NULL ,NULL ,NULL ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'D' ,'16' ,'압출방법' ,'이중압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,NULL ,NULL ,'Y' ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'SKO' ,'17' ,'압출방법' ,'단일+편조+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,NULL ,'Y' ,'Y' ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'DKO' ,'18' ,'압출방법' ,'이중+편조+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,'Y' ,'Y' ,'Y' ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'SK' ,'19' ,'압출방법' ,'단일압출+편조' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,NULL ,'Y' ,NULL ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'DK' ,'20' ,'압출방법' ,'이중압출+편조' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,'Y' ,'Y' ,NULL ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'STO' ,'21' ,'압출방법' ,'단일+THV+외압출' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'Y' ,'Y' ,NULL ,'Y' ,'N' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE01' ,'SK' ,'22' ,'압출방법' ,'단일압출+편조' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,'Y' ,NULL ,'Y' ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'PET' ,'23' ,'유직사종류' ,'PET' ,'4261' ,'4353' ,'0' ,'1' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'KEV' ,'24' ,'유직사종류' ,'케브라' ,'0' ,'0' ,'0' ,'1' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'NYL' ,'25' ,'유직사종류' ,'나일론' ,'0' ,'4800' ,'0' ,'1' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'N' ,'26' ,'유직사종류' ,'미적용' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'ARA' ,'27' ,'유직사종류' ,'아라미드' ,'0' ,'35000' ,'0' ,'1' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'VMQ' ,'28' ,'유직사종류' ,'VMQ' ,'0' ,'12500' ,'0' ,'1' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'N' ,'29' ,'유직사종류' ,'미적용' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'PET' ,'30' ,'유직사종류' ,'PET' ,'0' ,'4510' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'ARA' ,'31' ,'유직사종류' ,'아라미드' ,'0' ,'35000' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'KEV' ,'32' ,'유직사종류' ,'케브라' ,'0' ,'24.88' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'NYL' ,'33' ,'유직사종류' ,'나일론' ,'0' ,'10970' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'VMQ' ,'34' ,'유직사종류' ,'VMQ' ,'0' ,'12500' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'FVMQ' ,'35' ,'유직사종류' ,'FVMQ' ,'0' ,'83794' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE02' ,'THV' ,'36' ,'유직사종류' ,'THV' ,'0' ,'68500' ,'0' ,'1' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'ST' ,'37' ,'제품형상' ,'직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'ST_ONE' ,'38' ,'제품형상' ,'한쪽 확축관 직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'ST_TWO' ,'39' ,'제품형상' ,'양쪽 확축관 직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'CURV' ,'40' ,'제품형상' ,'일반 곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'ONE' ,'41' ,'제품형상' ,'한쪽 확축관 곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'TWO' ,'42' ,'제품형상' ,'양쪽 확축관 곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'HOSEPAD' ,'43' ,'제품형상' ,'HOSE PAD' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'PAD' ,NULL ,NULL ,NULL ,'N' ,NULL ,'[참고]HOSE PAD이나 일반에 넣어 분리:현업요청' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'SPON_G' ,'44' ,'제품형상' ,'SPONGE-범용HOSE용' ,'0' ,'0' ,'0' ,'0' ,'0' ,'PAD' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'SPON_H' ,'45' ,'제품형상' ,'SPONGE-연료고압HOSE용' ,'0' ,'0' ,'0' ,'0' ,'0' ,'PAD' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'SOLID' ,'46' ,'제품형상' ,'SOLID' ,'0' ,'0' ,'0' ,'0' ,'0' ,'PAD' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'STRA' ,'47' ,'제품형상' ,'직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'CURV1' ,'48' ,'제품형상' ,'끝단곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'CURV2' ,'49' ,'제품형상' ,'일반곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'CURV3' ,'50' ,'제품형상' ,'특수곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'STRA' ,'51' ,'제품형상' ,'직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'CURV' ,'52' ,'제품형상' ,'곡HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE03' ,'STRA' ,'53' ,'제품형상' ,'직HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,'GRP2_STR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'ACM' ,'54' ,'재질종류' ,'ACM' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'SI' ,'55' ,'재질종류' ,'SI' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'FKM' ,'56' ,'재질종류' ,'FKM' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'ECO' ,'57' ,'재질종류' ,'ECO' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'NBR' ,'58' ,'재질종류' ,'NBR' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'EPDM' ,'59' ,'재질종류' ,'EPDM' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'SBR' ,'60' ,'재질종류' ,'SBR' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'CR' ,'61' ,'재질종류' ,'CR' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'NR' ,'62' ,'재질종류' ,'NR' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE04' ,'ETC' ,'63' ,'재질종류' ,'기타' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE05' ,'GENL' ,'64' ,'제품구분(일반HOSE)' ,'일반 HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE05' ,'FKM' ,'65' ,'제품구분(일반HOSE)' ,'FKM HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE05' ,'FUEL' ,'66' ,'제품구분(일반HOSE)' ,'FUEL HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE05' ,'VACUUM' ,'67' ,'제품구분(일반HOSE)' ,'VACUUM HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE06' ,'STRA' ,'68' ,'SPONGE PAD 조립위치' ,'HOSE 직선부' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE06' ,'CURV' ,'69' ,'SPONGE PAD 조립위치' ,'HOSE 곡선부 OR 곡선부 통과' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP1' ,'70' ,'ASSY공정' ,'CLIP 조립_외경 Ф14mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP2' ,'71' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP3' ,'72' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 초과' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIPM' ,'73' ,'ASSY공정' ,'CLIP 위치이동' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'GENL=자체기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIPA' ,'74' ,'ASSY공정' ,'CLIP 조립' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'WASHER CLIP조립=자체기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIPM' ,'75' ,'ASSY공정' ,'CLIP 위치이동' ,'0' ,'0' ,'0' ,'0' ,'0' ,'WASHER' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'WASHER=자체기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CUTT' ,'76' ,'ASSY공정' ,'정재단' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'정재단=DIFF only' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP1' ,'77' ,'ASSY공정' ,'CLIP 조립_외경 Ф14mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'DIFF CLIP조립=일반에 따름' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP2' ,'78' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP3' ,'79' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 초과' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIPM' ,'80' ,'ASSY공정' ,'CLIP 위치이동' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'DIFF=자체기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_SENS' ,'81' ,'ASSY공정' ,'SENSOR조립' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'SENSOR조립=DIFF only' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_ELEC' ,'82' ,'ASSY공정' ,'통전검사' ,'0' ,'0' ,'0' ,'0' ,'0' ,'DIFF' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'통전검사=DIFF only' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP1' ,'83' ,'ASSY공정' ,'CLIP 조립_외경 Ф14mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'RETURN CLIP조립=일반에 따름' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP2' ,'84' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 이하 ' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIP3' ,'85' ,'ASSY공정' ,'CLIP 조립_외경 Ф24mm 초과' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CLIPM' ,'86' ,'ASSY공정' ,'CLIP 위치이동' ,'0' ,'0' ,'0' ,'0' ,'0' ,'RETURN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'RETURN=일반에 따름' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_PVCH' ,'87' ,'ASSY공정' ,'PVC HOSE 삽입' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_WIRG' ,'88' ,'ASSY공정' ,'WIR'G 고정' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_TAPE' ,'89' ,'ASSY공정' ,'TAPE'G' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_3WAY' ,'90' ,'ASSY공정' ,'3WAY VALVE 조립' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_CHKV' ,'91' ,'ASSY공정' ,'CHECK VALVE 조립' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_BOND' ,'92' ,'ASSY공정' ,'순간접착제 BOND'G' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_LAB1' ,'93' ,'ASSY공정' ,'LABEL부착(Ф26 WATER HOSE기준)' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_LAB2' ,'94' ,'ASSY공정' ,'LABEL부착(Ф42 RADIATOR HOSE기준)' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_SPON' ,'95' ,'ASSY공정' ,'SPONGE PAD ASSY' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE07' ,'AS_ETC' ,'96' ,'ASSY공정' ,'추가조립' ,'0' ,'0' ,'0' ,'0' ,'0' ,'ALL' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE08' ,'N' ,'97' ,'LEAKTEST 홀수' ,'미적용' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE08' ,'2' ,'98' ,'LEAKTEST 홀수' ,'HOLE수 2EA' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE08' ,'3' ,'99' ,'LEAKTEST 홀수' ,'HOLE수 3EA' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE08' ,'4' ,'100' ,'LEAKTEST 홀수' ,'HOLE수 4EA' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'ST50' ,'101' ,'SPONGE PAD 조립위치' ,'직선부 50mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'ST100' ,'102' ,'SPONGE PAD 조립위치' ,'직선부 100mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'ST150' ,'103' ,'SPONGE PAD 조립위치' ,'직선부 150mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'ST200' ,'104' ,'SPONGE PAD 조립위치' ,'직선부 200mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'ST200OV' ,'105' ,'SPONGE PAD 조립위치' ,'직선부 200mm초과' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'CV50' ,'106' ,'SPONGE PAD 조립위치' ,'곡선부or곡선부통과 50mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'CV100' ,'107' ,'SPONGE PAD 조립위치' ,'곡선부or곡선부통과 100mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'CV150' ,'108' ,'SPONGE PAD 조립위치' ,'곡선부or곡선부통과 150mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'CV200' ,'109' ,'SPONGE PAD 조립위치' ,'곡선부or곡선부통과 200mm이하' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE09' ,'CV200OV' ,'110' ,'SPONGE PAD 조립위치' ,'곡선부or곡선부통과 200mm초과' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE10' ,'N' ,'111' ,'확축코드' ,'미적용' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE10' ,'ONE' ,'112' ,'확축코드' ,'한쪽 확(축)관' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE10' ,'TWO' ,'113' ,'확축코드' ,'양쪽 확(축)관' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GENL' ,'GRP2_CUR' ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE11' ,'THV' ,'114' ,'THV' ,'THV' ,'0' ,'68500' ,'2.1' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE12' ,'N' ,'115' ,'마킹TYPE' ,'미적용' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'17차:마킹TYPE 미사용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE12' ,'RADN' ,'116' ,'마킹TYPE' ,'일반 HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE12' ,'RADY' ,'117' ,'마킹TYPE' ,'RADIATOR HOSE' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE13' ,'Y_AC' ,'118' ,'세척구분' ,'아크릴재질' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE13' ,'Y_NA' ,'119' ,'세척구분' ,'아크릴이외 재질' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE14' ,'N' ,'120' ,'BAR CODE' ,'도면 미명기' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE14' ,'Y' ,'121' ,'BAR CODE' ,'도면 명기' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'N' ,NULL ,'미적용(아래 2개 선택적용)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE14' ,'Y_R' ,'122' ,'BAR CODE' ,'도면 명기:RADIATOR HOSE용' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'HOSE14' ,'Y_W' ,'123' ,'BAR CODE' ,'도면 명기:WATER HOSE용' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.CMPK_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.CMPK_UPDT_DATE > B.CMPK_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBCMPK B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBCMPK (
+  CMPK_CORP_CODE
+ ,CMPK_STND_GUBN
+ ,CMPK_STND_DEGR
+ ,CMPK_GUBN_CODE
+ ,CMPK_CODE
+ ,CMPK_SORT_NUMB
+ ,CMPK_GUBN_NAME
+ ,CMPK_CODE_NAME
+ ,CMPK_APPL_VALU
+ ,CMPK_APPL_PRIC
+ ,CMPK_APPL_RATE1
+ ,CMPK_APPL_RATE2
+ ,CMPK_APPL_RATE3
+ ,CMPK_CODE_GRP1
+ ,CMPK_CODE_GRP2
+ ,CMPK_CODE_GRP3
+ ,CMPK_CODE_GRP4
+ ,CMPK_CODE_GRP5
+ ,CMPK_APPL_GUBN
+ ,CMPK_END0_DATE
+ ,CMPK_REMK
+ ,CMPK_UPDT_CMAN
+ ,CMPK_UPDT_DATE
+ ,CMPK_INIT_CMAN
+ ,CMPK_INIT_DATE
+) VALUES (
+  #cmpk_corp_code#
+ ,#cmpk_stnd_gubn#
+ ,#cmpk_stnd_degr#
+ ,#cmpk_gubn_code#
+ ,#cmpk_code#
+ ,#cmpk_sort_numb#
+ ,#cmpk_gubn_name#
+ ,#cmpk_code_name#
+ ,#cmpk_appl_valu#
+ ,#cmpk_appl_pric#
+ ,#cmpk_appl_rate1#
+ ,#cmpk_appl_rate2#
+ ,#cmpk_appl_rate3#
+ ,#cmpk_code_grp1#
+ ,#cmpk_code_grp2#
+ ,#cmpk_code_grp3#
+ ,#cmpk_code_grp4#
+ ,#cmpk_code_grp5#
+ ,#cmpk_appl_gubn#
+ ,#cmpk_end0_date#
+ ,#cmpk_remk#
+ ,#cmpk_updt_cman#
+ ,#cmpk_updt_date#
+ ,#cmpk_init_cman#
+ ,#cmpk_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBCMPK
+CMPK_CORP_CODE = #cmpk_corp_code#   SET CMPK_STND_GUBN = #cmpk_stnd_gubn#
+      ,CMPK_STND_DEGR = #cmpk_stnd_degr#
+      ,CMPK_GUBN_CODE = #cmpk_gubn_code#
+      ,CMPK_CODE = #cmpk_code#
+      ,CMPK_SORT_NUMB = #cmpk_sort_numb#
+      ,CMPK_GUBN_NAME = #cmpk_gubn_name#
+      ,CMPK_CODE_NAME = #cmpk_code_name#
+      ,CMPK_APPL_VALU = #cmpk_appl_valu#
+      ,CMPK_APPL_PRIC = #cmpk_appl_pric#
+      ,CMPK_APPL_RATE1 = #cmpk_appl_rate1#
+      ,CMPK_APPL_RATE2 = #cmpk_appl_rate2#
+      ,CMPK_APPL_RATE3 = #cmpk_appl_rate3#
+      ,CMPK_CODE_GRP1 = #cmpk_code_grp1#
+      ,CMPK_CODE_GRP2 = #cmpk_code_grp2#
+      ,CMPK_CODE_GRP3 = #cmpk_code_grp3#
+      ,CMPK_CODE_GRP4 = #cmpk_code_grp4#
+      ,CMPK_CODE_GRP5 = #cmpk_code_grp5#
+      ,CMPK_APPL_GUBN = #cmpk_appl_gubn#
+      ,CMPK_END0_DATE = #cmpk_end0_date#
+      ,CMPK_REMK = #cmpk_remk#
+      ,CMPK_UPDT_CMAN = #cmpk_updt_cman#
+      ,CMPK_UPDT_DATE = #cmpk_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 
