@@ -1,0 +1,620 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ci/ci11/conf">
+
+ <declare>
+  <job id="functions">
+   <script>
+    <![CDATA[
+    function saveLog(name, mesg) {
+        var log = new Map();
+
+        log.table_id = name;
+        log.conts = mesg;
+        log.crt_user = $user.usr_id;
+        $jdbc.update("bp/tcams/common/DLOG", "insert", log);
+    }
+    ]]>
+   </script>
+  </job>
+ </declare>
+
+ <service id="setConf" label="CONF">
+  <script>
+   <![CDATA[
+    var result = new Map();
+
+    try {
+        $logger.info($data.param);
+        //throw new Exception("Ready to work...")
+
+        var mtcds = $jdbc.queryList("bp/tcams/ci/ci11/conf/MTCD", "select", null);
+        for(var i = 0 ; i < mtcds.size() ; i++) {
+            if(mtcds[i].mg_mode == "D") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/MTCD", "delete", mtcds[i]);
+            } else if(mtcds[i].mg_code == "I") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/MTCD", "insert", mtcds[i]);
+            }
+        }
+
+        var mtdgs = $jdbc.queryList("bp/tcams/ci/ci11/conf/MTDG", "select", null);
+        for(var i = 0 ; i < mtdgs.size() ; i++) {
+            if(mtdgs[i].mg_mode == "D") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/MTDG", "delete", mtdgs[i]);
+            } else if(mtdgs[i].mg_mode == "I") {
+                 $jdbc.update("bp/tcams/ci/ci11/conf/MTDG", "insert", mtdgs[i]);
+            }
+        }
+
+        var cmpks = $jdbc.queryList("bp/tcams/ci/ci11/conf/CMPK", "select", null);
+        for(var i = 0 ; i < cmpks.size() ; i++) {
+            if(cmpks[i].mg_mode == "D") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/CMPK", "delete", cmpks[i]);
+            } else if(cmpks[i].mg_mode == "I") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/CMPK", "insert", cmpks[i]);
+            }
+        }
+
+        var pkmss = $jdbc.queryList("bp/tcams/ci/ci11/conf/PKMS", "select", null);
+        for(var i = 0 ; i < pkmss.size() ; i++) {
+            if(pkmss[i].mg_mode == "DROP") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "drop", null);
+            } else if(pkmss[i].mg_mode == "C") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "create", null);
+                $jdbc.update("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "comments", null);
+            } else if(pkmss[i].mg_mode == "I") {
+                  $jdbc.update("bp/tcams/ci/ci11/conf/PKMS", "insert", pkmss[i]);
+            } else if(pkmss[i].mg_mode == "DATA") {
+                var datas = $jdbc.queryList("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "select", null);
+                for(var j = 0 ; j < datas.size() ; j++) {
+                    if(datas[j].mg_mode == "I") {
+                        $jdbc.update("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "insert", datas[j]);
+                    } else if(datas[j].mg_mode == "U") {
+                         $jdbc.update("bp/tcams/ci/ci11/conf/" + pkmss[i].pkms_tabl_id, "update", datas[j]);
+                    }
+                }
+            }
+        }
+
+        var procs = $jdbc.queryList("bp/tcams/ci/ci11/conf/PROC", "select", null);
+        for(var i = 0 ; i < procs.size() ; i++) {
+            if(procs[i].mg_mode == "DROP") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/" + procs[i].name, "drop", null);
+            } else if(procs[i].mg_mode == "C") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/" + procs[i].name, "create", null);
+                var errs = $jdbc.queryList("bp/tcams/ci/ci11/conf/" + procs[i].name, "error", null);
+                if(errs.size() > 0) {
+                    $logger.info(errs[0].text);
+                    //$jdbc.update("bp/tcams/ci/ci11/conf/" + procs[i].name, "drop", null);
+                }
+            }
+        }
+        result.code = "Y";
+        result.message = "OK";
+    } catch(e) {
+        $logger.info(e);
+         result.code = "E";
+         result.message = e.message;
+    }
+
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+
+ <service id="setConfCode" label="Code">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.CalendarUtil);
+
+    var result = new Map();
+
+    $service.callJob("functions");
+
+    try {
+        $logger.info($data.param);
+         var come = $data.param.comd_come_code;
+           var param = new Map();
+           var data_str = "";
+        var stat = "";
+
+         saveLog("CODE." + come, "START...")
+
+        //throw new Exception("Ready to work...")
+
+           data_str    += " SELECT";
+           data_str    += " '100'";
+           data_str    += ",'PROC" + come + "'";
+           data_str    += ",'CA'";
+           data_str    += ",'Y'";
+           data_str    += ",NULL"
+           data_str    += ",'C'";
+           data_str    += ",'SYSTEMPG'";
+           data_str    += ",SYSDATE";
+           data_str    += ",'SYSTEMPG'";
+           data_str    += ",SYSDATE";
+           data_str    += " FROM DUAL";
+
+         param.data_str = data_str;
+
+        var cdgps = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDGP", "select.param", param);
+        for(var i = 0 ; i < cdgps.size() ; i++) {
+            stat = "CHK";
+            if(cdgps[i].chk_yn == "N") {
+                 $jdbc.update("bp/tcams/ci/ci11/conf/CDGP", "insert", cdgps[i]);
+                 stat += " ADD";
+             }
+             saveLog("=CDGP" + cdgps[i].grp_cd, stat);
+        }
+
+        data_str  = " SELECT ";
+        data_str += " '100'";
+        data_str += ",'ko_KR'";
+        data_str += ",'PROC" + come + "'";
+        data_str += ",'" + $data.param.comd_meth_name.replace("'", "''") + "'";
+        data_str += ",NULL"
+        data_str += ",'C'";
+        data_str += ",'SYSTEMPG'";
+        data_str += ",SYSDATE";
+        data_str += ",'SYSTEMPG'";
+        data_str += ",SYSDATE";
+        data_str += " FROM DUAL";
+
+        param.data_str = data_str;
+
+        var cdgls = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDGL", "select.param", param);
+
+        for(var i = 0 ; i < cdgls.size() ; i++) {
+            stat = "CHK";
+            if(cdgls[i].chk_yn == "N") {
+                $jdbc.update("bp/tcams/ci/ci11/conf/CDGL", "insert", cdgls[i]);
+                 stat += " ADD";
+            }
+               saveLog("=CDGL" + cdgls[i].grp_cd_nm, stat)
+        }
+
+        result.code = "Y";
+        result.message = "OK";
+    } catch(e) {
+        $logger.info(e);
+         result.code = "E";
+         result.message = e.message;
+    }
+
+    saveLog("CODE." + come, "FINISH")
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfProc" label="CONF Procedure">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.CalendarUtil);
+    importClass(Packages.emro.util.StringUtil);
+
+    var result = new Map();
+
+    $service.callJob("functions");
+
+    try {
+        $logger.info($data.param);
+
+         //saveLog("PROC." + $data.param.proc_name, "START...")
+         //throw new Exception("Ready to work...")
+
+         var cate = $data.param.comd_meth_gubn == "A" ? "ca" : "cm" ;
+         var come = $data.param.comd_come_code.toLowerCase();
+
+        if(StringUtil.isEmpty($data.param.proc_name)) {
+            throw new Exception("Please enter proc name.");
+        }
+
+         if($data.param.proc_mode == "A") {
+             var param = new Map();
+             var data_str = "";
+             var stat = "";
+            var proc_name_arr = $data.param.proc_name.split(",");
+
+            /*---
+            for(var i = 0 ; i < proc_name_arr.length ; i++) {
+                if(i == 0) {
+                    data_str  =   "           " ;
+                } else {
+                    data_str += "\n UNION ALL " ;
+                }
+                data_str += " SELECT ";
+                data_str += "'100' " ;
+                data_str += ",'PROC" + $data.param.comd_come_code + "' ";
+                data_str += ",'" + proc_name_arr[i] + "'";
+                data_str += ",'" + (i + 1) + "' ";
+                data_str += ",'Y' ";
+                data_str += ",'A' ";
+                data_str += ",NULL ";
+                data_str += ",'" + $data.param.comd_stnd_degr + "' ";
+                data_str += ",'U' ";
+                data_str += ",'SYSTEMPG' ";
+                data_str += ",SYSDATE ";
+                data_str += ",'SYSTEMPG' ";
+                data_str += ",SYSDATE ";
+                data_str += " FROM DUAL" ;
+            }
+             param.data_str = data_str;
+
+            var cddts = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDDT", "select.param", param);
+            for(var i = 0 ; i < cddts.size() ; i++) {
+                stat = "CHK" ;
+                if(cddts[i].chk_yn == "N") {
+                     $jdbc.update("bp/tcams/ci/ci11/conf/CDDT", "insert", cddts[i]);
+                     stat += " ADD";
+                 }
+                   saveLog("=CDDT" + cddts[i].dtl_cd, stat)
+            }
+
+            for(var i = 0 ; i < proc_name_arr.length ; i++) {
+                if(i == 0) {
+                    data_str  =   "           " ;
+                } else {
+                    data_str += "\n UNION ALL " ;
+                }
+                data_str += " SELECT ";
+                data_str += "'100'";
+                data_str += ",'ko_KR'";
+                data_str += ",'PROC" + $data.param.comd_come_code + "' ";
+                data_str += ",'" + proc_name_arr[i] + "' ";
+                data_str += ",'원가계산' ";
+                data_str += ",NULL,NULL,NULL,NULL,NULL,NULL,'U' ";
+                data_str += ",'SYSTEMPG' ,SYSDATE ,'SYSTEMPG' ,SYSDATE ";
+                data_str += " FROM DUAL" ;
+            }
+             param.data_str = data_str;
+
+            var cddls = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDDL", "select.param", param);
+            for(var i = 0 ; i < cddls.size() ; i++) {
+                stat = "CHK" ;
+                if(cddls[i].chk_yn == "N") {
+                     $jdbc.update("bp/tcams/ci/ci11/conf/CDDL", "insert", cddls[i]);
+                     stat += " ADD";
+                 }
+                   saveLog("=CDDL" + cddls[i].dtl_cd_nm, stat)
+            }
+            --- */
+
+            for(var i = 0 ; i < proc_name_arr.length ; i++) {
+                if(i == 0) {
+                    data_str  =   "           " ;
+                } else {
+                    data_str += "\n UNION ALL " ;
+                }
+                 data_str    += " SELECT";
+                 data_str    += " '100'";
+                 data_str    += ",'" + proc_name_arr[i] + "'";
+                 data_str    += ",'CA'";
+                 data_str    += ",'Y'";
+                 data_str    += ",NULL"
+                 data_str    += ",'C'";
+                 data_str    += ",'SYSTEMPG'";
+                 data_str    += ",SYSDATE";
+                 data_str    += ",'SYSTEMPG'";
+                 data_str    += ",SYSDATE";
+                 data_str    += " FROM DUAL";
+            }
+
+             param.data_str = data_str;
+
+            var cdgps = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDGP", "select.param", param);
+            for(var i = 0 ; i < cdgps.size() ; i++) {
+                if(cdgps[i].chk_yn == "N") {
+                     $logger.info("Need to be added ==>" + cdgps[i])
+                     $jdbc.update("bp/tcams/ci/ci11/conf/CDGP", "insert", cdgps[i]);
+                 } else {
+                     $logger.info("Checked ==>" + cdgps[i])
+                }
+            }
+
+            for(var i = 0 ; i < proc_name_arr.length ; i++) {
+                if(i == 0) {
+                    data_str  =   "           " ;
+                } else {
+                    data_str += "\n UNION ALL " ;
+                }
+                data_str += "SELECT ";
+                data_str += " '100'";
+                data_str += ",'ko_KR'";
+                data_str += ",'" + proc_name_arr[i]      + "'";
+                data_str += ",'" + $data.param.comd_meth_name.replace("'", "''") + " 원가계산 " + proc_name_arr[i].substring(9,10) + "'";
+                data_str += ",NULL"
+                data_str += ",'C'";
+                data_str += ",'SYSTEMPG'";
+                data_str += ",SYSDATE";
+                data_str += ",'SYSTEMPG'";
+                data_str += ",SYSDATE";
+                data_str += " FROM DUAL";
+            }
+
+            param.data_str = data_str;
+
+            var cdgls = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDGL", "select.param", param);
+            for(var i = 0 ; i < cdgls.size() ; i++) {
+                if(cdgls[i].chk_yn == "N") {
+                     $logger.info("Need to be added ==>" + cdgls[i])
+                     $jdbc.update("bp/tcams/ci/ci11/conf/CDGL", "insert", cdgls[i]);
+                 } else {
+                     $logger.info("Checked ==>" + cdgls[i])
+                }
+            }
+
+         } else if($data.param.proc_mode == "D") {
+
+            var param = new Map();
+            param.proc_name = $data.param.proc_name;
+
+            var proc_name_arr = param.proc_name.split(",");
+
+            var data_str = "";
+            for(var i = 0 ; i < proc_name_arr.length ; i++) {
+                if(i == 0) {
+                    data_str += "           ";
+                } else {
+                    data_str += "\n UNION ALL " ;
+                }
+                data_str += "SELECT" ;
+                data_str += " " + (i + 1) ;
+                data_str += ", '" + proc_name_arr[i] + "'";
+                data_str    += ", '원가계산'";
+                data_str    += " FROM DUAL";
+            }
+
+            $logger.info(data_str);
+
+            var stat = "";
+             //throw new Exception("Debugging...");
+
+            param.data_str = data_str;
+
+            var procs = $jdbc.queryList("bp/tcams/ci/ci11/conf/PROC", "select.param", param);
+            for(var i = 0 ; i < procs.size() ; i++) {
+                if(procs[i].cate == "common") {
+                     var name = "bp/tcams/" + procs[i].cate + "/" + procs[i].name;
+                } else {
+                     var name = "bp/tcams/" + procs[i].cate + "/" + come + "/" + procs[i].name;
+                }
+                if(procs[i].created_yn == "N") {
+                    stat += "001:Need to be created:" + procs[i].name;
+
+                    var errs = $jdbc.queryList(name, "error", null);
+                    if(errs.size() > 0) {
+                        $jdbc.update(name, "drop", null);
+                    }
+
+                    $jdbc.update(name, "create", null);
+
+                    var errs = $jdbc.queryList(name, "error", null);
+                    if(errs.size() > 0) {
+                        $logger.info(errs[0].text);
+                        throw new Exception(errs[0].text);
+                        stat += errs[0].text;
+                    }
+                } else if(procs[i].ver_yn == "Y") {
+                    if(procs[i].date_yn == "N") {
+                        $logger.info("> Versioning..." + procs[i].name + "." + procs[i].ver);
+                        $logger.info("> Name: " + name);
+
+                        $jdbc.update(name, "drop", null);
+                        $jdbc.update(name, "create", null);
+
+                        var errs = $jdbc.queryList(name, "error", null);
+
+                        if(errs.size() > 0) {
+                            $logger.info(errs[0].text);
+                            throw new Exception(errs[0].text);
+                        } else {
+                            param.mod_id = "SYSTEMPG";
+                            param.sys_id = "100";
+                            param.grp_cd = procs[i].name;
+                            param.dtl_cd = procs[i].ver
+
+                            var objs = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDDT", "select.create_time", param);
+
+                            param.rem = objs[0].timestamp;
+
+                            $jdbc.update("bp/tcams/ci/ci11/conf/CDDT", "update", param);
+                        }
+                        stat = "COMPILED:" + param.grp_cd + " " + param.dtl_cd + " " + param.rem;
+                    } else {
+                        stat = "CHK : " + procs[i].ver + "." + procs[i].rem ;
+                    }
+                } else if(procs[i].ver_yn == "N") {
+                    param.sys_id   = "100"
+                    param.grp_cd   = procs[i].name;
+
+                    var objs = $jdbc.queryList("bp/tcams/ci/ci11/conf/CDDT", "select.create_time", param);
+
+                    param.dtl_cd   = "0001";
+                    param.sort_ord = 1;
+                    param.use_yn   = "Y";
+                    param.flag     = null;
+                    param.val      = null;
+                    param.rem      = objs[0].timestamp;
+                    param.sts      = "C";
+                    param.reg_id   = "SYSTEMPG";
+                    param.reg_dt   = CalendarUtil.formatNow("yyyyMMdd HH:mm:ss");
+                    param.mod_id   = "SYSTEMPG";
+                    param.mod_dt   = CalendarUtil.formatNow("yyyyMMdd HH:mm:ss");
+
+                      $jdbc.update("bp/tcams/ci/ci11/conf/CDDT", "insert", param);
+
+                      param.sys_id      = "100";
+                    param.lang_cd     = "ko_KR";
+                    param.grp_cd      = procs[i].name;
+                    param.dtl_cd      = "0001";
+                    param.dtl_cd_nm   = "START";
+                    param.dtl_cd_use1 = null;
+                    param.dtl_cd_use2 = null;
+                    param.dtl_cd_use3 = null;
+                    param.dtl_cd_use4 = null;
+                    param.dtl_cd_use5 = null;
+                    param.rem         = null;
+                    param.sts         = "C";
+                    param.reg_id      = "SYSTEMPG";
+                    param.reg_dt      = CalendarUtil.formatNow("yyyyMMdd HH:mm:ss");
+                    param.mod_id      = "SYSTEMPG";
+                    param.mod_dt      = CalendarUtil.formatNow("yyyyMMdd HH:mm:ss");
+
+                      $jdbc.update("bp/tcams/ci/ci11/conf/CDDL", "insert", param);
+                }
+                   saveLog(procs[i].name, stat);
+            }
+
+            /*
+            $jdbc.update(name, "create", null);
+
+            var errs = $jdbc.queryList(name, "error", null);
+            if(errs.size() > 0) {
+                $logger.info(errs[0].text);
+            }
+            */
+         }
+
+        result.code = "Y";
+        result.message = stat;
+    } catch(e) {
+        $logger.info(e);
+        saveLog("=ERROR", e.message);
+         result.code = "E";
+         result.message = e.message;
+    }
+    //saveLog("PROC." + $data.param.proc_name, "FINISH")
+
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfMTDG" label="CONF">
+  <script>
+   <![CDATA[
+    importPackage(Packages.kr.co.itnova.conf);
+
+    var result = new Map();
+    var param = $data.param;
+
+    param.usr_id = $user.usr_id;
+
+    try {
+        var act = $jdbc.query("bp/tcams/ci/ci11/conf/MTDG", "select.act", null);
+
+        $logger.info(act);
+
+        /* ---
+        if(act.act_yn == "N") {
+            throw new Exception("Please check activate date : " + act.act_date);
+        }
+        --- */
+        result = ConfigLoader(param.class_id).getObj().check(param);
+
+        $logger.info(result);
+    } catch(e) {
+        $logger.info(e.message);
+
+        result.code = "E";
+        result.message = e.message;
+    }
+
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConfMTDG_" label="MTDG">
+  <script>
+   <![CDATA[
+    var result = new Map();
+
+    $service.callJob("functions");
+
+    try {
+        $logger.info($data.param);
+
+         //throw new Exception("Ready to work...")
+         saveLog("MTDG." + $data.param.comd_come_code, "START...")
+
+         var come = $data.param.comd_come_code.toLowerCase();
+         var meth = $data.param.comd_meth_gubn.toLowerCase();
+         var name = "bp/tcams/c" + meth +"/" + come + "/MTDG";
+         var stat = "";
+
+        var act = $jdbc.query("bp/tcams/ci/ci11/conf/MTDG", "select.act", null);
+
+        $logger.info(act);
+
+        if(act.act_yn == "N") {
+            throw new Exception("Please check activate date : " + act.act_date);
+        }
+
+        var mtdgs = $jdbc.queryList(name, "select", null);
+        for(var i = 0 ; i < mtdgs.size() ; i++) {
+            stat = "CHK";
+             if(mtdgs[i].chk_yn == "N") {
+                 $jdbc.update("bp/tcams/ca/conf", "insert.MTDG", mtdgs[i]);
+                 stat += " ADD";
+             } else {
+                 if(mtdgs[i].updated_yn == "N") {
+                     $jdbc.update("bp/tcams/ca/conf", "update.MTDG", mtdgs[i]);
+                     stat += " UPD";
+                 }
+             }
+               saveLog("=" + i + ":" + mtdgs[i].mtdg_stnd_degr, stat);
+        }
+
+        result.MESG_CODE = "SA-001";
+        result.MESG      = "OK";
+    } catch(e) {
+        $logger.info(e);
+        saveLog("=ERROR", e.message);
+         result.MESG_CODE = "SA-002";
+         result.MESG      = e.message;
+    }
+       saveLog("MTDG." + $data.param.comd_come_code, "FINISH...")
+
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="getLog" label="Log">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var logList = new List();
+
+    $service.callJob("functions");
+
+    try {
+        $logger.info($data.param);
+
+         //throw new Exception("Ready to work...")
+
+        logList = $jdbc.queryList("bp/tcams/ci/ci11/conf/DLOG", "S01", $data.param);
+        if($data.param.endRowNum == 0) {
+            cnt = $jdbc.query("bp/tcams/ci/ci11/conf/DLOG", "S02", $data.param);
+            $data.total_row_num = cnt.total_row_num;
+        } else {
+            $data.total_row_num = $data.param.total_row_num;
+        }
+
+        result.code = "Y";
+        result.mesg = "OK";
+    } catch(e) {
+        $logger.info(e);
+         result.code = "N";
+         result.mesg = e.message;
+    }
+
+    $data.logList = logList;
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+</service-descriptor>
