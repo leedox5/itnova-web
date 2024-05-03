@@ -1,0 +1,90 @@
+<dom-module id="ep-cd02-10-01-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 도움말
+        ** @Description     :
+        ** @Author          : AYH
+        ** @Create Date     : 2022.08.10
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+        <div class="hbox">
+       	    <table class="tb-form">
+        		<colgroup>
+	                <col>
+	            </colgroup>
+        		<tr>
+        			<td>
+                        <img src="/assets/images/tcams/common/cd02_10_01_01.png"/>        			
+        			</td>
+        		</tr>
+        	</table>
+        </div>
+        <div class="hbox flex-2">
+       	<sc-tab-navigation id="tab1" style="width:100%; height:100%;">
+       	    <div class="vbox" title-text="23차">
+	       	    <table class="tb-form">
+	        		<colgroup>
+		                <col>
+		            </colgroup>
+	        		<tr>
+	        			<td>
+	        				<img src="/assets/images/tcams/common/cd02_10_01_02.png"/>
+	        			</td>
+	        		</tr>
+	        	</table>
+       	    </div>
+       	    <div class="vbox" title-text="26차 이후 ">
+	       	    <table class="tb-form">
+	        		<colgroup>
+		                <col>
+		            </colgroup>
+	        		<tr>
+	        			<td>
+	        				<img src="/assets/images/tcams/common/cd02_10_01_03.png"/>
+	        			</td>
+	        		</tr>
+	        	</table>
+       	    </div>
+       	</sc-tab-navigation>
+       	</div>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is:	"ep-cd02-10-01-01",
+			properties:	{
+				// 조회조건
+				searchParam	   : {type: Object, value: function() {return {};}},
+			},
+	
+			/******************************
+			 * 초기화 설정
+			 ******************************/
+			// 초기화 완료 후 호출 함수
+			initialized: function() {
+				var	me = this;
+			},
+			
+			/**
+			 * 부모에서 호출
+			 */
+			load: function() {
+				var	me = this;
+
+				me.$.tab1.selectedIndex = 1;
+			},
+        });
+	</script>
+</dom-module>

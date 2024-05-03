@@ -1,0 +1,3019 @@
+<sc-link rel="import" href="../../co/co02/es-co02-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci02/es-ci02-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci04/es-ci04-01.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-00.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-02.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-03.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-04.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-05.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-08.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-15.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-16.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-01-02.html"></sc-link>
+
+
+<dom-module id="es-cd02-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : CHAIN 정보
+        ** @Description     : 
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.09
+        ** @History         : 2019.12.09 최초작성
+        ******************************************************************************************
+    -->
+		<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->
+		<!-- 코드 조회-->
+		<sc-service-group id="codes">
+			<sc-code-provider code="CA_STNDGUBN" target="{{codes.stnd_gubn}}"></sc-code-provider> <!-- 표준구분 -->
+			<sc-code-provider code="CA_MATL_SRC" target="{{codes.matl_src0}}"></sc-code-provider> <!-- 표준구분 -->
+			<sc-code-provider code="CA_VENDDEGR" target="{{codes.vend_degr}}"></sc-code-provider> <!-- 업체구분 -->
+		</sc-service-group>   		
+		
+		<!-- 조회 -->
+        <sc-service-provider id="getListRPC" descriptor="bp/tcams/cd/cd02" service-id="get.chinlist" on-response="resultSearch">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="chinList" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- END 집계 조회 -->
+        <sc-service-provider id="getInfoDataRPC" descriptor="bp/tcams/cd/cd02" service-id="get.basic.select1">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam1}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultEsum}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- END ITEM에서만 열었을때 호출되는 필수 정보 업데이트 -->
+        <sc-service-provider id="RequiredInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="update.RequiredInfo" on-response="RequiredInfo">
+            <inputs>
+                <sc-service-input name="updates" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultReqInfo}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 상태코드 조회 -->
+        <sc-service-provider id="getPassStatRPC" descriptor="bp/tcams/ca/common" service-id="get.end_pass_stat" on-response="getPassStat_resultHandler">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{passParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultPass}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider> 
+        
+		<!-- 저장 -->
+        <sc-service-provider id="insertListRPC" descriptor="bp/tcams/cd/cd02" service-id="insert.chinlist" on-response="resultInsert_resultHandler">
+            <outputs>
+                <sc-service-output name="result" target="{{resultIns}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 상태코드 조회 -->
+        <sc-service-provider id="returnPassStatRPC" descriptor="bp/tcams/cd/cd02" service-id="save.return" on-response="resultReturnStat">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{passParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultReturn}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- eono 저장 -->
+        <sc-service-provider id="saveEONO" descriptor="bp/tcams/cd/cd02" service-id="eo.saveEONO" on-response="saveEONO_resultHandler">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+                <sc-service-input name="list" value="{{resultList}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultEONO}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 기타비 입력전 check -->
+        <sc-service-provider id="checkValidationRPC" descriptor="bp/tcams/cd/cd02" service-id="check.spms" on-response="doCalc">
+            <inputs>
+                <sc-service-input name="param" value="{{etc0Param}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultCheck}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- END 집계 -->
+        <sc-service-provider id="esumRPC" descriptor="bp/tcams/cd/cd02" service-id="exec.esum" on-response="afterEsum">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultCheck}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 업체명 조회 -->
+        <sc-service-provider id="getVendNameInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.vendNameInfo" on-response="resultVendSearch">
+            <inputs>
+                <sc-service-input name="param" value="{{vend_param}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{vend_info}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>                
+        
+		<sc-service-provider id="saveImpt" descriptor="bp/tcams/cd/cd02/2023" service-id="saveImpt"></sc-service-provider>
+        
+		<!--
+            ************************************************************************************************************
+            * UI Area
+            ************************************************************************************************************
+        -->
+		<cc-page-title-bar page-title="체인 목록" on-click="onTitleClick">
+			<sc-label id="passMsg" style="color:red"></sc-label>
+            <sc-button id="btn_sortView"   text="원가내역 상세조회"  on-click="sortViewLoad"       style="align:right;"></sc-button>
+            <sc-button id="btn_carscode"   text="차종선택"            on-click="popup_ESCI02_01"     style="align:right;"></sc-button>
+            <sc-button id="btn_indscode"   text="업종선택"            on-click="popup_ESCI04_01"     style="align:right;"></sc-button>
+            <sc-button id="btn_basedate"   text="적용일선택"           on-click="popup_ESCD00_01"    style="align:right;"></sc-button>
+            <sc-button id="btn_vendcode"   text="업체선택"            on-click="popup_ESCD02_01_02"  style="align:right;"></sc-button>
+            <sc-button id="btn_etc_sub"    text="SUB기타비"          on-click="PassFunc_SUB"        style="align:right;"></sc-button>
+            <sc-button id="btn_sum_end"    text="집계 및 END기타비"     on-click="PassFunc_END"        style="align:right;"></sc-button>
+		</cc-page-title-bar>
+			
+		<cc-search-container>
+			<table>
+				<colgroup>
+					<col style="width:80px"> <!-- END PART -->
+					<col style="width:180px"><!-- END PART 입력-->
+					<col style="width:240px"><!-- END PART NAME 입력-->
+					<col style="width:60px"> <!-- EO NO -->						
+					<col style="width:150px"><!-- EO NO 입력 -->	
+					<col style="width:50px"> <!-- SEQ -->	
+					<col style="width:120px"><!-- SEQ 입력-->
+					<col style="width:80px"> <!-- SUB PART -->
+					<col style="width:400px"><!-- SUB PART 입력-->
+					<col>
+					<col>
+					<col>
+				</colgroup>
+				<tr> 
+					<th><sc-label text="END PART"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_PART_NO" value="{{searchParam.chin_part_no}}" on-enter="getList" max-length="20" readonly="true"
+						upper-case="true" style="width:160px"></sc-text-field>
+					</td>
+					<td>
+						<sc-text-field id="TB_PART_NAME" value="{{searchParam.chin_part_name}}" on-enter="getList" max-length="20" readonly="true"
+						mask-re="/[a-zA-Z0-9]/" strip-chars-re="/[ㄱ-힣]/" upper-case="true" ></sc-text-field>
+					</td>
+					<th><sc-label text="EO NO"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_EONO" value="{{searchParam.chin_eono}}" on-enter="getList" max-length="20" readonly="true"
+						mask-re="/[a-zA-Z0-9]/" strip-chars-re="/[ㄱ-힣]/" upper-case="true" ></sc-text-field>
+					</td>
+					<th><sc-label text="SEQ"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_SEQ0" value="" mask-re="/[0-9]/" on-enter="getList" max-length="10" readonly="true"></sc-text-field>
+					</td>
+					<th><sc-label text="SUB PART"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_PART_SUB0" value="{{searchParam.chin_part_sub0}}" mask-re="/[a-zA-Z0-9-]/" on-enter="getList" 
+						max-length="20" upper-case="true" style="width:150px"></sc-text-field>
+						<img src="../../../../assets/img/arr_up.png"  on-click="gridScroll_pre"/>
+						<img src="../../../../assets/img/arr_down.png"  on-click="gridScroll_next"/>
+						<sc-checkbox-field id="ini" label="필터" on-click="scrollFilter" input-value="{{searchParam.chk_filter}}" checked-value="Y" un-checked-value="N"></sc-checkbox-field>
+						<sc-text-field id="TB_CORP_CODE" value="{{searchParam.chin_corp_code}}" mask-re="/[a-zA-Z0-9-]/" max-length="4" 
+						hidden></sc-text-field>
+					</td>
+					<td>
+						<sc-label text="계산구분" hidden></sc-label>
+					</td>
+					<td>
+						<sc-text-field id="TB_COST_GUBN" value="{{searchParam.chin_cost_gubn}}" hidden></sc-text-field>
+					</td>
+					<td></td>											
+				</tr>
+			</table> 
+		</cc-search-container>
+		<div class="vspace-5"></div>
+		<table class="tb-form" style="width:1100px;padding-top:20px;">
+			<colgroup>
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+				<col style="width:110px;">
+			</colgroup>	
+				<tr>
+					<th style="text-align:center;"><sc-label text="재료비계"></sc-label></th> 
+					<th style="text-align:center;"><sc-label text="가공비계"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="제조원가"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="재료관리비"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="일반관리비"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="이윤"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="외주관리비"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="총원가"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="금형상각비"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="기타(상각외)"></sc-label></th>
+					<th style="text-align:center;"><sc-label text="END단가"></sc-label></th>
+				</tr>
+				<tr>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_matl_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_proc_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_manu_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_matl_mact}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_gme0_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_prof_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_exmt_mgct}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="{{resultEsum.sum_totl_cost}}"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="[[formatFn(resultEsum.esum_repy_cost,'amt')]]"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="[[formatFn(resultEsum.etc_etc0_cost2,'amt')]]"  format-type="amt"></sc-label></td>
+					<td style="text-align:right;"><sc-label text="[[formatFn(resultEsum.esum_cumt_pric,'amt')]]"  format-type="amt"></sc-label></td>
+				</tr>		
+			</table>	
+            <sc-grid id="gridPanel" editable="true" class="flex" data-provider="{{resultList}}" header-height="45"
+            		 on-item-edit-end="itemEditEndHandler" on-item-click="itemClickHandler" on-header-click="headerClickHandler" locked-column-count="{{lockColCount}}"   
+                     use-dummy="true">
+				<cc-grid-toolbar>
+     				<sc-label text="삭제 선택열 표시" style="vertical-align:top; margin-left: 30px;"></sc-label>
+					<sc-checkbox-field id="chk_del"  style="margin-right: 30px;"   checked-value="Y" un-checked-value="N" input-value="{{searchParam.comc_chk_del}}"  default-input-value="N" default-value="false" on-checkchange="onChangeCheckDelCol"></sc-checkbox-field>
+					
+					<sc-button text="체인 UPLOAD"    on-click="excelUpload" id="btn_exclupld"></sc-button>
+					<sc-button text="금형비조회"       on-click="popup_END_ESCD02_16" id="btn_mold"></sc-button>				
+					<sc-button text="END주기"        on-click="popup_END_ESCD02_02" id="btn_endremark"></sc-button>
+					<sc-button text="SUB주기"        on-click="popup_ESCD02_02" id="btn_remark"></sc-button>
+					<sc-button text="주기정보"        on-click="popup_ESCD02_04" id="btn_remark1"></sc-button>
+					<sc-button text="조회"           on-click="getList" id="btn_retrieve"></sc-button>
+					<sc-button text="추가"           on-click="PassFunc_ADD" id="btn_add"></sc-button>
+					<sc-button text="저장"           on-click="PassFunc_SAVE" id="btn_save"></sc-button>
+				</cc-grid-toolbar>
+				<sc-grid-columns>
+					<sc-checkbox-column data-field="chk"          header-text="전체" width="45"  text-align="center" check-value="Y" un-checked-value="N" 
+				                    editable="true" id="chk" item-editable-function="isItemEnabled" visible="true"></sc-checkbox-column>
+					<sc-data-column     data-field="comd_levl"           header-text="레&#xa;벨"   width="30"  text-align="center" max-length="10"
+									data-type="number" editor-maskre="/[0-9]/" item-editable-function="isItemEnabled" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column data-field="img_arrow_up" editable="false" width="20" header-image-location="center" visible="[[formula('isVisibleArrow')]]" 
+										sortable="false" header-image-url="ui/assets/img/arr_up.png"></sc-data-column>
+					<sc-data-column data-field="img_arrow_down" editable="false" width="20" header-image-location="center" visible="[[formula('isVisibleArrow')]]" 
+										sortable="false" header-image-url="ui/assets/img/arr_down.png"></sc-data-column>										
+					<sc-data-column     data-field="comd_tagt_seq0" header-text="목적지&#xa;NO"   id="col_tagt_seq0" width="45"  text-align="center" max-length="10" visible="false"
+									data-type="number" editor-maskre="/[0-9]/" item-editable-function="isItemEnabled" item-style-function="setStyle" visible="[[formula('isVisibleArrow')]]" ></sc-data-column>													                    
+					<sc-data-column	 data-field="comd_part_sub0" header-text="PART NO"  width="130" text-align="left" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-image-column    data-field="img_partno" editable="false" width="20" text-align="center" id="col_img_partno" visible="[[formula('isVisiblePartNo')]]" 
+										sortable="false" image-change-function="onImageChange"></sc-image-column>
+					<sc-data-column     data-field="comd_part_name" header-text="PART NAME"  sortable="false" width="190" text-align="left" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_eono_sub0" header-text="EONO"  sortable="false" width="80" text-align="left" item-editable-function="isItemEnabled" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_cumt_sub0" header-text="계산&#xa;번호"  sortable="false" width="40" text-align="center" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_usg0"      header-text="USG"  sortable="false" width="40" text-align="right" item-editable-function="isItemEnabled"
+										data-type="number" editor-maskre="/[0-9]/" max-length="10" item-style-function="setStyle"></sc-data-column>
+					<sc-combobox-column data-field="comd_stnd_gubn" header-text="표준구분"    visible="false" text-align="center" item-editable-function="isItemEnabled" 
+				                   		items="{{stnd_gubn}}"   display-field="label" value-field="data" item-style-function="setStyle"></sc-combobox-column>
+					<sc-data-column     data-field="comd_cars_code"  header-text="차종"   visible="false"      width="110" text-align="center" item-editable-function="isItemEnabled"
+										editor-maskre="/[A-Z 0-9]/" max-length="12" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_inds_code"  header-text="업종"         width="40" text-align="center" item-editable-function="isItemEnabled"
+										editor-maskre="/[A-Z 0-9]/" max-length="2" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-date-column    data-field="comd_base_date"  header-text="적용일"         width="80" text-align="center" item-editable-function="isItemEnabled"
+										data-type="date" editor-maskre="/[0-9]/" max-length="8" sortable="false" item-style-function="setStyle"></sc-date-column>
+
+					<sc-data-column     data-field="comd_vend_code"  header-text="업체코드"     visible="[[formula('isVisibleVend')]]"  width="80" editable="true" text-align="center" item-editable-function="isItemEnabled"
+										editor-maskre="/[A-Z 0-9]/" max-length="18" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_vend_name"  header-text="업체명"      visible="[[formula('isVisibleVend')]]" width="100" editable="false" text-align="left" sortable="false" item-style-function="setStyle"></sc-data-column>
+								
+					<sc-combobox-column data-field="comd_src0"       header-text="SRC"         width="40"  text-align="center" item-editable-function="isItemEnabled" 
+				                    	editable="true" items="{{codes.matl_src0}}"   display-field="label" value-field="data" sortable="false" item-style-function="setStyle"></sc-combobox-column>
+				    <sc-combobox-column data-field="comd_vend_degr" header-text="적용&#xa;임율"    text-align="center" item-editable-function="isItemEnabled" width="50" placeholder=""
+				                   		items="{{codes.vend_degr}}"   display-field="label" value-field="data" item-style-function="setStyle"></sc-combobox-column>
+				                   						                    	
+					<sc-data-column data-field="comd_vehl_gubn"  header-text="승상&#xa;구분"  width="40"  text-align="center" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_assy_pric"  header-text="SUB ASSY가"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle" visible="false"></sc-data-column>				                    						
+					<sc-data-column     data-field="spsm_matl_cost"  header-text="재료비"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="spsm_proc_cost"  header-text="가공비"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="spsm_matl_mact"  header-text="재료관리비"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="spsm_gme0_cost"  header-text="일반관리비"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="spsm_prof_cost"  header-text="이윤"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_repy_cost"  header-text="금형상각비"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_etc0_cost2"  header-text="기 타 비&#xa;(상각외)"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="comd_cumt_pric"  header-text="부품단가"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-data-column     data-field="spsm_trif_apct"  header-text="관세"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" sortable="false" item-style-function="setStyle"></sc-data-column>
+					<sc-combobox-column data-field="comd_pims_appl"  header-text="단가구분"         width="80"  text-align="center" item-editable-function="isItemEnabled" item-style-function="setStyle" 
+				                    	editable="true" items="{{pims_appl}}"   display-field="label" value-field="data" sortable="false" item-style-function="setStyle"></sc-combobox-column>
+				    <sc-data-column     data-field="pims_vend_code" header-text="부품&#xa;업체코드"  sortable="false" width="80" text-align="left" item-style-function="setStyle"></sc-data-column>					
+				    <sc-data-column     data-field="pims_vend_name" header-text="부품&#xa;업체명"  sortable="false" width="80" text-align="left" item-style-function="setStyle"></sc-data-column>
+
+				    <sc-data-column     data-field="comd_pims_pric"  header-text="적용단가"      width="80" editable="false" text-align="right" data-type="number" format-type="amt" 
+				    					item-editable-function="isItemEnabled" sortable="false" editor-maskre="/[0-9.]/" max-length="18" item-style-function="setStyle"></sc-data-column>
+					<sc-image-column    data-field="img_pims_pric" editable="false" width="20" text-align="center" id="col_img_pimspric" sortable="false" 
+										item-editable-function="isItemEnabled" image-change-function="onImageChange"></sc-image-column>	
+					<sc-date-column    data-field="comd_pims_srdt"  header-text="적용일"     width="80" text-align="center" sortable="false" item-style-function="setStyle"></sc-date-column>
+					<sc-combobox-column data-field="comd_sum0_gubn" header-text="품목집계&#xa;여부"         width="65"  text-align="center" editable="false"
+				                    	editable="true" items="{{lows_gubn}}"   display-field="label" value-field="data" sortable="false"></sc-combobox-column>	
+					<sc-combobox-column data-field="comd_omgt_gubn" header-text="외주재관비&#xa;지급여부"         width="65"  text-align="center" item-editable-function="isItemEnabled" 
+				                    	editable="true" items="{{omgt_gubn}}"   display-field="label" value-field="data" sortable="false"></sc-combobox-column>
+				    <sc-data-column     data-field="comd_temp_gubn" header-text="임시"  width="40" text-align="center" sortable="false"></sc-data-column>					                    	
+				    <sc-data-column     data-field="comd_remk"      header-text="주기&#xa;정보"  width="45" text-align="center" sortable="false"></sc-data-column>
+				    <sc-data-column     data-field="comd_rpay_gubn" header-text="금형계산&#xa;유무"  width="80" text-align="center" sortable="false"></sc-data-column>
+				    <sc-data-column   item-style-function=""  data-field="chin_link_gubn" header-text="변동구분"  width="80" text-align="center" sortable="false"></sc-data-column>
+				    
+					<sc-attachment-column data-field="file_cnt" shared-group-field="comd_att_grp_cd"  header-text="첨부" width="40" on-upload-complete="onUploadComplete"	
+											text-align="right" upload-editable-function="onUploadEditable" visible="[[formula('isVisibleFile')]]"></sc-attachment-column>				    
+	    
+				</sc-grid-columns>
+				<sc-grid-fields>
+					<sc-grid-field data-field="eono_check"   ></sc-grid-field>
+					<sc-grid-field data-field="comd_eono_old"></sc-grid-field>
+					<sc-grid-field data-field="comd_trif_apct"></sc-grid-field><!-- 관세  -->
+					<sc-grid-field data-field="comd_corp_code"></sc-grid-field><!-- 법인코드  -->
+					<sc-grid-field data-field="comd_cost_gubn"></sc-grid-field><!-- 계산구분  -->
+					<sc-grid-field data-field="comd_part_endi"></sc-grid-field><!-- END PART  -->
+					<sc-grid-field data-field="comd_eono_endi"></sc-grid-field><!-- END EONO -->
+					<sc-grid-field data-field="comd_cumt_endi"></sc-grid-field><!-- END CUMTNO -->
+					<sc-grid-field data-field="comd_seq0"></sc-grid-field><!-- CHIN SEQ0 -->
+					<sc-grid-field data-field="comd_sort_key0"></sc-grid-field><!-- SORT KEY -->
+					<sc-grid-field data-field="comd_vend_apfr"></sc-grid-field><!-- 업체적용일 -->
+					<sc-grid-field data-field="comd_spms_stat"></sc-grid-field><!-- 진행상태 -->
+					<sc-grid-field data-field="comd_link_meth"></sc-grid-field><!-- 진행상태 -->
+					<sc-grid-field data-field="comd_pims_seq"></sc-grid-field><!-- PIMS SEQ -->
+					<sc-grid-field data-field="comd_pims_srdt"></sc-grid-field><!-- PIMS 적용일 -->
+					<sc-grid-field data-field="comd_pims_vend"></sc-grid-field><!-- PIMS 업체코드 -->
+					<sc-grid-field data-field="comd_att_grp_cd" ></sc-grid-field> <!-- 첨부파일그룹코드 -->
+					
+					<!-- 반드시 필요!!!! -->
+					<sc-grid-field data-field="editstatus"    ></sc-grid-field> <!-- row 상태구분 값 -->
+					<sc-grid-field data-field="new0_item_gubn"></sc-grid-field> <!-- 신규 행추가 구분 -->
+					
+					<!-- [2023.01.16] impt처리 -->
+					<sc-grid-field data-field="impt_corp_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_cost_gubn"></sc-grid-field>
+					<sc-grid-field data-field="impt_part_no"></sc-grid-field>
+					<sc-grid-field data-field="impt_eono"></sc-grid-field>
+					<sc-grid-field data-field="impt_cumt_no"></sc-grid-field>
+					<sc-grid-field data-field="impt_come_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_matl_seq0"></sc-grid-field>
+					<sc-grid-field data-field="impt_matl_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_impt_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_impt_cost"></sc-grid-field>
+					<sc-grid-field data-field="impt_nati_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_gubn"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_mogb"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_apdt"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_mony"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_user"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_stnd"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_apdt"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_user"></sc-grid-field>
+					<sc-grid-field data-field="impt_matl_pric"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_carr_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_carr_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_insu_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_insu_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_pric"></sc-grid-field>
+				</sc-grid-fields>					
+			</sc-grid> 
+		</div>
+
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+        Polymer({
+            is: "es-cd02-01",
+            properties: {
+                codes: {
+                    type: Object,
+                    reset: false,
+                    value: function() {
+                        return {
+                        	stnd_gubn: [],
+                        	matl_src0: [],
+                        	vend_degr: []
+                        }
+                    }
+                },
+
+				//상단 조회조건
+				passParam      : {type: Object , value: function() { return {}; }},
+                searchParam    : {type: Object , value: function() { return {}; }},
+                searchParam1   : {type: Object , value: function() { return {}; }},
+                etc0Param      : {type: Object , value: function() { return {}; }},
+                vend_param     : {type: Object , value: function() { return {}; }},
+                vend_info      : {type: Object , value: function() { return {}; }},
+                
+				// END 집계 데이터
+                resultEsum     : {type: Object , value: function() { return {}; }},  
+                resultReqInfo  : {type: Object , value: function() { return {}; }},
+                resultPass     : {type: Object , value: function() { return {}; }},
+                resultReturn   : {type: Object , value: function() { return {}; }},
+                resultIns      : {type: Object , value: function() { return {}; }},
+                resultEONO     : {type: Object , value: function() { return {}; }},
+                resultCheck    : {type: Object , value: function() { return {}; }},
+                color          : {type: Object , value: function() { return {}; }},
+                
+                
+				// 단가구분
+                pims_appl      : {type : Array , value : function() { return [{data:'', label:''}
+                															 ,{data:"A", label:"직접입력"}
+                                                                             ,{data:"M", label:"구매단가"}
+                                                                             ,{data:"U", label:"사급판매가"}];}},
+
+				// 단가구분
+                lows_gubn      : {type : Array , value : function() { return commonAS.defaultYn();}},                                                                                               
+                omgt_gubn      : {type : Array , value : function() { return commonAS.defaultYn();}},
+
+                
+                // 조회 결과 리스트
+				resultList     : {type : Array , value: function() { return []; }},
+				resultList_org : {type : Array , value: function() { return []; }},
+                resultSave     : {type : Array , value: function() { return []; }},
+                backUpList   : {type : Array , value: function() { return []; }},
+
+                
+				
+				filterList     : {type : Array , value: function() { return []; }},
+				
+				lockColCount   : {type :Object , value: function() { return  6; }},
+				sRowIndex      : {type :Number , value: -1 },
+				mRowIndex      : {type :Number , value: 0 },
+				nRowIndex      : {type :Number , value: 0 },
+
+				scrollGubn     : {type : String, value : function() { return '';}},
+				passGubn       : {type : String, value : function() { return '';}},
+				initFlag       : {type : String, value : function() { return '';}}
+
+            },
+
+            formulas : {
+                // 입력제어
+                isVisiblePartNo : function() {
+                    var me = this;
+                	var provider = me.$.gridPanel.getDataProvider();
+
+                	// 그리드의 생성여부를 확인후 작업
+                	if (UT.isNotEmpty(provider)) {
+                    	var created = provider.getNewItems();
+                    	//신규 행추가가 존재하는 경우만 활성화
+                    	if (created.length > 0) {
+            				return true;
+                       	} else {
+                       		return false;
+                        }
+                   	} else {
+                   		return false;
+                    }
+                },
+
+                // 입력제어
+                isVisibleVend : function() {
+                    var me = this;
+
+                	// 그리드의 생성여부를 확인후 작업
+                	if (me.get("searchParam.from_menu_id") == "PCB00010") {
+                		me.$.btn_vendcode.removeAttribute("hidden");
+           				return true;
+                   	} else {
+                   		me.$.btn_vendcode.setAttribute("hidden", "hidden");
+                   		return false;
+                    }
+                },  
+
+                // 입력제어
+                //[2021.12.29] check dept 코드화
+                isVisibleFile: function() {
+                	var me = this;
+                	if (me.searchParam.chk_dept == "ST") {
+                		return true;
+                	} else {
+                		return false;
+                	}
+                },
+                
+                isVisibleArrow : function() {
+                    var me = this;
+                	// 그리드의 생성여부를 확인후 작업
+                	if (me.searchParam.emst_pass_stat == "20") {
+            			return true;
+                   	} else {
+                   		return false;
+                    }
+                }
+
+            },              
+
+             /**
+              * 초기화 완료 후 호출 함수
+              */
+            initialized: function() {
+                var me = this;
+
+				// 공통코드 그룹 조회
+                me.$.codes.service();
+                                
+                me.applyFormula();
+            },
+            
+           /**
+            * 부모에서 파라미터 전달
+            **/
+            load: function(obj) {
+                var me = this;
+
+                me.set("initFlag", "Y");
+                
+				me.set("searchParam.chin_corp_code", obj.emst_corp_code);
+				me.set("searchParam.chin_cost_gubn", obj.emst_cost_gubn);
+				me.set("searchParam.chin_part_no"  , obj.emst_part_no);
+				me.set("searchParam.chin_part_name", obj.emst_part_name);
+				me.set("searchParam.chin_eono"     , obj.emst_eono);
+				me.set("searchParam.from_menu_id"  , obj.from_menu_id);
+				me.$.TB_SEQ0.value             = obj.emst_cumt_no;
+				                               
+				me.searchParam.chin_seq0       = obj.emst_cumt_no; 
+				me.searchParam.emst_corp_code  = obj.emst_corp_code;
+				me.searchParam.emst_cost_gubn  = obj.emst_cost_gubn;
+				me.searchParam.emst_part_no    = obj.emst_part_no;  
+				me.searchParam.emst_eono       = obj.emst_eono;     
+				me.searchParam.emst_cumt_no    = obj.emst_cumt_no;
+				me.searchParam.emst_cumto_no   = obj.emst_cumto_no;
+				me.searchParam.emst_part_name  = obj.emst_part_name;
+
+				me.searchParam.emst_stnd_gubn  = obj.emst_stnd_gubn;
+				me.searchParam.emst_cars_code  = obj.emst_cars_code;
+				me.searchParam.emst_base_date  = obj.emst_base_date;
+				me.searchParam.emst_pass_stat  = obj.emst_pass_stat;
+				me.searchParam.emst_link_meth  = obj.emst_link_meth;
+				me.searchParam.emst_inds_code  = obj.emst_inds_code;
+				me.searchParam.emst_src0       = obj.emst_src0;
+				me.searchParam.emst_vehl_gubn  = obj.emst_vehl_gubn;
+				
+				me.passParam.corp_code         = obj.emst_corp_code;
+				me.passParam.cost_gubn         = obj.emst_cost_gubn;
+				me.passParam.part_no           = obj.emst_part_no;  
+				me.passParam.eono              = obj.emst_eono;     
+				me.passParam.cumt_no           = obj.emst_cumt_no; 
+
+				me.searchParam.chk_dept        = obj.chk_dept;
+				
+				// 삭제 컬럼 추가
+				me.$.gridPanel.selectionType = "eliminate";	
+				
+				if ((obj.emst_cost_gubn == "RD" && SCSessionManager.getCurrentUser().rx_role == "Y") ||
+					(obj.emst_cost_gubn != "RD" && SCSessionManager.getCurrentUser().rd_role == "Y")) {
+					me.$.btn_sortView.hidden = true;
+					me.$.btn_exclupld.hidden = true;
+					me.$.btn_carscode.hidden = true;
+					me.$.btn_indscode.hidden = true;
+					me.$.btn_basedate.hidden = true;
+					//me.$.btn_vendcode.hidden = true;
+					me.$.btn_etc_sub.hidden  = true;
+					me.$.btn_sum_end.hidden  = true;
+					
+					
+					me.$.btn_endremark.hidden = true; // 버튼 필요
+					me.$.btn_remark.hidden    = true; // 버튼 필요
+					me.$.btn_add.hidden       = true; // 버튼 필요
+					me.$.btn_save.hidden      = true; // 버튼 필요
+					
+					//check_delete.visible = false;
+					//check.visible        = false;
+					// 삭제 및 체크 박스 숨김처리
+					me.$.gridPanel.useSelection  = false;
+					me.$.chk.hidden              = false;					
+
+					me.set("lockColCount", 4);
+				}
+				
+				me.searchParam1.comd_corp_code = obj.emst_corp_code;
+				me.searchParam1.comd_cost_gubn = obj.emst_cost_gubn;
+				me.searchParam1.comd_part_no   = obj.emst_part_no;  
+				me.searchParam1.comd_eono      = obj.emst_eono;     
+				me.searchParam1.comd_cumt_no   = obj.emst_cumt_no;
+
+				var from_menu = obj.from_menu_id;
+				// END ITEM 마스터에서 진입 한경우 만 실행
+ 				if (from_menu == "PCA00010" || from_menu == "PCB00010" || from_menu == "PCK00010") {
+ 					me.$.RequiredInfoRPC.service();
+ 	 			} else {
+ 	 	 			// 조회
+ 	 				me.getList();
+ 	 	 		}
+
+ 				me.applyFormula();
+
+ 				me.set("initFlag", "N");
+            },
+
+            /**
+             * 조회 후 이벤트
+             */            
+            RequiredInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				// 메세지 처리 (실패 시) 
+				if (me.resultReqInfo.MESG_CODE == 'SA-002') {
+					UT.alert("END ITEM 필수정보가 부족합니다. <br>END ITEM MASTER에서 기종/차종/업종 등의 <br>입력을 확인하여 주십시오.");
+				} 
+				
+				// 메세지 처리 (성공 시)
+				if (me.resultReqInfo.MESG_CODE == 'SA-001') {
+					// 조회
+					me.getList();
+				}
+            },            
+
+            /**
+             * 조회 클릭 시 이벤트
+             */              
+            getList: function(){
+                var me = this;
+
+                // 초기화
+                me.set("resultEsum", {});
+                me.set("resultEsum.esum_repy_cost", '');
+                me.set("resultEsum.etc_etc0_cost2", '');
+                me.set("resultEsum.esum_cumt_pric", '');
+
+				me.$.getListRPC.service();
+				me.$.getInfoDataRPC.service();
+
+				me.applyFormula();
+            },
+
+            /**
+             * 조회 후 이벤트
+             */            
+             resultSearch : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+                // 조회 후 조회데이터 백업 - 필터 처리 후 원복을 위한 작업
+                me.set("resultList_org", []);
+                me.set("resultList_org", me.get("resultList"));
+
+                
+				var sCode = me.resultList[0].comd_spms_stat;
+				var sLink = me.resultList[0].comd_link_meth;
+				var cGubn = me.resultList[0].comd_cost_gubn;
+				var passStat = "";
+				
+				if(sCode == '2C' || sCode == '30' || sCode == '40'){
+					if(cGubn == 'RD'){
+						if(sCode == '40'){
+							passStat = "가격관리 전송";
+						} else {
+							passStat = "결재완료";
+						}					
+					}else{
+						if(sCode == '30'){
+							passStat = "결재요청";
+						} else if (sCode == '2C') {
+							passStat = "계산완료";
+						} else {
+							passStat = "결재완료";
+						}
+					}
+					me.$.passMsg.text = "( 진행상태 : " + passStat + " )";
+				} else {
+					me.$.passMsg.text = "";
+				}		
+
+				// 버튼 컨트롤
+				me.setButtonOnOff(sCode, sLink);	//2018.08.24 BJM 연동구분 Param 추가   
+
+				me.applyFormula();                        	
+
+            },
+
+            /**
+             * 버튼 컨트롤
+             **/            
+            setButtonOnOff : function(sCode, sLink){
+                var me = this;
+
+				//2018.08.24 BJM - 연동구분에 따른 버튼 처리 추가 (B: 일괄연동, S: 구간연동)
+				if (sCode == "2C" || sCode == "30" || sCode == "40" || sLink == "B" || sLink == "S") {
+					me.$.btn_exclupld.disabled  = true;	// Upload
+					me.$.btn_indscode.disabled  = true;	// 업종선택
+					me.$.btn_basedate.disabled  = true;	// 적용일선택
+					//me.$.btn_vendcode.disabled  = true;	// 업체선택
+					me.$.btn_carscode.disabled  = true;	// 차종선택
+					me.$.btn_etc_sub.disabled   = false;	// SUB기타비
+					me.$.btn_sum_end.disabled   = false;	// 집계 및 END 기타비
+					me.$.btn_endremark.disabled = true;	// END 주기
+					me.$.btn_remark.disabled    = true;	// SUB 주기
+					me.$.btn_add.disabled       = true;	// 추가
+					me.$.btn_save.disabled      = true;	// 저장	
+				} else {
+					me.$.btn_exclupld.disabled  = false; // Upload
+					me.$.btn_indscode.disabled  = false; // 업종선택
+					me.$.btn_basedate.disabled  = false; // 적용일선택
+					//me.$.btn_vendcode.disabled  = false; // 업체선택
+					me.$.btn_carscode.disabled  = false; // 차종선택
+					me.$.btn_etc_sub.disabled   = false; // SUB기타비
+					me.$.btn_sum_end.disabled   = false; // 집계 및 END 기타비
+					me.$.btn_endremark.disabled = false; // END 주기
+					me.$.btn_remark.disabled    = false; // SUB 주기
+					me.$.btn_add.disabled       = false; // 추가
+					me.$.btn_save.disabled      = false; // 저장
+				}                
+            },
+
+
+         	/**
+         	 * SUB PART별 상세조회 클릭 시 이벤트  
+         	 */
+         	sortViewLoad : function() {
+                var me = this,
+				    checkNum = 0,
+				    provider = me.$.gridPanel.getDataProvider();
+
+				var sCode = provider.getItemAt(0).comd_spms_stat;
+				
+				var title = "원가내역 상세조회";
+				var url = "ui/bp/tcams/cd/cd16/em-cd16.html?tit=" + title + 
+					"&emst_corp_code="+ me.searchParam.emst_corp_code+
+					"&emst_cost_gubn="+ me.searchParam.emst_cost_gubn+
+					"&emst_part_no="  + me.searchParam.emst_part_no+
+					"&emst_part_name="+ me.searchParam.emst_part_name+
+					"&emst_eono="     + me.searchParam.emst_eono+
+					"&emst_cumt_no="  + me.searchParam.emst_cumt_no+
+					"&emst_cumto_no=" + me.searchParam.emst_cumto_no;
+				
+				//결재요청 또는 완료인 것은 조회용으로 분기
+				if (sCode == '2C' || sCode == '30' || sCode == '40') {
+					url += "&isView=Y";	
+				}			    
+			    
+				UT.createWindow("PCX00040", "원가내역 상세조회", url);
+            }, 
+
+         	/**
+         	 * 이전 찾기 클릭 이벤트 
+         	 */
+         	gridScroll_pre : function() {
+                var me = this;
+                me.set("scrollGubn", "pre");
+                me.gridScroll();
+            },
+
+         	/**
+         	 * 다음 찾기 클릭 이벤트 
+         	 */
+         	gridScroll_next : function() {
+                var me = this;
+                me.set("scrollGubn", "next");
+                me.gridScroll();
+            }, 
+
+         	/**
+         	 * 찾기 버튼에 클릭에 따른 이벤트 처리 
+         	 */
+         	gridScroll : function() {
+                var me = this,
+                	obj = {},
+                    arr = [],
+                    cnt = 0,
+				    provider = me.$.gridPanel.getDataProvider();
+
+			    //me.set("color.background", "#FFC286");
+
+				// 필터값이 존재하는 경우
+			    if (UT.isNotEmpty(me.searchParam.chin_part_sub0)) {
+			    	me.set("filterList", commonAS.gridFilterChange(provider.getItems(), {key:"comd_part_sub0", value:me.searchParam.chin_part_sub0}));
+			    	// 필터된 값이 없으면 경고
+					if(me.filterList.length == 0){
+						UT.alert("찾는 PART가 없습니다.");
+						return;
+					}
+				} else {
+					// 필터가 없는 경우
+					UT.alert("찾고자 하는 SUB PART를 먼저 입력하세요.");
+					return;	
+				}
+
+             	// 백업 선행
+			    for (var i = 0 ; i < provider.getItemSize(); i++) {
+		    		obj = provider.getItemAt(i);
+		    		
+		    		if (obj["comd_part_sub0"].indexOf(me.searchParam.chin_part_sub0) > -1) {
+		    			arr[cnt] = i;
+		    			cnt++;
+		    		}
+			    }
+
+				var rowIndex = UT.toNumber(me.get("sRowIndex"));
+				if (me.get("scrollGubn") == 'pre') {
+					if(rowIndex > 0) {
+						rowIndex--; 
+					} else if (rowIndex < 0) {
+						rowIndex = 0;
+					}
+
+					// 해당 ROWINDEX 위치로 포커스 지정
+					me.$.gridPanel.setCurrentCell({rowIndex: arr[rowIndex], dataField:"comd_part_sub0"});
+					
+					
+				} else if (me.get("scrollGubn") == 'next') {
+					if(rowIndex < provider.getItemSize()) {
+						rowIndex++;
+					}
+					if(rowIndex == provider.getItemSize()) {
+						rowIndex=0;
+					}
+
+					// 해당 ROWINDEX 위치로 포커스 지정
+					me.$.gridPanel.setCurrentCell({rowIndex: arr[rowIndex], dataField:"comd_part_sub0"});					
+				}
+
+				me.set("sRowIndex", rowIndex);				    
+            },
+
+         	/**
+         	 * 찾기 버튼에 클릭에 따른 이벤트 처리 
+         	 */
+         	scrollFilter : function() {
+                var me = this,
+                    tempObj = {},
+				    provider = me.$.gridPanel.getDataProvider();
+
+                if (me.get("initFlag") == "N") {
+
+    			    // 필터 체크 시
+    			    if (me.get("searchParam.chk_filter") == "Y") {
+
+                     	// 백업 선행
+                     	me.makeBackUpList();
+
+                     	// 리스트에 복사
+        			    me.set("resultList", UT.copy(provider.getItems()));
+    				    				    
+    				    // 필터 처리
+    				    if (UT.isNotEmpty(me.searchParam.chin_part_sub0)) {
+
+    				    	me.set("resultList", commonAS.gridFilterChange(me.resultList, {key:"comd_part_sub0", value:me.searchParam.chin_part_sub0}));
+
+    						// row 상태 set
+    					    for (var i = 0 ; i < provider.getItemSize(); i++) {
+    						    if (provider.getItemAt(i).editstatus == "created") {
+    						    	provider.setItemState(i, "created");
+    							} else if (provider.getItemAt(i).editstatus == "updated") {
+    								provider.setItemAt(i, { chk : "Y"});
+    							} else if (provider.getItemAt(i).editstatus == "deleted") {
+    								provider.setItemState(i, "deleted");
+    								me.$.gridPanel.selectionCheck(i, true, false);
+    							} else {
+    								provider.setItemState(i, "none");
+    							}
+    					    }
+    					    				    	
+    					} else {
+    						// 필터 값이 없으면 원래 데이터로 원복
+    						me.restoreData();
+    					}
+    				} else {
+    					// 필터 값이 없으면 원래 데이터로 원복
+    					me.restoreData();
+    				}
+                }
+            },
+
+         	/**
+         	 * 백업 생성
+         	 */
+         	makeBackUpList : function() {
+                var me = this,
+				// 백업 받아놓은 데이터로 복사
+				    provider = me.$.gridPanel.getDataProvider();
+
+				// 초기화
+			    me.set("backUpList", []);        			    
+
+             	// 백업 선행
+			    for (var i = 0 ; i < provider.getItemSize(); i++) {
+			    	provider.setItemAt(i, { editstatus : provider.getItemState(i)});
+			    	provider.setItemAt(i, { chk : "N"});
+			    }
+			    me.set("backUpList", UT.copy(provider.getItems())); 			    
+            },             
+
+         	/**
+         	 * 필터 해제 및 필터 대상 값이 없는 경우 원복처리
+         	 */
+         	restoreData : function(gubn) {
+                var me = this,
+				// 백업 받아놓은 데이터로 복사
+				    provider = me.$.gridPanel.getDataProvider();
+
+				provider.removeAll();
+                me.set("resultList", UT.copy(me.backUpList));
+
+				// row 상태 set
+			    for (var i = 0 ; i < provider.getItemSize(); i++) {
+				    if (provider.getItemAt(i).editstatus == "created") {
+				    	provider.setItemAt(i, { chk : "Y"});
+				    	provider.setItemState(i, "created");
+					} else if (provider.getItemAt(i).editstatus == "updated") {
+						provider.setItemAt(i, { chk : "Y"});
+					} else if (provider.getItemAt(i).editstatus == "deleted") {
+						provider.setItemState(i, "deleted");
+						me.$.gridPanel.selectionCheck(i, true, false);
+					}
+			    }
+
+            },            
+
+         	/**
+         	 * 상태 체크 -  행추가
+         	 */
+         	PassFunc_ADD : function() {
+                var me = this;
+                me.set("passGubn", "ADD");
+                me.set("passParam.msg", "추가");
+                me.$.getPassStatRPC.service();
+            },
+
+         	/**
+         	 * 상태 체크 - 저장
+         	 */
+         	PassFunc_SAVE : function() {
+                var me = this;
+                me.set("passGubn", "SAVE");
+                me.set("passParam.msg", "수정");
+                me.$.getPassStatRPC.service();
+            }, 
+
+         	/**
+         	 * 상태 체크 - SUB 집계
+         	 */
+         	PassFunc_SUB : function() {
+                var me = this;
+                me.set("passGubn", "SUB");
+                me.set("passParam.msg", "계산");
+                me.$.getPassStatRPC.service();
+            },            
+
+         	/**
+         	 * 상태 체크 - SUB 집계
+         	 */
+         	PassFunc_END : function() {
+                var me = this;
+                me.set("passGubn", "END");
+                me.set("passParam.msg", "계산");
+                me.$.getPassStatRPC.service();
+            },
+
+            /**
+             * 상태코드 조회ㅐ후 이벤트
+             */            
+             getPassStat_resultHandler : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				var massege = "END ITEM 진행상태가 대상, 작성중이 아니면<br>" +me.get("passParam.msg") + " 불가능합니다.";
+				if (me.resultPass.pass_cnt != '0') {
+					if(me.get("passGubn") == "END" || me.get("passGubn") == "SUB") {
+						me.popup_ESCD02_03_V(); 
+					} else {
+						UT.alert(massege);
+						return;
+					}
+				} else {
+					// 구분 코드에 따른 분기처리
+					if(me.get("passGubn") == "END" || me.get("passGubn") == "SUB") {
+						// [2024.03.26] 변동 처리
+						if(me.resultPass.emst_link_meth == "B") {
+							me.set("searchParam.emst_link_meth", "B");
+							me.popup_ESCD02_03_V(); 
+						} else {
+							me.popup_ESCD02_03(); 
+						}
+					}
+					if(me.get("passGubn") == "ADD")  {
+						me.addItem();
+					}
+					if(me.get("passGubn") == "SAVE") {
+						me.saveList();
+					}
+				}           	
+            },
+
+         	/**
+         	 * 저장 버튼 클릭 시 이벤트
+         	 */
+         	saveList : function() {
+                var me = this,
+                	provider = me.$.gridPanel.getDataProvider();
+				var addIdx = 0;
+				// 초기화
+				me.set("resultSave", []);
+			    me.set("messageDev", []);					
+
+			    var items   = provider.getItems();
+                var created = provider.getNewItems();
+                var updated = provider.getUpdateItems(); 
+                var deleted = provider.removeItems();
+
+                // 신규/수정건이 있을 경우에만 저장
+                if (created.length + updated.length + deleted.length === 0) {
+                    UT.alert("저장 할 내역이 없습니다.");
+                    return;
+                }
+                
+                // 저장 유효성 체크
+                if (!me.validationList()) {
+                    return;
+                }
+
+                // 레벨 유효성 체크
+                if (!me.validationLevel("save")) {
+                    return;
+                }
+
+                // row 상태값 set
+                for (var i = 0 ; i < provider.getItemSize() ; i++) {
+                	provider.setItemAt(i, { editstatus : provider.getItemState(i)});
+                }                
+                
+				var eono_end = "";
+				var eono_sub = "";                
+
+				if (created.length > 0 || updated.length > 0 ||  deleted.length > 0) {
+					
+	                commonAS.confirm("Warning", "계산기준 내역변경 시엔 집계 DATA가 초기화 되며<br>적용된 공법을 재 계산하여야 합니다.<br>계속 하시겠습니까?", function() {
+
+						for (var indexI = 0 ; indexI < provider.getItemSize() ; indexI++) {
+							if (provider.getItemAt(indexI).comd_levl == '1' && provider.getItemAt(indexI).eono_check == 'Y') {
+								eono_end='END';
+								me.searchParam['emst_eono'] = provider.getItemAt(indexI).comd_eono_old;	
+								me.searchParam['eono_to']   = provider.getItemAt(indexI).comd_eono_sub0;							
+							} else if (UT.toNumber(provider.getItemAt(indexI).comd_levl) > 1 && provider.getItemAt(indexI).eono_check == 'Y') {
+								eono_sub='SUB';
+							}
+						}
+
+						if (eono_end == 'END') {
+							me.searchParam.eono_chk = eono_end;											   
+							me.$.saveEONO.service();
+						} else {
+							
+							me.set("resultSave", UT.copy(provider.getItems()));
+							
+							for (var indexI = 0 ; indexI < me.resultSave.length ; indexI++) {
+								if (UT.isNotEmpty(me.resultSave[indexI].comd_pims_pric)) {
+									me.resultSave[indexI].comd_pims_pric = commonAS.substr2num(me.resultSave[indexI].comd_pims_pric + "");
+								}
+							}							
+		                    me.$.insertListRPC.body = {
+			                	param: me.get("resultSave")
+			                };
+			                me.$.insertListRPC.service();
+						}
+	                });
+				}
+            },
+
+         	/**
+         	 * 그리드 저장 유효성 체크
+         	 */
+         	validationList: function() {
+                var me = this,
+                    preRowIndex = 0,
+                    cCnt = 0,
+                    dCnt = 0;
+                	saveArr = [];
+
+                var provider = me.$.gridPanel.getDataProvider();
+                var created = provider.getNewItems();
+                var updated = provider.getUpdateItems(); 
+                var deleted = provider.removeItems();
+
+                saveArr = commonAS.makeArray(created,updated);
+
+                //삭제 체크
+				for (var d = 0 ; d < provider.getItemSize() ; d++) {
+					
+					if (provider.getItemState(d) == "deleted") {
+						var o = provider.getItemAt(d);
+
+						if(o['comd_levl'] == "1") {
+							UT.alert("1레벨은 삭제가 불가능 합니다.");
+							return false;
+						}
+
+						// 두번째 데이터는 상위 레벨을 체크하기
+						if (dCnt > 0) {
+							var level    = UT.toNumber(o['comd_levl']);
+							var sortKey  = UT.toNumber(o['comd_sort_key0']);
+							var rowIndex = d;
+							// 현재 레벨이 2레벨이면 최상이라 판단하고 담는다
+							if (level == 2) {
+								preRowIndex = rowIndex;
+							} else {
+								// 초기화
+								cCnt = 0;
+								// 전체 데이터를 기준으로 체크해야 상위 레벨이 존재하면 삭제 대상으로 담지 않아야 함
+								for (var r = preRowIndex+1 ; r < provider.getItemSize() ; r++) {
+									var checkObj = provider.getItemAt(r);
+
+									// 이전 삭제 row부터 아래로 내려오다가 현재 체크할 row까지 온다면 종료
+									if (r == rowIndex) {
+										break;
+									}
+
+									// 이전 삭제 row의 레벨과 같거나 큰 row가 존재한다면 부모가 삭제 대상이 아닌 것으로 판단
+									if (UT.toNumber(provider.getItemAt(preRowIndex).comd_levl) <= UT.toNumber(checkObj['comd_levl']) ) {
+										cCnt++;
+										break;
+									}
+								}
+
+								// 상위 부모가 체크되지 않음 row는 담기
+								if (cCnt > 0) {
+									preRowIndex = rowIndex;
+								} else {
+									me.$.gridPanel.selectionCheck(rowIndex, false, false);
+								}
+							}
+							dCnt++;
+
+						// 첫번째 데이터는 담기
+						} else {
+							preRowIndex = rowIndex;
+							dCnt++;
+						}						
+					}
+				}
+
+                //신규 or 수정 체크
+				for (var s = 0; s <saveArr.length; s++ ){
+					var o = saveArr[s];
+					if(UT.isEmpty(o['comd_levl'])) {
+						UT.alert("레벨은 필수 항목입니다.");
+						return false;
+					}
+					if(UT.isEmpty(o['comd_stnd_gubn'])) {
+						UT.alert("표준구분은 필수 항목입니다.");
+						return false;
+					}										
+					if(UT.isEmpty(o['comd_part_sub0'])) {
+						UT.alert("PART NO는 필수 항목입니다.");
+						return false;
+					}
+					if(UT.isEmpty(o['comd_eono_sub0'])) {
+						UT.alert("EONO는 필수 항목입니다.");
+						return false;
+					}
+					if(UT.isEmpty(o['comd_usg0'])) {
+						UT.alert("USG는 필수 항목입니다.");
+						return false;
+					}										
+					if(UT.isEmpty(o['comd_base_date'])) {
+						UT.alert("적용일은 필수 항목입니다.");
+						return false;
+					} else {
+						if (!UT.isDate(UT.toDate(o['comd_base_date']))) {
+							UT.alert("날짜값이 유효하지 않습니다.");
+							return false;
+						}
+					}
+					if(UT.isEmpty(o['comd_inds_code'])) {
+						UT.alert("업종은 필수 항목입니다.");
+						return false;
+					}
+					if(     UT.isNotEmpty(o['comd_pims_appl']) 
+						&& (   o['comd_pims_appl'] == 'A'
+							|| o['comd_pims_appl'] == 'M'
+							|| o['comd_pims_appl'] == 'U')) {
+						if (UT.isEmpty(o['comd_pims_pric'])) {
+							UT.alert("단가구분 적용시 적용단가는 필수 항목 입니다.");
+							return false;
+						}
+						// [2023.07.19] VEND 체크 추가
+						if (o['comd_pims_appl'] == 'M' || o['comd_pims_appl'] == 'U') {
+							if (UT.isEmpty(o['pims_vend_code'])) {
+								UT.alert("단가구분 적용시 부품업체코드는 필수 항목 입니다.");
+								return false;
+							}
+					    }
+					}
+					if(o['comd_stnd_gubn'] == "P") {
+						UT.alert("현대트랜시스표준은 현재 존재하지 않습니다.");
+						return false;
+					}										
+										
+				}
+
+                return true;
+            }, 
+
+         	/**
+         	 * 레벨 유효성 체크
+         	 */
+         	validationLevel: function(gubn) {
+                var me = this,
+                	selectedIndex = 0,
+					provider = me.$.gridPanel.getDataProvider();
+
+				// 1레벨은 수정 불가 
+				if (UT.toNumber(provider.getItemAt(0).comd_levl) != 1){
+					UT.alert("유효하지 않은 LEVEL입니다.<br>[사유: 최상위 레벨은 1레벨이여야 합니다.]");
+					return false;
+				}                
+
+
+                for (var indexI = 0; indexI < provider.getItemSize(); indexI++ ){
+
+    				if (gubn == "save") {
+    					if(provider.getItemAt(indexI).chk == "Y"){
+    						selectedIndex 	= indexI;
+
+    						// 수정된 레벨은 1보다 커야한다. 
+    						if (UT.toNumber(provider.getItemAt(indexI).comd_levl) < 2 ) {
+    							UT.alert("유효하지 않은 LEVEL입니다.<br>[사유: 서브파트레벨이 1레벨 이하입니다.]");
+    							provider.getItemAt(indexI).comd_levl = "";
+    							return false;
+    						}  
+    						// 레벨은 직전 레벨과 비교한다.					
+    						if (UT.toNumber(provider.getItemAt(indexI).comd_levl) > UT.toNumber(provider.getItemAt(indexI-1).comd_levl) + 1 ) {
+    							UT.alert("유효하지 않은 LEVEL입니다.<br>[사유: 하위레벨이 2이상 큼]");
+    							return false;
+    						}							
+    				  	}
+    				} else {
+        				// 1레벨은 상위에서 체크하여 하위구성 전체를 체크
+        				if (indexI > 0) {
+    						// 수정된 레벨은 1보다 커야한다. 
+    						if (UT.toNumber(provider.getItemAt(indexI).comd_levl) < 2 ) {
+    							UT.alert("유효하지 않은 LEVEL입니다.<br>[사유: 서브파트레벨이 1레벨 이하입니다.]");
+    							provider.getItemAt(indexI).comd_levl = "";
+    							return false;
+    						}  
+    						// 레벨은 직전 레벨과 비교한다.					
+    						//if (UT.toNumber(provider.getItemAt(indexI).comd_levl) > UT.toNumber(provider.getItemAt(indexI-1).comd_levl) + 1 ) {
+    						//	UT.alert("유효하지 않은 LEVEL입니다.<br>[사유: 하위레벨이 2이상 큼]");
+    						//	return false;
+    						//}	
+            			}
+        			}                   
+
+                }
+
+                return true;
+            },
+
+            /**
+             * 신규 저장 및 수정 처리 후 로직
+             */            
+            resultInsert_resultHandler : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	me.set("messageDev", UT.copy(me.resultIns));
+
+				// 메세지 처리 (실패 시)
+				if (me.resultIns['MESG_CODE'] == 'SA-002') {
+					commonAS.comeAlert(me.resultIns);
+				}
+				
+				// 메세지 처리 (성공 시)
+				if (me.resultIns['MESG_CODE'] == 'SA-001') {
+					
+					if (me.searchParam['emst_pass_stat'] == '50') {
+						
+						me.$.returnPassStatRPC.service();
+					} else {
+						var imptList = [];
+						
+						for (var indexI = 0 ; indexI < me.resultSave.length ; indexI++) {
+
+							if (UT.isNotEmpty(me.resultSave[indexI].comd_pims_pric) &&
+								me.resultSave[indexI].comd_trif_apct != "0" &&
+								UT.isNotEmpty(me.resultSave[indexI].comd_trif_apct)) {
+								console.log(me.resultSave[indexI]);
+								if(parseFloat(me.resultSave[indexI].comd_trif_apct) > 0) {
+									imptList.push(me.resultSave[indexI]);
+							    }
+							}
+						}
+
+						if(imptList.length > 0) {
+							me.$.saveImpt.body = {
+                                items : imptList 									
+							};
+			                commonJS.callService(me.$.saveImpt).then((data) => {
+			                    console.log(data);
+
+			                    if(data.result.code == "N") {
+			                    	UT.alert(data.result.mesg);
+			                    	return;    
+			                    }
+								UT.alert("저장 되었습니다.");
+								me.getList();
+								me.moduleCall();
+			                });
+						} else {
+							UT.alert("저장 되었습니다.");
+							me.getList();
+							me.moduleCall();
+					    }
+					}
+					
+				}
+            },  
+
+            /**
+             * 신규 저장 및 수정 처리 후 로직
+             */            
+             resultReturnStat : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	me.set("messageDev", UT.copy(me.resultIns));
+
+            	UT.alert("저장 되었습니다.");
+            	me.moduleCall();
+
+            },
+
+
+			/*
+			* DataGrid 컬럼 별 enabled 처리
+			*/
+            isItemEnabled: function(data, item) {
+
+	            var me = this,
+                provider = me.$.gridPanel.getDataProvider();                
+
+				switch(item.dataField) {
+					// 조정단가는 신규일때 입력 불가
+					case "comd_levl" :
+					case "comd_part_sub0" :
+					case "comd_cumt_sub0" :
+						if(data.new0_item_gubn == "Y") return true;
+						else return false;
+						break;
+						
+					case "comd_eono_sub0" :
+						if(data.comd_use_yn == 'Y') return true;
+						else return false;
+					break;
+					
+					case "comd_usg0" :
+					case "comd_stnd_gubn" :
+					case "comd_lows_gubn" :
+					case "comd_omgt_gubn" :
+					case "comd_base_date" :
+					case "comd_cars_code" :
+					case "comd_inds_code" :
+					case "comd_tagt_seq0" :
+						if(data.comd_levl != "1" && data.comd_use_yn == 'Y') return true;
+						else return false;
+					break;
+					
+					case "comd_vend_degr" :
+					case "comd_pims_appl" :
+						// 레벨 제한 풀기 - 소순철 책임 요청에 의한 처리 GYD
+						if(data.comd_use_yn == 'Y') return true;
+						else return false;
+						break;
+
+					case "comd_pims_pric" :
+						// 레벨 제한 풀기 - 소순철 책임 요청에 의한 처리 GYD
+						if(data.comd_pims_appl == "A"  && data.comd_use_yn == 'Y') return true;
+						else return false;
+						break;
+
+					// 업체는 사용자 입력을 제한한다. 
+  					case "comd_vend_code" :
+  						if(data.comd_vend_code == ""){
+  							data.comd_vend_apfr = "";
+  							data.comd_vend_name = "";
+  						} 
+  						
+						if(data.comd_levl != "1" && data.comd_use_yn == 'Y') return true;
+  						else return false;
+					break;	
+					
+					// 소스는  2레벨부터 수정불가 
+					case "comd_src0" :
+						if(data.comd_spms_stat == "20") {						
+							if(data.comd_levl != "1" && data.comd_use_yn == 'Y') return true;
+							else return false;
+						} else {
+							return false;
+						}	
+					break;
+
+					case "img_pims_pric" :
+						if (data.comd_pims_appl == 'M' || data.comd_pims_appl == 'U') {
+							return true;
+						} else {
+							return false;
+						}
+					break;
+					
+					case "comd_remk" :
+					case "comd_trif_apct" :
+		
+					default:
+						return true;
+				}
+			},
+
+         	/**
+         	 * EONO 저장 후 이벤트
+         	 */
+         	saveEONO_resultHandler: function(e, res) {
+                var me = this,
+					provider = me.$.gridPanel.getDataProvider();
+
+				if (me.resultEONO.MESG_CODE == 'SA-002') {
+					commonAS.comeAlert(me.resultEONO);
+					me.getList();
+				} else if (me.resultEONO.MESG_CODE == 'SA-001') {
+					me.set("searchParam.chin_eono"   , provider.getItemAt(0).comd_eono_sub0);
+					me.set("searchParam.chin_seq0"   , me.resultEONO.emst_cumt_no);
+					me.set("searchParam.emst_eono"   , provider.getItemAt(0).comd_eono_sub0);
+					me.set("searchParam.emst_cumt_no", me.resultEONO.emst_cumt_no);
+					UT.alert("저장 되었습니다.");
+					me.getList();
+					me.moduleCall();
+				}
+            },
+
+         	/**
+         	 * 모듈간 통신 END ITEM 마스터 화면 재조회
+         	 */
+         	moduleCall: function() {
+                var me = this,
+					provider = me.$.gridPanel.getDataProvider();
+
+				// END ITEM MASTER
+				if (     me.searchParam['cmms_cost_gubn'] == 'R0'
+					  || me.searchParam['cmms_cost_gubn'] == 'R1'
+					  || me.searchParam['cmms_cost_gubn'] == 'R2'
+					  || me.searchParam['cmms_cost_gubn'] == 'R3') {
+					var target1 = document.querySelector("sc-pages").children.PCA00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00020;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 개발
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RD') {
+					var target1 = document.querySelector("sc-pages").children.PCB00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00030;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 임시
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RC') {
+					var target1 = document.querySelector("sc-pages").children.PCK00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00010;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				}
+            }, 
+
+         	/**
+         	 * EXCEL Upload
+         	 */
+         	excelUpload: function() {
+                var me = this,
+                	param = {},
+					provider = me.$.gridPanel.getDataProvider();
+
+				param['comc_corp_code'] = me.get("searchParam.emst_corp_code");
+				param['comc_cost_gubn'] = me.get("searchParam.emst_cost_gubn");
+				param['comc_part_no']   = me.get("searchParam.emst_part_no");
+				param['comc_eono']      = me.get("searchParam.emst_eono");
+				param['comc_cumt_no']   = me.get("searchParam.emst_cumt_no");				
+
+	            if(!me.ep_cd02_04){
+	                me.ep_cd02_04 = UT.popup('ep-cd02-04', me, 1000, 650, {
+                		'selected-item' : function(popup, e) {
+							me.getList();
+                            popup.close();
+                		}
+	                }, {title : "체인 Upload"}); // G.Y.D 체인 팝업 필요!!!!
+	            }
+                me.ep_cd02_04.show();
+				me.ep_cd02_04.getWindowContent().load(param);                
+            },
+
+         	/**
+         	 * 차종 팝업
+         	 */
+         	popup_ESCI02_01: function() {
+                var me = this,
+                	param = {},
+					provider = me.$.gridPanel.getDataProvider();
+
+	            var param = {};
+				for(var i=0; i<provider.getItemSize(); i++ ){
+					if(provider.getItemAt(i).chk == "Y"){
+
+						if(provider.getItemAt(i).comd_levl == '1') {
+							UT.alert("1 LEVEL 차종은 END-ITEM에서 수정하십시오.");
+							return;
+						}		
+										
+						if(    provider.getItemAt(i).comd_dsgn_stat == '40' 
+							|| provider.getItemAt(i).comd_dsgn_stat == '30'
+							|| provider.getItemAt(i).comd_dsgn_stat == '2C') {
+							UT.alert("결재 진행중/결재 ITEM/계산완료는 수정할 수 없습니다.");
+							return;
+						}
+						cnt++;
+					}
+				}
+				
+				if (cnt == 0) {
+					UT.alert("선택된 ITEM이 없습니다.");
+					return;
+				}				
+
+	            if(!me.popup_ci02){
+	                me.popup_ci02 = UT.popup('es-ci02-01', me, 900, 600, {
+                		'selected-item' : function(popup, e) {
+                			var result = e.detail;
+
+        					for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+        						if(provider.getItemAt(indexI).chk == "Y") {
+        							provider.setItemAt(indexI, { comd_cars_code : result.comd_cars_code});
+        						}
+        					}               			
+                            popup.close();
+                		}
+	                }, {title : "차종선택"});
+	            }
+                me.popup_ci02.show();
+				me.popup_ci02.getWindowContent().load(param);               
+            }, 
+
+         	/**
+         	 * 업종 팝업
+         	 */
+         	popup_ESCI04_01: function() {
+		        var me = this,
+	            	cnt = 0,
+	            	provider = me.$.gridPanel.getDataProvider();
+	            var param = {};
+	
+				for(var i=0; i<provider.getItemSize(); i++ ){
+					if(provider.getItemAt(i).chk == "Y"){
+	
+						if(provider.getItemAt(i).comd_levl == '1') {
+							UT.alert("1 LEVEL 차종은 END-ITEM에서 수정하십시오.");
+							return;
+						}
+											
+						if(    provider.getItemAt(i).comd_dsgn_stat == '40' 
+							|| provider.getItemAt(i).comd_dsgn_stat == '30'
+							|| provider.getItemAt(i).comd_dsgn_stat == '2C') {
+							UT.alert("결재 진행중/결재 ITEM/계산완료는 수정할 수 없습니다.");
+							return;
+						}
+											
+						cnt++;
+					}
+				}
+				
+				if (cnt == 0) {
+					UT.alert("선택된 ITEM이 없습니다.");
+					return;
+				}
+            
+	            if(!me.popup_ci04_01){
+	                me.popup_ci04_01 = UT.popup('es-ci04-01', me, 1200, 600, {
+	            		'selected-item' : function(popup, e) {
+	            			var result = e.detail;
+	
+	    					for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+	    						if(provider.getItemAt(indexI).chk == "Y"){
+	    							provider.setItemAt(indexI, { comd_inds_code : result.comd_inds_code});
+	    						}
+	    					}               			
+	                        popup.close();
+	            		}
+	                }, {title : "업종선택"});
+	            }
+	            me.popup_ci04_01.show();
+				me.popup_ci04_01.getWindowContent().load(param);             
+            }, 
+
+         	/**
+         	 * 적용일 팝업
+         	 */
+         	popup_ESCD00_01: function() {
+		        var me = this,
+	            	cnt = 0,
+	            	provider = me.$.gridPanel.getDataProvider();
+	            var param = {};
+	
+				for(var i=0; i<provider.getItemSize(); i++ ){
+					if(provider.getItemAt(i).chk == "Y"){
+	
+						if(provider.getItemAt(i).comd_levl == '1') {
+							UT.alert("1 LEVEL 차종은 END-ITEM에서 수정하십시오.");
+							return;
+						}
+											
+						if(    provider.getItemAt(i).comd_dsgn_stat == '40' 
+							|| provider.getItemAt(i).comd_dsgn_stat == '30'
+							|| provider.getItemAt(i).comd_dsgn_stat == '2C') {
+							UT.alert("결재 진행중/결재 ITEM/계산완료는 수정할 수 없습니다.");
+							return;
+						}
+
+						if(UT.isEmpty(provider.getItemAt(i).comd_inds_code)) {
+							UT.alert("업종을 입력하여 주십시오.");
+							return;
+						}
+
+						param['comd_corp_code'] = 'K1';
+						param['comd_stnd_gubn'] = provider.getItemAt(i).comd_stnd_gubn;
+						param['comd_inds_code'] = provider.getItemAt(i).comd_inds_code;												
+											
+						cnt++;
+					}
+				}
+				
+				if (cnt == 0) {
+					UT.alert("선택된 ITEM이 없습니다.");
+					return;
+				}
+            
+	            if(!me.ep_cd02_00){
+	                me.ep_cd02_00 = UT.popup('ep-cd02-00', me, 380, 500, {
+	            		'selected-item' : function(popup, e) {
+	            			var result = e.detail;
+	
+	    					for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+	    						if(provider.getItemAt(indexI).chk == "Y"){
+	    							provider.setItemAt(indexI, { comd_base_date : result.comd_appl_date});
+	    						}
+	    					}               			
+	                        popup.close();
+	            		}
+	                }, {title : "원가계산 기준일 선택"}); // G.Y.D 원가계산 기준일 팝업 필요!!!!
+	            }
+	            me.ep_cd02_00.show();
+				me.ep_cd02_00.getWindowContent().load(param);             
+            },
+
+         	/**
+         	 * 업체 팝업
+         	 */
+         	popup_ESCD02_01_02: function() {
+	            var me = this,
+	            	cnt = 0,
+	            	provider = me.$.gridPanel.getDataProvider();
+	            var param = {};
+	
+				for(var i=0; i<provider.getItemSize(); i++ ){
+					if(provider.getItemAt(i).chk == "Y"){
+
+						if(provider.getItemAt(i).comd_levl == '1') {
+							UT.alert("1 LEVEL 차종은 END-ITEM에서 수정하십시오.");
+							return;
+						}
+											
+						if(    provider.getItemAt(i).comd_dsgn_stat == '40' 
+							|| provider.getItemAt(i).comd_dsgn_stat == '30'
+							|| provider.getItemAt(i).comd_dsgn_stat == '2C') {
+							UT.alert("결재 진행중/결재 ITEM/계산완료는 수정할 수 없습니다.");
+							return;
+						}						
+						cnt++;
+					}
+				}
+				
+				if (cnt == 0) {
+					UT.alert("선택된 ITEM이 없습니다.");
+					return;
+				}					            
+	            
+	            if(!me.ep_cd02_01_02){
+	                me.ep_cd02_01_02 = UT.popup('ep-cd02-01-02', me, 875, 600, {
+	            		'selected-item' : function(popup, e) {
+	            			var result = e.detail,
+	            			provider = me.$.gridPanel.getDataProvider();
+	            			
+	
+	    					for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+	        					var obj = provider.getItemAt(indexI);
+	    						if(obj.chk == "Y"){
+	    							if(obj.comd_vend_code != result.comd_vend_code) {
+	
+		        						provider.setItemAt(indexI, { comd_vend_code : result.comd_vend_code});
+		        						provider.setItemAt(indexI, { comd_vend_apfr : result.comd_appl_date});
+		        						provider.setItemAt(indexI, { comd_vend_name : result.comd_vend_name});
+
+	    							}
+	    						}
+	    					}               			
+	                        popup.close();
+	            		}
+	                }, {title : "업체선택"});
+	            }
+	            me.ep_cd02_01_02.show();
+				me.ep_cd02_01_02.getWindowContent().load();	           
+            },
+
+         	/**
+         	 * END PART 별 주기정보 팝업 
+         	 */
+         	popup_ESCD02_04: function() {
+	            var me = this,
+	            	cnt = 0,
+	            	provider = me.$.gridPanel.getDataProvider();
+	            var param = {};
+
+				param['comd_corp_code'] = provider.getItemAt(0).comd_corp_code;
+				param['comd_cost_gubn'] = provider.getItemAt(0).comd_cost_gubn;
+				param['comd_part_endi'] = provider.getItemAt(0).comd_part_endi;
+				param['comd_eono_endi'] = provider.getItemAt(0).comd_eono_endi;
+				param['comd_cumt_endi'] = provider.getItemAt(0).comd_cumt_endi;
+				param['comd_seq0'] 		= provider.getItemAt(0).comd_seq0;	            
+	
+	            if(!me.ep_cd02_03){
+	                me.ep_cd02_03 = UT.popup('ep-cd02-03', me, 600, 600, {
+	            		'selected-item' : function(popup, e) {
+	                        popup.close();
+	            		}
+	                }, {title : "주기정보 조회"});
+	            }
+	            me.ep_cd02_03.show();
+				me.ep_cd02_03.getWindowContent().load(param);	           
+            },
+
+         	/**
+         	 * 금형비 조회 
+         	 */
+         	popup_END_ESCD02_16: function() {
+	            var me = this;
+	            var param = {};
+
+				param['emst_corp_code'] = me.searchParam.emst_corp_code;
+				param['emst_cost_gubn'] = me.searchParam.emst_cost_gubn;
+				param['emst_part_no']   = me.searchParam.emst_part_no;
+				param['emst_eono']      = me.searchParam.emst_eono;
+				param['emst_cumt_no']   = me.searchParam.emst_cumt_no;
+				param['from_menu_id']   = "cd02";
+	
+	            if(!me.ep_cd02_16){
+	                me.ep_cd02_16 = UT.popup('ep-cd02-16', me, 977, 600, {
+	            		'selected-item' : function(popup, e) {
+	                        popup.close();
+	            		}
+	                }, {title : "금형비 조회"});
+	            }
+	            me.ep_cd02_16.show();
+				me.ep_cd02_16.getWindowContent().load(param);	           
+            },            
+
+         	/**
+         	 * END PART 주기정보 등록 팝업 
+         	 */
+         	popup_END_ESCD02_02: function() {
+	            var me = this;
+	            var param = {};
+
+				param['comd_cost_gubn'] = me.searchParam.emst_cost_gubn;
+				param['comd_part_endi'] = me.searchParam.emst_part_no;
+				param['comd_eono_endi'] = me.searchParam.emst_eono;
+				param['comd_cumt_endi'] = me.searchParam.emst_cumt_no;
+				param['comd_pass_stat'] = me.searchParam.emst_pass_stat;
+				param['comd_seq0']      = 0;
+				param['comd_remk_gubn'] = 'E';
+				param['comd_remk_code'] = 'END0';				            
+	
+	            if(!me.ep_cd02_02_END){
+	                me.ep_cd02_02_END = UT.popup('ep-cd02-02', me, 570, 350, {
+	            		'selected-item' : function(popup, e) {
+	                        popup.close();
+	            		}
+	                }, {title : "주기정보 선택"});
+	            }
+	            me.ep_cd02_02_END.show();
+				me.ep_cd02_02_END.getWindowContent().load(param);	           
+            },
+
+         	/**
+         	 * SUB PART 주기정보 등록 팝업 
+         	 */
+         	popup_ESCD02_02: function() {
+	            var me = this,
+	            	provider = me.$.gridPanel.getDataProvider();
+	            var param = {};
+				var resultSize = provider.getItemSize();
+				var checkSubcnt   = 0; 
+				var checkedIndex  = 0;	
+
+			    for(var indexI= 0; indexI<provider.getItemSize(); indexI++ ){
+					if(provider.getItemAt(indexI).chk == "Y"){
+						if (provider.getItemAt(indexI).new0_item_gubn == "Y") {
+							UT.alert("선택된 PART는 저장되지 않은 PART입니다.");
+							return;
+						}  
+			    		checkSubcnt++;
+			    		checkedIndex = indexI; 
+			    	}
+			    }	            
+
+				if (checkSubcnt == 0) {
+					UT.alert("선택된 항목이 없습니다.");
+				} else if (checkSubcnt == 1) {
+					// 한개 항목만 선택되었을 경우 파라메터 값 세팅 
+					param['comd_cost_gubn'] = provider.getItemAt(checkedIndex).comd_cost_gubn;
+					param['comd_part_endi'] = provider.getItemAt(checkedIndex).comd_part_endi;
+					param['comd_eono_endi'] = provider.getItemAt(checkedIndex).comd_eono_endi;
+					param['comd_cumt_endi'] = provider.getItemAt(checkedIndex).comd_cumt_endi;
+					param['comd_pass_stat'] = me.searchParam.emst_pass_stat;
+					param['comd_seq0']      = provider.getItemAt(checkedIndex).comd_seq0;
+					param['comd_remk_gubn'] = 'S';
+					param['comd_remk_code'] = 'SUB0';
+
+		            if(!me.ep_cd02_02_SUB){
+		                me.ep_cd02_02_SUB = UT.popup('ep-cd02-02', me, 570, 250, {
+		            		'selected-item' : function(popup, e) {
+								// 재조회 한다.   
+								me.getList();			            		
+		                        popup.close();
+		            		}
+		                }, {title : "주기정보 선택"});
+		            }
+		            me.ep_cd02_02_SUB.show();
+					me.ep_cd02_02_SUB.getWindowContent().load(param);					
+
+				} else {
+					UT.alert("한 개의 서브파트만 선택하십시오.");
+				}	           
+            },
+
+            //[2020.11.26]조회 전용
+            popup_ESCD02_03_V: function() {
+				var me = this;
+            	var cntFlag = 0;
+				var gubnFlag = me.get("passGubn");
+				var provider = me.$.gridPanel.getDataProvider();
+				
+				me.set("etc0Param", {});
+				
+				me.set("searchParam.comd_flag_gubn", "END");
+				
+				if (gubnFlag == "END") {
+					me.etc0Param.comd_corp_code = me.searchParam.chin_corp_code;
+					me.etc0Param.comd_part_sub0 = me.searchParam.chin_part_no;
+					me.etc0Param.comd_cumt_sub0 = me.searchParam.chin_seq0;
+					me.etc0Param.comd_eono_sub0 = me.searchParam.chin_eono;
+					me.etc0Param.comd_cost_gubn = me.searchParam.chin_cost_gubn;
+					me.etc0Param.comd_stnd_gubn = me.searchParam.emst_stnd_gubn;
+					me.etc0Param.comd_base_date = me.searchParam.emst_base_date;
+					me.etc0Param.comd_pass_stat = me.searchParam.emst_pass_stat;
+					me.etc0Param.comd_vehl_gubn = me.searchParam.emst_vehl_gubn;
+					me.etc0Param.comd_flag_gubn = "END";
+					
+		            if(!me.ep_cd02_08_END){
+		                me.ep_cd02_08_END = UT.popup('ep-cd02-08', me, 1100, 455, {
+		            		'selected-item' : function(popup, e) {
+		            			// 계산실행 후 조회
+		            			//me.getList();
+		            			// END ITEM 마스터 정보 재조회
+		            			//me.moduleCall();		            			
+		                        //popup.close();
+		            		}
+		                }, {title : "END 기타비 계산"});
+		            }
+		            me.ep_cd02_08_END.show();
+					me.ep_cd02_08_END.getWindowContent().load(me.get("searchParam"));						
+				} else if (gubnFlag == 'SUB') {
+					
+					for(var indexI = 0; indexI < provider.getItemSize(); indexI++) {
+						if (provider.getItemAt(indexI).chk == "Y") {
+				    		cntFlag++;
+				    		me.etc0Param = UT.copy(provider.getItemAt(indexI));
+				    	}
+				    }
+				    
+					me.etc0Param.comd_pass_stat = me.searchParam.emst_pass_stat;
+
+					// [2024.04.26] param 추가
+					me.etc0Param.emst_link_meth = me.searchParam.emst_link_meth;
+				    
+				    // 유효성 체크
+				    if (cntFlag > 1) {
+			    		UT.alert("1개의 ITEM을 선택해 주세요.");
+			    		return;
+			    		
+			    	} else if (cntFlag == 0) {
+			    		UT.alert("선택된 ITEM이 없습니다. ");
+			    		return;
+			    	}
+			    	
+			    	if (UT.isEmpty(me.etc0Param['comd_cumt_pric'])) {
+			    		UT.alert("SUB 집계 정보가 존재하지 않습니다. ");
+			    		return;
+			    	}
+			    	
+			    	if (UT.isEmpty(me.etc0Param['comd_part_sub0'])) {
+			    		UT.alert("대상이 유효하지 않습니다. ");
+			    		return;
+			    	}  
+			    	
+					me.etc0Param.comd_flag_gubn = "SUB";
+				    
+		            if(!me.ep_cd02_08_SUB){
+		                me.ep_cd02_08_SUB = UT.popup('ep-cd02-08', me, 1100, 435, {
+		            		'selected-item' : function(popup, e) {
+		            			//me.getList();
+		            			// END ITEM 마스터 정보 재조회
+		            			//me.moduleCall();
+		                        //popup.close();
+		            		}
+		                }, {title : "SUB 기타비 계산"});
+		            }
+		            me.ep_cd02_08_SUB.show();
+					me.ep_cd02_08_SUB.getWindowContent().load(me.get("etc0Param"));					
+				}  
+            },
+         	/**
+         	 * SUB기타비 / 집계 및 END기타비 버튼 팝업
+         	 */
+         	popup_ESCD02_03: function() {
+	            var me = this,
+	            	cntFlag = 0,
+	            	gubnFlag = me.get("passGubn"),
+	            	provider = me.$.gridPanel.getDataProvider();
+
+	            // 초기화
+            	me.set("etc0Param", {});
+	
+				if (gubnFlag == 'END') {
+					
+					me.etc0Param.comd_corp_code = me.searchParam.chin_corp_code;
+					me.etc0Param.comd_part_sub0 = me.searchParam.chin_part_no;
+					me.etc0Param.comd_cumt_sub0 = me.searchParam.chin_seq0;
+					me.etc0Param.comd_eono_sub0 = me.searchParam.chin_eono;
+					me.etc0Param.comd_cost_gubn = me.searchParam.chin_cost_gubn;
+					me.etc0Param.comd_stnd_gubn = me.searchParam.emst_stnd_gubn;
+					me.etc0Param.comd_base_date = me.searchParam.emst_base_date;
+					me.etc0Param.comd_pass_stat = me.searchParam.emst_pass_stat;
+					me.etc0Param.comd_vehl_gubn = me.searchParam.emst_vehl_gubn;
+					me.etc0Param.comd_flag_gubn = "END";
+					
+					me.$.checkValidationRPC.service();
+					
+				} else if (gubnFlag == 'SUB') {
+					
+					for(var indexI = 0; indexI < provider.getItemSize(); indexI++) {
+						if (provider.getItemAt(indexI).chk == "Y") {
+				    		cntFlag++;
+				    		me.etc0Param = UT.copy(provider.getItemAt(indexI));
+				    	}
+				    }
+				    
+					me.etc0Param.comd_pass_stat = me.searchParam.emst_pass_stat;
+				    
+				    // 유효성 체크
+				    if (cntFlag > 1) {
+			    		UT.alert("1개의 ITEM을 선택해 주세요.");
+			    		return;
+			    		
+			    	} else if (cntFlag == 0) {
+			    		UT.alert("선택된 ITEM이 없습니다. ");
+			    		return;
+			    	}
+			    	
+			    	if (UT.isEmpty(me.etc0Param['comd_cumt_pric'])) {
+			    		UT.alert("SUB 집계 정보가 존재하지 않습니다. ");
+			    		return;
+			    	}
+			    	
+			    	if (UT.isEmpty(me.etc0Param['comd_part_sub0'])) {
+			    		UT.alert("대상이 유효하지 않습니다. ");
+			    		return;
+			    	}  
+			    	
+					me.etc0Param.comd_flag_gubn = "SUB";
+					me.$.checkValidationRPC.service();
+				    
+				}  else {
+					UT.alert("유효하지 않는 구분값 입니다.");
+				}         
+            },
+
+         	/**
+         	 * SUB기타비 / 집계 및 END기타비 버튼 팝업
+         	 */
+         	doCalc: function() {
+	            var me = this,
+	            	gubnFlag = me.get("passGubn"),
+	            	provider = me.$.gridPanel.getDataProvider();
+
+				if (gubnFlag == 'END') {
+					if (me.resultCheck['MESG_CODE'] == 'SA-001' || me.resultCheck['MESG_CODE'] == 'SA-000') {
+						
+						// sub part를 등록하고  계산하지 않은경우(경고처리 에러 아님)
+						if (me.resultCheck['MESG_CODE'] == 'SA-000') {
+							commonAS.confirm("Warning", me.resultCheck['MESG'], function() {
+								me.$.esumRPC.service();
+			                });
+						} else {
+							me.$.esumRPC.service();
+						}
+						
+					} else if (me.resultCheck['MESG_CODE'] == 'SA-003') {
+						UT.alert(me.resultCheck['MESG']);
+					} else {
+						UT.alert("[ERROR] <br>"
+						            +"[MESG_CODE   ]" + me.resultCheck['MESG_CODE'] + "<br>"
+						            +"[MESG        ]" + me.resultCheck['MESG']      + "<br>"
+						            +"[LINE_NO     ]" + me.resultCheck['LINE_NO']   + "<br>"
+						            );
+					}
+				} else if (gubnFlag == 'SUB') {
+
+		            if(!me.ep_cd02_08_SUB){
+		                me.ep_cd02_08_SUB = UT.popup('ep-cd02-08', me, 1100, 435, {
+		            		'selected-item' : function(popup, e) {
+		            			me.getList();
+		            			// END ITEM 마스터 정보 재조회
+		            			me.moduleCall();
+		                        //popup.close();
+		            		}
+		                }, {title : "SUB 기타비 계산"});
+		            }
+		            me.ep_cd02_08_SUB.show();
+					me.ep_cd02_08_SUB.getWindowContent().load(me.get("etc0Param"));					
+				}            	
+         
+            },
+
+
+
+         	/**
+         	 * EONO 저장 후 이벤트
+         	 */
+         	afterEsum: function(e, res) {
+                var me = this,
+					provider = me.$.gridPanel.getDataProvider();
+
+				me.set("searchParam.comd_flag_gubn", "END");
+
+				if (me.resultCheck['MESG_CODE'] == 'SA-001') {
+					// 계산실행 후 조회
+					me.getList();
+
+		            if(!me.ep_cd02_08_END){
+		                me.ep_cd02_08_END = UT.popup('ep-cd02-08', me, 1100, 455, {
+		            		'selected-item' : function(popup, e) {
+		            			// 계산실행 후 조회
+		            			me.getList();
+		            			// END ITEM 마스터 정보 재조회
+		            			me.moduleCall();		            			
+		                        //popup.close();
+		            		}
+		                }, {title : "END 기타비 계산"});
+		            }
+		            me.ep_cd02_08_END.show();
+					me.ep_cd02_08_END.getWindowContent().load(me.get("searchParam"));						
+					
+				} else {
+					UT.alert("[ERROR] <br>"
+					            +"[MESG_CODE   ]" + me.resultCheck['MESG_CODE'] + "<br>"
+					            +"[MESG        ]" + me.resultCheck['MESG']      + "<br>"
+					            +"[LINE_NO     ]" + me.resultCheck['LINE_NO']   + "<br>"
+					            );
+				}
+            },                        
+
+
+            /**
+             * 추가 버튼 Click 이벤트
+             */            
+             addItem: function() {
+            	var me = this,
+	            provider = me.$.gridPanel.getDataProvider();
+
+
+				var selectedResultSize 	= 0;
+				var selectedIndex 		= 0;
+				var addIndex 			= 0;
+				
+				// 엔드와 체인은 한번에 한행씩 추가가 가능하다. 
+				for(var indexH = 0; indexH < provider.getItemSize(); indexH++) {
+					if(provider.getItemAt(indexH).new0_item_gubn == "Y"){
+						UT.alert("체인추가는 한개 파트씩 가능합니다.<br>" + "먼저 추가중인 파트를 저장하십시오.");
+						return;						
+				  	}
+				}
+			
+				for(var indexI = 0; indexI < provider.getItemSize(); indexI++) {
+					if(provider.getItemAt(indexI).chk == "Y"){
+						selectedResultSize++;
+						selectedIndex 	= indexI;
+						addIndex		= ++indexI;
+				  	}			
+				}
+				
+				// 체크된 갯수 체크 					
+				if (selectedResultSize < 1) {
+					// ==============================================
+					// 체크된 행이 없는경우 맨 마지막에 자동으로 체크
+					// ==============================================					
+					selectedResultSize = 1;
+					selectedIndex = provider.getItemSize() - 1;
+					addIndex      = provider.getItemSize();
+					provider.setItemAt(selectedIndex, { chk : "Y"});
+									
+				} else if (selectedResultSize > 1) {
+					UT.alert("추가할 위치를 한 곳만 지정하세요.");
+					return;
+				}
+
+				
+				if (selectedResultSize == 1) {
+					if(me.searchParam.chk_filter == "Y"){
+						me.searchParam.chk_filter = "N";	
+						me.scrollFilter();
+					}	
+
+		            // 그리드 신규행 추가
+	                var row = {
+	                		new0_item_gubn: "Y",
+	                		chk           : "Y",
+	                		comd_corp_code: "K1",
+	                		
+	        				// 표준구분,차종,업종,적용일, 승상구분은 자동으로 1레벨 값으로 셋팅해준다.
+	                		comd_stnd_gubn: provider.getItemAt(0).comd_stnd_gubn,
+	                		comd_cars_code: provider.getItemAt(0).comd_cars_code,
+	                		comd_inds_code: provider.getItemAt(0).comd_inds_code,
+	                		comd_base_date: provider.getItemAt(0).comd_base_date,
+	                		comd_vehl_gubn: provider.getItemAt(0).comd_vehl_gubn,
+	                		comd_use_yn   : "Y",
+	                		editstatus    : "created"
+	                };
+
+	                provider.addItemAt(addIndex, row);
+
+					// 이전 체크 row해제 
+					provider.setItemAt(selectedIndex, { chk : "N"});
+					
+					me.set("resultList_org", me.get("resultList"));
+				} else {
+					UT.alert("추가할 위치 오류입니다.");
+					return;
+				}
+
+				me.set("resultList_org", provider.getItems());
+				me.applyFormula();	// formulas 적용
+            },
+             
+            /**
+             *  grid header click 이벤트
+             */
+            headerClickHandler : function(event) {
+				var me = this, 
+				dataField = event.detail.dataField,
+				selectedIndex = -1;
+				selectedCheckCnt = 0,
+				provider = me.$.gridPanel.getDataProvider();
+
+				for (var i=0; i < provider.getItemSize(); i++) {
+					if(provider.getItemAt(i).chk == "Y"){
+						selectedIndex 	= i;
+						selectedCheckCnt++;
+				  	}
+				}
+
+				if (selectedCheckCnt > 1) {
+					UT.alert("한 개의 서브파트만 선택하십시오.");
+					return;
+				}
+
+				if (selectedCheckCnt == 0) {
+					UT.alert("선택 후 작업하세요.");
+					return;
+				}				
+
+				switch(dataField) {
+
+					case 'img_arrow_up':
+						if (me.$.gridPanel.getCurrentCell().rowIndex > 0) {
+							me.set("mRowIndex" , selectedIndex);
+							me.rowDataMoveUp();
+						}						
+						break;
+	
+					case 'img_arrow_down':
+						if (me.$.gridPanel.getCurrentCell().rowIndex > 0) {
+							me.set("mRowIndex" , selectedIndex);
+							me.rowDataMoveDown();
+						}
+						break;
+					
+					default :
+						break;
+				}
+	
+			},		            
+
+            /**
+             *  grid item click 이벤트
+             */           
+            itemClickHandler : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item,
+					rowIndex = item.rowIndex,
+					newValue = e.newValue,
+					oldValue = e.oldValue,
+					provider = e.provider;
+
+				var pass_desc = data.comd_pass_desc;
+
+				me.set("color.background", "#FFFFCC");				
+
+				me.set("rowIndex", item.rowIndex);
+				switch(item.dataField) {
+		            case 'comd_part_sub0':
+						// 공법 마스터 호출 : 저장안한 ROW일 경우 메세지 출력
+						// 추가 후 저장안한 항목인가?
+						if(data.new0_item_gubn == "Y") {
+							UT.alert("공법 선택화면을 보시려면 먼저 저장을 하세요.");
+						} else {
+							
+							if(UT.isEmpty(data.comd_corp_code)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [법인코드]");
+								return;
+							} else if(UT.isEmpty(data.comd_cost_gubn)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [계산구분]");
+								return;
+							} else if(UT.isEmpty(data.comd_part_sub0)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [PART NO]");
+								return;
+							} else if(UT.isEmpty(data.comd_eono_sub0)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [EONO]");
+								return;
+							} else if(UT.isEmpty(data.comd_cumt_sub0)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [계산번호]");
+								return;
+							} else if(UT.isEmpty(data.comd_stnd_gubn)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [표준구분]");
+								return;
+							} else if(UT.isEmpty(data.comd_base_date)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [원가계산 적용일]");
+								return;
+							} else if(UT.isEmpty(data.comd_inds_code)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [업종]");
+								return;
+							} else if(UT.isEmpty(data.comd_usg0)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [USG]");
+								return;
+							} else if(UT.isEmpty(data.comd_levl)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [LEVEL]");
+								return;
+							} else if(UT.isEmpty(data.comd_spms_stat)) {
+								UT.alert("필수값이 부족하여 공법선택 화면으로 전환할 수 없습니다.<br>사유 : [진행상태]");
+								return;
+							} else if(data.comd_pims_appl == "A" || data.comd_pims_appl == "M" || data.comd_pims_appl == "H" || data.comd_pims_appl == "U") {
+								UT.alert("단가구분 값이 입력되어 공법선택 화면으로 전환할 수 없습니다.");
+								return;
+							} else if(data.comd_use_yn == "N") {
+								UT.alert("상위 레벨에서 단가구분 값이 입력되어 공법선택 화면으로 전환할 수 없습니다.");
+								return;
+							} else {
+								
+							}
+							
+							var tmpStr = data.comd_part_name;
+							if (tmpStr == null || tmpStr == "") {
+								tmpStr = " ";
+							}
+							var cars_code = "";
+							if (UT.isEmpty(data.comd_cars_code)) {
+								cars_code = "";
+							} else {
+								cars_code = data.comd_cars_code;
+							}
+
+							var url = "ui/bp/tcams/cd/cd09/em-cd09.html?tit=공법선택" + 
+								 "&spms_corp_code=" + data.comd_corp_code +
+								 "&spms_cost_gubn=" + data.comd_cost_gubn +
+								 "&spms_part_no="   + data.comd_part_sub0 +
+								 "&spms_eono="      + data.comd_eono_sub0 +
+								 "&spms_cumt_no="   + data.comd_cumt_sub0 +
+								 "&spms_stnd_gubn=" + data.comd_stnd_gubn +
+								 "&spms_cars_code=" + cars_code +
+								 "&spms_base_date=" + data.comd_base_date +
+								 "&spms_vend_code=" + data.comd_vend_code +
+								 "&spms_usg0="      + data.comd_usg0 +
+								 "&spms_seq0="      + data.comd_seq0 +
+								 "&spms_vehl_gubn=" + data.comd_vehl_gubn +
+								 "&spms_link_meth=" + data.comd_link_meth +
+								 "&spms_pass_stat=" + data.comd_spms_stat +
+							     "&spms_part_name=" + tmpStr.replace("&", "＆") +
+							     "&chk_dept="       + me.searchParam.chk_dept ;
+								 								
+							UT.createWindow("PCF00020", "공법선택", url);
+						}
+					break;
+					
+					case 'img_partno':
+						// 추가 아이템인가?
+						if(data.new0_item_gubn == "Y") {
+	
+				            var me = this;
+				            var param = {popControl:'Y'};
+				            if(!me.es_co02_01){
+				                me.es_co02_01 = UT.popup('es-co02-01', me, 1000, 600, {
+			                		'selected-item' : function(popup, e) {
+			                			var result = e.detail,
+			                			    preObj = {};
+
+			        						provider = me.$.gridPanel.getDataProvider();
+			        						preObj = provider.getItemAt(me.$.gridPanel.getCurrentCell().rowIndex - 1);
+			        						
+			        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_part_sub0 : result.comd_part_no});
+			        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_part_name : result.comd_part_name});
+			        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_eono_sub0 : result.comd_eono});
+			        						if (UT.isEmpty(result.comd_src0_code)) {
+			        							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_src0 : "L"});
+				        					} else {
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_src0 : result.comd_src0_code});
+				        					}
+				        					
+											// END키는 조회히든에서 가져온다.	
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_corp_code : preObj.comd_corp_code});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_cost_gubn : preObj.comd_cost_gubn});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_part_endi : preObj.comd_part_endi});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_eono_endi : preObj.comd_eono_endi});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_cumt_endi : preObj.comd_cumt_endi});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_spms_stat : preObj.comd_spms_stat});
+											provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_sort_key0 : UT.toNumber(preObj.comd_sort_key0) + 1});
+			        				
+			                            popup.close();
+			                		}
+				                }, {title : "PART NO 선택"});
+				            }
+			                me.es_co02_01.show();
+							me.es_co02_01.getWindowContent().load(param);
+						}
+						break;
+					
+					case 'img_pims_pric':
+						var me = this,
+						priceParam = {};
+							provider = me.$.gridPanel.getDataProvider();
+
+						if (me.searchParam.emst_pass_stat != "20") {
+							return;
+						}							
+						// 구분 선택에 따른 값 초기화	
+						if (data.comd_pims_appl != "A") {
+							/* --- [2023.01.17]
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_pric : ""});
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_vend : ""});
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_srdt : ""});
+							--- */
+						} else if (data.comd_pims_appl == "A") {
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_code : ""});
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_srdt : ""});
+						}
+						
+						if (data.comd_pims_appl == "M" || data.comd_pims_appl == "U" || data.comd_pims_appl == "H") {
+
+							// SUB 품번이 없으면 단가구분 초기화
+							if (UT.isNotEmpty(data.comd_part_sub0)) {
+								priceParam.comd_part_no = data.comd_part_sub0;
+							} else {
+								UT.alert("PART NO 선택 후 작업하세요.");
+								provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_appl : ""});
+							}
+
+							priceParam.comd_vend_cd   = data.comd_vend_code;
+							priceParam.comd_corp_code = me.searchParam.emst_corp_code;
+							priceParam.comd_stnd_gubn = me.searchParam.emst_stnd_gubn;
+							priceParam.comd_base_date = me.searchParam.emst_base_date;	
+
+							//[2023.01.18] impt 여부
+							priceParam.impt_yn = data.impt_yn;		
+							priceParam.row = data;				
+							
+							if (data.comd_pims_appl == "M" || data.comd_pims_appl == "H") {
+
+					            if(!me.ep_cd02_05){
+					                me.ep_cd02_05 = UT.popup('ep-cd02-05', me, 700, 500, {
+				                		'selected-item' : function(popup, e) {
+				                			var result = e.detail;
+
+				        						provider = me.$.gridPanel.getDataProvider();
+				        						
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_code : result.pims_vend_code}); //부품업체코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_name : result.pims_vend_name}); //부품업체명
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_pric : result.pims_part_pric}); //부품업체명
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_trif_apct : result.pims_trif_pric}); //관세
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_vend : result.pims_vend_code}); //업체코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_seq  : result.pims_appl_seq0}); //SEQ
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_srdt : result.pims_appl_date}); //적용일
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_appl : result.pims_src0_gubn}); //단가구분
+                                                // [2022.01.16] impt 저장용				        						
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_impt_code : result.impt_impt_code}); //수입코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_impt_cost : result.impt_impt_cost}); //수입단가
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_nati_code : result.impt_nati_code}); //국가코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_exch_gubn : result.impt_exch_gubn}); //환율구분
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_exch_mogb : result.impt_exch_mogb}); //화폐구분
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_exch_apdt : result.impt_exch_apdt}); //적용일
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_exch_mony : result.impt_exch_mony}); //환율
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_exch_user : result.impt_exch_user}); //직접입력
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_ldcr_stnd : result.impt_ldcr_stnd}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_ldcr_code : result.impt_ldcr_code}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_ldcr_apdt : result.impt_ldcr_apdt}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_ldcr_rate : result.impt_ldcr_rate}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_ldcr_user : result.impt_ldcr_user}); //
+
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_matl_pric : result.impt_matl_pric}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_trif_rate : result.impt_trif_rate}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_trif_inpt : result.impt_trif_inpt}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_carr_rate : result.impt_carr_rate}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_carr_inpt : result.impt_carr_inpt}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_insu_rate : result.impt_insu_rate}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_insu_inpt : result.impt_insu_inpt}); //
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {impt_trif_pric : result.impt_trif_pric}); //
+				        						
+				                            popup.close();
+				                		}
+					                }, {title : "부품구입가조회 현황"});
+					            }
+				                me.ep_cd02_05.show();
+								me.ep_cd02_05.getWindowContent().load(priceParam);
+																
+							} else if (data.comd_pims_appl == "U") {
+					            if(!me.ep_cd02_15){
+					                me.ep_cd02_15 = UT.popup('ep-cd02-15', me, 700, 500, {
+				                		'selected-item' : function(popup, e) {
+				                			var result = e.detail;
+
+				        						provider = me.$.gridPanel.getDataProvider();
+				        						
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_code : result.pims_vend_code}); //부품업체코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_name : result.pims_vend_name}); //부품업체명
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_pric : result.pims_part_pric}); //부품업체명
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_trif_apct : result.pims_trif_pric}); //관세
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_vend : result.pims_vend_code}); //업체코드
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_seq  : result.pims_appl_seq0}); //SEQ
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_srdt : result.pims_src0_gubn}); //적용일
+				        						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_appl : result.pims_src0_gubn}); //단가구분
+
+												item.comd_pims_srdt = selectedItem["pims_appl_date"]; //적용일
+												item.comd_pims_appl = selectedItem["pims_src0_gubn"]; //단가구분
+				        				
+				                            popup.close();
+				                		}
+					                }, {title : "부품구입가조회 현황"});
+					            }
+				                me.ep_cd02_15.show();
+								me.ep_cd02_15.getWindowContent().load(priceParam);
+							}
+						}
+						break;
+
+// 					case 'img_arrow_up':
+
+// 						if (me.$.gridPanel.getCurrentCell().rowIndex > 0) {
+// 							me.set("mRowIndex" , me.$.gridPanel.getCurrentCell().rowIndex);
+// 							me.rowDataMoveUp();
+// 						}						
+// 						break;
+
+// 					case 'img_arrow_down':
+// 						if (me.$.gridPanel.getCurrentCell().rowIndex > 0) {
+// 							me.set("mRowIndex" , me.$.gridPanel.getCurrentCell().rowIndex);
+// 							me.rowDataMoveDown();
+// 						}
+// 						break;
+					
+					default :
+						break;
+				}
+
+			},
+
+            /**
+             * 데이터 위 방향으로 이동
+             */            
+             rowDataMoveUp : function() {
+            	var me = this,
+            	upIndex = 0,
+            	tagetIndex = 0,
+            	currentIndex = 0,
+            	upLevl = 0,
+            	errCnt = 0,
+            	chinldIndex = [],
+            	nChinldIndex = [],
+            	provider = me.$.gridPanel.getDataProvider();
+
+            	if (me.searchParam.chk_filter == "N") {
+                	
+                 	// 백업 선행
+                 	me.makeBackUpList();
+                	
+                	currentIndex = UT.toNumber(me.get("mRowIndex"));
+
+   					// 나를 포함한 최상위 부보부터 자식 전체의 index 추출
+   					chinldIndex = me.getAllIndexArr(me.backUpList, currentIndex);               	
+
+					nChinldIndex = me.getParentIndexArr(me.backUpList, chinldIndex[0]-1);
+   	            	upIndex = nChinldIndex[nChinldIndex.length-1];
+   	            	upLevl = UT.toNumber(provider.getItemAt(upIndex).comd_levl);
+   	            						
+   					// 상위 구성이 1레벨인 경우 이동이 없음
+   					if (upLevl > 1 && upIndex > 0) {
+
+   						// 루프로 하나씩 위치 이동
+   						for (var c = 0 ; c < chinldIndex.length; c++) {  					
+   							provider.moveRow(chinldIndex[c], upIndex);
+   							// 이동 타깃 초기화
+   							if (c == 0) {
+   								me.set("nRowIndex" , upIndex);
+   								me.$.gridPanel.setCurrentCell({rowIndex: upIndex, dataField:"chk"});
+       						}    							
+   							upIndex++;
+   						}
+   					} else {
+   						UT.alert("[SUB PART 순서 변경]<br>1 LEVEL 위로 이동할 수 없습니다.");
+   						errCnt++;
+   					}
+            	} else {
+					UT.alert("필터 해제 후 작업하세요.");
+					errCnt++;
+                }
+
+            	if (errCnt == 0) {
+                	// 레벨 체크
+                    if (!me.validationLevel("move")) {
+    					// 데이터 원복
+    					me.restoreData();
+                    } else {
+    					// 정렬 순번 만들기
+    					me.makeSortKey("move_up");
+                    }
+                }
+            },
+
+            /**
+             * 데이터 아래 방향으로 이동
+             */            
+             rowDataMoveDown : function() {
+            	var me = this,
+            	downIndex = 0,
+            	tagetIndex = 0,
+            	currentIndex = 0,
+            	errCnt = 0,
+            	chinldIndex = [],
+            	nChinldIndex = [],
+            	provider = me.$.gridPanel.getDataProvider();
+
+            	if (me.searchParam.chk_filter == "N") {
+
+                 	// 백업 선행
+                 	me.makeBackUpList();
+                 	                	
+                	currentIndex = UT.toNumber(me.get("mRowIndex"));
+
+   					// 나를 포함한 최상위 부보부터 자식 전체의 index 추출
+   					chinldIndex = me.getAllIndexArr(me.backUpList, currentIndex);
+   					
+   					downIndex = chinldIndex[chinldIndex.length -1] + 1;
+   					nChinldIndex = me.getChildIndexArr(me.backUpList, downIndex);
+
+   					if (nChinldIndex.length > 1) {
+   						downIndex = downIndex + nChinldIndex.length -1;
+       				}
+   					
+   					// 전체 구성보다 큰 수치는 이동 불가
+   					if (downIndex < provider.getItemSize()) {
+       					
+   						// 루프로 하나씩 위치 이동
+   						for (var c = chinldIndex.length -1 ; c > -1; c--) {
+   							provider.moveRow(chinldIndex[c], downIndex);
+   							// 이동 타깃 초기화
+   							if (c == 0) {
+   								me.set("nRowIndex" , downIndex);
+   								me.$.gridPanel.setCurrentCell({rowIndex: downIndex, dataField:"chk"});
+       						}         							
+   							downIndex--;
+   						} 
+   					} else {
+   						UT.alert("이동 불가한 위치를 지정하였습니다.");
+   						errCnt++;
+   					}
+                } else {
+					UT.alert("필터 해제 후 작업하세요.");
+					errCnt++;
+                }
+
+            	if (errCnt == 0) {
+                	// 레벨 체크
+                    if (!me.validationLevel("move")) {
+    					// 데이터 원복
+    					me.restoreData();
+                    } else {
+    					// 정렬 순번 만들기
+    					me.makeSortKey("move_down");
+                    }
+                }               
+            }, 
+
+            /**
+             * 현재 노드에서 자식 row index 추출
+             */            
+             getChildIndexArr : function(array, cindex) {
+            	var me = this,
+            		olevel = 0,
+            	    clevel = 0,
+            	    rCnt = 0,
+            	    ret = [];
+
+            	// 하위 구성 서칭
+			    for (var t= cindex ; t < array.length; t++) {
+    			    if (t == cindex) {
+        			    // 비교 원본 레벨 저장
+    			    	olevel = array[t].comd_levl;
+    			    	ret[rCnt] = t;
+    			    	rCnt++;
+	    			} else {
+		    			// 하위 레벨 저장 후 비교
+	    				clevel = array[t].comd_levl;
+	    				// 하위의 레벨이 비교 원본보다 같거나 커지면 스탑
+		    			if (olevel >= clevel) {
+							break;
+			    		} else {
+			    			ret[rCnt] = t;
+			    			rCnt++;
+			    		}
+		    		}
+			    } 
+            	return ret;
+            },
+
+            /**
+             * 현재 노드에서 최상위 부모 추출 후 자식 전체 row index 추출
+             */            
+             getAllIndexArr : function(array, cindex) {
+            	var me = this,
+            		olevel = 0,
+            	    clevel = 0,
+            	    rCnt = 0,
+            	    sIndex = 0,
+            	    ret = [];
+
+            	// 상위 구성 서칭하여 취 상위 품목 index 정보 추출
+			    for (var t=cindex ; t > -1; t--) {
+    			    if (t == cindex) {
+    			    	clevel = array[t].comd_levl;
+    			    	// 직상위 부모다 2레벨이면 stop
+    			    	if (clevel == 2) {
+    			    		sIndex = t;
+    			    		break;
+        			    }
+	    			} else {
+		    			// 하위 레벨 저장 후 비교
+	    				clevel = array[t].comd_levl;
+	    				// 상위의 레벨이 2레벨이면 스탑
+		    			if (clevel == 2) {
+		    				sIndex = t;
+							break;
+			    		}
+			    	}
+			    }         	    
+
+            	// 하위 구성 서칭
+			    for (var t=sIndex ; t < array.length; t++) {
+    			    if (t == sIndex) {
+        			    // 비교 원본 레벨 저장
+    			    	olevel = array[t].comd_levl;
+    			    	ret[rCnt] = t;
+    			    	rCnt++;
+	    			} else {
+		    			// 하위 레벨 저장 후 비교
+	    				clevel = array[t].comd_levl;
+	    				// 하위의 레벨이 비교 원본보다 같거나 커지면 스탑
+		    			if (olevel >= clevel) {
+							break;
+			    		} else {
+			    			ret[rCnt] = t;
+			    			rCnt++;
+			    		}
+		    		}
+			    } 
+            	return ret;
+            },            
+
+            /**
+             * 현재 노드에서 부모 row index 추출
+             */            
+             getParentIndexArr : function(array, cindex) {
+            	var me = this,
+            	    clevel = 0,
+            	    rCnt = 0,
+            	    ret = [];
+
+            	// 상위 구성 서칭
+			    for (var t=cindex ; t > -1; t--) {
+    			    if (t == cindex) {
+    			    	ret[rCnt] = t;
+    			    	rCnt++;
+    			    	clevel = array[t].comd_levl;
+    			    	// 직상위 부모다 2레벨이면 stop
+    			    	if (clevel == 2) {
+    			    		break;
+        			    }
+	    			} else {
+		    			// 하위 레벨 저장 후 비교
+	    				clevel = array[t].comd_levl;
+		    			ret[rCnt] = t;
+		    			rCnt++;	    				
+	    				// 상위의 레벨이 2레벨이면 스탑
+		    			if (clevel == 2) {
+							break;
+			    		}
+			    	}
+			    } 
+            	return ret;
+            },            
+
+            /**
+             * 정렬 순번 생성
+             */            
+            makeSortKey : function(gubn) {
+            	var me = this,
+            	provider = me.$.gridPanel.getDataProvider();
+            	// 전체 정렬 순번 재지정
+			    for (var s= 0 ; s < provider.getItemSize(); s++) {
+				    if (UT.isNotEmpty(gubn) && UT.toNumber(me.get("nRowIndex")) == s) {
+				    	provider.setItemAt(s, { comd_sort_key0 : s});
+				    	provider.setItemAt(s, { chk : "Y"});
+				    	me.set("nRowIndex" , -1);
+					} else {
+						provider.setItemAt(s, { comd_sort_key0 : s});
+					}
+			    }
+            },
+                        
+            /**
+             *  grid item edit end 이벤트
+             */           
+            itemEditEndHandler : function(event) {
+				var me = this, e = event.detail, oldItem = {},
+				data = e.data,
+				item = e.item,
+				rowIndex = e.item.rowIndex,
+                oldValue = event.detail.oldValue,
+                newValue = event.detail.newValue,
+				provider = e.provider;
+
+				switch(item.dataField) {
+				
+					case 'comd_levl':
+						oldItem = provider.getItemAt(me.$.gridPanel.getCurrentCell().rowIndex - 1);
+						if (oldItem.comd_use_yn == 'N') {
+							if (UT.toNumber(newValue) > UT.toNumber(oldItem.comd_levl)) {
+								Ut.alert("상위 레벨의 단가구분이 선택되어있습니다. 확인 후 작업하세요.");
+								provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_levl : ""});
+							}
+						}
+
+						break;
+						
+					case 'comd_eono_sub0':
+						if (data.new0_item_gubn != 'Y') {
+							if(newValue != oldValue) {
+								provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {eono_check : "Y"});
+							} else  { 
+								provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {eono_check : ""});
+							}
+						}
+						break;
+
+					case 'comd_pims_appl':
+						if (UT.isEmpty(newValue)) {
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_pric : "Y"});
+						}
+						// [2023.01.20] 관련값들 CLEAR
+						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_code : null});
+						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {pims_vend_name : null});
+						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_pric : null});
+						provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_pims_srdt : null});
+						break;												
+					
+					case 'comd_vend_code':
+
+						if (data.comd_levl == "1") {
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_vend_code : oldValue});
+							UT.alert("1 LEVEL 업체는 END-ITEM에서 수정하십시오.");
+							return;
+						}						
+							
+						if (UT.isNotEmpty(newValue)) {
+							me.vend_param.comd_vend_code = newValue;
+							me.vend_param.comd_indx      = event.rowIndex;
+							me.vend_param.comd_levl      = item.comd_levl;
+							
+							me.$.getVendNameInfoRPC.service();	
+							
+						} else {
+							provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, {comd_vend_name : ""});
+						}
+						
+						break;
+					
+					default :
+						break;
+				} 
+
+			},
+
+            /**
+             * 업체 코드로 업체명 조회 후처리
+             */            
+            resultVendSearch : function(e, res) {
+            	var me = this,
+				data = e.data,
+				item = e.item,
+            	target = e.currentTarget.id,
+            	provider = me.$.gridPanel.getDataProvider();
+
+				if (UT.isNotEmpty(me.vend_info.comd_vend_name)) {
+					provider.setItemAt(me.vend_param.comd_indx, { comd_vend_name : me.vend_info.comd_vend_name});
+				} else {
+					provider.setItemAt(me.vend_param.comd_indx, { comd_vend_code : ""});
+					UT.alert("등록되지 않은 업체코드입니다. 확인 후 작업하세요.");
+				}            	
+            },
+
+            /**
+             * Grid Column 이미지 제어
+             */
+            onImageChange : function(data, item) {
+                var dataField = item.dataField;
+                if(   dataField == "img_partno" 
+                   || dataField == "img_pims_pric") {
+
+                    if (UT.isEmpty(data.comd_spms_stat) || (UT.isNotEmpty(data.comd_spms_stat) && data.comd_spms_stat == "20")) {
+                    	return "ui/assets/img/bull_choice.gif";
+                    } else {
+                    	return null;
+                    }
+                } else if (dataField == "img_arrow_up") {
+                    if (data.comd_levl != "1") {
+                    	//return "ui/assets/img/arrow_up.gif";
+                    	return "ui/assets/img/arr_up.png";
+                    }
+                } else if (dataField == "img_arrow_down") {
+                    if (data.comd_levl != "1") {
+                    	//return "ui/assets/img/arrow_down.gif";
+                    	return "ui/assets/img/arr_down.png";
+                    }                    
+                }
+             },            
+
+            /**
+             * row 별 스타일
+             */             
+             setStyle : function(data, item) {
+            	var me = this,
+            	dataField = item.dataField;
+
+            	if (dataField == "comd_part_sub0") {
+    				if (data['comd_levl'] == '2' && data['comd_use_yn'] == 'Y' ) {
+    					return {background : "#F0F8FF", fontColor : "#0e006f", fontWeight: "bold"}; //#F0FFFF
+    				} else if (data['comd_use_yn'] == 'N' ) {
+    					return {background : "#CCCCCC", fontColor : "#0e006f", fontWeight: "bold"};
+    				} else {
+    					return {fontColor : "#0e006f", fontWeight: "bold"};
+        			}
+            	} else if (dataField == "comd_levl"
+            			|| dataField == "comd_tagt_seq0" 
+    					|| dataField == "comd_eono_sub0" 
+            			|| dataField == "comd_usg0" 
+                		|| dataField == "comd_stnd_gubn"
+                    	|| dataField == "comd_vend_degr"
+                		|| dataField == "comd_cars_code"
+                		|| dataField == "comd_inds_code"
+                		|| dataField == "comd_base_date"
+                		|| dataField == "comd_vend_code"
+                		|| dataField == "comd_src0"
+                		|| dataField == "comd_omgt_gubn"
+                		|| dataField == "comd_pims_appl"
+                		|| dataField == "comd_pims_pric") {
+            		if (data['comd_levl'] == '2' && data['comd_use_yn'] == 'Y' ) {
+            			return {};
+            		}
+                } else {
+    				if (data['comd_levl'] == '2' && data['comd_use_yn'] == 'Y' ) {
+    					return {background : "#F0F8FF"};
+    				} else if (data['comd_use_yn'] == 'N' ) {
+    					return {background : "#CCCCCC"};
+    				} else {
+    					return {};
+        			}
+                }
+			},
+
+			formatFn: function(value, type) {
+    			if(value) {
+    				return SCFormatter.format(type, value);
+    			}
+    			return null;
+           	},
+
+            /**
+             * 첨부파일 업로드 후 이벤트
+             */
+            onUploadComplete : function(e, data) {
+            	var me = this,
+            	provider = me.$.gridPanel.getDataProvider();
+				// 첨부 그룹코드 set
+				provider.setItemAt(data.itemIndex, { comd_att_grp_cd : data.grpCd});
+            }, 
+
+            onUploadEditable: function(data, item) {
+                var me = this;
+
+                if (data.comd_spms_stat == "20") {
+					return true;
+                } else {
+                	return false;
+                }
+           	},
+
+	        /**             
+             * 삭제 컬럼 컨트롤
+             **/
+	        onChangeCheckDelCol : function() {
+		        var me = this;
+
+		        if (me.$.chk_del.inputValue == "Y") {
+		        	me.$.gridPanel.useSelection  = true;
+		        	me.$.gridPanel.selectionType = "eliminate";
+		        } else {
+		        	me.$.gridPanel.useSelection  = false;
+			    }
+	        }             			
+
+			  
+        });
+	</script>
+
+</dom-module>

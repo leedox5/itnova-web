@@ -1,0 +1,280 @@
+<dom-module id="ep-cr01-01">
+    <!--
+        ******************************************************************************************
+        ** @Program-name    : 배포 팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.11.28
+        ** @History         : 2019.11.28 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- 팀 코드 조회 -->
+        <sc-service-provider id="getTeamRPC" descriptor="bp/tcams/cr/cr01" service-id="get.team.code">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 배포부서 조회 -->
+        <sc-service-provider id="getTargetRPC" descriptor="bp/tcams/cr/cr01" service-id="get.targetList" on-response="afterTarget"></sc-service-provider> 
+        
+        <!-- 저장 -->
+        <sc-service-provider id="distRPC" descriptor="bp/tcams/cr/cr01" service-id="team.dist" on-response="afterDist">
+            <outputs>
+                <sc-service-output name="result" target="{{message}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <cc-page-title-bar>
+           <sc-button text="부서조회"      on-click="getTeam"></sc-button>
+           <sc-button text="배포내역조회"   on-click="getTarget"></sc-button>
+           <sc-button text="배포"        on-click="distribution"></sc-button>
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container search-button-hidden="true">
+			<table>
+				<colgroup>
+					<col style="width:70px">  <!-- 부서 -->
+					<col style="width:120px"> <!-- 부서코드 입력 -->
+					<col style="width:80px">  <!-- 부서명  -->
+					<col style="width:300px"> <!-- 부서명 입력 -->
+					<col>																				
+				</colgroup>
+				<tr>
+					<th><sc-label text="부서" ></sc-label></th>
+					<td>
+                        <sc-text-field id="tb_dept_code" mask-re="/[A-Z0-9]/" strip-chars-re="/[ㄱ-힣]/" max-length="20" text-align="left"
+                                value="{{searchParam.dept_cd}}" on-enter="getTeam" style="width:100px">
+                        </sc-text-field>
+					</td>
+					<th><sc-label text="부서명" ></sc-label></th>
+					<td>
+                        <sc-text-field id="tb_dept_name" text-align="left"
+                                value="{{searchParam.dept_nm}}" on-enter="getTeam" style="width:280px">
+                        </sc-text-field>
+					</td>
+					<td></td>					
+				</tr>
+			</table>					
+		</cc-search-container>
+		<div class="hbox flex">
+			<sc-grid id="gridPanelL" class="flex-5"
+	                  use-state="false" 
+	                  use-selection="false" 
+	                  data-provider="{{resultList}}" 
+	                  on-item-click="itemClickHandlerList"
+	                  use-dummy="true">
+	            <cc-grid-toolbar></cc-grid-toolbar>	
+	            <sc-grid-columns>
+	           	    <sc-image-column data-field="plus"     width="20" singular-source="/assets/images/datagrid/plus.gif" sortable="false"></sc-image-column>
+	                <sc-data-column  data-field="dept_cd"  header-text="부서코드"   width="110"  text-align="center"></sc-data-column>
+	                <sc-data-column  data-field="dept_nm"  header-text="부서명"    width="140"  text-align="left"></sc-data-column>
+	            </sc-grid-columns>
+	        </sc-grid>	
+	        
+			<sc-splitter split-type="vertical"></sc-splitter>
+				
+	        <sc-grid id="gridPanelR" class="flex-5"
+	                 use-state="false" 
+	                 use-selection="false" 
+	                 data-provider="{{targetList}}" 
+	                 on-item-click="itemClickHandlerDist"
+	                 use-dummy="true">
+	           <cc-grid-toolbar></cc-grid-toolbar>
+	           <sc-grid-columns>
+	          	    <sc-image-column data-field="minus"     width="20" singular-source="/assets/images/datagrid/minus.gif" sortable="false"></sc-image-column>
+	               <sc-data-column data-field="dept_cd"  header-text="부서코드"   width="110"  text-align="center"></sc-data-column>
+	               <sc-data-column data-field="dept_nm"  header-text="부서명"     width="140"  text-align="left"></sc-data-column>
+	        	</sc-grid-columns>
+	        </sc-grid>
+		</div>
+
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cr01-01",
+            properties: {
+                titleText   : {type : String, value : "배포부서 지정"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+	            //배포대상목록
+                distList    : {type : Array,  value : function() {return [];}},
+				// 메세지
+                message     : {type : Object, value : function() {return {};}},
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}},
+				//배포 대상
+                targetList  : {type : Array,  value : function() {return [];}},
+				//저장 대상
+                saveList    : {type : Array,  value : function() {return [];}}                
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(distList) {
+                var me = this;
+                //me.set("searchParam", UT.copy(obj));
+                me.set("distList", distList)
+
+				me.getTeam();
+				//me.getTarget();                
+
+            },
+	        /**
+	         * 부서 조회
+	         */ 
+            getTeam : function() {
+                var me = this;
+                me.$.getTeamRPC.service();
+            },
+
+	        /**
+	         * 배포 부서 조회
+	         */ 
+	         getTarget : function() {
+                var me = this;
+                me.$.getTargetRPC.body = {
+                	distList : me.distList		
+                };
+                
+                me.$.getTargetRPC.service();
+            },
+
+	        /**
+	         * 배포 부서 조회
+	         */ 
+	         distribution : function() {
+                var me = this;
+
+                var provider = me.$.gridPanelR.getDataProvider();
+                me.saveList = [];
+
+				for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+					me.saveList.push(provider.getItemAt(indexI));
+				}
+
+                me.$.distRPC.body = {
+                		//searchParam : me.get("searchParam"),
+                		distList : me.get("distList"),
+                		saveParam   : me.get("saveList")
+                    };                
+                me.$.distRPC.service();
+            },            
+
+            afterTarget : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	var resultTarget = data.resultTarget;
+            	
+            	me.set("targetList", resultTarget);
+            },
+            
+            /**
+             * 배포 후 이벤트
+             */            
+             afterDist : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	UT.alert(me.message['MESG']);
+				if (me.message['MESG_CODE'] == 'SA-001') {
+					me.getTarget();
+				}
+            },                         
+
+                        
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            },
+            
+            /**
+             *  왼쪽 grid item click 이벤트
+             */           
+            itemClickHandlerList : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item;
+
+				var provider = me.$.gridPanelR.getDataProvider();
+
+				switch(item.dataField) {
+		            case 'plus':
+			            // 배포리스트 
+						if(provider.getItemSize() > 9) {
+							UT.alert("배포는 10부서를 넘길 수 없습니다.");
+							return
+						}
+						
+						for (var i = 0; i < provider.getItemSize(); i++) {
+							if (provider.getItemAt(i).dept_cd == data.dept_cd) {
+								UT.alert("기 등록된 부서입니다.");
+								return;
+							}
+						}
+
+						provider.addItemAt(provider.getItemSize(), {dept_cd:data.dept_cd, dept_nm:data.dept_nm});
+						
+					break;
+					default :
+						break;
+				}
+
+			},
+
+            /**
+             *  오른쪽 grid item click 이벤트
+             */           
+             itemClickHandlerDist : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item;
+
+				var provider = me.$.gridPanelR.getDataProvider();
+
+				switch(item.dataField) {
+		            case 'minus':
+			            // 배포리스트 
+						provider.removeItemAt(item.rowIndex);
+					break;
+					default :
+						break;
+				}
+
+			},			
+            
+        });
+    </script>
+
+</dom-module>

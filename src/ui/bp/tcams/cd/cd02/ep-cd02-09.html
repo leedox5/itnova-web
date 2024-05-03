@@ -1,0 +1,122 @@
+<dom-module id="ep-cd02-09">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 기타비 집계 원가내역(왼쪽)
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.27
+        ** @History         : 2019.12.27최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+   		<div class="vbox flex">
+			<table class="tb-form" style="padding-top:20px; width:295px">
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white; text-align:center" colspan="2" width="150px" ><sc-label text="구분" style="text-align:right"></sc-label></td>
+						<td style="background-color:#3a9edd; color:white; text-align:center" width="145px" class="align-right"><sc-label text="원가"></sc-label></td>
+					</tr>
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white; text-align:center" rowspan="3"><sc-label text="재료비"></sc-label></td>
+						<td style="background-color:#3a9edd; color:white"><sc-label text="LP"></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_mtlp_cost}}"></sc-label></td>						
+					</tr>
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white"><sc-label text="KD" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_mtkd_cost}}"></sc-label></td>
+					</tr>
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white"><sc-label text="계" ></sc-label></td>
+						<td style="text-align:right;background-color:#ffffcc;"><sc-label text="{{searchParam.sum_matl_cost}}"></sc-label></td>
+					</tr>		
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white ; text-align:center" rowspan="3"><sc-label text="가공비" ></sc-label></td>
+						<td style="background-color:#3a9edd; color:white"><sc-label text="노무비" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_ibr0_cost}}"></sc-label></td>
+					</tr>			
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white"><sc-label text="경비" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_expm_cost}}"></sc-label></td>
+					</tr>	
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white"><sc-label text="계" ></sc-label></td>
+						<td style="text-align:right; background-color:#ffffcc;"><sc-label text="{{searchParam.sum_proc_cost}}"></sc-label></td>
+					</tr>	
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="제조원가" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_manu_cost}}"></sc-label></td>
+					</tr>																											
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="일반관리비" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_gme0_cost}}"></sc-label></td>
+					</tr>	
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="이윤" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_prof_cost}}"></sc-label></td>
+					</tr>	
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="재료관리비" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_matl_mact}}"></sc-label></td>
+					</tr>
+					<tr id="tr_exmt_mgct" height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="외주재관비" ></sc-label></td>
+						<td style="text-align:right;"><sc-label text="{{searchParam.sum_exmt_mgct}}"></sc-label></td>
+					</tr>
+					<tr height = "25">
+						<td style="background-color:#3a9edd; color:white" colspan="2"><sc-label text="총원가" ></sc-label></td>
+						<td style="text-align:right; background-color:#ffffcc;"><sc-label text="{{searchParam.sum_totl_cost}}"></sc-label></td>
+					</tr>									
+			</table>  		
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-09",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object, value : function() { return {};},notify : true},
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				me.set("searchParam", UT.copy(obj));
+
+				if (me.searchParam['comd_etc0_gubn'] == 'END') {
+					me.$.tr_exmt_mgct.removeAttribute("hidden");
+				} else {
+					me.$.tr_exmt_mgct.setAttribute("hidden", "hidden");
+				}
+            }
+
+        });
+	</script>
+</dom-module>

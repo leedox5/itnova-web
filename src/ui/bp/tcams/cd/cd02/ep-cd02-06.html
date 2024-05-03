@@ -1,0 +1,951 @@
+<sc-link rel="import" href="ep-cd02-07.html"></sc-link>
+<dom-module id="ep-cd02-06">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 환산단가  팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.24
+        ** @History         : 2019.12.24 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- 환율 조회 -->
+        <sc-service-provider id="getExchGubnInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.getExchGubnInfoRPC" on-response="afterExchGubnInfoRPC">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultExchParam}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- LDC율 조회 -->
+        <sc-service-provider id="getLDCGubnInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.getLdcGubnInfoRPC" on-response="afterLdcGubnInfoRPC">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultLdcrParam}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>        
+        
+        <!-- 공통코드 지역, 조건, 화폐단위 가져오기 -->
+        <sc-service-provider id="getBearGubnInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.getBearGubnInfoRPC" on-response="afterBearGubnInfoRPC">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{comm_gubn_list}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>        
+
+		<sc-service-provider id="chkCompute" descriptor="bp/tcams/cd/cd02/2023" service-id="chkCompute"></sc-service-provider>
+		<sc-service-provider id="getImpt" descriptor="bp/tcams/cd/cd02/2023" service-id="getImpt"></sc-service-provider>
+        
+        <cc-page-title-bar page-title="환산단가 선택">
+           <sc-button text="계산"        on-click="compute"></sc-button>
+           <sc-button text="확인"        on-click="applyPrice"></sc-button>
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container>
+			<table>
+				<colgroup>
+					<col style="width:90px">  <!-- 수입코드, 수입단가, 환율, LDC율 -->
+					<col style="width:150px">  <!-- 수입코드 입력, 수입단가 입력, 환율 선택 콤보, LDC율 선택 콤보 -->
+					<col style="width:120px">  <!-- , , 환율 적용일, LDC 적용일 -->
+					<col style="width:40px">  <!--  -->
+					<col style="width:60px">  <!-- , , 환율 적용일 선택콤보 -->
+					<col style="width:120px">  <!-- , , 환율 적용일 선택콤보 -->
+					<col style="width:100px">  <!-- , , 환율 적용일 선택콤보 -->
+				</colgroup>
+				<tr>
+					<th><sc-label text="수입코드" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_impt_cond" value="{{searchParam.impt_cond}}" disabled="true" style="width:120px"></sc-text-field>
+						<a><img id="img_imptcond" src="../../../../assets/img/bull_choice.gif" on-click="imptCondPopup" style="padding-left:5px; width:15px"/></a>
+					</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<th><sc-label text="수입단가" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_impt_pric" class="align-right" value="{{searchParam.impt_pric}}" disabled="true" style="width:120px" format-type="number" input-cover="true"></sc-text-field>
+					</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<th><sc-label text="직접입력" ></sc-label></th>
+					<td></td>
+				</tr>
+				<tr>
+					<th><sc-label text="관세율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_trif_rate1" class="align-right" value="{{searchParam.trif_rate1}}" disabled="true" format-type="number" input-cover="true" style="width:120px"></sc-text-field>
+						<sc-label text="    %" >
+					</td>
+					<td></td>
+					<td></td>
+					<th><sc-label text="관세율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_trif_rate2" class="align-right" value="{{searchParam.trif_rate2}}" format-type="number" input-cover="true"  style="width:100px" editVal></sc-text-field>
+					</td>
+					<td></td>
+				</tr>
+				<tr>
+					<th><sc-label text="환율" ></sc-label></th>
+					<td>
+                        <sc-combobox-field id="sb_exch_gubn1" display-field="label" value-field="data" on-change="exchChangeEventHandler" input-clear="false"
+                                items="{{exch_gubn_list}}" value="{{searchParam.exch_gubn1}}" style="width:120px">
+                        </sc-combobox-field>
+					</td>
+					<td>
+						<sc-date-field id="dt_exch_appl" string-date="true" value="{{searchParam.exch_appl_date}}" class="align-right" validator-type="invaliddate" style="width:100px"></sc-date-field>
+					</td>
+					<td></td>
+					<th><sc-label text="환율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_mony_rate1" value="{{searchParam.mony_rate1}}" class="align-right" format-type="number" input-cover="true" style="width:100px" disabled="true"></sc-text-field>
+					</td>
+					<td>
+						<sc-text-field id="tb_mony_rate2" value="{{searchParam.mony_rate2}}" class="align-right" format-type="number" input-cover="true" style="width:100px" editVal></sc-text-field>
+					</td>
+				</tr>
+				<tr>
+					<th><sc-label text="LDC율" ></sc-label></th>
+					<td>
+                        <sc-combobox-field id="sb_ldcr_gubn" display-field="label" value-field="data" on-change="setLDCGubnData_gubn" input-clear="false"
+                                items="{{stnd_gubn_list}}" value="{{searchParam.ldcr_gubn}}" style="width:120px">
+                        </sc-combobox-field>
+					</td>
+					<td>
+						<sc-date-field id="dt_ldcr_appl" string-date="true" value="{{searchParam.ldcr_appl_date}}" format-type="number" input-cover="true" style="width:100px" validator-type="invaliddate" ></sc-date-field>
+					</td>
+					<td></td>
+					<th><sc-label text="LDC율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_ldcr_rate1" value="{{searchParam.ldcr_rate1}}" class="align-right" style="width:100px" disabled="true"></sc-text-field>
+						<sc-text-field id="tb_adtf_rate"  value="{{searchParam.adtf_rate}}"  hidden></sc-text-field>
+						<sc-text-field id="tb_expe_rate"  value="{{searchParam.expe_rate}}"  hidden></sc-text-field>
+					</td>
+					<td>
+						<sc-text-field id="tb_ldcr_rate2" value="{{searchParam.ldcr_rate2}}" class="align-right" format-type="number" input-cover="true" style="width:100px" editVal></sc-text-field>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4"></td>
+					<th><sc-label text="운임율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_carr_rate1" value="{{searchParam.carr_rate1}}" class="align-right" format-type="number" input-cover="true" style="width:100px" disabled="true"></sc-text-field>
+					</td>
+					<td>
+						<sc-text-field id="tb_carr_rate2" editVal value="{{searchParam.carr_rate2}}" class="align-right" format-type="number" input-cover="true" style="width:100px" on-change="getLdcData_2" editVal></sc-text-field>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="4"></td>
+					<th><sc-label text="보험율" ></sc-label></th>
+					<td>
+						<sc-text-field id="tb_insu_rate1" value="{{searchParam.insu_rate1}}" class="align-right" style="width:100px" disabled="true"></sc-text-field>
+					</td>
+					<td>
+						<sc-text-field id="tb_insu_rate2" value="{{searchParam.insu_rate2}}" class="align-right" format-type="number" input-cover="true" style="width:100px" on-change="getLdcData_2" editVal></sc-text-field>
+					</td>
+				</tr>
+				<tr>
+					<th><sc-label text="환산단가" ></sc-label></th>
+					<td colspan="2">
+						<sc-text-field id="tb_matl_pric" value="{{searchParam.matl_pric}}" disabled="true" class="align-right" style="width:150px;" format-type="number" input-cover="true" calcVal></sc-text-field>
+					</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr hidden>
+					<th><sc-label text="관세단가" ></sc-label></th>
+					<td colspan="2">
+						<sc-text-field id="tb_trif_pric" value="{{searchParam.trif_pric}}"></sc-text-field>
+					</td>
+					<th><sc-label text="관세적용" ></sc-label></th>
+					<td>
+                        <sc-combobox-field id="sb_trif_yn" display-field="label" value-field="data" on-change="trifYnEventHandler"
+                                items="{{trif_gubn_list}}" value="{{searchParam.trif_yn}}" style="width:110px">
+                        </sc-combobox-field>
+					</td>
+					<td></td>
+				</tr>				
+			</table>					
+		</cc-search-container>
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-06",
+            properties: {
+                titleText       : {type : String, value : "환산단가 선택"},
+
+				//환율구분
+                exch_gubn_list  : {type : Array , value : function() { return [{data:'B', label:'사업계획환율'}
+                                                                              ,{data:'C', label:'매매기준율'}
+                                                                              ,{data:'D', label:'전신환매도율'}];}},
+				// 표준구분
+                stnd_gubn_list  : {type : Array , value : function() { return [{data:'H', label:'총론'}
+                                                                              ,{data:'P', label:'사업계획'}];}},                                                                             
+				// 관세 적용
+                trif_gubn_list  : { type : Array  , value : function() { return commonAS.useYn2();} },
+
+             	// 공통코드 지역, 조건, 화폐단위 
+            	comm_gubn_list  : {type : Array  , value : function() { return [];}},
+
+                impt_mony       : {type : String, value : function() { return '';}},
+                impt_area       : {type : String, value : function() { return '';}},
+                impt_cond       : {type : String, value : function() { return '';}},
+                
+                funcGubn        : {type : String, value : function() { return '';}},
+
+                trif_cost       : {type : Number, reset: false, value : 0},
+                
+                
+                
+                //조회조건
+                searchParam     : {type : Object, value : function() {return {};}},
+                // 부모에서 받은 전달값(수동공법에서 사용)
+                parentParam     : {type : Object, value : function() {return {};}},
+                
+                resultExchParam : {type : Object, value : function() {return {};}},
+                resultLdcrParam : {type : Object, value : function() {return {};}},
+                
+            },
+
+	    	observers : [
+	    		            'exchApplDateChanged(searchParam.exch_appl_date)',
+	    		            'ldcrApplDateChanged(searchParam.ldcr_appl_date)'
+	    		 		],   
+	    		 		
+            exchApplDateChanged : function(date) {
+            	if(this.$.dt_exch_appl.validate()) {
+                    this.exchChangeEventHandler();	
+            	}
+            },
+            
+            ldcrApplDateChanged : function(date) {
+            	if(this.$.dt_ldcr_appl.validate()) {
+            		this.setLDCGubnData_gubn();
+            	}
+            },
+            
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+
+                // 초기값 set
+                me.set("searchParam.corp_code"     , obj.comd_corp_code);
+                me.set("searchParam.stnd_gubn"     , obj.comd_stnd_gubn);
+                me.set("searchParam.exch_appl_date", obj.comd_base_date);
+                me.set("searchParam.ldcr_appl_date", obj.comd_base_date);
+                me.set("searchParam.impt_pric"     , obj.comd_part_pric);
+                
+                me.set("searchParam.impt_yn"       , obj.impt_yn);
+                me.set("searchParam.impt_cw_yn"    , obj.impt_cw_yn);
+                
+                if(UT.isNotEmpty(obj.comd_impt_cond)) {
+                    me.set("searchParam.impt_cond"     , obj.comd_impt_cond);
+                    me.set("impt_area", obj.comd_impt_cond.substr(0,2));
+                    me.set("impt_cond", obj.comd_impt_cond.substr(2,3));
+                    me.set("impt_mony", obj.comd_impt_cond.substr(5,3));
+                }
+
+				me.$.sb_exch_gubn1.selectedIndex = 0;
+				me.$.sb_ldcr_gubn.selectedIndex = 0;
+
+				// 수동공법에서 진입하는 경우
+				if (UT.isNotEmpty(obj.comd_come_code)) {
+					me.set("parentParam", obj);
+
+					// 공통코드 지역,조건,화폐단위 조회 Param 셋팅
+					me.set("searchParam.comd_area_gubn", "CW_IMC-REGN");
+					me.set("searchParam.comd_deal_gubn", "CW_IMC-DEAL");
+					me.set("searchParam.comd_mony_gubn", "CA_MONYGUBN");
+
+					// 수동공법에서 환산단가 팝업 여는 경우 수입단가 활성화
+					me.$.tb_impt_pric.removeAttribute("disabled");
+					
+					//지역,조건,화폐단위 조회
+					me.$.getBearGubnInfoRPC.service();
+				}
+
+				if(me.searchParam.impt_yn == "Y") {
+					me.set("searchParam.row", obj.row);
+
+					me.$.getImpt.body = { param : me.searchParam.row }
+	                commonJS.callService(me.$.getImpt).then((data) => {
+	                    console.log(data);
+
+	                    if(data.result.code == "N") {
+	                    	UT.alert(data.result.mesg);
+	                    	return;    
+	                    }
+
+	                    var impt = data.result.impt;
+
+	                    me.set("searchParam.impt_cond", impt.impt_cond);
+
+	                    me.set("impt_area", impt.impt_cond.substr(0,2));
+	                    me.set("impt_cond", impt.impt_cond.substr(2,3));
+	                    me.set("impt_mony", impt.impt_cond.substr(5,3));
+	                    
+	                    me.set("searchParam.trif_rate1", impt.impt_trif_rate);
+	                    me.set("searchParam.trif_rate2", impt.impt_trif_inpt);
+	                    me.set("searchParam.exch_gubn1", impt.impt_exch_gubn);
+	                    me.set("searchParam.exch_appl_date", impt.impt_exch_apdt);
+	                    me.set("searchParam.mony_rate1", impt.impt_exch_mony);
+	                    me.set("searchParam.mony_rate2", impt.impt_exch_user);
+	                    me.set("searchParam.ldcr_gubn", impt.impt_ldcr_stnd);
+	                    me.set("searchParam.ldcr_appl_date", impt.impt_ldcr_apdt);
+	                    me.set("searchParam.ldcr_rate1", impt.impt_ldcr_rate);
+	                    me.set("searchParam.ldcr_rate2", impt.impt_ldcr_user);
+	                    me.set("searchParam.carr_rate1", impt.impt_carr_rate);
+	                    me.set("searchParam.carr_rate2", impt.impt_carr_user);
+	                    me.set("searchParam.insu_rate1", impt.impt_insu_rate);
+	                    me.set("searchParam.insu_rate2", impt.impt_insu_user);
+	                    me.set("searchParam.matl_pric" , impt.impt_matl_pric);
+	                });
+				}
+
+				if(me.searchParam.impt_cw_yn == "Y") {
+					me.set("searchParam.row_cw", obj.row_cw);
+					var impt = me.searchParam.row_cw;
+
+                    me.set("searchParam.impt_cond" , impt.impt_cond);
+
+                    me.set("impt_area", impt.impt_cond.substr(0,2));
+                    me.set("impt_cond", impt.impt_cond.substr(2,3));
+                    me.set("impt_mony", impt.impt_cond.substr(5,3));
+                    
+                    me.set("searchParam.trif_rate1", impt.impt_trif_rate);
+                    me.set("searchParam.trif_rate2", impt.impt_trif_inpt);
+                    me.set("searchParam.exch_gubn1", impt.impt_exch_gubn);
+                    me.set("searchParam.exch_appl_date", impt.impt_exch_apdt);
+                    me.set("searchParam.mony_rate1", impt.impt_exch_mony);
+                    me.set("searchParam.mony_rate2", impt.impt_exch_user);
+                    me.set("searchParam.ldcr_gubn", impt.impt_ldcr_stnd);
+                    me.set("searchParam.ldcr_appl_date", impt.impt_ldcr_apdt);
+                    me.set("searchParam.ldcr_rate1", impt.impt_ldcr_rate);
+                    me.set("searchParam.ldcr_rate2", impt.impt_ldcr_user);
+                    me.set("searchParam.carr_rate1", impt.impt_carr_rate);
+                    me.set("searchParam.carr_rate2", impt.impt_carr_user);
+                    me.set("searchParam.insu_rate1", impt.impt_insu_rate);
+                    me.set("searchParam.insu_rate2", impt.impt_insu_user);
+                    me.set("searchParam.matl_pric" , impt.impt_matl_pric);
+			    }
+            },
+
+            setLDCGubnData_gubn : function() {
+				var me = this;
+				me.set("funcGubn", "gubn");
+				me.setLDCGubnData();
+			},
+
+			setLDCGubnData_appl : function() {
+				var me = this;
+				me.set("funcGubn", "appl");
+				me.setLDCGubnData();
+			},
+
+			setLDCGubnData : function() {
+				var me = this,
+				ldcGubn = me.get("funcGubn"),
+				dt_exch_appl = me.get("searchParam.exch_appl_date"),
+				impt_area = me.get("impt_area"),
+				impt_cond = me.get("impt_cond");
+				
+				if (UT.isNotEmpty(impt_area) && UT.isNotEmpty(impt_cond)) {
+					me.set("searchParam.ldcr_code"     , impt_area + impt_cond);
+					me.set("searchParam.ldcr_stnd_gubn", me.get("searchParam.ldcr_gubn"));
+					//me.set("searchParam.ldcr_appl_date", ((dt_exch_appl).replace('/', '')).replace('/', ''));
+					
+					// 초기화
+					me.set("searchParam.ldcr_rate1", "");
+					me.set("searchParam.carr_rate1", "");
+					me.set("searchParam.insu_rate1", "");
+					me.set("searchParam.trif_rate1", "");
+					me.set("searchParam.adtf_rate" , "");
+					me.set("searchParam.expe_rate" , "");
+					
+					me.$.getLDCGubnInfoRPC.service();
+				}
+			},
+
+            /**
+             * ldc율 조회 후 처리
+             */            
+            afterLdcGubnInfoRPC : function(e, res) {
+             	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(UT.isEmpty(data.resultList)) {
+					UT.alert("LDC율 정보가 없습니다. <br> 관리자에게 문의하여 주세요.");
+					return;
+				}
+            	
+				if (UT.isNotEmpty(me.resultLdcrParam['ldcr_rate'])) {
+
+					me.set("searchParam.ldcr_rate1", me.resultLdcrParam['ldcr_rate']);
+					me.set("searchParam.carr_rate1", me.resultLdcrParam['carr_rate']);
+					me.set("searchParam.insu_rate1", me.resultLdcrParam['insu_rate']);
+					me.set("searchParam.trif_rate1", me.resultLdcrParam['trif_rate']);
+
+					me.set("searchParam.adtf_rate" , me.resultLdcrParam['adtf_rate']);
+					me.set("searchParam.expe_rate" , me.resultLdcrParam['expe_rate']);
+					
+					if (me.get("funcGubn") == 'appl') {
+						me.getLdcData_1();	
+					}
+									
+				} else {
+					UT.alert("LDC율 정보가 없습니다. <br> 관리자에게 문의하여 주세요.");
+				}	
+            },
+
+            /**
+			 * 지역,조건,화폐단위 조회 후 처리
+			 */
+            afterBearGubnInfoRPC : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 기존 저장 수입코드 있으면 전부 셋팅 
+            	if (me.get("parentParam.comd_impt_flag") == "Y") {
+            		for (var i = 0; i < me.comm_gubn_list.length; i++) {
+						if (me.comm_gubn_list[i].grp_cd == me.get("searchParam.comd_area_gubn")) {
+							if (me.comm_gubn_list[i].dtl_cd.substring(0,1) == me.get("parentParam.comd_impt_code").substring(0,1)) {
+								me.set("impt_area", me.comm_gubn_list[i].dtl_cd);
+							}
+						}
+					}
+
+            		for (var i = 0; i < me.comm_gubn_list.length; i++) {
+						if (me.comm_gubn_list[i].grp_cd == me.get("searchParam.comd_deal_gubn")) {
+							if (me.comm_gubn_list[i].dtl_cd.substring(0,1) == me.get("parentParam.comd_impt_code").substring(1,2)) {
+								me.set("impt_cond", me.comm_gubn_list[i].dtl_cd);
+							}
+						}
+					}
+
+            		for (var i = 0; i < me.comm_gubn_list.length; i++) {
+						if (me.comm_gubn_list[i].grp_cd == me.get("searchParam.comd_mony_gubn")) {
+							if (me.comm_gubn_list[i].dtl_cd.substring(0,1) == me.get("parentParam.comd_impt_code").substring(2,3)) {
+								me.set("impt_mony", me.comm_gubn_list[i].dtl_cd);
+							}
+						}
+					}
+
+            		me.$.tb_impt_cond.value = me.get("impt_area") + me.get("impt_cond") + me.get("impt_mony");
+
+            	// 없으면 화폐구분만 셋팅
+               	} else if (me.get("parentParam.comd_impt_flag") == "N") {
+               		me.set("impt_mony", me.get("parentParam.comd_impt_code"));
+               		me.$.tb_impt_cond.value = "";
+              	}
+
+              	if (UT.isEmpty(me.get("parentParam.comd_exch_date")) || UT.isEmpty(me.get("parentParam.comd_stnd_date"))) {
+                  	me.set("searchParam.exch_appl_date", me.get("parentParam.comd_base_date"));
+                  	me.$.dt_exch_appl.value = me.get("parentParam.comd_base_date");
+                  	me.set("searchParam.ldcr_appl_date", me.get("parentParam.comd_base_date"));
+                  	me.$.dt_ldcr_appl.value = me.get("parentParam.comd_base_date");
+              	} else {
+              		me.set("searchParam.exch_appl_date", me.get("parentParam.comd_exch_date"));
+                  	me.$.dt_exch_appl.value = me.get("parentParam.comd_exch_date");
+                  	me.set("searchParam.ldcr_appl_date", me.get("parentParam.comd_stnd_date"));
+                  	me.$.dt_ldcr_appl.value = me.get("parentParam.comd_stnd_date");
+               	}
+
+              	if (UT.isEmpty(me.get("parentParam.comd_exch_gubn"))) {
+              		me.$.sb_exch_gubn1.selectedIndex = 0;
+              	} else {
+	              	me.$.sb_exch_gubn1.value = me.get("parentParam.comd_exch_gubn");  //환율구분
+              	}
+              	
+              	if (UT.isEmpty(me.get("parentParam.comd_ldcr_gubn"))) {
+    				me.$.sb_ldcr_gubn.selectedIndex = 0;
+              	} else {
+	              	me.$.sb_ldcr_gubn.value  = me.get("parentParam.comd_ldcr_gubn");  //LDC율구분
+              	}
+
+              	//환율 정보 조회
+				me.exchChangeEventHandler();
+				//ldc율 정보 조회
+				me.setLDCGubnData_gubn();
+
+				me.$.tb_matl_pric.text  = me.get("parentParam.comd_krw0_pric");     //환산단가
+				me.$.tb_mony_rate2.text = me.get("parentParam.comd_exch_user");     //환율
+				me.$.tb_ldcr_rate2.text = me.get("parentParam.comd_ldc0_user");     //LDC율       
+				me.$.tb_carr_rate2.text = me.get("parentParam.comd_carr_inpt");     //운임율      
+				me.$.tb_insu_rate2.text = me.get("parentParam.comd_insu_inpt");     //보험율      
+            },
+             			
+
+			trifYnEventHandler : function() {
+				var me = this;
+				
+				if (me.get("searchParam.trif_yn") == 'Y') {
+					if (UT.isNotEmpty(me.get("searchParam.impt_pric"))
+						&& (   UT.isNotEmpty(me.get("searchParam.mony_rate1"))
+						    || UT.isNotEmpty(me.get("searchParam.mony_rate2"))
+						   )
+						&& (   UT.isNotEmpty(me.get("searchParam.ldcr_rate1"))
+							|| UT.isNotEmpty(me.get("searchParam.ldcr_rate2"))
+							)
+						) {						
+						me.compute();						
+					}
+				}
+			},
+
+			compute: function() {
+				var me = this;
+				
+				me.$.chkCompute.body = { param : me.searchParam }
+                commonJS.callService(me.$.chkCompute).then((data) => {
+                    console.log(data);
+
+                    if(data.result.code == "N") {
+                    	UT.alert(data.result.mesg);
+                    	return;    
+                    }
+                    
+                    var calc = data.result.calc;
+                    
+                    // 관세 단가
+    				me.set("searchParam.trif_pric", commonAS.substr4num(calc.trif_pric.toString()));
+    				
+    				// 환산 단가
+    				me.set("searchParam.matl_pric", commonAS.substr2num(calc.matl_pric.toString()));
+
+    				// 관세
+    				me.set("trif_cost", me.searchParam.trif_pric);    				
+                });
+			},
+			
+			/**
+			 * 계산
+			 */			
+			compute_x : function() {
+				var me = this,
+				ldcr_rate = 0,
+				trif_rate = 0,
+				carr_rate = 0,
+				insu_rate = 0,
+				adtf_rate = 0,
+				expe_rate = 0,
+				mony_rate = 0,
+				trif_pric = 0,
+				matl_pric = 0,
+				impt_pric = 0;
+
+				if (UT.isNotEmpty(me.get("searchParam.impt_pric"))) {
+					impt_pric = parseFloat(me.get("searchParam.impt_pric"));
+				} else {
+					UT.alert("수입단가 없습니다. 확인 후 작업하세요.");
+					return;					
+				}
+
+				if (UT.isNotEmpty(me.get("searchParam.mony_rate2"))) {
+					// 직접 입력을 우선 처리
+					mony_rate = parseFloat(me.get("searchParam.mony_rate2"));
+				} else {
+					if (UT.isNotEmpty(me.get("searchParam.mony_rate1"))) {
+						mony_rate = parseFloat(me.get("searchParam.mony_rate1"));
+					} else {
+						UT.alert("환율은 필수 입력입니다.");
+						return;						
+					}
+				}
+
+				if (UT.isNotEmpty(me.get("searchParam.ldcr_rate2"))) {
+					// 직접 입력을 우선 처리
+					ldcr_rate = parseFloat(me.get("searchParam.ldcr_rate2"));
+				} else {
+					if (UT.isNotEmpty(me.get("searchParam.ldcr_rate1"))) {
+						ldcr_rate = parseFloat(me.get("searchParam.ldcr_rate1"));
+					} else {
+						UT.alert("LDC율은 필수 입력입니다.");
+						return;						
+					}
+				}
+
+				if (UT.isNotEmpty(me.get("searchParam.trif_rate1"))) {
+					if (parseFloat(me.get("searchParam.trif_rate1")) > 100) {
+						UT.alert("관세율은 100%를 초과 할 수 없습니다. <br> 항목을 다시 확인하여 주시기 바랍니다.");
+						return;
+					}
+					trif_rate = parseFloat(me.get("searchParam.trif_rate1"));
+				}
+
+				if (UT.isNotEmpty(me.get("searchParam.trif_rate2"))) {
+					if (parseFloat(me.get("searchParam.trif_rate2")) > 100) {
+						UT.alert("관세율은 100%를 초과 할 수 없습니다. <br> 항목을 다시 확인하여 주시기 바랍니다.");
+						return;
+					}
+					trif_rate = parseFloat(me.get("searchParam.trif_rate2"));
+				}
+
+				// 직접입력을 우선 적용하고 선택사항임
+				if (UT.isNotEmpty(me.get("searchParam.insu_rate2"))) {
+					// 직접 입력을 우선 처리
+					insu_rate = parseFloat(me.get("searchParam.insu_rate2"));
+				} else {
+					if (UT.isNotEmpty(me.get("searchParam.insu_rate1"))) {
+						insu_rate = parseFloat(me.get("searchParam.insu_rate1"));
+					} else {
+						insu_rate = 0;
+					}
+				}				
+				
+				//============================================================================
+				// 관세단가 계산
+				// 1. FOB 조건 : FOB수입가 * 표준환율 * (1 + 운임율 + 보험율) * (관세율 * 100)
+				// 2. CIF 조건 : CIF수입가 * 표준환율 * (관세율 * 100)
+				// 2011.09.16 부동 소수점 처리 위해  + 0.000000001
+				//============================================================================
+				if (UT.isNotEmpty(me.get("searchParam.impt_cond"))) {
+					if (me.get("impt_cond") == 'FOB') {
+						trif_pric = impt_pric * mony_rate * (1.00000 + (carr_rate) + (insu_rate)) * (trif_rate * 0.01);
+					} else if (me.get("impt_cond") == 'CIF') {
+						trif_pric = impt_pric * mony_rate * (trif_rate * 0.01);
+					}					
+				}
+				// 관세 단가
+				me.set("searchParam.trif_pric", commonAS.substr4num(trif_pric.toString()));
+				
+				matl_pric = impt_pric * mony_rate * ldcr_rate;
+				
+				// 환산 단가
+				me.set("searchParam.matl_pric", commonAS.substr2num(matl_pric.toString()));
+				
+				// 관세
+				me.set("trif_cost", impt_pric * mony_rate);
+				
+			},
+
+			getLdcData_1 : function() {
+				var me = this;
+				me.set("funcGubn", "1");
+				me.getLdcData();
+			},
+
+			getLdcData_2 : function() {
+				var me = this;
+				me.set("funcGubn", "2");
+				me.getLdcData();
+			},			
+
+			/**
+			 * LDC율 적용일 변경 시
+			 */			
+			getLdcData : function() {
+				var me = this,
+				ldcr_rate = 0,
+				trif_rate = 0,
+				carr_rate = 0,
+				insu_rate = 0,
+				adtf_rate = 0,
+				expe_rate = 0,
+				funcGubn = me.get("funcGubn");
+				
+				if (UT.isNotEmpty(me.get("searchParam.adtf_rate"))) {
+					adtf_rate = parseFloat(me.get("searchParam.adtf_rate"));
+				}
+				if (UT.isNotEmpty(me.get("searchParam.expe_rate"))) {
+					expe_rate = parseFloat(me.get("searchParam.expe_rate"));						
+				}				
+				
+				if (UT.isNotEmpty(me.get("searchParam.trif_rate1"))) {
+					if (parseFloat(me.get("searchParam.trif_rate1")) > 100) {
+						UT.alert("관세율은 100%를 초과 할 수 없습니다. <br> 항목을 다시 확인하여 주시기 바랍니다.");
+						return;
+					}
+					trif_rate = parseFloat(me.get("searchParam.trif_rate1"));
+				}
+
+				if (UT.isNotEmpty(me.get("searchParam.trif_rate2"))) {
+					if (parseFloat(me.get("searchParam.trif_rate2")) > 100) {
+						UT.alert("관세율은 100%를 초과 할 수 없습니다. <br> 항목을 다시 확인하여 주시기 바랍니다.");
+						return;
+					}
+					trif_rate = parseFloat(me.get("searchParam.trif_rate2"));
+				}				
+				
+				
+				// 직접입력을 우선 적용하고 선택사항임
+				if (UT.isNotEmpty(me.get("searchParam.carr_rate2"))) {
+					// 직접 입력을 우선 처리
+					carr_rate = parseFloat(me.get("searchParam.carr_rate2"));
+				} else {
+					if (UT.isNotEmpty(me.get("searchParam.carr_rate1"))) {
+						carr_rate = parseFloat(me.get("searchParam.carr_rate1"));
+					} else {
+						carr_rate = 0;
+					}
+				}
+				
+				// =================================================================================
+				// LDC율 : 1.FOB조건 : TRUNC((1 +해상운임률+보험률) * (1+관세율/100 * (1+추가관세율/100)) + 부대비율,4)
+				// LDC율 : 2.CIF조건 : TRUNC(                        (1+관세율/100 * (1+추가관세율/100)) + 부대비율,4)
+				// =================================================================================
+				if (UT.isNotEmpty(me.get("searchParam.impt_cond"))) {
+					
+					if (me.get("impt_cond") == 'FOB') {
+						ldcr_rate = (1.0000 + carr_rate + insu_rate) 
+							* (1.0000 + (trif_rate * 0.01))
+							* (1.0000 + (adtf_rate * 0.01))
+							+ expe_rate
+							+ 0.000000001;
+					} else if (me.get("impt_cond") == 'CIF') {
+						ldcr_rate = (1.0000 + (trif_rate * 0.01))
+							* (1.0000 + (adtf_rate * 0.01))
+							+ expe_rate
+							+ 0.000000001;
+					}					
+				}
+
+				if (funcGubn == "1") {
+					me.set("searchParam.ldcr_rate1", commonAS.substr4num(ldcr_rate.toString()));
+				} else if (funcGubn == "2") {
+					me.set("searchParam.ldcr_rate2", commonAS.substr4num(ldcr_rate.toString()));
+				}
+				
+			},
+
+        	/**
+             * 환율 구분 콤보 변경 이벤트
+             **/
+            exchChangeEventHandler : function() {
+			    var me = this,
+			    impt_mony    = me.get("impt_mony"),
+			    dt_exch_appl = me.get("searchParam.exch_appl_date");
+			    
+				if (UT.isNotEmpty(impt_mony) && UT.isNotEmpty(dt_exch_appl)) {
+					me.set("searchParam.mony_gubn"     ,impt_mony);
+					me.set("searchParam.exch_gubn"     ,me.get("searchParam.exch_gubn1"));
+					me.set("searchParam.exch_appl_date",((dt_exch_appl).replace('/', '')).replace('/', ''));
+					
+					// 환율정보 초기화
+					me.resultExchParam['mony_rate'] = '';
+					me.$.getExchGubnInfoRPC.service();
+				}
+		    },
+
+            /**
+             * 환율 조회 후 처리
+             */            
+            afterExchGubnInfoRPC : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+            	
+
+				if (UT.isNotEmpty(me.resultExchParam['mony_rate'])) {
+					me.set("searchParam.mony_rate1", me.resultExchParam['mony_rate']);
+				} else {
+					UT.alert("환율 정보가 없습니다. <br> 관리자에게 문의하여 주세요.");
+					me.set("searchParam.mony_rate1", null);
+				}
+				
+            }, 
+
+            applyPrice: function() {
+				var me = this,
+				item = {};
+				
+				if (me.get("searchParam.trif_yn") == 'Y') {
+					
+					if (   UT.isNotEmpty(me.get("searchParam.trif_rate1")) 
+					    && UT.isNotEmpty(me.get("searchParam.trif_rate2"))) {
+						if (   parseFloat(me.get("searchParam.trif_rate1")) == 0
+						    && parseFloat(me.get("searchParam.trif_rate2")) == 0) {
+							UT.alert("관세단가 '적용'을 선택하셨습니다. <br>반드시 관세율을 입력하신 후 재 계산을 하셔야 합니다.");
+							return;
+						} else {
+							item.part_pric = me.get("searchParam.matl_pric");
+							item.trif_pric = me.get("trif_cost");
+
+							// 수동공법에서 연 경우
+							if (UT.isNotEmpty(me.parentParam)) {
+								item.impt_code   = me.$.tb_impt_cond.value;   //수입코드
+								item.trif_rate   = me.$.tb_trif_rate1.value;  //관세율
+								item.trif_rate_m = me.$.tb_trif_rate2.value;
+								item.exch_gubn   = me.$.sb_exch_gubn1.value;  //환율구분
+								item.exch_date   = ((me.$.dt_exch_appl.value).replace('/', '')).replace('/', '');  //환율구분적용일
+								item.stnd_gubn   = me.$.sb_ldcr_gubn.value;   //표준구분
+								item.stnd_date   = ((me.$.dt_ldcr_appl.value).replace('/', '')).replace('/', '');  //표준구분적용일
+								
+								item.exch_rate   = me.$.tb_mony_rate1.value;
+								item.exch_rate_m = me.$.tb_mony_rate2.value;
+
+								item.ldc0_rate   = me.$.tb_ldcr_rate1.value;
+								item.ldc0_rate_m = me.$.tb_ldcr_rate2.value;
+								item.carr_rate   = me.$.tb_carr_rate1.value;
+								item.carr_rate_m = me.$.tb_carr_rate2.value;
+								item.insu_rate   = me.$.tb_insu_rate1.value;
+								item.insu_rate_m = me.$.tb_insu_rate2.value;
+								
+								item.nati_code   = me.get("impt_area");
+								item.exch_mogb   = me.get("impt_mony");
+								item.impt_pric   = me.get("searchParam.impt_pric");
+								
+								item.exch_link   = me.get("searchParam.exch_link");
+							}
+							
+							// 값 리턴
+							me.fire("selected-item", item);	
+							me.onClose();						
+						}
+					} else {
+						UT.alert("관세단가 '적용'을 선택하셨습니다. <br>반드시 관세율을 입력하신 후 재 계산을 하셔야 합니다.");
+						return;
+					}
+				} else {
+					item.impt_cond = me.get("searchParam.impt_cond");
+					item.part_pric = me.get("searchParam.matl_pric");
+					item.trif_pric = me.get("trif_cost");
+					item.ldc0_rate = me.get("searchParam.ldcr_rate1");
+					item.exch_rate = me.get("searchParam.mony_rate1");
+
+					// 수동공법에서 연 경우
+					if (UT.isNotEmpty(me.parentParam)) {
+						if (   UT.isNotEmpty(me.get("impt_area"))
+						    && UT.isNotEmpty(me.get("impt_cond"))
+						    && UT.isNotEmpty(me.get("impt_mony"))) {
+							item.impt_code = me.get("impt_area").substr(0, 1) + me.get("impt_cond").substr(0, 1) + me.get("impt_mony").substr(0, 1);	
+						}
+						
+						item.trif_rate   = me.$.tb_trif_rate1.value;  //관세율
+						item.trif_rate_m = me.$.tb_trif_rate2.value;
+						item.exch_gubn   = me.$.sb_exch_gubn1.value;  //환율구분
+						item.exch_date   = ((me.$.dt_exch_appl.value).replace('/', '')).replace('/', '');  //환율구분적용일
+						item.stnd_gubn   = me.$.sb_ldcr_gubn.value;   //표준구분
+						item.stnd_date   = ((me.$.dt_ldcr_appl.value).replace('/', '')).replace('/', '');  //표준구분적용일
+						
+						item.exch_rate   = me.$.tb_mony_rate1.value;
+						item.exch_rate_m = me.$.tb_mony_rate2.value;
+						
+						item.ldc0_rate   = me.$.tb_ldcr_rate1.value;
+						item.ldc0_rate_m = me.$.tb_ldcr_rate2.value;
+						item.carr_rate   = me.$.tb_carr_rate1.value;
+						item.carr_rate_m = me.$.tb_carr_rate2.value;
+						item.insu_rate   = me.$.tb_insu_rate1.value;
+						item.insu_rate_m = me.$.tb_insu_rate2.value;
+						
+						item.nati_code   = me.get("searchParam.impt_area");
+						item.exch_mogb   = me.get("searchParam.impt_mony");
+						item.impt_pric   = me.get("searchParam.impt_pric");
+						
+						item.exch_link   = me.get("searchParam.exch_link");
+					}
+					// [2023.01.16] impt param 생성
+					item.impt_impt_code  = me.searchParam.impt_cond.substring(0, 1) + 
+					                       me.searchParam.impt_cond.substring(2, 3) +
+					                       me.searchParam.impt_cond.substring(5, 6);
+					item.impt_impt_cost  = me.get("searchParam.impt_pric");
+					item.impt_nati_code  = me.searchParam.impt_cond.substring(0, 2);
+					item.impt_exch_gubn  = me.$.sb_exch_gubn1.value;
+					item.impt_exch_mogb  = me.searchParam.impt_cond.substring(5);
+					item.impt_exch_apdt  = ((me.$.dt_exch_appl.value).replace('/', '')).replace('/', ''); 
+					item.impt_exch_mony  = me.$.tb_mony_rate1.value;
+					item.impt_exch_user  = me.$.tb_mony_rate2.value;
+					item.impt_ldcr_stnd  = me.$.sb_ldcr_gubn.value;
+					item.impt_ldcr_code  = me.searchParam.impt_cond.substring(0, 5);
+					item.impt_ldcr_apdt  = ((me.$.dt_ldcr_appl.value).replace('/', '')).replace('/', '');
+					item.impt_ldcr_rate  = me.$.tb_ldcr_rate1.value;
+					item.impt_ldcr_user  = me.$.tb_ldcr_rate2.value;
+
+					item.impt_matl_pric  = me.get("searchParam.matl_pric");
+					item.impt_trif_rate  = me.$.tb_trif_rate1.value;
+					item.impt_trif_inpt  = me.$.tb_trif_rate2.value;
+
+					item.impt_carr_rate  = me.$.tb_carr_rate1.value;
+					item.impt_carr_inpt  = me.$.tb_carr_rate2.value;
+					item.impt_insu_rate  = me.$.tb_insu_rate1.value;
+					item.impt_insu_inpt  = me.$.tb_insu_rate2.value;
+					item.impt_trif_pric  = me.get("searchParam.trif_pric"); 
+						
+					// 값 리턴
+					me.fire("selected-item", item);	
+					me.onClose();
+				}
+			},
+
+			onClose : function() {
+                var me = this;
+                me.fire("close");
+            },
+
+            imptCondPopup : function() {
+                var me = this,
+                param = {};
+
+                // 수동공법에서 연경우, param 세팅
+                if (UT.isNotEmpty(me.parentParam)) {
+                	if (UT.isNotEmpty(me.$.tb_impt_cond.value)) {
+    					param['impt_area'] = me.get("impt_area");
+    					param['impt_cond'] = me.get("impt_cond");
+    					param['impt_mony'] = me.get("impt_mony");
+    				} else {
+    					param['impt_mony'] = me.get("searchParam.impt_mony");
+    				}
+                }
+
+	            if(!me.ep_cd02_07){
+	                me.ep_cd02_07 = UT.popup('ep-cd02-07', me, 450, 230, {
+                		'selected-item' : function(popup, e) {
+                			var result = e.detail;
+
+                			me.set("searchParam.impt_cond", result.impt_code);
+                			me.set("impt_area", result.impt_area);
+                			me.set("impt_mony", result.impt_mony);
+                			me.set("impt_cond", result.impt_cond);
+
+                			//환율 정보 조회
+   							me.exchChangeEventHandler();
+   							//ldc율 정보 조회
+   							me.setLDCGubnData_gubn();
+                            popup.close();
+                		}
+	                }, {title : "수입코드 선택"});
+	            }
+                me.ep_cd02_07.show();
+				me.ep_cd02_07.getWindowContent().load(param);  
+            }
+        });
+    </script>
+
+</dom-module>

@@ -1,0 +1,279 @@
+<sc-link rel="import" href="/ui/bp/tcams/cm/common/es-cmcm-10.html"></sc-link>
+<dom-module id="ep-cd02-13">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 운반비/팔레트비 계산 (오른쪽-팔레트비)
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.01.02
+        ** @History         : 2020.01.02최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+		<sc-service-provider id="getOpt1" descriptor="bp/tcams/cd/cd02/conf" service-id="getOpt1" on-response="afterGetOpt1"></sc-service-provider>
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+		<div class="vbox flex" >
+			<sc-label text="[ 파렛트비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+			<tr>
+				<td><sc-label text="파렛트비 계산" style="font-weight:bold"></sc-label></td>
+			</tr>
+			<form name="matlData">
+			<table class="come-form"  style="padding-top:20px; width:560px">
+			    <colgroup>
+                <col style="width:135px">
+                <col style="width:150px">
+                <col style="width:130px">
+                <col>
+            	</colgroup>
+				<tr height = "30">
+					<th>
+						<sc-label text="파렛트종류" ></sc-label>
+					</th>
+					<td>
+						<sc-combobox-field id="sb_palt_kind" width="80px" display-field="label" value-field="data" input-clear="false"
+                        	items="{{palt_kind_list}}" value="{{searchParam.trpt_palt_kind}}" on-change="onChange">
+                        </sc-combobox-field>					
+					</td>
+					<th>
+					    <sc-label id="lb01" text="조정계수" hidden="true"></sc-label>
+                        <a><img id="img_1" src="/ui/assets/img/bull_reference.gif" hidden="true" on-click="openPopup10" style="padding-left:5px;"/></a>					    
+					</th>
+					<td>
+					    <sc-combobox-field id="sb01" value="{{searchParam.trpt_adel_fact}}" hidden="true"></sc-combobox-field>
+					</td>
+				</tr>	
+				<tr height = "30">
+					<th>
+						<sc-label text="생산년수" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_prod_year" value="{{searchParam.trpt_prod_year}}" editable="true" max-length="4" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+					</td>
+					<th>
+						<sc-label text="년생산갯수" ></sc-label>
+					</th>
+					<td >
+						<sc-text-field id="tb_prod_cont" value="{{searchParam.trpt_prod_cont}}" editable="true" max-length="10" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" on-change="changeProd" editVal class="align-right"></sc-text-field>
+					</td>
+				</tr>	
+				 
+				<tr height = "30">
+					<th>
+						<sc-label text="파렛트단가" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_palt_pric" value="{{searchParam.trpt_palt_pric}}" editable="true" max-length="10" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+					</td>
+					<td colspan="2" rowspan="3"></td>
+				</tr>
+				
+				<tr height = "30">
+					<th>
+						<sc-label text="파렛트 재고일수" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_palt_days" value="{{searchParam.trpt_palt_days}}" on-blur="substr1num" editable="true" max-length="10" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" on-change="changeProd" editVal class="align-right"></sc-text-field>
+					</td>
+				</tr>
+				
+				<tr height = "30">
+					<th>
+						<sc-label text="파렛트 제작수량(EA)" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_palt_prod" value="{{searchParam.trpt_palt_prod}}" editable="true" max-length="10" mask-re="/[0-9]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+					</td>
+				</tr>
+					
+				<tr>
+					<th>
+						<sc-label text="파렛트" ></sc-label>
+					</th>
+					<td colspan="3">
+						<table class="tb-form" style="padding-top:20px; width:410px">
+			                <tr>
+			                    <td rowspan="2" style="background-color:#3a9edd; color:white; text-align:center; width:65px">
+			                        <sc-label text="구분"></sc-label> 
+			                    </td>
+			                    <td colspan="3" style="background-color:#3a9edd; color:white; text-align:center; width:320px">
+			                        <sc-label text="적재 SIZE"></sc-label>
+			                    </td>
+			                </tr>
+			                <tr>
+			                    <td style="background-color:#3a9edd; color:white; text-align:center; width:105px">
+			                        <sc-label text="장"></sc-label>
+			                    </td>
+			                    <td style="background-color:#3a9edd; color:white; text-align:center; width:105px">
+			                        <sc-label text="폭"></sc-label>
+			                    </td>
+			                    <td style="background-color:#3a9edd; color:white; text-align:center; width:105px">
+			                        <sc-label text="고"></sc-label>
+			                    </td>
+			                </tr>
+			                <tr>
+			                    <td style="background-color:white; text-align:center">
+			                        <sc-label text="운반차량"></sc-label>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_cars_leng" value="{{searchParam.tb_cars_leng}}" style="width:100px" disabled="true" mask-re="/[1-9.]/" strip-chars-re="/[ㄱ-힣]/" class="align-right"></sc-text-field>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_cars_widt" value="{{searchParam.tb_cars_widt}}" style="width:100px" disabled="true" mask-re="/[1-9.]/" strip-chars-re="/[ㄱ-힣]/" class="align-right"></sc-text-field>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_cars_heig" value="{{searchParam.tb_cars_heig}}" style="width:100px" disabled="true" mask-re="/[1-9.]/" strip-chars-re="/[ㄱ-힣]/" class="align-right"></sc-text-field>
+			                    </td>
+			                </tr>
+			                <tr>
+			                    <td style="background-color:white; text-align:center"> 
+			                        <sc-label text="파렛트"></sc-label>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_ptsz_leng"  value="{{searchParam.trpt_ptsz_leng}}" style="width:100px" editable="true" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_ptsz_widt"  value="{{searchParam.trpt_ptsz_widt}}" style="width:100px" editable="true" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+			                    </td>
+			                    <td>
+			                        <sc-text-field id="tb_ptsz_heig"   value="{{searchParam.trpt_ptsz_heig}}" style="width:100px" editable="true" mask-re="/[0-9.]/" strip-chars-re="/[ㄱ-힣]/" editVal class="align-right"></sc-text-field>
+			                    </td>
+			                </tr> 					
+						</table>					
+					</td>
+
+				</tr>
+			</table>
+			<table class="come-form"  style="padding-top:20px; width:560px">
+				<colgroup>
+                <col style="width:135px">
+                <col style="width:150px">
+                <col style="width:130px">
+                <col>
+            	</colgroup>
+				<tr height = "30">
+					<th>
+						<sc-label text="부품당 파렛트비" ></sc-label>
+					</th>
+					<td> 
+						<sc-text-field id="tb_part_palt" value="{{searchParam.trpt_part_palt}}" disabled="true" max-length="10" mask-re="/[0-9]/" strip-chars-re="/[ㄱ-힣]/"  class="align-right"></sc-text-field>
+					</td>
+					<td></td>
+					<td></td>
+				</tr>
+			</table>
+			</form>	
+		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-13",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object, value : function() { return {};},notify : true},
+
+                palt_kind_list : {type: Array , value : function() { return [];}},
+
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				me.set("searchParam"   , UT.copy(obj.searchParam));
+				me.set("palt_kind_list", UT.copy(obj.paltKindList));
+
+				if (UT.isEmpty(me.get("searchParam.trpt_palt_days"))) {
+					me.set("searchParam.trpt_palt_days", "2");
+				}
+				
+				//me.$.sb_palt_kind.selectedIndex = 0;
+				me.onChange();
+            },
+
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr1num: function(e) {
+                var me = this;
+                eval("me.$." + e.target.id).setAttribute("value", commonAS.substr1num(e.target.value));
+            },            
+
+            /**
+             * 부모에서 호출
+             **/
+            changeProd: function(obj) {
+                var me = this;
+
+				me.set("searchParam.trpt_palt_prod", "");
+            },
+
+            onChange: function() {
+                var me = this;
+                me.$.getOpt1.body = {
+                    param : me.searchParam
+                };
+
+                me.$.getOpt1.service1();
+            },            
+
+            afterGetOpt1: function(e, res) {
+                var me = this;
+                var data = res.response;
+
+                me.$.lb01.hidden = data.result.disabled == "Y" ? true : false;
+                me.$.img_1.hidden = data.result.disabled == "Y" ? true : false;
+                me.$.sb01.hidden = data.result.disabled == "Y" ? true : false;
+                me.$.sb01.items = data.result.disabled == "Y" ? [] : data.opt1;
+
+                
+                if(UT.isEmpty(me.searchParam.trpt_adel_fact)) {
+                    me.set("searchParam.trpt_adel_fact", "0.9");
+                }
+            },
+
+            openPopup10: function(e, res) {
+				var me = this;
+				//if(!me.popup10) {
+					me.popup10 = UT.popup("es-cmcm-10", me, 700, 180, {
+						"getInfo" : function(popup, e) {
+							var selected = e.detail;
+
+							popup.close();
+						}
+					}, {title: me.translate("도움말")});
+				//}
+	 			me.popup10.show();
+	 			me.popup10.getWindowContent().load({
+	 	 			searchParam : me.get("searchParam")
+	 	 		});
+            },
+        });
+	</script>
+</dom-module>

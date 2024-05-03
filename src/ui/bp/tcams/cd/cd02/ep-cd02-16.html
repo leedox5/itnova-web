@@ -1,0 +1,137 @@
+<dom-module id="ep-cd02-16">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 금형비 정보
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.04.01
+        ** @History         : 2020.04.01 최초작성
+        ******************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+    <template>
+    
+	    <sc-service-provider id="getSelectedComecodeRPC" descriptor="bp/tcams/cd/cd02" service-id="get.moldList">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="resultList" target="{{resultSelectedComeCode}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    <sc-service-provider id="getWonmSelectedComecodeRPC" descriptor="bp/tcams/cd/cd02" service-id="get.wonm.moldList">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="resultList" target="{{resultSelectedComeCode}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>	    
+	    
+		<cc-page-title-bar page-title="금형비">
+            <sc-button text="닫기"  on-click="onClose"></sc-button>
+		</cc-page-title-bar>
+			    
+		<sc-grid id="selectedGridPanel" class="flex" editable="false" use-dummy="true" data-provider="{{resultSelectedComeCode}}" show-number-line="false" use-selection="false"
+				row-style-function="bgColor">
+			<cc-grid-toolbar title-text="금형공법 적용리스트">
+			</cc-grid-toolbar>
+			<sc-grid-columns>
+	            <sc-data-column   data-field="comd_cmms_numb" header-text="SEQ"        editable="false" width="40"  text-align="center" data-type="number"    format-type="integer"></sc-data-column>
+	            <sc-data-column   data-field="comd_part_no"   header-text="PART NO"    editable="false" width="100"  text-align="left"></sc-data-column>
+	            <sc-data-column   data-field="comd_part_nm"   header-text="PART NAME"  editable="false" width="150"  text-align="left"></sc-data-column>
+	            <sc-data-column   data-field="comd_meth_name" header-text="금형공법"   editable="false" width="140" text-align="left" style-name="link"></sc-data-column>
+	            <sc-data-column   data-field="comd_degr_desc" header-text="차수"       editable="false" width="60"  text-align="center"></sc-data-column>
+	            <sc-data-column   data-field="comd_rpay_gubn" header-text="상각구분"   editable="false" width="70"  text-align="center"></sc-data-column>
+	            <sc-data-column   data-field="comd_tmld_cost" header-text="계산금형비" editable="false" width="120" text-align="right"></sc-data-column>
+	            <sc-data-column   data-field="comd_adel_pric" header-text="조정금액"   editable="false" width="120" text-align="right"></sc-data-column>
+	            <sc-data-column   data-field="comd_totl_cost" header-text="결정금형비" editable="false" width="120" text-align="right"></sc-data-column>
+			</sc-grid-columns>
+		</sc-grid>
+    </template>
+	<!-- 화면 구성 끝-->
+    
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'ep-cd02-16',
+            properties : {
+            	searchParam    : {type: Object , value: function() { return {}; }},   
+                resultSelectedComeCode  : {type : Array , value: function() { return []; }},
+
+            },
+            
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+			initialized : function() {
+				var me = this;
+			},
+
+			/**
+			 * 선택공법 조회
+			 */
+			 getSelectedList : function() {
+				var me = this;
+				me.$.getSelectedComecodeRPC.service();
+			},
+
+			/**
+			 * 원단위 전체 금형 조회
+			 */
+			 getWonmSelectedList : function() {
+				var me = this;
+				me.$.getWonmSelectedComecodeRPC.service();
+			},			
+
+			/**
+			 * view stac 관련 파라메터 저장 함수 
+			 */
+			load : function(obj) {
+				var me = this;
+
+				if (obj['from_menu_id'] == "cd02") {
+					me.set("searchParam.emst_corp_code", obj['emst_corp_code']);
+					me.set("searchParam.emst_cost_gubn", obj['emst_cost_gubn']);
+					me.set("searchParam.emst_part_no"  , obj['emst_part_no']);
+					me.set("searchParam.emst_eono"     , obj['emst_eono']);
+					me.set("searchParam.emst_cumt_no"  , obj['emst_cumt_no']);	
+					me.getSelectedList();
+				} else {
+					me.set("searchParam.proj_mgno"     , obj['proj_mgno']);
+					me.getWonmSelectedList();
+				}
+				
+			},
+
+			
+
+			/**
+			 * SUM Data 배경색 변경
+			 */
+            bgColor : function(item){
+            	var me = this;
+				if (item.comd_meth_name == "합 계") {
+					return  {"background": "#ffffcc"};
+				} else {
+					return {"background": "#ffffff"};
+				} 
+            },
+				
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+            } 			
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,291 @@
+<dom-module id="ep-cd02-07">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 수입코드  팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.26
+        ** @History         : 2019.12.26 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+        <cc-page-title-bar page-title="수입코드 선택">
+           <sc-button text="확인"        on-click="apply"></sc-button>
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container>
+<!-- 			<table> -->
+<!-- 				<colgroup> -->
+<!-- 					<col style="width:50px">  지역 -->
+<!-- 					<col style="width:100px">  -->
+<!-- 					<col style="width:50px">  조건 -->
+<!-- 					<col style="width:100px">   -->
+<!-- 					<col style="width:50px">  화폐 -->
+<!-- 				</colgroup> -->
+<!-- 				<tr> -->
+<!-- 					<th><sc-label class="hspace-10" text="지역" ></sc-label></th> -->
+<!-- 					<td></td> -->
+<!-- 					<th><sc-label class="hspace-10" text="조건" ></sc-label></th> -->
+<!-- 					<td></td> -->
+<!-- 					<th><sc-label class="hspace-10" text="화폐" ></sc-label></th> -->
+<!-- 				</tr>				 -->
+<!-- 				<tr"> -->
+<!-- 					<td> -->
+<!-- 						<sc-radio-group-field id="rdo_area" name="AREA" value="{{searchParam.rdo_area}}" items="{{area_gubn}}" display-field="label"  -->
+<!-- 								value-field="data"> -->
+<!--                         </sc-radio-group-field> -->
+<!-- 					</td> -->
+<!-- 					<td></td> -->
+<!-- 					<td> -->
+<!-- 						<sc-radio-group-field id="rdo_cond" name="COND" value="{{searchParam.rdo_cond}}" items="{{cond_gubn}}" display-field="label"  -->
+<!-- 								value-field="data"> -->
+<!--                         </sc-radio-group-field> -->
+<!-- 					</td> -->
+<!-- 					<td></td> -->
+<!-- 					<td> -->
+<!-- 						<sc-radio-group-field class="h-100" id="rdo_mony" name="MONY" value="{{searchParam.rdo_mony}}" items="{{mony_gubn}}" display-field="label"  -->
+<!-- 								value-field="data"> -->
+<!--                         </sc-radio-group-field> -->
+<!-- 					</td> -->
+<!-- 				</tr> -->
+<!-- 				<tr> -->
+<!-- 					<td></td> -->
+<!-- 					<th><sc-label text="수입 코드" ></sc-label></th>				 -->
+<!-- 					<td colspan="3"> -->
+<!-- 						<sc-text-field id="tb_impt_code1" value="{{searchParam.rdo_area}}" style="width:30px;text-align:center" ></sc-text-field> -->
+<!-- 						<sc-text-field id="tb_impt_code2" value="{{searchParam.rdo_cond}}" style="width:40px;text-align:center" ></sc-text-field> -->
+<!-- 						<sc-text-field id="tb_impt_code3" value="{{searchParam.rdo_mony}}" style="width:40px;text-align:center" ></sc-text-field> -->
+<!-- 					</td> -->
+<!-- 				</tr>				 -->
+<!-- 			</table> -->
+			<table>
+				<colgroup>
+					<col style="width:30px">  <!--  -->
+					<col style="width:100px"> <!-- 지역  -->
+					<col style="width:30px">  <!--  -->
+					<col style="width:80px">  <!-- 조건 -->
+					<col style="width:30px">  <!--  -->
+					<col style="width:40px">  <!-- 화폐 -->
+				</colgroup>
+				<tr>
+					<td></td>
+					<th><sc-label text="지역" ></sc-label></th>
+					<td></td>
+					<th><sc-label text="조건" ></sc-label></th>
+					<td></td>
+					<th><sc-label class="hspace-10" text="화폐" ></sc-label></th>
+				</tr>	
+				<tr>
+					<td>
+						<sc-radio-field id="rdo_area1" groupName="AREA" input-value="JP" on-click="rdo_area_clickHandler"></sc-radio-field>					
+					</td>
+					<th><sc-label text="일본" ></sc-label></th>
+					<td>
+						<sc-radio-field id="rdo_cond1" name="COND" input-value="FOB" on-click="rdo_cond_clickHandler"></sc-radio-field>
+					</td>
+					<th><sc-label text="FOB" ></sc-label></th>
+					<td>
+						<sc-radio-field id="rdo_mony1" name="MONY" input-value="JPY" on-click="rdo_mony_clickHandler"></sc-radio-field> 
+					</td>
+					<th><sc-label text="JPY" ></sc-label></th>
+				</tr>
+				<tr>
+					<td>
+						<sc-radio-field id="rdo_area2" groupName="AREA" input-value="EU" on-click="rdo_area_clickHandler"></sc-radio-field>					
+					</td>
+					<th><sc-label text="유럽" ></sc-label></th>
+					<td>
+						<sc-radio-field id="rdo_cond2" name="COND" input-value="CIF" on-click="rdo_cond_clickHandler"></sc-radio-field>
+					</td>
+					<th><sc-label text="CIF" ></sc-label></th>
+					<td>
+						<sc-radio-field id="rdo_mony2" name="MONY" input-value="EUR" on-click="rdo_mony_clickHandler"></sc-radio-field> 
+					</td>
+					<th><sc-label text="EUR" ></sc-label></th>
+				</tr>
+				<tr>
+					<td>
+						<sc-radio-field id="rdo_area3" groupName="AREA" input-value="US" on-click="rdo_area_clickHandler"></sc-radio-field>					
+					</td>
+					<th><sc-label text="미주" ></sc-label></th>
+					<td></td>
+					<td></td>
+					<td>
+						<sc-radio-field id="rdo_mony3" name="MONY" input-value="USD" on-click="rdo_mony_clickHandler"></sc-radio-field> 
+					</td>
+					<th><sc-label text="USD" ></sc-label></th>
+				</tr>
+				<tr>
+					<td>
+						<sc-radio-field id="rdo_area4" groupName="AREA" input-value="CN" on-click="rdo_area_clickHandler"></sc-radio-field>					
+					</td>
+					<th><sc-label text="중국" ></sc-label></th>
+					<td></td>
+					<td></td>
+					<td>
+						<sc-radio-field id="rdo_mony4" name="CNY" input-value="USD" on-click="rdo_mony_clickHandler"></sc-radio-field> 
+					</td>
+					<th><sc-label text="CNY" ></sc-label></th>
+				</tr>												
+				<tr>
+					<td></td>
+					<th><sc-label text="수입 코드" ></sc-label></th>				
+					<td colspan="3">
+						<sc-text-field id="tb_impt_code1" style="width:30px" disible="true"></sc-text-field>
+						<sc-text-field id="tb_impt_code2" style="width:40px" disible="true"></sc-text-field>
+						<sc-text-field id="tb_impt_code3" style="width:40px" disible="true"></sc-text-field>
+					</td>
+				</tr>				
+			</table>
+		</cc-search-container>
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-07",
+            properties: {
+                titleText       : {type : String, value : "환산단가 선택"},
+
+				// 지역구분
+                area_gubn       : {type : Array , value : function() { return [{data:'JP', label:'일본'}
+                                                                              ,{data:'EU', label:'유럽'}
+                                                                              ,{data:'US', label:'미주'}
+                                                                              ,{data:'CN', label:'중국'}];}},
+				// 조건구분
+                cond_gubn       : {type : Array , value : function() { return [{data:'FOB', label:'FOB'}
+                                                                              ,{data:'CIF', label:'CIF'}];}},
+
+				// 화폐구분
+                mony_gubn       : {type : Array , value : function() { return [{data:'JPY', label:'JPY'}
+                                                                              ,{data:'EUR', label:'EUR'}
+                                                                              ,{data:'USD', label:'USD'}
+                                                                              ,{data:'CNY', label:'CNY'}];}},
+                                                                              
+                searchParam     : {type : Object, value : function() {return {};}}
+                
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+
+            },
+
+	        /**
+	         * 지역 클릭 이벤트
+	         */
+	        rdo_area_clickHandler: function(event) {
+                var me = this;
+
+                var selectId = event.currentTarget.id;
+
+                if (selectId == "rdo_area1") {
+                	me.$.rdo_area2.checked = false;
+                	me.$.rdo_area3.checked = false;
+                	me.$.rdo_area4.checked = false;
+                	me.$.tb_impt_code1.value = "JP";
+                } else if (selectId == "rdo_area2"){
+                	me.$.rdo_area1.checked = false;
+                	me.$.rdo_area3.checked = false;
+                	me.$.rdo_area4.checked = false;
+                	me.$.tb_impt_code1.value = "EU";                    
+                } else if (selectId == "rdo_area3"){
+                	me.$.rdo_area1.checked = false;
+                	me.$.rdo_area2.checked = false;
+                	me.$.rdo_area4.checked = false; 
+                	me.$.tb_impt_code1.value = "US";                    
+                } else if (selectId == "rdo_area4"){
+                	me.$.rdo_area1.checked = false;
+                	me.$.rdo_area2.checked = false;
+                	me.$.rdo_area3.checked = false;
+                	me.$.tb_impt_code1.value = "CN"; 
+                }
+            },
+
+	        /**
+	         * 조건 클릭 이벤트
+	         */
+	        rdo_cond_clickHandler: function(event) {
+                var me = this;
+
+                var selectId = event.currentTarget.id;
+
+                if (selectId == "rdo_cond1") {
+                	me.$.rdo_cond2.checked = false;
+                	me.$.tb_impt_code2.value = "FOB";
+                } else if (selectId == "rdo_cond2"){
+                	me.$.rdo_cond1.checked = false;
+                	me.$.tb_impt_code2.value = "CIF";                    
+                }
+            },
+
+	        /**
+	         * 화폐 클릭 이벤트
+	         */
+	        rdo_mony_clickHandler: function(event) {
+                var me = this;
+
+                var selectId = event.currentTarget.id;
+
+                if (selectId == "rdo_mony1") {
+                	me.$.rdo_mony2.checked = false;
+                	me.$.rdo_mony3.checked = false;
+                	me.$.rdo_mony4.checked = false;
+                	me.$.tb_impt_code3.value = "JPY";
+                } else if (selectId == "rdo_mony2"){
+                	me.$.rdo_mony1.checked = false;
+                	me.$.rdo_mony3.checked = false;
+                	me.$.rdo_mony4.checked = false;
+                	me.$.tb_impt_code3.value = "EUR";                    
+                } else if (selectId == "rdo_mony3"){
+                	me.$.rdo_mony1.checked = false;
+                	me.$.rdo_mony2.checked = false;
+                	me.$.rdo_mony4.checked = false; 
+                	me.$.tb_impt_code3.value = "USD";                    
+                } else if (selectId == "rdo_mony4"){
+                	me.$.rdo_mony1.checked = false;
+                	me.$.rdo_mony2.checked = false;
+                	me.$.rdo_mony3.checked = false;
+                	me.$.tb_impt_code3.value = "CNY"; 
+                }                                
+
+            },                                      
+
+            apply : function() {
+				var me = this,
+				item = {};
+
+				item.impt_code = me.$.tb_impt_code1.value + me.$.tb_impt_code2.value + me.$.tb_impt_code3.value;
+				item.impt_area = me.$.tb_impt_code1.value;
+				item.impt_cond = me.$.tb_impt_code2.value;
+				item.impt_mony = me.$.tb_impt_code3.value;
+				// 값 리턴
+				me.fire("selected-item", item);	
+				me.onClose();				
+			},
+
+			onClose : function() {
+                var me = this;
+                me.fire("close");
+            }
+
+        });
+    </script>
+
+</dom-module>

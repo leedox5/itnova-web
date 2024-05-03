@@ -1,0 +1,98 @@
+<dom-module id="ep-cr01-02">
+    <!--
+        ******************************************************************************************
+        ** @Program-name    : 복사시 계산구분 선택 팝업
+        ** @Description     :
+        ** @Author          : S.D.M
+        ** @Create Date     : 2020.05.27
+        ** @History         : 2020.05.27 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+        <cc-page-title-bar>
+           <sc-button text="확인"      on-click="getCost"></sc-button>
+           <sc-button text="닫기"      on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container search-button-hidden="true">
+			<table>
+				<colgroup>
+					<col style="width:70px">  <!-- 계산구분 -->
+					<col style="width:120px"> <!-- 계산구분 입력 -->
+					<col>																				
+				</colgroup>
+				<tr>
+					<th><sc-label text="계산구분" ></sc-label></th>
+					<td>
+                        <sc-combobox-field id="sb_cost_gubn_P" display-field="label" value-field="data"
+                                items="{{desn_gubn}}" value="{{searchParam.comd_cost_gubn_P}}" style="width:100px">
+                        </sc-combobox-field>
+					</td>
+					<td></td>					
+				</tr>
+			</table>					
+		</cc-search-container>
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cr01-02",
+            properties: {
+				//계산구분
+                desn_gubn      : {type : Array , value : function() { return [{data:'R0', label:'CONCEPT'}
+																             ,{data:'R1', label:'PROTO'}
+																             ,{data:'R2', label:'PILOT'}
+																             ,{data:'R3', label:'SOP'}];}},
+                titleText   : {type : String, value : "복사"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}}
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+
+
+            },
+	        
+	        /**
+	         * 확인 버튼 클릭
+	         */ 
+	         getCost : function() {
+                var me = this;
+                if (UT.isEmpty(me.searchParam.comd_cost_gubn_P)) {
+                	UT.alert("계산구분을 선택해 주시기 바랍니다.");
+                	return;
+                } else {
+                	me.fire("save-complete", me.searchParam);
+                }
+            },
+                        
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            }
+            	
+            
+        });
+    </script>
+
+</dom-module>

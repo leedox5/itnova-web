@@ -1,0 +1,312 @@
+<sc-link rel="import" href="ep-cd02-09.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-10.html"></sc-link>
+
+<dom-module id="ep-cd02-08">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 기타비 집계 메인
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.27
+        ** @History         : 2019.12.27최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 최초 화면값 조회 -->
+        <sc-service-provider id="getInfoDataRPC" descriptor="bp/tcams/cd/cd02" service-id="get.basic.select" on-response="transferData" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result"    target="{{result}}"    change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 계산 전 저장 -->
+        <sc-service-provider id="calcDataInsertRPC" descriptor="bp/tcams/cd/cd02" service-id="calc.cost.insert" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+        </sc-service-provider>
+        
+		<!-- 계산 실행 -->
+        <sc-service-provider id="calcDataRPC" descriptor="bp/tcams/cd/cd02" service-id="calc.cost.exec" on-response="afterCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result"    target="{{messageCode}}"    change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 계산 전 불량비 적용공정 Check -->
+        <sc-service-provider id="getCheckInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.transPaltCheckInfo" on-response="checkInfo" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="transPalt_check"    target="{{resultChk}}"    change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>        
+        
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+   		<div class="vbox flex">
+			<cc-page-title-bar id="endItemMaster" page-title="{{titleText}}" on-click="onTitleClick">
+	            <sc-button id="calcBtn" text="계산실행"      on-click="calculation" ></sc-button>
+	            <sc-button text="닫기"         on-click="onClose"	    ></sc-button>
+			</cc-page-title-bar>   		
+            <table>
+            	<colgroup>
+					<col style="width:50px"></col>
+					<col style="width:30px"></col>
+					<col style="width:80px"></col>
+					<col style="width:120px"></col>
+					<col style="width:60px"></col>
+					<col style="width:80px"></col>
+					<col style="width:300px"></col>
+					<col>
+				</colgroup>
+                <tr height = "31">
+                    <th><sc-label id="lvl" text="LVL : "></sc-label></th>
+                    <th><sc-label id="lvl_val" text=""  style="color:#5555FF"></sc-label></th>
+                    <th><sc-label id="part_no" text="PART NO : "></sc-label></th>
+                    <th><sc-label id="part_no_val" text="" style="color:#5555FF"></sc-label></th>
+                    <th><sc-label id="eono" text="EO NO : "></sc-label></th>
+                    <th><sc-label id="eono_val" text="" style="color:#5555FF"></sc-label></th>
+            		<td><sc-label id="toolTip" text="" style="color:red"></td>
+            	</tr>
+            </table>   		
+    		<div class="hbox flex">
+		        <ep-cd02-09 id="left" class="flex-3" search-param="{{searchParam}}"></ep-cd02-09>
+		        <sc-splitter split-type="vertical"></sc-splitter>
+				<ep-cd02-10 id="right" class="flex-7" search-param="{{searchParam}}" on-trap-tool-tip="onTrapToolTip" on-palt-tool-tip="onPaltToolTip"></ep-cd02-10>
+   			</div>
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-08",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object, value : function() { return {};},notify : true},
+                // 조회 결과
+                result        : {type: Object, value : function() { return {};}},
+                resultChk     : {type: Object, value : function() { return {};}},
+
+                messageCode   : {type: Object, value : function() { return {};}},
+                
+                
+				standInfoList : {type: Array , value : function() { return [];}},
+
+				gubnFlag      : {type: String, value : function() { return '';}},
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				me.set("searchParam.comd_etc0_gubn", obj.comd_flag_gubn);
+				
+				if (obj.comd_flag_gubn == 'END') {
+					me.searchParam['comd_lvl0']      = '1';
+					me.searchParam['comd_corp_code'] = obj['chin_corp_code'];
+					me.searchParam['comd_cost_gubn'] = obj['chin_cost_gubn'];
+					me.searchParam['comd_part_no']   = obj['chin_part_no'];
+					me.searchParam['comd_eono']      = obj['chin_eono'];
+					me.searchParam['comd_cumt_no']   = obj['chin_seq0'];
+					me.searchParam['comd_etc0_gubn'] = obj.comd_flag_gubn;
+					
+					me.searchParam['comd_stnd_gubn'] = obj['emst_stnd_gubn'];
+					me.searchParam['comd_cars_code'] = obj['emst_cars_code'];
+					me.searchParam['comd_base_date'] = obj['emst_base_date'];
+					me.searchParam['comd_vehl_gubn'] = obj['comd_vehl_gubn'];
+					
+					me.searchParam['emst_pass_stat'] = obj['emst_pass_stat'];
+
+					// [2024.03.26] param 추가
+					me.searchParam['emst_link_meth'] = obj['emst_link_meth'];
+				} else if (obj.comd_flag_gubn == 'SUB') { 
+					me.searchParam['comd_lvl0']      = obj['comd_levl'];
+					me.searchParam['comd_corp_code'] = obj['comd_corp_code'];
+					me.searchParam['comd_cost_gubn'] = obj['comd_cost_gubn'];
+					me.searchParam['comd_part_no']   = obj['comd_part_sub0'];
+					me.searchParam['comd_eono']      = obj['comd_eono_sub0'];
+					me.searchParam['comd_cumt_no']   = obj['comd_cumt_sub0'];
+					me.searchParam['comd_inds_code'] = obj['comd_inds_code'];
+					me.searchParam['comd_etc0_gubn'] = obj.comd_flag_gubn;
+					
+					me.searchParam['comd_stnd_gubn'] = obj['comd_stnd_gubn'];
+					me.searchParam['comd_cars_code'] = obj['comd_cars_code'];
+					me.searchParam['comd_base_date'] = obj['comd_base_date'];
+					me.searchParam['comd_vehl_gubn'] = obj['comd_vehl_gubn'];
+					
+					me.searchParam['coms_corp_code'] = obj['comd_corp_code'];
+					me.searchParam['coms_part_no']   = obj['comd_part_endi'];
+					me.searchParam['coms_eono']      = obj['comd_eono_endi'];
+					me.searchParam['coms_cumt_no']   = obj['comd_cumt_endi'];
+					
+					me.searchParam['emst_pass_stat'] = obj['comd_pass_stat'];
+					// [2024.03.26] param 추가
+					me.searchParam['emst_link_meth'] = obj['emst_link_meth'];
+				}
+
+				// 화면에 표기
+				
+				me.$.lvl_val.text     = me.searchParam['comd_lvl0'].toString();
+				
+				me.$.part_no_val.text = me.searchParam['comd_part_no'];  
+				me.$.eono_val.text    = me.searchParam['comd_eono']; 				
+
+				if(me.searchParam.emst_pass_stat == "20") {
+					if(me.searchParam.emst_link_meth == "B") {
+						me.$.calcBtn.disabled = true;
+					} else {
+						me.$.calcBtn.disabled = false;
+					}
+				} else {
+					me.$.calcBtn.disabled = true;
+				}
+				// 최초 조회 데이터 조회
+				me.$.getInfoDataRPC.service();
+
+            },
+
+            /**
+             * 공법입력 조회 후 결과 처리
+             **/
+             transferData : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				// 결과를 searchParam에 통합
+				if (UT.isNotEmpty(me.get("result"))) {
+					me.set("searchParam", commonAS.mergeObj(me.get("searchParam"), me.get("result")));
+				}
+
+				// 파라미터 전달
+            	me.$.left.load(me.get("searchParam"));
+            	me.$.right.load(me.get("searchParam"));
+
+            },
+
+            /**
+             * 계산실행  버튼  click 이벤트
+             **/
+             calculation: function() {
+                var me = this;
+
+                // 양방향 바인트로 처리하기 때문에 기존 getInputData 함수 호출이 필요 없음
+                // 단, 기존에는 text값을 추출하여 파라미터를 닮았지만 to-be에서는 searchParam으로 bind하여 처리
+				if((UT.toNumber(me.get("searchParam.ti_pdab_rate")) != 0 && me.get("searchParam.ti_pdab_rate") != "") ||
+				   (UT.toNumber(me.get("searchParam.ti_pdab_cost")) != 0 && me.get("searchParam.ti_pdab_cost") != "")) {
+					me.$.calcDataInsertRPC.service();	
+				} else {
+					me.$.getCheckInfoRPC.service();
+				}
+            },
+
+            /**
+             * 계산 실행
+             **/
+             goCalc : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	me.$.calcDataRPC.service();
+            },
+
+            /**
+             * 불량비 공정 체크후 처리
+             **/
+             checkInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(UT.isNotEmpty(me.resultChk['pro_nm'])) {
+	                commonAS.confirm("확인", "선택하신 공법중 불량비 적용 대상이 존재합니다("+ me.resultChk['pro_nm'] +")<br>실행 하시겠습니까?", function() {
+						me.$.calcDataInsertRPC.service();
+	                });
+				} else {
+					me.$.calcDataInsertRPC.service();	
+				}
+            },
+
+            /**
+             * 계산 실행 후 메세지 처리
+             **/
+            afterCalc : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if (me.messageCode['MESG_CODE'] == 'SA-002') {
+					UT.alert('[ERROR]' + '<br>'
+					          +'[MESG_CODE ] : ' + me.messageCode['MESG_CODE'] + '<br>' 
+					          +'[MESG      ] : ' + me.messageCode['MESG']
+							  );
+					
+				} else {
+					UT.alert('정상적으로 처리되었습니다.');
+					me.$.getInfoDataRPC.service();
+
+					me.fire("selected-item", me.get("searchParam"));	
+				}            	
+            },             
+
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+            },
+            
+            //운반비 툴팁 정보
+            onTrapToolTip : function() {
+                var me = this;
+                me.$.toolTip.text = "운반비 ＞ 개당 운반비가 일반관리비의 25% 초과분에 한해 별도 적용한다.";
+            },
+
+            //파렛트 툴팁 정보
+            onPaltToolTip : function() {
+                var me = this;
+                me.$.toolTip.text = "파렛트비 ＞ 총원가의 1% 초과분에 한하여 적용한다.";
+            }                       
+
+        });
+	</script>
+</dom-module>

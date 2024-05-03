@@ -1,0 +1,63 @@
+<sc-link rel="import" href="es-cr01-01.html"></sc-link>
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : END-ITEM MASTER(설계)
+        ** @Description     : END-ITEM 을 등록, 복사 하는 화면
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.11.18
+        ** @History         : 2019.11.18 최초작성
+        ******************************************************************************************
+    -->
+
+<dom-module id="em-cr01">
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+	<template>
+		<sc-pages id="pages" selected="0" class="fit">
+			<es-cr01-01 id="main"></es-cr01-01>
+		</sc-pages>
+	</template>
+	
+	<script>
+		Polymer({
+			is : 'em-cr01',
+			
+				properties: {
+			         searchParam   : {type  : Object, value : function(){return {}; }}
+				    },
+
+		            /******************************
+		             * 초기화 설정
+		             ******************************/
+		             initialized: function() {
+		            	var me= this;
+		            	
+						// URL에서 넘어오는 Key 정보 get
+						if (!UT.isEmpty(this.params)) {
+							searchParam = {
+								 emst_corp_code : this.params.emst_corp_code
+								,emst_cost_gubn : this.params.emst_cost_gubn  
+								,emst_part_no   : this.params.emst_part_no
+								,emst_eono      : this.params.emst_eono  
+								,emst_cumt_no   : this.params.emst_cumt_no
+								,emst_dev0_bumn : this.params.emst_dev0_bumn
+								,cmms_meth_name : this.params.cmms_meth_name
+								,emst_debn_code : this.params.emst_debn_code
+								,emst_cars_code : this.params.emst_cars_code   
+								,emst_inds_code : this.params.emst_inds_code
+								,emst_pass_stat : this.params.emst_pass_stat
+								,comd_init_name : this.params.comd_init_name
+							};
+							me.set("searchParam"  , searchParam);
+							me.$.main.load(me.get("searchParam"));
+		             	}			    			
+					}
+				});
+	</script>
+
+
+</dom-module>

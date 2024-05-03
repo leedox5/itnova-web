@@ -1,0 +1,69 @@
+<sc-link rel="import" href="es-cd02-01.html"></sc-link>
+
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : CHAIN 정보
+        ** @Description     : 
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.09
+        ** @History         : 2019.12.09 최초작성
+        ******************************************************************************************
+    -->
+<dom-module id="em-cd02">
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+	<template>
+		<sc-pages id="pages" selected="0" class="fit">
+			<es-cd02-01 id="main"></es-cd02-01>
+		</sc-pages>
+	</template>
+
+	<script>
+		Polymer({
+			is : 'em-cd02',
+			
+				properties: {
+			         searchParam : {type : Object, value : function(){return {}; }}
+				    },
+
+		            /******************************
+		             * 초기화 설정
+		             ******************************/
+		             initialized: function() {
+		            	var me= this;
+		            	
+						// Sub Part에서 넘어오는 Key 정보 get
+						if (!UT.isEmpty(this.params)) {
+							searchParam = {
+								 emst_corp_code : this.params.emst_corp_code
+								,emst_cost_gubn : this.params.emst_cost_gubn  
+								,emst_part_no   : this.params.emst_part_no
+								,emst_eono      : this.params.emst_eono  
+								,emst_part_name : this.params.emst_part_name
+								,emst_cumt_no   : this.params.emst_cumt_no
+								,emst_cumto_no  : this.params.emst_cumto_no
+								,emst_stnd_gubn : this.params.emst_stnd_gubn
+								,emst_base_date : this.params.emst_base_date
+								,emst_cars_code : this.params.emst_cars_code   
+								,emst_inds_code : this.params.emst_inds_code
+								,emst_pass_stat : this.params.emst_pass_stat
+								,emst_link_meth : this.params.emst_link_meth
+								,emst_src0      : this.params.emst_src0
+								,emst_vehl_gubn : this.params.emst_vehl_gubn
+								,emst_cumt_yn   : this.params.emst_cumt_yn
+								,emst_chin_yn   : this.params.emst_chin_yn
+								,from_menu_id   : this.params.from_menu_id
+                                ,chk_dept       : this.params.chk_dept
+							};
+							me.set("searchParam"  , searchParam);
+							me.$.main.load(me.get("searchParam"));
+		             	}			    			
+					}
+				});
+	</script>
+
+</dom-module>

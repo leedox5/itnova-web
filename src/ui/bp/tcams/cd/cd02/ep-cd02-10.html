@@ -1,0 +1,931 @@
+<sc-link rel="import" href="ep-cd02-11.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-14.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-10-01.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-10-02.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-10-03.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-10-04.html"></sc-link>
+
+<dom-module id="ep-cd02-10">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 기타비 계산내역(오른쪽)
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.27
+        ** @History         : 2019.12.27최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+		
+ 		#trapTooltip {
+ 			display: none;
+ 			position: fixed;
+ 			background-color: white;
+ 		}		
+ 		#paltTooltip {
+ 			display: none;
+ 			position: fixed;
+ 			background-color: white;
+ 		}		 
+		
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 최초 화면값 조회 -->
+        <sc-service-provider id="getInfoDataRPC" descriptor="bp/tcams/cd/cd02" service-id="get.basic.select" on-response="transferData" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result"    target="{{result}}"    change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+      
+        
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+	 	<div id="trapTooltip">
+			<sc-label id="trapTipMesg"style="color:blue;" text="" >
+		</div>		    
+	 	<div id="paltTooltip">
+			<sc-label id="paltTipMesg"style="color:blue;" text="" >
+		</div>	    
+   		<div class="vbox flex">
+				<table class="tb-form" style="padding-top:20px; width:695px">
+
+						<tr height = "25" style="padding-top:20px">
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="135px"><sc-label text="구분" ></sc-label></td>
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="180px" >
+								<sc-label text="적용구분"></sc-label>
+								<img src="../../../../assets/img/bull_reference.gif"   on-click="openPopup_cd02_10_01" style="padding-left:15px"/>
+							</td>
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="80" ><sc-label text="적용율(%)"></sc-label></td>
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="80" ><sc-label text="금액"></sc-label></td>
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="100" ><sc-label text="적용원가"></sc-label></td>
+							<td style="background-color:#3a9edd; color:white; text-align:center" width="100" ><sc-label text="기타비합계"></sc-label></td>
+						</tr>
+						<tr id="tr_height1" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+								<sc-label text="승인도 설계시험비"></sc-label>
+								<img src="../../../../assets/img/bull_reference.gif" on-click="openPopup_cd02_10_02" style="padding-left:15px"/>
+							</td>
+							<td>
+								<sc-combobox-field id="sb_rnd0_appl" width="200px" display-field="label" value-field="data" input-clear="false" 
+		                                items="{{rnd0Arry}}" value="{{searchParam.sb_rnd0_appl}}" on-change="settingInputBox">
+		                        </sc-combobox-field>
+							</td>
+							<td >
+							    <sc-text-field id="ti_rnd0_rate" value="{{searchParam.ti_rnd0_rate}}" class="align-right" editable="true"
+							     	max-length="8" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/"></sc-text-field>                   	 
+							</td>
+							<td>
+								<sc-text-field id="ti_rnd0_cost" value="{{searchParam.ti_rnd0_cost}}" class="align-right" editable="true" format-type="number"  input-cover="true" 
+									max-length="8" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_rnd0_apct" value="{{searchParam.ti_rnd0_apct}}" class="align-right" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					 
+							</td>
+							<td>
+								<sc-text-field id="ti_rnd0_ttat"  value="{{searchParam.ti_rnd0_ttat}}" class="align-right" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>
+						
+						<tr id="tr_height2" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+								<sc-label text="로열티비"></sc-label>
+								<img src="../../../../assets/img/bull_reference.gif" on-click="openPopup_cd02_10_03" style="padding-left:15px"/>
+							</td>
+							<td>
+								<sc-combobox-field id="sb_rylt_appl" width="90" display-field="label" value-field="data" input-clear="false"
+		                        	items="{{ryt0Arry}}" value="{{searchParam.sb_rylt_appl}}" on-change="settingInputBox">
+		                        </sc-combobox-field>
+							</td>
+							<td>
+							    <sc-text-field id="ti_rylt_rate" value="{{searchParam.ti_rylt_rate}}" class="align-right"  format-type="number"  input-cover="true"  
+							    	max-length="6" editable="true" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_rylt_cost" value="{{searchParam.ti_rylt_cost}}" class="align-right" format-type="number" input-cover="true" 
+									max-length="8" editable="true" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_rylt_apct" value="{{searchParam.ti_rylt_apct}}" class="align-right" disabled  width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td>
+								<sc-text-field id="ti_rylt_ttat" value="{{searchParam.ti_rylt_ttat}}" class="align-right" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>
+						
+						<tr id="tr_height3" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+								<sc-label text="불량비"></sc-label>
+								<img id="pop07" src="../../../../assets/img/bull_calculation.gif" on-click="openPopup_cd02_14" style="padding-left:15px"/>
+								<img src="../../../../assets/img/bull_reference.gif" on-click="openPopup_cd02_10_04" style="padding-left:15px"/>
+							</td>
+							<td>
+								<sc-combobox-field id="sb_pdab_appl" width="90" display-field="label" value-field="data" input-clear="false"
+		                                items="{{pdabArry}}"  value="{{searchParam.sb_pdab_appl}}" on-change="settingInputBox"> 
+		                        </sc-combobox-field>
+							</td>
+							<td>
+							    <sc-text-field id="ti_pdab_rate" value="{{searchParam.ti_pdab_rate}}" class="align-right" format-type="number" input-cover="true"
+							    	max-length="6" editable="true" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_pdab_cost" value="{{searchParam.ti_pdab_cost}}" class="align-right" format-type="number" input-cover="true"
+									max-length="8" editable="true" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_pdab_apct" value="{{searchParam.ti_pdab_apct}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td>
+								<sc-text-field id="ti_pdab_ttat" value="{{searchParam.ti_pdab_ttat}}" class="align-right" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>
+						
+						<tr id="tr_height4" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+								<sc-label text="운반비"></sc-label>
+								<img id="trapImg"  src="../../../../assets/img/bull_calculation.gif" on-click="openPopup_cd02_11" style="padding-left:15px"/>  
+								<img id="img_trap" src="../../../../assets/img/bull_reference.gif"   on-click="trapToolTips" style="padding-left:15px"/>
+							</td>
+							<td></td>
+							<td>
+							    <sc-text-field id="ti_trap_rate" value="{{searchParam.ti_trap_rate}}" class="align-right" disabled width="70"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_trap_cost"  value="{{searchParam.ti_trap_cost}}"  class="align-right"   editable="true" format-type="number" input-cover="true"
+								  max-length="8" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td> 
+								<sc-text-field id="ti_trap_apct" value="{{searchParam.ti_trap_apct}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td>
+								<sc-text-field id="ti_trap_ttat" value="{{searchParam.ti_trap_ttat}}"  class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>
+						
+						<tr id="tr_height5" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+							 	<sc-label text="파렛트비"></sc-label>
+							 	<img id="paltImg"  src="../../../../assets/img/bull_calculation.gif" on-click="openPopup_cd02_11" style="padding-left:15px"/> 
+							 	<img id="img_palt" src="../../../../assets/img/bull_reference.gif"   on-click="paltToolTips" style="padding-left:15px"/>
+							</td>
+							<td></td>
+							<td width="80" >
+							    <sc-text-field id="ti_palt_rate" value="{{searchParam.ti_palt_rate}}" class="align-right"  disabled width="70"></sc-text-field>
+							</td>
+							<td width="80" >
+								<sc-text-field id="ti_palt_cost" value="{{searchParam.ti_palt_cost}}"  class="align-right"  editable="true"  format-type="number" input-cover="true"
+									max-length="8" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td width="100" >
+								<sc-text-field id="ti_palt_apct" value="{{searchParam.ti_palt_apct}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td width="100" >
+								<sc-text-field id="ti_palt_ttat" value="{{searchParam.ti_palt_ttat}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>
+						
+						<tr id="tr_height6" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" >
+								<sc-label text="서열비"></sc-label>
+							</td>
+							<td></td>
+							<td>
+							    <sc-text-field id="ti_feed_rate"  value="{{searchParam.ti_feed_rate}}" class="align-right"    disabled width="70"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_feed_cost" value="{{searchParam.ti_feed_cost}}" class="align-right"   editable="true"  format-type="number" input-cover="true"
+									max-length="8" width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field>
+							</td>
+							<td width="100" >
+								<sc-text-field  id="ti_feed_apct" value="{{searchParam.ti_feed_apct}}"  class="align-right"   disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td width="100" >
+								<sc-text-field  id="ti_feed_ttat" value="{{searchParam.ti_feed_ttat}}" class="align-right"    disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>		
+						
+						<tr id="tr_height7" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" ><sc-label text="영구상각비"></sc-label></td>
+							<td></td>
+							<td>
+							    <sc-text-field id="ti_repy_rate" class="align-right" value="{{searchParam.ti_repy_rate}}" disabled width="70" format-type="number" input-cover="true"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field  id="ti_repy_cost" class="align-right" value="{{searchParam.ti_repy_cost}}" disabled width="70" format-type="number" input-cover="true"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_repy_apct"   class="align-right" value="{{searchParam.ti_repy_apct}}" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td>
+								<sc-text-field id="ti_repy_ttat" class="align-right" value="{{searchParam.ti_repy_ttat}}" disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>	
+						
+						<tr id="tr_height8" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" ><sc-label text="추가비(기타비)"></sc-label></td>
+							<td>
+								<sc-combobox-field id="sb_exit_gubn" width="210" display-field="label" value-field="data" input-clear="false"
+		                                items="{{exitArry}}"  value="{{searchParam.ti_exit_gubn}}" on-change="exitGubnChange"> 
+		                        </sc-combobox-field>
+							</td>
+							<td width="80" >
+							    <sc-text-field id="ti_exit_rate"  value="{{searchParam.ti_exit_rate}}" class="align-right"  disabled width="70" ></sc-text-field>
+							</td>
+							<td width="80" >
+								<sc-text-field id="ti_exit_cost" value="{{searchParam.ti_exit_cost}}"  class="align-right"   editable="true"  format-type="number" input-cover="true"
+									max-length="8"  width="70" on-blur="lengthLimit" mask-re="/[0-9.]/">
+		                    	</sc-text-field> 
+							</td>
+							<td width="100" >
+								<sc-text-field id="ti_exit_apct" value="{{searchParam.ti_exit_apct}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td width="100" >
+								<sc-text-field id="ti_exit_ttat" value="{{searchParam.ti_exit_ttat}}" class="align-right"   disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>		
+						
+						<tr id="tr_height9" height="33">
+							<td style="background-color:#3a9edd; color:white" width="80" ><sc-label text="기타비계"></sc-label></td>
+							<td></td>
+							<td>
+							    <sc-text-field id="ti_etc0_rate"  value="{{searchParam.ti_etc0_rate}}" class="align-right" disabled width="70"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_etc0_cost" value="{{searchParam.ti_etc0_cost}}" class="align-right"  disabled width="70" format-type="number" input-cover="true"></sc-text-field>
+							</td>
+							<td>
+								<sc-text-field id="ti_etc0_apct" value="{{searchParam.ti_etc0_apct}}" class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+							<td>
+								<sc-text-field  id="ti_etc0_ttat" value="{{searchParam.ti_etc0_ttat}}"  class="align-right"  disabled width="100" format-type="number" input-cover="true"></sc-text-field>					
+							</td>
+						</tr>																										
+					
+				</table>  		
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-10",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object, value : function() { return {};},notify : true},
+
+				//승인도 설계시험비 구분
+                rnd0Arry      : {type : Array , value : function() { return [{data:'N', label:'미적용'}
+                                                                            ,{data:'A', label:'총원가비율 적용'}
+                                                                            ,{data:'B', label:'총원가 - 수입부품'}
+                                                                            ,{data:'C', label:'직접입력'}];}},
+
+				//로열티비 구분
+                ryt0Arry      : {type : Array , value : function() { return [{data:'N', label:'미적용'}
+                                                                            ,{data:'A', label:'총원가비율 적용'}
+                                                                            ,{data:'B', label:'수입부품제외'}
+                                                                            ,{data:'C', label:'직접입력'}];}},
+
+				//불량비 구분
+                pdabArry      : {type : Array , value : function() { return [{data:'N', label:'미적용'}
+                                                                            ,{data:'A', label:'가공비기준'}
+                                                                            ,{data:'B', label:'(제조원가 + 산폐)기준'}
+                                                                            ,{data:'C', label:'총원가 기준'}
+                                                                            ,{data:'D', label:'직접입력'}
+                                                                            ,{data:'G', label:'공법계산 불량비'}];}}, 
+
+				//전파괴검사 구분
+                exitArry      : {type : Array , value : function() { return [];}},                                                                             
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				me.set("searchParam", UT.copy(obj));
+
+				me.set("exitArry", []);
+				me.exitArry.push({data : "N", label : "미적용"});
+
+				if (me.searchParam['comd_etc0_gubn'] == 'END') {
+					me.exitArry.push({data : "E1", label : "직접입력"});
+					me.$.tr_height1.setAttribute("height", "33");
+					me.$.tr_height2.setAttribute("height", "33");
+					me.$.tr_height3.setAttribute("height", "33");
+					me.$.tr_height4.setAttribute("height", "33");
+					me.$.tr_height5.setAttribute("height", "33");
+					me.$.tr_height6.setAttribute("height", "33");
+					me.$.tr_height7.setAttribute("height", "33");
+					me.$.tr_height8.setAttribute("height", "33");
+					me.$.tr_height9.setAttribute("height", "33");
+				} else {
+					me.exitArry.push({data : "E1", label : "직접입력"});
+					me.exitArry.push({data : "E2", label : "전파괴검사"});
+					me.$.tr_height1.setAttribute("height", "31");
+					me.$.tr_height2.setAttribute("height", "31");
+					me.$.tr_height3.setAttribute("height", "31");
+					me.$.tr_height4.setAttribute("height", "31");
+					me.$.tr_height5.setAttribute("height", "31");
+					me.$.tr_height6.setAttribute("height", "31");
+					me.$.tr_height7.setAttribute("height", "31");
+					me.$.tr_height8.setAttribute("height", "31");
+					me.$.tr_height9.setAttribute("height", "31");
+				}
+
+				// 파라미터 셋팅
+				me.settingValue();
+            },
+
+            /**
+             * 소숫점 2자리로 제한
+             **/
+            lengthLimit: function() {
+                var me = this;
+
+                if (UT.isEmpty(me.$.ti_rnd0_rate.value)) {
+                	me.$.ti_rnd0_rate.value = "";
+                } else {
+                	me.$.ti_rnd0_rate.value = commonAS.substr2num(me.$.ti_rnd0_rate.value);
+                }
+                if (UT.isEmpty(me.$.ti_rnd0_cost.value)) {
+                	me.$.ti_rnd0_cost.value = "";
+                } else {
+                	me.$.ti_rnd0_cost.value = commonAS.substr2num(me.$.ti_rnd0_cost.value);
+                }
+                if (UT.isEmpty(me.$.ti_rylt_rate.value)) {
+                	me.$.ti_rylt_rate.value = "";
+                } else {
+                	me.$.ti_rylt_rate.value = commonAS.substr2num(me.$.ti_rylt_rate.value);
+                }
+                if (UT.isEmpty(me.$.ti_rylt_cost.value)) {
+                	me.$.ti_rylt_cost.value = "";
+                } else {
+                	me.$.ti_rylt_cost.value = commonAS.substr2num(me.$.ti_rylt_cost.value);
+                }
+                if (UT.isEmpty(me.$.ti_pdab_rate.value)) {
+                	me.$.ti_pdab_rate.value = "";
+                } else {
+                	me.$.ti_pdab_rate.value = commonAS.substr2num(me.$.ti_pdab_rate.value);
+                }
+                if (UT.isEmpty(me.$.ti_pdab_cost.value)) {
+                	me.$.ti_pdab_cost.value = "";
+                } else {
+                	me.$.ti_pdab_cost.value = commonAS.substr2num(me.$.ti_pdab_cost.value);
+                }
+                if (UT.isEmpty(me.$.ti_trap_cost.value)) {
+                	me.$.ti_trap_cost.value = "";
+                } else {
+                	me.$.ti_trap_cost.value = commonAS.substr2num(me.$.ti_trap_cost.value);
+                }
+                if (UT.isEmpty(me.$.ti_palt_cost.value)) {
+                	me.$.ti_palt_cost.value = "";
+                } else {
+                	me.$.ti_palt_cost.value = commonAS.substr2num(me.$.ti_palt_cost.value);
+                } 
+                if (UT.isEmpty(me.$.ti_feed_cost.value)) {
+                	me.$.ti_feed_cost.value = "";
+                } else {
+                	me.$.ti_feed_cost.value = commonAS.substr2num(me.$.ti_feed_cost.value);
+                }
+                if (UT.isEmpty(me.$.ti_exit_cost.value)) {
+                	me.$.ti_exit_cost.value = "";
+                } else {
+                	me.$.ti_exit_cost.value = commonAS.substr2num(me.$.ti_exit_cost.value);
+                }
+            },            
+
+            /**
+             * combo 에 따른 input box visible 처리
+             */
+             settingInputBox: function() {
+                var me = this;
+
+				if(me.get("searchParam.sb_rnd0_appl") == 'C') {
+					me.$.ti_rnd0_cost.removeAttribute("hidden");
+					me.$.ti_rnd0_cost.setAttribute("editVal", true);
+					me.$.ti_rnd0_rate.setAttribute("hidden", "hidden");
+					me.$.ti_rnd0_rate.removeAttribute("editVal");
+					me.set("searchParam.ti_rnd0_rate", "");
+				} else if (me.get("searchParam.sb_rnd0_appl") == 'N') {
+					me.$.ti_rnd0_rate.setAttribute("hidden", "hidden");
+					me.$.ti_rnd0_cost.setAttribute("hidden", "hidden");
+					
+					me.$.ti_rnd0_cost.removeAttribute("editVal");
+					me.$.ti_rnd0_rate.removeAttribute("editVal");
+					
+					me.set("searchParam.ti_rnd0_rate", "");	
+					me.set("searchParam.ti_rnd0_cost", "");
+					me.set("searchParam.ti_rnd0_apct", "0");
+				} else {
+					me.$.ti_rnd0_rate.removeAttribute("hidden");
+					me.$.ti_rnd0_cost.setAttribute("hidden", "hidden");
+					me.$.ti_rnd0_rate.setAttribute("editVal", true);
+					me.$.ti_rnd0_cost.removeAttribute("editVal");
+					me.set("searchParam.ti_rnd0_cost", "");
+				}
+				
+				if(me.get("searchParam.sb_rylt_appl") == 'C') {
+					me.$.ti_rylt_cost.removeAttribute("hidden");
+					me.$.ti_rylt_cost.setAttribute("editVal", true);
+					me.$.ti_rylt_rate.setAttribute("hidden", "hidden");
+					me.$.ti_rylt_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_rylt_rate", "");
+				} else if (me.get("searchParam.sb_rylt_appl") == 'N') {
+					me.$.ti_rylt_cost.setAttribute("hidden", "hidden");
+					me.$.ti_rylt_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_rylt_cost", "");
+					me.$.ti_rylt_rate.setAttribute("hidden", "hidden");
+					me.$.ti_rylt_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_rylt_rate", "");											
+					me.set("searchParam.ti_rylt_apct", "0");
+				} else {
+					me.$.ti_rylt_rate.removeAttribute("hidden");
+					me.$.ti_rylt_rate.setAttribute("editVal", true);
+					me.$.ti_rylt_cost.setAttribute("hidden", "hidden");
+					me.$.ti_rylt_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_rylt_cost", "");					
+				}
+
+				/*
+				if (UT.isEmpty(me.get("searchParam.sb_pdab_appl"))) {
+					me.$.sb_pdab_appl.selectedIndex = 0;
+				}
+				*/
+								
+				if(me.get("searchParam.sb_pdab_appl") == 'D') {
+					me.$.ti_pdab_cost.removeAttribute("hidden");
+					me.$.ti_pdab_cost.setAttribute("editable", true);
+					me.$.ti_pdab_cost.setAttribute("editVal", true);
+					me.$.ti_pdab_rate.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_rate", "");
+				} else if (me.get("searchParam.sb_pdab_appl") == 'E' || me.get("searchParam.sb_pdab_appl") == 'F') {
+					me.$.ti_pdab_cost.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_cost", "");
+					me.$.ti_pdab_rate.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_rate", "");
+
+					// 프레스 불량비 계산
+					me.calexitCost(); 
+					
+				} else if (me.get("searchParam.sb_pdab_appl") == 'N') {
+					me.$.ti_pdab_cost.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_cost", "");
+					me.$.ti_pdab_rate.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_apct", "0");
+				} else if (me.get("searchParam.sb_pdab_appl") == 'G') {
+					me.$.pop07.removeAttribute("hidden");
+					me.$.ti_pdab_cost.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_cost", "");
+					me.$.ti_pdab_rate.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_rate.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_rate", "");
+				} else {
+					me.$.ti_pdab_rate.removeAttribute("hidden");
+					me.$.ti_pdab_rate.setAttribute("editable", true);
+					me.$.ti_pdab_rate.setAttribute("editVal", true);
+					me.$.ti_pdab_cost.setAttribute("hidden", "hidden");
+					me.$.ti_pdab_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_pdab_cost", "");
+					me.$.pop07.setAttribute("hidden", "hidden");
+				}
+				
+				if (me.get("searchParam.ti_exit_gubn") == 'E1') {
+					//me.$.ti_exit_cost.removeAttribute("hidden");
+					me.$.ti_exit_cost.removeAttribute("disabled");
+					me.$.ti_exit_cost.setAttribute("editVal", true);
+				} else if (me.get("searchParam.ti_exit_gubn") == 'N') {
+					me.$.ti_exit_cost.setAttribute("disabled", true);
+					//me.$.ti_exit_cost.setAttribute("editable", false);
+					//me.$.ti_exit_cost.setAttribute("editVal", false);
+					me.set("searchParam.ti_exit_apct", "0");
+				} else {
+					//me.$.ti_exit_cost.setAttribute("editable", false);
+					//me.$.ti_exit_cost.setAttribute("editVal", false);
+					me.$.ti_exit_cost.setAttribute("disabled", true);
+				}
+				
+				// SUB일땐 숨김처리
+				if(me.get("searchParam.comd_etc0_gubn") == 'SUB') {
+					me.$.ti_feed_apct.setAttribute("hidden", "hidden");
+					me.$.ti_feed_cost.setAttribute("hidden", "hidden");
+					me.$.ti_feed_rate.setAttribute("hidden", "hidden");
+					me.$.ti_feed_ttat.setAttribute("hidden", "hidden");
+					me.$.ti_etc0_rate.setAttribute("hidden", "hidden");
+				}
+            }, 
+
+            /**
+             * 프레스 불량비 계산
+             */
+            calexitCost: function() {
+                var me = this,
+                pdab_rate = 0,
+                manu_cost = 0,
+                pdab_cost = 0;
+				// 프레스 단품 불량 처리
+				/* [2022-07-25] TEST을 위해 막음
+				if (me.get("searchParam.sb_pdab_appl") == 'E') {
+					// 불량률
+					if (UT.isNotEmpty(me.get("searchParam.cmpk_appl_rate")) || UT.isNotEmpty(me.get("searchParam.spcr_totl_cost"))) {
+						pdab_rate = parseFloat(me.get("searchParam.cmpk_appl_rate"));
+						manu_cost = parseFloat(me.get("searchParam.spcr_totl_cost"));
+						// press제조원가 
+						pdab_cost = manu_cost * pdab_rate * 0.01;
+
+						me.set("searchParam.ti_pdab_rate", pdab_rate.toString());
+						me.set("searchParam.ti_pdab_cost", commonAS.substr2num(pdab_cost.toString()));
+					}
+				} else if (me.get("searchParam.sb_pdab_appl") == 'F') {
+					
+					// ASSY 불량률
+					pdab_rate = 0.11;
+					manu_cost = parseFloat(me.get("searchParam.sum_manu_cost"));
+					// 제조원가 
+					pdab_cost = manu_cost * pdab_rate * 0.01;
+					me.set("searchParam.ti_pdab_rate", pdab_cost.toString());
+					me.set("searchParam.ti_pdab_cost", commonAS.substr2num(pdab_cost.toString()));					
+				}                
+				*/
+            },
+
+            /**
+             * 부모에서 조회된 값 setting
+             */
+            settingValue: function() {
+                var me = this,
+                etc_rnd0_appl = me.get("searchParam.etc_rnd0_appl"),
+                etc_rylt_appl = me.get("searchParam.etc_rylt_appl"),
+                etc_pdab_gubn = me.get("searchParam.etc_pdab_gubn"),
+                etc_exit_gubn = me.get("searchParam.etc_exit_gubn");
+
+				// combo 재구성
+				me.resetComboBox();
+				// R&D비
+				if (UT.isEmpty(etc_rnd0_appl)) {
+					me.set("searchParam.sb_rnd0_appl", "N");
+				} else {
+					me.set("searchParam.sb_rnd0_appl",etc_rnd0_appl);
+            	}
+
+				me.set("searchParam.ti_rnd0_rate", me.get("searchParam.etc_rnd0_rate"));
+				me.set("searchParam.ti_rnd0_cost", me.get("searchParam.etc_rnd0_cost"));
+				me.set("searchParam.ti_rnd0_apct", me.get("searchParam.etc_rnd0_apct"));
+				me.set("searchParam.ti_rnd0_ttat", me.get("searchParam.sum_rnd0_ttat"));
+				
+				// 로열티비
+				if (UT.isEmpty(etc_rylt_appl)) {
+					me.set("searchParam.sb_rylt_appl", "N");
+				} else {
+					me.set("searchParam.sb_rylt_appl", etc_rylt_appl);
+				}
+				me.set("searchParam.ti_rylt_rate", me.get("searchParam.etc_rylt_rate"));
+				me.set("searchParam.ti_rylt_cost", me.get("searchParam.etc_rylt_cost"));
+				me.set("searchParam.ti_rylt_apct", me.get("searchParam.etc_rylt_apct"));
+				me.set("searchParam.ti_rylt_ttat", me.get("searchParam.sum_rylt_ttat"));
+
+				// 불량비
+				if (UT.isEmpty(etc_pdab_gubn)) {
+					me.set("searchParam.sb_pdab_appl", "N");
+				} else {
+					me.set("searchParam.sb_pdab_appl", etc_pdab_gubn);
+				}
+				me.set("searchParam.ti_pdab_rate", me.get("searchParam.etc_pdab_rate"));
+				me.set("searchParam.ti_pdab_cost", me.get("searchParam.etc_pdab_cost"));
+				me.set("searchParam.ti_pdab_apct", me.get("searchParam.etc_pdab_apct"));
+				me.set("searchParam.ti_pdab_ttat", me.get("searchParam.sum_pdab_ttat"));
+				
+				// 운반비
+				me.set("searchParam.ti_trap_cost", me.get("searchParam.etc_trap_cost"));
+				me.set("searchParam.ti_trap_apct", me.get("searchParam.etc_trap_apct"));
+				me.set("searchParam.ti_trap_ttat", me.get("searchParam.sum_trap_ttat"));
+				
+				// 파렛트비
+				me.set("searchParam.ti_palt_cost", me.get("searchParam.etc_palt_cost"));
+				me.set("searchParam.ti_palt_apct", me.get("searchParam.etc_palt_apct"));
+				me.set("searchParam.ti_palt_ttat", me.get("searchParam.sum_palt_ttat"));
+				
+				// 서열비
+				me.set("searchParam.ti_feed_cost", me.get("searchParam.etc_feed_cost"));
+				me.set("searchParam.ti_feed_apct", me.get("searchParam.etc_feed_cost"));
+				me.set("searchParam.ti_feed_ttat", me.get("searchParam.sum_feed_ttct"));
+				
+				// 영구상각비
+				me.set("searchParam.ti_repy_apct", me.get("searchParam.etc_repy_apct"));
+				me.set("searchParam.ti_repy_ttat", me.get("searchParam.sum_repy_ttct"));
+				
+				// 추가비
+				// 불량비
+				if (UT.isEmpty(etc_exit_gubn)) {
+					me.set("searchParam.ti_exit_gubn", "N");
+				} else {
+					me.set("searchParam.ti_exit_gubn", etc_exit_gubn);
+				}				
+				me.set("searchParam.ti_exit_cost", me.get("searchParam.etc_exit_cost"));
+				me.set("searchParam.ti_exit_apct", me.get("searchParam.etc_exit_cost"));
+				me.set("searchParam.ti_exit_ttat", me.get("searchParam.sum_exit_ttct"));
+				
+				// 기타비계
+				me.set("searchParam.ti_etc0_apct", me.get("searchParam.etc_etc0_cost"));
+				me.set("searchParam.ti_etc0_ttat", me.get("searchParam.sum_etc0_ttct"));
+				
+				// combo 에 따른 input box visible 처리
+				me.settingInputBox();
+            },
+
+            /**
+             * combo box 재구성
+             */
+             resetComboBox: function() {
+                var me = this;
+
+				// 승용 SUB
+				if(me.get("searchParam.comd_etc0_gubn") == 'SUB' && me.get("searchParam.comd_vehl_gubn") == 'P') {
+					
+					// 프레스 공법이 존재하지 않으면 전파괴검사 제외 처리
+					if (me.get("searchParam.pres_use_yn") == 'N') {
+						me.set("exitArry", []);
+						me.exitArry.push({data:'N' , label:'미적용'});
+						me.exitArry.push({data:'E1', label:'직접입력'});
+						
+						me.set("pdabArry", []);
+						me.pdabArry.push({data:'N', label:'미적용'});
+						me.pdabArry.push({data:'A', label:'가공비기준'});
+						me.pdabArry.push({data:'B', label:'(제조원가 + 산폐)기준'});
+						me.pdabArry.push({data:'C', label:'총원가 기준'});
+						me.pdabArry.push({data:'D', label:'직접입력'});
+						me.pdabArry.push({data:'G', label:'공법계산 불량비'});
+					} else {
+						me.set("pdabArry", []);
+						me.pdabArry.push({data:'N', label:'미적용'});
+						me.pdabArry.push({data:'A', label:'가공비기준'});
+						me.pdabArry.push({data:'B', label:'(제조원가 + 산폐)기준'});
+						me.pdabArry.push({data:'C', label:'총원가 기준'});
+						me.pdabArry.push({data:'D', label:'직접입력'});
+						me.pdabArry.push({data:'E', label:'프레스 단품불량(제조원가)기준'});
+						me.pdabArry.push({data:'F', label:'프레스 ASSY(제조원가)기준'});
+						me.pdabArry.push({data:'G', label:'공법계산 불량비'});
+					}
+					//상용 SUB
+				} else if (me.get("searchParam.comd_etc0_gubn") == 'SUB' && me.get("searchParam.comd_vehl_gubn") == 'C') {
+					// 프레스 공법이 존재하지 않으면 전파괴검사 제외 처리
+					if (me.get("searchParam.pres_use_yn") == 'N') {
+						me.set("exitArry", []);
+						me.exitArry.push({data:'N' , label:'미적용'});
+						me.exitArry.push({data:'E1', label:'직접입력'});
+					} else {
+						me.set("exitArry", []);
+						me.exitArry.push({data:'N' , label:'미적용'});
+						me.exitArry.push({data:'E1', label:'직접입력'});
+						me.exitArry.push({data:'E2', label:'전파괴검사'});	
+					}					
+				}
+            },
+
+            /**
+             * combo 에 따른 자동 계산 처리 및 컨트롤 처리
+             */
+             exitGubnChange: function() {
+                var me = this,
+                appl_data = 0,
+                prod_cnt0 = 0,
+                loss_rate = 0,
+                manu_cost = 0,
+                lost_cost = 0;
+
+				if (me.get("searchParam.ti_exit_gubn") == 'E1') {
+					me.$.ti_exit_cost.removeAttribute("disabled");
+					me.$.ti_exit_cost.setAttribute("editable", true);
+					me.$.ti_exit_cost.setAttribute("editVal", true);
+				} else if (me.get("searchParam.ti_exit_gubn")  == 'E2') {
+					//me.$.ti_exit_cost.setAttribute("editable", false);
+					//me.$.ti_exit_cost.setAttribute("editVal", false);
+					me.$.ti_exit_cost.setAttribute("disabled", true);
+					
+					if (UT.isNotEmpty(me.get("searchParam.cmms_prod_cnt0"))) {
+						prod_cnt0 = parseFloat(me.get("searchParam.cmms_prod_cnt0"));
+						// 프레스 공법의 제조원가로 계산
+						manu_cost = parseFloat(me.get("searchParam.spcr_totl_cost"));
+						// 12만대 초과
+						if (prod_cnt0 > 120000) {
+							loss_rate = parseFloat((52 / prod_cnt0 * 100).toString().substring(0, 7));
+						} else if (prod_cnt0 > 60000 && prod_cnt0 <= 120000) {
+							loss_rate = parseFloat((26 / prod_cnt0 * 100).toString().substring(0, 7));
+						} else if (prod_cnt0 > 30000 && prod_cnt0 <= 60000) {
+							loss_rate = parseFloat((12 / prod_cnt0 * 100).toString().substring(0, 7));
+						} else if (prod_cnt0 <= 30000) {
+							loss_rate = parseFloat((6 / prod_cnt0 * 100).toString().substring(0, 7));
+						}
+
+						me.set("searchParam.ti_exit_rate", loss_rate.toString());
+						if (manu_cost.toString() != 'NaN') {
+							lost_cost = manu_cost * loss_rate * 0.01;
+							me.set("searchParam.ti_exit_cost", commonAS.substr2num(lost_cost.toString()));
+						} else {
+							me.set("searchParam.ti_exit_cost", "0");
+						}
+											
+					}
+				} else {
+					me.$.ti_exit_cost.setAttribute("disabled", true);
+					//me.$.ti_exit_cost.removeAttribute("editVal");
+					me.set("searchParam.ti_exit_cost", "");
+					me.set("searchParam.ti_exit_rate", "");
+					me.set("searchParam.ti_exit_apct", "");
+				}                
+            },
+
+            /**
+             * 운반비/파렛트비 팝업창
+             */
+             openPopup_cd02_11: function() {
+                var me = this,
+                param = UT.copy(me.get("searchParam"));
+
+                // [2024.03.26]
+                if(param.emst_pass_stat == "40") {
+                    UT.alert("결재완료 품목입니다.");
+                    return;
+                }
+
+                if(param.emst_link_meth == "B") {
+                    UT.alert("변동 품목입니다.");
+                    return;
+                }
+                
+	            if(!me.ep_cd02_11){
+	                me.ep_cd02_11 = UT.popup('ep-cd02-11', me, 980, 410, {
+                		'selected-item' : function(popup, e) {
+                			var result = e.detail;
+                			me.set("searchParam.ti_trap_cost", result.trpt_part_carg);
+                			me.set("searchParam.ti_palt_cost", result.trpt_part_palt);
+                			popup.close();
+                		}
+	                }, {title : "운반비/파렛트비"});
+	            }
+                me.ep_cd02_11.show();
+				me.ep_cd02_11.getWindowContent().load(param);                
+            },
+
+            /**
+             * 공법계산 불량비
+             */
+            openPopup_cd02_14: function() {
+                var me = this,
+                param = UT.copy(me.get("searchParam"));
+
+	            if(!me.ep_cd02_14){
+	                me.ep_cd02_14 = UT.popup('ep-cd02-14', me, 680, 300, {
+                		'close' : function(popup, e) {
+                			popup.close();
+                		}
+	                }, {title : "공법계산 불량비"});
+	            }
+                me.ep_cd02_14.show();
+				me.ep_cd02_14.getWindowContent().load(param);                
+            },
+
+            /**
+             * 운반비 툴팁 클릭 이벤트
+             */
+
+             trapToolTips : function(e) {
+                 var me = this;
+	           	 me.$.trapTipMesg.text = "개당 운반비가 일반관리비의 25% 초과분에 한해 별도 적용한다.";
+	
+	        	 var tooltip = this.$.trapTooltip,
+	                 display = getComputedStyle(this.$.trapTooltip).display;
+
+	        	  tooltip.style.display = display === "none" ? "block" : "none";
+	
+	              var rect = e.target.getBoundingClientRect();
+	             
+	              var divTop = rect.top - 20,
+	                  diLeft = rect.left - 20;
+	              tooltip.style.top  = divTop + 'px';
+	              tooltip.style.left = diLeft + 'px';                 
+             },             
+
+             /**
+              * 파렛트 툴팁 클릭 이벤트
+              */
+              paltToolTips: function(e) {
+            	  var me = this;
+            	  
+            	  me.$.paltTipMesg.text = "총원가의 1% 초과분에 한하여 적용한다.";
+
+            	  var tooltip = this.$.paltTooltip,
+                 	 display = getComputedStyle(this.$.paltTooltip).display;
+             	 
+            	  tooltip.style.display = display === "none" ? "block" : "none";
+
+                  var rect = e.target.getBoundingClientRect();
+                 
+                  var divTop = rect.top - 20,
+                      diLeft = rect.left - 20;
+                  tooltip.style.top  = divTop + 'px';
+                  tooltip.style.left = diLeft + 'px';
+              },
+
+	          /**             
+	            * 적용 구분 도움말 팝업
+	            **/
+		      openPopup_cd02_10_01 : function(e){
+	  	          var me = this;
+	  	          var targetId = e.target.id;
+	
+	  	          if (!me.ep_cd02_10_01) {
+	  		          me.ep_cd02_10_01 = UT.popup("ep-cd02-10-01", me, 530, 650, {}, {title: me.translate("도움말")});
+	  			  }
+	  			  
+	  	          me.ep_cd02_10_01.show();
+	  		      me.ep_cd02_10_01.getWindowContent().load();
+	  	      },
+
+	          /**             
+	            * 승인도 설계시험비 도움말 팝업
+	            **/
+		      openPopup_cd02_10_02 : function(e){
+	  	          var me = this;
+	  	          var targetId = e.target.id;
+	
+	  	          if (!me.ep_cd02_10_02) {
+	  		          me.ep_cd02_10_02 = UT.popup("ep-cd02-10-02", me, 590, 640, {}, {title: me.translate("도움말")});
+	  			  }
+	  			  
+	  	          me.ep_cd02_10_02.show();
+	  		      me.ep_cd02_10_02.getWindowContent().load();
+	  	      },
+
+	          /**             
+	            * ROYALTY 도움말 팝업
+	            **/
+		      openPopup_cd02_10_03 : function(e){
+	  	          var me = this;
+	  	          var targetId = e.target.id;
+	
+	  	          if (!me.ep_cd02_10_03) {
+	  		          me.ep_cd02_10_03 = UT.popup("ep-cd02-10-03", me, 600, 450, {}, {title: me.translate("도움말")});
+	  			  }
+	  			  
+	  	          me.ep_cd02_10_03.show();
+	  		      me.ep_cd02_10_03.getWindowContent().load();
+	  	      },
+	          /**             
+	            * 불량율 도움말 팝업
+	            **/
+		      openPopup_cd02_10_04 : function(e){
+	  	          var me = this;
+	  	          var targetId = e.target.id;
+	
+	  	          if (!me.ep_cd02_10_04) {
+	  		          me.ep_cd02_10_04 = UT.popup("ep-cd02-10-04", me, 680, 820, {}, {title: me.translate("도움말")});
+	  			  }
+	  			  
+	  	          me.ep_cd02_10_04.show();
+	  		      me.ep_cd02_10_04.getWindowContent().load();
+	  	      }, 	  	       
+
+        });
+	</script>
+</dom-module>

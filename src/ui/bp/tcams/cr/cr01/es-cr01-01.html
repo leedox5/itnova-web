@@ -1,0 +1,2670 @@
+<sc-link rel="import" href="../../co/co02/es-co02-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci02/es-ci02-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci04/es-ci04-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci21/es-ci21-01.html"></sc-link>
+<sc-link rel="import" href="ep-cr01-01.html"></sc-link>
+<sc-link rel="import" href="ep-cr01-02.html"></sc-link>
+<sc-link rel="import" href="../../cd/cd01/ep-cd01-01-01.html"></sc-link>
+<sc-link rel="import" href="../../cd/cd02/ep-cd02-03.html"></sc-link>
+<sc-link rel="import" href="../../cd/cd02/ep-cd02-01-02.html"></sc-link>
+<sc-link rel="import" href="../../cd/cd04/es-cd04-01.html"></sc-link>
+<sc-link rel="import" href="../../../approval/es-aprv-input.html"></sc-link>
+<sc-link rel="import" href="../../../approval/es-aprv-detail-new.html"></sc-link>
+
+<dom-module id="es-cr01-01">
+    <!--
+        ******************************************************************************************
+        ** @Program-name    : END ITEM MASTER 정보
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.11.18
+        ** @History         : 2019.11.18 최초작성
+        ******************************************************************************************
+    -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+    <template>
+
+        <!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->
+        <!-- 공통 코드 조회-->
+        <sc-service-group id="codes">
+            <sc-code-provider code="CA_PASSDSGN" target="{{codes.pass_dsgn}}"></sc-code-provider> <!-- 진행상태 -->
+            <sc-code-provider code="CA_STNDGUBN" target="{{codes.stnd_gubn}}"></sc-code-provider> <!-- 표준구분 -->
+            <sc-code-provider code="CA_MATL_SRC" target="{{codes.matl_src0}}"></sc-code-provider> <!-- 표준구분 -->
+        </sc-service-group>
+
+        <!-- 갑을지 조회 체크 -->
+        <sc-service-provider id="getCompareRPC" descriptor="bp/tcams/cd/cd11" service-id="oz.cnt" on-response="paramSetEncode" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam1}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="flag" target="{{flag}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        <!-- 차종 코드 조회 -->
+        <sc-service-provider id="getDesnCarsRPC" descriptor="bp/tcams/cr/cr01" service-id="get.ca_carscode.list">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{desn_cars}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        <!-- 업종 코드 조회 -->
+        <sc-service-provider id="getDesnIndsRPC" descriptor="bp/tcams/cr/cr01" service-id="get.ca_indscode.list">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{desn_inds}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        <!-- 결재상신 전 계산되지 않은 공법이 존재하는지 체크 : 20170822 LSM-->
+        <sc-service-provider id="getCheckCmms" descriptor="bp/tcams/cr/cr01" service-id="checkCmms" on-response="endPartCheck" ></sc-service-provider>
+
+        <!-- 결재전 계산 값 체크 -->
+        <sc-service-provider id="getCheckEndPart" descriptor="bp/tcams/cr/cr01" service-id="checkEndpart" on-response="approvalProcess" >
+            <outputs>
+                <sc-service-output name="result" target="{{checkFlag}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 조회 -->
+        <sc-service-provider id="getListRPC" descriptor="bp/tcams/cr/cr01" service-id="get.emstlist" on-response="resultSearch_resultHandler">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="chinList"  target="{{resultList1}}"  change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 전체 조회 엑셀 -->
+        <sc-service-provider id="getExcelListRPC" descriptor="bp/tcams/cr/cr01" service-id="get.emstExcelList" on-response="getExcelListRPC_resultHandler">
+            <inputs>
+                <sc-service-input name="param" value="{{excelParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="excelList" target="{{resultExcelList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 저장 -->
+        <sc-service-provider id="insertListRPC" descriptor="bp/tcams/cr/cr01" service-id="insert.emstlist" on-response="insertListRPC_resultHandler">
+            <outputs>
+                <sc-service-output name="result" target="{{resultSave}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 삭제 -->
+        <sc-service-provider id="deleteListRPC" descriptor="bp/tcams/cr/cr01" service-id="delete.emstlist" on-response="deleteListRPC_resultHandler">
+            <outputs>
+                <sc-service-output name="result" target="{{resultDel}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 복사 -->
+        <sc-service-provider id="copyListRPC" descriptor="bp/tcams/cr/cr01" service-id="copy.emstlist" on-response="copyListRPC_resultHandler">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{resultCopy}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultCopy}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 임시계산이동 -->
+        <sc-service-provider id="moveListRPC" descriptor="bp/tcams/cr/cr01" service-id="move.emstlist" on-response="moveListRPC_resultHandler">
+            <inputs>
+                <sc-service-input name="moveParam" value="{{resultMove}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{moveObj}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 업체조회 -->
+        <sc-service-provider id="getVendNameInfoRPC" descriptor="bp/tcams/cr/cr01" service-id="get.vendNameInfo" on-response="resultVendSearch">
+            <inputs>
+                <sc-service-input name="param" value="{{vend_param}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="vend_name" target="{{vend_info}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- close할 메뉴 리스트 얻기 -->
+        <sc-service-provider id="menuListRPC" descriptor="bp/tcams/ca/common" service-id="get.come.menu.id" on-response="afterGetMenu">
+            <outputs>
+                <sc-service-output name="result" target="{{resultMenu}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 공통코드조회 -->
+        <sc-service-provider id="getComm" descriptor="bp/tcams/cr/cr01" service-id="get.comm.codes" on-response="afterGetComm">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{commCode}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 기종코드 가져오기 -->
+        <sc-service-provider id="getTmcdCode" descriptor="bp/tcams/cr/cr01" service-id="get.ca_tmcdcode.list">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{tmcdcode}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 엔진코드 가져오기 -->
+        <sc-service-provider id="getEncdcont" descriptor="bp/tcams/cr/cr01" service-id="get.ca_encdcont.list">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{encdcont}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 계산완료 상태 변경 -->
+        <sc-service-provider id="updateStatus" descriptor="bp/tcams/cr/cr01" service-id="update.status" on-response="updateStatus_resultHandler" >
+            <outputs>
+                <sc-service-output name="result" target="{{resultPass}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 변수 암호화 -->
+        <sc-service-provider id="paramSetEncodeRPC" descriptor="bp/tcams/common" service-id="encode.params" on-response="print" >
+            <outputs>
+                <sc-service-output name="result" target="{{resultEncode}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="chkChin" descriptor="bp/tcams/cr/cr01/2023" service-id="chkChin"></sc-service-provider>
+        <sc-service-provider id="chkCancel" descriptor="bp/tcams/cr/cr01/2023" service-id="chkCancel"></sc-service-provider>
+
+        <!--
+            ************************************************************************************************************
+            * UI Area
+            ************************************************************************************************************
+        -->
+        <cc-page-title-bar id="endItemMaster" page-title="END ITEM MASTER" on-click="onTitleClick">
+            <sc-button id="btnAllExcel"       text="전체 엑셀"      on-click="getExcel"         style="align:right;" hidden="true"></sc-button>
+            <sc-button id="gabBtn"         text="갑/을지 출력"    on-click="compareCostCnt"      style="align:right;"></sc-button>
+            <sc-button id="compInfoBtn"    text="원가비교 조회"    on-click="compareCost"     style="align:right;"></sc-button>
+        </cc-page-title-bar>
+        <cc-search-container search-button-hidden="true">
+            <table>
+                <colgroup>
+                    <col style="width:80px"> <!-- 원가구분, 진행상태 -->
+                    <col style="width:130px"> <!-- 콤보구성 -->
+                    <col style="width:0px" hidden="true"> <!-- 콤보구성 -->
+                    <col style="width:80px"> <!-- 기종, PART NO  -->
+                    <col style="width:170px"> <!-- 콤보구성 -->
+                    <col style="width:100px"> <!-- 엔진, PART NAME-->
+                    <col style="width:200px"> <!-- 콤보구성 -->
+                    <col style="width:50px"> <!-- 차종 -->
+                    <col style="width:150px"> <!-- 콤보구성 -->
+                    <col style="width:70px"> <!-- SUB PART여부  -->
+                    <col style="width:50px"> <!-- 체크박스  -->
+                    <col style="width:80px"> <!-- 업종, 담당자 -->
+                    <col style="width:130px"> <!-- 콤보구성 -->
+                    <col style="width:130px"> <!-- 원가계산적용일, 등록일 -->
+                    <col style="width:210px"> <!-- 콤보구성 -->
+                    <col>
+                </colgroup>
+                <tr>
+                    <th><sc-label text="원가구분" ></sc-label></th>
+                    <td>
+                        <sc-combobox-field id="sb_cost_gubn_R" display-field="label" value-field="data"
+                                items="{{desn_gubn}}" value="{{searchParam.comd_cost_gubn_R}}" placeholder="전체" style="width:100px">
+                        </sc-combobox-field>
+                    </td>
+                    <td hidden="true">
+                        <sc-combobox-field id="sb_cost_gubn_P" display-field="label" value-field="data"
+                                items="{{desn_gubn}}" value="{{searchParam.comd_cost_gubn_P}}" style="width:100px">
+                        </sc-combobox-field>
+                    </td>
+                    <th><sc-label text="기종" ></sc-label></th>
+                    <td>
+<!--                         <sc-text-field id="cnd_tmcd_code" max-length="20" text-align="left" upper-case="true" style="width:150px" -->
+<!--                                 value="{{searchParam.comd_tmcd_code_R}}" on-enter="getList" style="width:150px"> -->
+<!--                         </sc-text-field> -->
+                        <sc-multi-combobox-field id="cnd_tmcd_code" on-change="changeHandler_tmcdcode" placeholder="전체" enable-check-all="true"
+                            display-field="label" value-field="data" items="{{tmcdcode}}" value="{{searchParam.tmcdCode}}"
+                            style="width:150px">
+                        </sc-multi-combobox-field>
+                    </td>
+                    <th><sc-label text="엔진" ></sc-label></th>
+                    <td>
+<!--                         <sc-text-field id="cnd_encd_cont" max-length="20" text-align="left" upper-case="true" style="width:150px" -->
+<!--                                 value="{{searchParam.comd_encd_cont_R}}" on-enter="getList" style="width:150px"> -->
+<!--                         </sc-text-field>                     -->
+                        <sc-multi-combobox-field id="cnd_encd_cont" on-change="changeHandler_encdcont" placeholder="전체" enable-check-all="true"
+                            display-field="label" value-field="data" items="{{encdcont}}" value="{{searchParam.encdcont}}"
+                            style="width:150px">
+                        </sc-multi-combobox-field>
+                    </td>
+                    <th><sc-label text="차종" ></sc-label></th>
+                    <td>
+<!--                         <sc-text-field id="sb_cars_code_R" max-length="20" text-align="left" upper-case="true" style="width:120px" -->
+<!--                                 value="{{searchParam.comd_cars_code_R}}" on-enter="getList" style="width:150px"> -->
+<!--                         </sc-text-field>                     -->
+                        <sc-combobox-field id="sb_cars_code_R" display-field="label" value-field="data"
+                                items="{{desn_cars}}" value="{{searchParam.comd_cars_code_R}}" placeholder="전체" style="width:120px">
+                        </sc-combobox-field>
+                    </td>
+                    <th></th>
+                    <td></td>
+                    <th><sc-label text="업종" ></sc-label></th>
+                    <td>
+<!--                         <sc-text-field id="sb_inds_code_R" max-length="20" text-align="left" upper-case="true" style="width:100px" -->
+<!--                                 value="{{searchParam.comd_inds_code_R}}" on-enter="getList" style="width:150px"> -->
+<!--                         </sc-text-field> -->
+                        <sc-combobox-field id="sb_inds_code_R" display-field="label" value-field="data"
+                                items="{{desn_inds}}" value="{{searchParam.comd_inds_code_R}}" placeholder="전체" style="width:100px">
+                        </sc-combobox-field>
+                    </td>
+                    <th><sc-label text="원가계산적용일" style="width:100px;"></sc-label></th>
+                    <td>
+                        <sc-date-field id="comd_base_frdt" string-date="true" value="{{searchParam.comd_base_frdt}}"></sc-date-field>
+                        <sc-label text=" ~ "></sc-label>
+                        <sc-date-field id="comd_base_todt" string-date="true" value="{{searchParam.comd_base_todt}}"></sc-date-field>
+                    </td>
+                </tr>
+                <tr>
+                    <th><sc-label text="진행상태" ></sc-label></th>
+                    <td>
+                        <sc-combobox-field id="sb_pass_stat_R" display-field="label" value-field="data"
+                                editor-regex="/[A-Z]/" text-case="upper" max-length="20" text-align="left"
+                                items="{{codes.pass_dsgn}}" value="{{searchParam.comd_pass_stat_R}}" placeholder="전체" style="width:100px;">
+                        </sc-combobox-field>
+                    </td>
+                    <th><sc-label text="PART NO"></sc-label></th>
+                    <td>
+                        <sc-text-field id="tb_part_no_R" max-length="20" text-align="left" upper-case="true"
+                                value="{{searchParam.comd_part_no_R}}" on-enter="getList" style="width:150px">
+                        </sc-text-field>
+                    </td>
+                    <th><sc-label text="PART NAME"></sc-label></th>
+                    <td colspan="3">
+                        <sc-text-field id="tb_part_name_R" max-length="20" text-align="left"
+                                value="{{searchParam.comd_part_name_R}}" on-enter="getList" style="width:393px">
+                        </sc-text-field>
+                    </td>
+                    <th><sc-label text="SUB PART"></sc-label></th>
+                    <td>
+                        <sc-checkbox-field id="tb_sub0_part" input-value="{{searchParam.comd_sub0_part}}" checked-value="Y" un-checked-value="N"></sc-checkbox-field>
+                    </td>
+                    <th><sc-label text="담당자"></sc-label></th>
+                    <td>
+                        <sc-text-field id="tb_init_name_R" text-align="left" style="width:100px;"
+                                value="{{searchParam.comd_init_name_R}}" on-enter="getList" hangle-restrict="true">
+                        </sc-text-field>
+                    </td>
+                    <th><sc-label text="등록일" style="width:100px;"></sc-label></th>
+                    <td>
+                        <sc-date-field id="comd_from_date" string-date="true" value="{{searchParam.comd_from_date}}" ></sc-date-field>
+                        <sc-label text=" ~ "></sc-label>
+                        <sc-date-field id="comd_to_date" string-date="true" value="{{searchParam.comd_to_date}}" ></sc-date-field>
+                    </td>
+                </tr>
+            </table>
+
+        </cc-search-container>
+        <sc-grid id="gridPanel" class="flex" editable="true" on-item-edit-end="itemEditEndHandler"
+                 locked-column-count="{{lockColCount}}" header-height="40" on-upload-complete="onUploadComplete"
+                 on-item-click="itemClickHandler" data-provider="{{resultList}}" use-dummy="true">
+            <cc-grid-toolbar>
+                 <sc-label id="lb_del" text="삭제 선택열 표시" style="vertical-align:top; margin-left: 30px;"></sc-label>
+                <sc-checkbox-field id="chk_del"  style="margin-right: 30px;"   checked-value="Y" un-checked-value="N" input-value="{{searchParam.comc_chk_del}}"  default-input-value="N" default-value="false" on-checkchange="onChangeCheckDelCol"></sc-checkbox-field>
+
+                <sc-button text="차종선택" id="btn_carscode" on-click="popup_ESCI02_ALL"   ></sc-button>
+                <sc-button text="업종선택" id="btn_indscode" on-click="popup_ESCI04_01"          ></sc-button>
+<!--                 <sc-button text="업체선택" id="btn_vendcode" on-click="popup_ESCD02_ALL"></sc-button> -->
+                <sc-button text="배포"     id="btn_distibution" on-click="distibutionPopup"></sc-button>
+                <sc-button text="결재상신" id="btn_app" style="margin-left: 15px; margin-right: 13px;" on-click="chkChin" class="blue"></sc-button>
+                <sc-button text="계산완료"  id="btn_complete" on-click="complete"             ></sc-button>
+                <sc-button text="계산완료취소" id="btn_cancel" on-click="chkCancel"></sc-button>
+                <sc-button text="담당자변경" id="btn_charger" on-click="popup_ESCD01_01_01"  ></sc-button>
+                <sc-button text="조회"                      style="margin-left: 15px;" on-click="list"               ></sc-button>
+                <sc-button text="추가"     id="btn_add"     on-click="addItem"             ></sc-button>
+                <sc-button text="저장"     id="btn_save"    on-click="saveList"            ></sc-button>
+                <sc-button text="복사"     id="btn_copy"    on-click="copyAlert"           ></sc-button>
+                <sc-button text="임시 이동"  id="btn_move"   on-click="moveAlert"           ></sc-button>
+            </cc-grid-toolbar>
+
+            <sc-grid-paging id="pagingControl" scroll-append="on" scroll-auto-load="true"
+                            scroll-page-size="50" paging-function="search" ajax-ref="getListRPC"
+                            list-data="{{resultList1}}" scroll-paging="true"></sc-grid-paging>
+            <sc-grid-columns>
+                <sc-checkbox-column data-field="chk"          header-text="전체" width="45"  text-align="center" check-value="Y" un-checked-value="N"
+                                    editable="true" id="chk" item-editable-function="isItemEnabled" visible="true"></sc-checkbox-column>
+                <sc-combobox-column data-field="comd_stnd_gubn" header-text="표준구분"       width="70"  text-align="center" item-editable-function="isItemEnabled"
+                                    editable="true" items="{{codes.stnd_gubn}}"   display-field="label" value-field="data" visible="false"></sc-combobox-column>
+                <sc-data-column        data-field="comd_part_no"   header-text="PART NO"     width="120" editable="false" text-align="left" style-name="link"></sc-data-column>
+
+                <sc-image-column    data-field="img_partno" editable="false" width="20" text-align="center" id="col_img_partno" visible="[[formula('isVisiblePartNo')]]" sortable="false" image-change-function="onImageChange"></sc-image-column>
+                <sc-data-column     data-field="comd_part_name" header-text="PART NAME"   width="195" editable="false" text-align="left"></sc-data-column>
+                <sc-combobox-column data-field="comd_cost_gubn" header-text="계산구분"       width="60"  text-align="center" item-editable-function="isItemEnabled"
+                                    editable="true" items="{{desn_gubn}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-data-column     data-field="comd_eono"      header-text="EO NO"       width="85" editable="false" text-align="left"></sc-data-column>
+                <sc-data-column     data-field="comd_cumt_no"   header-text="SEQ"         width="0"  visible="false" editable="false" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_cumto_no"  header-text="SEQ"         width="50" editable="false" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_tmcd_code"  header-text="기종"         width="80" editable="false" text-align="center" id="col_tmcdcode"></sc-data-column>
+                <sc-image-column    data-field="img_tmcdcode" editable="false" width="20" text-align="center" id="col_img_tmcdcode" visible="true" image-change-function="onImageChange"></sc-image-column>
+                <sc-data-column     data-field="comd_cars_code"  header-text="차종"         width="80" text-align="center" item-editable-function="isItemEnabled"
+                                    editor-maskre="[A-Z 0-9]" max-length="12"></sc-data-column>
+                <sc-data-column     data-field="comd_encd_cont"  header-text="엔진"         width="50" visible="false" editable="false" text-align="left"></sc-data-column>
+                <sc-data-column     data-field="comd_capa_cont"  header-text="배기량"        width="50" visible="false" editable="false" text-align="left"></sc-data-column>
+                <sc-data-column     data-field="comd_tf_code"    header-text="T/F"         width="40" visible="false" editable="false" text-align="left"></sc-data-column>
+
+                <sc-data-column     data-field="comd_inds_code"  header-text="업종"         width="40" text-align="center" text-case="upper" item-editable-function="isItemEnabled"
+                                    editor-maskre="[A-Z 0-9]" max-length="2"></sc-data-column>
+                <sc-image-column    data-field="img_indscode" editable="false" width="20" text-align="center" visible="true"
+                                    id="col_img_indscode" image-change-function="onImageChange"></sc-image-column>
+                <sc-combobox-column data-field="comd_src0"       header-text="SRC"         width="50"  text-align="center" item-editable-function="isItemEnabled"
+                                    editable="true" items="{{codes.matl_src0}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-combobox-column data-field="comd_vehl_gubn"  header-text="승상&#xa;구분"  width="40"  text-align="center" item-editable-function="isItemEnabled"
+                                    editable="true" items="{{vehl_gubn}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-date-column        data-field="comd_base_date" header-text="원가계산&#xa;기준일"    width="95" editable="true" text-align="center" format-type="date"></sc-date-column>
+
+
+                <sc-data-column     data-field="comd_rsch_pric"  header-text="설계원가"      width="100" editable="true" text-align="right" data-type="number" format-type="amt" visible="false"></sc-data-column>
+                <sc-data-column     data-field="comd_cumt_pric"  header-text="계산단가"      width="100" editable="false" text-align="right" data-type="number" format-type="amt" ></sc-data-column>
+                <sc-image-column    data-field="img_remk"       header-text="주&#xa;기"     width="20" editable="false" text-align="center" image-change-function="onImageChange"></sc-image-column>
+                <sc-attachment-column data-field="file_cnt" shared-group-field="comd_att_grp_cd"  header-text="첨부" width="40" on-upload-complete="onUploadComplete"
+                                            text-align="right" upload-editable-function="onUploadEditable"></sc-attachment-column>
+                <sc-date-column        data-field="comd_sum0_date" header-text="원가계산&#xa;집계일"    width="95" editable="false" text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_init_date" header-text="등록일"           width="90" editable="false" text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_rpt0_date" header-text="상신일"           width="90" editable="false" text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_aprv_date" header-text="결재일"           width="90" editable="false" text-align="center" format-type="date"></sc-date-column>
+                <sc-data-column     data-field="comd_pass_desc"    header-text="진행상태"  item-style-function="passColor" width="80" editable="false" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_init_name"    header-text="담당자"      width="80" editable="false" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_vend_code"  header-text="업체코드"      visible="false" width="80" editable="true" text-align="left" item-editable-function="isItemEnabled"></sc-data-column>
+                <sc-image-column    data-field="img_vend_name"   width="20" visible="false" text-align="center" id="col_img_vend_name" image-change-function="onImageChange"></sc-image-column>
+                <sc-data-column     data-field="comd_vend_name"  header-text="업체명"    visible="false"   width="80" editable="false" text-align="left"></sc-data-column>
+            </sc-grid-columns>
+            <sc-grid-fields>
+                <sc-grid-field data-field="comd_aprv_no"    ></sc-grid-field> <!-- 결재번호 -->
+                <sc-grid-field data-field="comd_pass_stat"  ></sc-grid-field> <!-- 진행상태 -->
+                <sc-grid-field data-field="comd_tool_gubn_o"></sc-grid-field> <!-- 계산구분 -->
+                <sc-grid-field data-field="comd_corp_code"  ></sc-grid-field> <!-- 법인코드 -->
+                <sc-grid-field data-field="comd_chin_yn"    ></sc-grid-field> <!-- 체인여부 -->
+                <sc-grid-field data-field="comd_cumt_yn"    ></sc-grid-field> <!-- 집계여부 -->
+                <sc-grid-field data-field="comd_vend_apfr"  ></sc-grid-field> <!-- 업체적용일 -->
+                <sc-grid-field data-field="comd_tool_gubn"  ></sc-grid-field> <!-- 계산방식 -->
+                <sc-grid-field data-field="comd_init_cman"  ></sc-grid-field> <!-- 사번 -->
+                <sc-grid-field data-field="comd_att_grp_cd" ></sc-grid-field> <!-- 첨부파일그룹코드 -->
+                <sc-grid-field data-field="new0_item_gubn"  ></sc-grid-field> <!-- 신규 행추가 구분 -->
+            </sc-grid-fields>
+        </sc-grid>
+        <!-- 전체 다운로드용 엑셀 그리드 -->
+        <sc-grid id="allExcelGridPanel" header-height="40" hidden="true" show-number-line="false" data-provider = "{{resultExcelList}}">>
+              <sc-grid-columns>
+                <sc-combobox-column data-field="comd_stnd_gubn"    header-text="표준구분"       width="70"  text-align="center"
+                                    items="{{codes.stnd_gubn}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-data-column        data-field="comd_part_no"      header-text="PART NO"     width="120" text-align="left"></sc-data-column>
+                <sc-data-column     data-field="comd_part_name"    header-text="PART NAME"   width="195" text-align="left"></sc-data-column>
+                <sc-combobox-column data-field="comd_cost_gubn"    header-text="원가구분"       width="60"
+                                    items="{{desn_gubn}}"   display-field="label" value-field="data" text-align="center"></sc-combobox-column>
+                <sc-data-column     data-field="comd_eono"         header-text="EO NO"       width="85" text-align="left"></sc-data-column>
+                <sc-data-column     data-field="comd_cumto_no"     header-text="SEQ"         width="50" text-align="center"></sc-data-column>
+
+                <sc-data-column     data-field="comd_tmcd_code"    header-text="기종"         width="80" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_cars_code"    header-text="차종"         width="80" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_encd_cont"    header-text="엔진"         width="50" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_capa_cont"    header-text="배기량"        width="50" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_tf_code"      header-text="T/F"         width="40" text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_inds_code"    header-text="업종"         width="40" text-align="center"></sc-data-column>
+                <sc-combobox-column data-field="comd_src0"         header-text="SRC"         width="50" text-align="center"
+                                    items="{{codes.matl_src0}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-combobox-column data-field="comd_vehl_gubn"    header-text="승상&#xa;구분"  width="40"  text-align="center"
+                                    items="{{vehl_gubn}}"   display-field="label" value-field="data"></sc-combobox-column>
+                <sc-date-column        data-field="comd_base_date"    header-text="원가계산기준일"    width="95"   format-type="date"></sc-date-column>
+                <sc-data-column     data-field="comd_vend_code"    header-text="업체코드"       width="80"  text-align="left" ></sc-data-column>
+                <sc-data-column     data-field="comd_vend_name"    header-text="업체명"       width="80" text-align="left"></sc-data-column>
+
+                <sc-data-column     data-field="comd_rsch_pric"    header-text="설계원가"      width="100"  text-align="right" data-type="number" format-type="amt" ></sc-data-column>
+                <sc-data-column     data-field="comd_cumt_pric"    header-text="계산단가"      width="100"  text-align="right" data-type="number" format-type="amt" ></sc-data-column>
+                <sc-date-column        data-field="comd_sum0_date"    header-text="원가계산집계일"    width="95"   text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_init_date"    header-text="등록일"        width="90"   text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_rpt0_date"    header-text="상신일"        width="90"   text-align="center" format-type="date"></sc-date-column>
+                <sc-date-column        data-field="comd_aprv_date"    header-text="결재일"        width="90"   text-align="center" format-type="date"></sc-date-column>
+                <sc-data-column     data-field="comd_pass_desc"    header-text="진행상태"      width="80"  text-align="center"></sc-data-column>
+                <sc-data-column     data-field="comd_init_name"    header-text="담당자"       width="80"  text-align="center"></sc-data-column>
+            </sc-grid-columns>
+        </sc-grid>
+        <sc-dialog id="dialog1" style="width:350px;height:150px" on-keydown="chkEnter">
+            <div style="display:flex; flex-direction:column;">
+            [[searchParam.msg]]
+            </div>
+        </sc-dialog>
+    </template>
+
+    <!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+    <script>
+        Polymer({
+            is: "es-cr01-01",
+            properties: {
+
+                //원가구분
+                desn_gubn      : {type : Array , value : function() { return [{data:'AA', label:'전체'}
+                                                                             ,{data:'R0', label:'CONCEPT'}
+                                                                             ,{data:'R1', label:'PROTO'}
+                                                                             ,{data:'R2', label:'PILOT'}
+                                                                             ,{data:'R3', label:'SOP'}];}},
+                //승상구분
+                vehl_gubn      : {type : Array , value : function() { return [{data:'P', label:'승용'}
+                                                                             ,{data:'C', label:'상용'}];}},
+                //상단 조회조건
+                searchParam    : {type: Object , value: function() { return {}; }},
+
+                // 서비스 요청시 사용되는 param
+                searchParam1   : {type: Object , value: function() { return {}; }},
+                flag           : {type: Object , value: function() { return {}; }},
+                apprvObj       : {type: Object , value: function() { return {}; }},
+                checkFlag      : {type: Object , value: function() { return {}; }},
+                excelParam     : {type: Object , value: function() { return {}; }},
+                resultSave     : {type: Object , value: function() { return {}; }},
+                resultDel      : {type: Object , value: function() { return {}; }},
+                resultCopy     : {type: Object , value: function() { return {}; }},
+                resultPass     : {type: Object , value: function() { return {}; }},
+                moveObj        : {type: Object , value: function() { return {}; }},
+                vend_param     : {type: Object , value: function() { return {}; }},
+                distObj        : {type: Object , value: function() { return {}; }},
+                codes          : {type: Object , value: function() { return {pass_dsgn:[], stnd_gubn:[], matl_src0:[]}}, reset: false},
+                resultEncode   : {type: Object , value: function() { return {}; }},
+
+
+                lockColCount   : {type :Object , value: function() { return  8; }},
+
+                checkCmms      : {type : Array , value: function() { return []; }},
+                resultList     : {type : Array , value: function() { return []; }},
+                resultList1    : {type : Array , value: function() { return []; }},
+                resultExcelList: {type : Array , value: function() { return []; }},
+                resultInsert   : {type : Array , value: function() { return []; }},
+                resultUpdate   : {type : Array , value: function() { return []; }},
+                resultDelete   : {type : Array , value: function() { return []; }},
+                resultPassStat : {type : Array , value: function() { return []; }},
+                resultMove     : {type : Array , value: function() { return []; }},
+                vend_info      : {type : Array , value: function() { return []; }},
+                commCode       : {type : Array , value: function() { return []; }},
+                desn_cars      : {type : Array , value: function() { return []; }},
+                desn_inds      : {type : Array , value: function() { return []; }},
+                tmcdcode       : {type : Array , value: function() { return []; }},
+                encdcont       : {type : Array , value: function() { return []; }},
+                resultMenu     : {type : Array , value: function() { return []; }},
+                distList       : {type : Array , value: function() { return []; }},
+                apprvList      : {type : Array , value: function() { return []; }},
+
+                vendPopflag    : {type : String, value : function() { return 'N';}},
+                flag_req       : {type : String, value : function() { return 'N';}},
+                messageFlag    : {type : String, value : function() { return 'N';}},
+                vendflag       : {type : String, value : function() { return 'N';}},
+                fileName       : {type : String, value : function() { return '';}},
+                path           : {type : String, value : function() { return '';}},
+                funcGubn       : {type : String, value : function() { return '';}},
+                initFlag       : {type : String, value : function() { return '';}},
+
+                rowIndex       : {type : Number, reset: false, value : -1},
+
+                totcnt         : {type :Object , value: function() { return  0; }},
+                endRowNum      : {type :Object , value: function() { return  0; }},
+                messageDev     : {type: Object , value: function() { return {}; }}
+
+            },
+
+            formulas : {
+                // 입력제어
+                isVisiblePartNo : function() {
+                    var me = this;
+                    var provider = me.$.gridPanel.getDataProvider();
+
+                    // 그리드의 생성여부를 확인후 작업
+                    if (UT.isNotEmpty(provider)) {
+                        var created = provider.getNewItems();
+                        //신규 행추가가 존재하는 경우만 활성화
+                        if (created.length > 0) {
+                            //개발원가 롤인 경우 비활성화
+                            if (SCSessionManager.getCurrentUser().rd_role == "Y") {
+                                return false;
+                            } else {
+                                return true;
+                            }
+                           } else {
+                               return false;
+                        }
+                       } else {
+                           return false;
+                    }
+                }
+            },
+
+            /**
+             * 초기화 완료 후 호출 함수
+             */
+            initialized: function() {
+                var me = this;
+
+                me.set("initFlag", "Y");
+
+                // 공통코드 그룹 조회
+                me.$.codes.service();
+                // 코드 조회
+                me.$.getComm.service();
+                // 차종코드 조회
+                me.$.getDesnCarsRPC.service();
+                // 업종코드 조회
+                me.$.getDesnIndsRPC.service();
+                // close할 메뉴 얻어오기
+                me.$.menuListRPC.service();
+
+                // 기종,엔진 코드 조회
+                me.$.getTmcdCode.service();
+                me.$.getEncdcont.service();
+
+                // 콤포넌트 컨트롤
+                //me.controlComp();
+                 // formulas 적용
+                me.applyFormula();
+
+                me.set("initFlag", "N");
+            },
+
+            /**
+             * 부모에서 파라미터 전달
+             **/
+            load: function(obj) {
+                var me = this,
+                    date = new Date();
+
+                if(UT.isEmpty(obj.emst_pass_stat)){
+                    // 기본 변수 선언
+                    me.set("searchParam.comd_pass_stat_R", "20");
+                } else {
+                    me.set("searchParam.comd_pass_stat_R", obj.emst_pass_stat);
+                }
+
+                if(UT.isEmpty(obj.emst_mach_gubn)){
+                    // 기본 변수 선언
+                    me.set("searchParam.comd_mach_gubn_R", "V");
+                } else {
+                    me.set("searchParam.comd_mach_gubn_R", obj.emst_mach_gubn);
+                }
+
+                if(UT.isEmpty(obj.emst_cost_gubn)){
+                    // 기본 변수 선언
+                    me.set("searchParam.comd_cost_gubn_R", "AA");
+                } else {
+                    me.set("searchParam.comd_cost_gubn_R", obj.emst_cost_gubn);
+                }
+
+                // SUB PART 여부 체크 해제
+                me.set("searchParam.comd_sub0_part", "N");
+
+                if(UT.isEmpty(obj.emst_part_no)){
+                    // 기본 변수 선언
+                    me.set("searchParam.comd_part_no_R", "");
+                } else {
+                    me.set("searchParam.comd_part_no_R", obj.emst_part_no);
+                }
+                me.searchParam.comd_eono_R       = obj.emst_eono;
+                me.searchParam.comd_cumt_no_R    = obj.emst_cumt_no;
+                me.searchParam.comd_cumto_no_R   = obj.emst_cumto_no;
+
+                me.searchParam.comd_dev0_bumn_R  = obj.emst_dev0_bumn;
+                //me.searchParam.comd_debn_code_R  = obj.emst_debn_code;
+                me.searchParam.comd_cars_code_R  = obj.emst_cars_code;
+                me.searchParam.comd_inds_code_R  = obj.emst_inds_code;
+                me.searchParam.comd_init_name_R  = obj.comd_init_name;
+
+                //초기 날자 셋팅
+                if (UT.isNotEmpty(obj.emst_part_no)) {
+                    me.set("searchParam.comd_from_date", "");
+                } else {
+                    me.set("searchParam.comd_from_date", UT.formatDate(new Date(date.getFullYear(), date.getMonth() -3, date.getDate()), 'yyyyMMdd'));
+                }
+
+                me.set("searchParam.comd_to_date"  , UT.formatDate(date, 'yyyyMMdd'));
+
+                // 콤포넌트 컨트롤
+                me.controlComp();
+                 // formulas 적용
+                me.applyFormula();
+
+                if (UT.isNotEmpty(obj.emst_pass_stat)) {
+                    me.getList();
+                }
+
+            },
+
+            /**
+             * 콤포넌트 컨트롤
+             */
+            controlComp : function() {
+                var me = this;
+
+                // 삭제 컬럼 추가
+                me.$.gridPanel.selectionType = "eliminate";
+
+                if (SCSessionManager.getCurrentUser().w04_role == "Y") {
+                    me.$.btnAllExcel.hidden = false;
+                } else {
+                    me.$.btnAllExcel.hidden = true;
+                }
+
+                if (me.searchParam.chk_dept == "ST") {
+                    me.$.col_img_tmcdcode.visible  = false;
+                    me.$.col_tmcdcode.visible      = false;
+                }
+
+                if (SCSessionManager.getCurrentUser().rd_role == "Y") {
+                    me.$.btnAllExcel.hidden  = true;
+                    me.$.gabBtn.hidden       = false;
+                    me.$.compInfoBtn.hidden  = true;
+                    me.$.btn_carscode.hidden = true;
+                    me.$.btn_indscode.hidden = true;
+                    me.$.btn_app.hidden      = true;
+                    me.$.btn_charger.hidden  = true;
+                    me.$.btn_add.hidden      = true;
+                    me.$.btn_save.hidden     = true;
+                    me.$.btn_copy.hidden     = true;
+                    me.$.btn_move.hidden     = true;
+
+                    // 삭제 및 체크박스 컬럼 삭제
+                    me.$.gridPanel.useSelection    = false;
+                    me.$.chk.hidden              = false;
+                    me.$.col_img_tmcdcode.visible  = false;
+                    me.$.col_img_indscode.visible  = false;
+                    me.$.col_img_vend_name.visible = false;
+
+                }
+
+                if (SCSessionManager.getCurrentUser().g_role == "Y") {
+                    me.set("searchParam.comd_pass_stat_R", '40'); //결재완료
+                    me.$.sb_pass_stat_R.disabled  = true; //진행상태 변경 불가. 2016-11-21 소순철 책임 요청
+
+                    me.$.gabBtn.hidden       = false;
+                    me.$.compInfoBtn.hidden  = true;
+                    me.$.btn_carscode.hidden = true;
+                    me.$.btn_indscode.hidden = true;
+
+                    me.$.btn_app.hidden      = true;
+                    me.$.btn_charger.hidden  = true;
+                    me.$.btn_add.hidden      = true;
+                    me.$.btn_save.hidden     = true;
+                    me.$.btn_copy.hidden     = true;
+                    me.$.btn_move.hidden     = true;
+
+                    me.$.btn_complete.hidden = true;
+                    me.$.btn_cancel.hidden   = true;
+
+                    me.$.lb_del.hidden       = true;
+                    me.$.chk_del.hidden      = true;
+                    me.$.btn_distibution.hidden = true;
+                }
+            },
+
+            /**
+             * 조회 버튼 클릭 시 이벤트
+             */
+             list : function() {
+                var me = this;
+
+                me.set("searchParam.comd_cumto_no_R", "");
+                me.getList();
+            },
+
+            /**
+             * 목록 조회
+             */
+             getList : function() {
+                var me = this;
+
+                me.$.pagingControl.pagingParam.endRowNum        = 0;
+                me.$.pagingControl.pagingParam.comd_mach_gubn_R = "V";
+                me.$.pagingControl.pagingParam.tmcdCodeStr      = me.searchParam.tmcdCodeStr;
+                me.$.pagingControl.pagingParam.encdContStr      = me.searchParam.encdContStr;
+
+                me.$.pagingControl.pagingParam.comd_tmcd_code_R = me.searchParam.comd_tmcd_code_R;
+                me.$.pagingControl.pagingParam.comd_encd_cont_R = me.searchParam.comd_encd_cont_R;
+
+                me.$.pagingControl.pagingParam.comd_pass_stat_R = me.searchParam.comd_pass_stat_R;
+                me.$.pagingControl.pagingParam.comd_part_no_R   = me.searchParam.comd_part_no_R;
+                me.$.pagingControl.pagingParam.comd_part_name_R = me.searchParam.comd_part_name_R;
+                me.$.pagingControl.pagingParam.comd_cost_gubn_R = me.searchParam.comd_cost_gubn_R;
+                me.$.pagingControl.pagingParam.comd_cars_code_R = me.searchParam.comd_cars_code_R;
+                me.$.pagingControl.pagingParam.comd_inds_code_R = me.searchParam.comd_inds_code_R;
+                me.$.pagingControl.pagingParam.comd_init_name_R = me.searchParam.comd_init_name_R;
+                me.$.pagingControl.pagingParam.comd_gubn        = me.searchParam.comd_init_name_R;
+                me.$.pagingControl.pagingParam.comd_cumto_no_R  = me.searchParam.comd_cumto_no_R;
+                me.$.pagingControl.pagingParam.comd_base_frdt   = me.searchParam.comd_base_frdt;
+                me.$.pagingControl.pagingParam.comd_base_todt   = me.searchParam.comd_base_todt;
+                me.$.pagingControl.pagingParam.comd_from_date   = me.searchParam.comd_from_date;
+                me.$.pagingControl.pagingParam.comd_to_date     = me.searchParam.comd_to_date;
+                me.$.pagingControl.pagingParam.comd_sub0_part   = me.searchParam.comd_sub0_part;
+
+                me.search(me.$.pagingControl.pagingParam);
+
+                me.applyFormula();
+                if (SCSessionManager.getCurrentUser().rd_role == "Y") {
+                    me.set("lockColCount", 5);
+                } else {
+                    me.set("lockColCount", 8);
+                }
+
+            },
+
+            /**
+             * 조회 버튼 Click 이벤트
+             */
+            search: function(param) {
+                var me = this;
+
+                me.$.getListRPC.addInput("param", param);
+                me.$.getListRPC.service();
+
+            },
+
+            /**
+             * 조회 후 이벤트
+             */
+            resultSearch_resultHandler: function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                console.log(data);
+
+                me.applyFormula();
+            },
+
+            /**
+             * close 화면 메뉴 조회 후 이벤트
+             */
+            afterGetMenu : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                //chain, 공법선택화면 추가
+                me.resultMenu.push({comd_menu_id : "PCB00020"},{comd_menu_id:"PCF00020"});
+
+            },
+
+            afterGetComm : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                console.log(data);
+                me.set("searchParam.chk_dept", data.chk.chk_dept);
+
+                me.controlComp();
+            },
+
+            /**
+             * END PART CHECK
+             */
+             endPartCheck : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                var ret = data.ret;
+
+                if(ret.MESG_CODE == "SA-002") {
+                    UT.alert(ret.MESG);
+                    return;
+                }
+
+                // 미집계 품목이 존재할 경우, 오류 메시지 활성화
+                if (data.resultAll.length > 0) {
+                    UT.alert("미집계 품목이 존재합니다.\n집계처리 후 다시 작업하세요.");
+                    return;
+                }
+
+                me.$.getCheckEndPart.body = {
+                    apprvList : me.apprvList
+                };
+
+                me.$.getCheckEndPart.service();
+
+            },
+
+            /**
+             * 업체 코드로 업체명 조회 후처리
+             */
+            resultVendSearch : function(e, res) {
+                var me = this,
+                data = e.data,
+                item = e.item,
+                target = e.currentTarget.id,
+                provider = me.$.gridPanel.getDataProvider();
+
+
+                if (me.vend_info.length == 0) {
+                    me.set("vendflag", "Y");
+
+                    provider.setItemAt(me.vend_param.comd_indx, { comd_vend_code : ""});
+                    provider.setItemAt(me.vend_param.comd_indx, { comd_vend_name : ""});
+
+                } else {
+                    me.set("vendflag", "N");
+
+                    provider.setItemAt(me.vend_param.comd_indx, { comd_vend_name : me.vend_info[0].comd_vend_name});
+                }
+            },
+
+            /**
+             * 복사 처리 후 로직
+             */
+            copyListRPC_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                me.set("messageDev", UT.copy(me.resultCopy));
+
+                // 메세지 처리 (실패 시)
+                if (me.resultCopy.MESG_CODE == 'SA-002') {
+                    commonAS.comeAlert(me.resultCopy);
+                }
+
+                // 메세지 처리 (성공 시)
+                if (me.resultCopy.MESG_CODE == 'SA-001') {
+                    UT.alert("SEQ : " + me.resultCopy.CUMT_NO + "로 <br>" + "복사 되었습니다.");
+                    //재조회
+                    me.getList();
+                }
+            },
+
+            /**
+             * 임시 이동 처리 후 로직
+             */
+            moveListRPC_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                me.set("messageDev", UT.copy(me.moveObj));
+
+                // 메세지 처리 (실패 시)
+                if (me.moveObj.MESG_CODE == 'SA-002') {
+                    commonAS.comeAlert(me.moveObj);
+                } else {
+                    UT.alert(me.moveObj.MESG);
+                    me.getList();
+                }
+            },
+
+            /**
+             * 삭제 처리 후 로직
+             */
+            deleteListRPC_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                me.set("messageDev", UT.copy(me.resultDel));
+
+                // 메세지 처리 (실패 시)
+                if (me.resultDel['MESG_CODE'] == 'SA-002') {
+                    commonAS.partAlert(me.resultDel);
+                }
+
+                // 메세지 처리 (성공 시)
+                if (me.resultDel['MESG_CODE'] == 'SA-001') {
+                    if(me.messageFlag != 'Y') {
+                        UT.alert("삭제 되었습니다.");
+                        me.getList();
+                    }
+                }
+            },
+
+            /**
+             * 신규 저장 및 수정 처리 후 로직
+             */
+            insertListRPC_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                me.set("messageDev", UT.copy(me.resultSave));
+
+                // 메세지 처리 (실패 시)
+                if (me.resultSave['MESG_CODE'] == 'SA-002') {
+                    commonAS.partAlert(me.resultSave);
+                }
+
+                // 메세지 처리 (성공 시)
+                if (me.resultSave['MESG_CODE'] == 'SA-001') {
+                    if (me.resultSave['CHANGE_FLAG'] == 'X') {
+
+                        UT.alert("저장 되었습니다.<br>[원가계산 기준일,승상구분] 변경되었습니다.<br>END ITEM 하위 화면들은 다시 호출해야 합니다.");
+                        commonAS.closeAllTab(me.resultMenu);
+                    } else {
+                        UT.alert("저장 되었습니다.");
+                    }
+                    me.getList();
+                }
+            },
+
+            /**
+             * 전체 엑셀 조회 후 로직
+             */
+             getExcelListRPC_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+                // 엑셀 Export
+                me.$.allExcelGridPanel.excelExport();
+            },
+
+            /**
+             * 타이틀 클릭
+             */
+             onTitleClick : function() {
+                var me = this;
+                if (UT.isNotEmpty(me.messageDev) && SCSessionManager.getCurrentUser().usr_id == "GE000288") {
+                    commonAS.partAlert(me.messageDev);
+                }
+            },
+
+            /**
+             * 파라미터 암호화 처리
+             */
+            paramSetEncode : function(e, res) {
+                var me = this,
+                index = 0,
+                data = res.response,
+                target = e.currentTarget.id,
+                provider = me.$.gridPanel.getDataProvider();
+
+                // OZ 파라메터 넘길 변수
+                //var user_id    = SCSessionManager.getCurrentUser().usr_id;
+                var corp_code  = "";
+                var cost_gubn  = "";
+                var part_no    = "";
+                var eono       = "";
+                var cumt_no    = "";
+                var cumto_no   = "";
+                var aprv_date  = "";
+
+                for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y"){
+                        index++;
+                        corp_code = provider.getItemAt(indexI).comd_corp_code;
+                        cost_gubn = provider.getItemAt(indexI).comd_cost_gubn;
+                        part_no   = provider.getItemAt(indexI).comd_part_no;
+                        eono      = provider.getItemAt(indexI).comd_eono;
+                        cumt_no   = provider.getItemAt(indexI).comd_cumt_no;
+                        cumto_no  = provider.getItemAt(indexI).comd_cumto_no;
+                        aprv_date = provider.getItemAt(indexI).comd_aprv_date;
+                    }
+                }
+
+                if (index > 1) {
+                    UT.alert('갑을지 출력은 한건씩만 가능합니다.');
+                    return;
+                } else if (index == 0) {
+                    UT.alert('선택된 ITEM이 없습니다.');
+                    return;
+                } else {
+
+                    // CR01.jsp 로직을 끌고 옮(암호화 문제로....)
+                    var fileName = "";
+                    if (UT.isNotEmpty(part_no)) {
+                        fileName += part_no;
+                    }
+                    if (UT.isNotEmpty(cumto_no)) {
+                        fileName += "_" + cost_gubn + "_" + "SEQ" + cumto_no;
+                    }
+                    if (UT.isEmpty(aprv_date)) {
+                        if (UT.isNotEmpty(me.get("flag.updt"))) {
+                            fileName += "_" + me.get("flag.updt");
+                        }
+                    } else {
+                        fileName += "_" + aprv_date;
+                    }
+
+                    me.set("fileName", fileName);
+                    me.set("path"    , me.get("flag.updt"));
+
+
+                    var paramsObj = {XDECX_spms_pims_appl:me.get("flag.flag")
+                                    ,sys_gubn:"PROD"
+                                    ,user_id:SCSessionManager.getCurrentUser().usr_id
+                                    ,emst_corp_code:corp_code
+                                    ,emst_cost_gubn:cost_gubn
+                                    ,emst_part_no:part_no
+                                    ,emst_eono:eono
+                                    ,emst_cumt_no:cumt_no
+                                    ,emst_aprv_date:aprv_date
+                                    ,saveFileName:fileName
+                                    ,date:me.get("flag.updt")
+                                    ,path:me.get("flag.path")};
+
+                    me.$.paramSetEncodeRPC.body  = {
+                            param: paramsObj
+                    };
+
+                    me.$.paramSetEncodeRPC.service();
+                }
+            },
+
+            /**
+             * 갑을지 출력
+             */
+            print : function(e, res) {
+                var me = this,
+                index = 0,
+                data = res.response,
+                target = e.currentTarget.id,
+                provider = me.$.gridPanel.getDataProvider();
+
+                var iframe = document.createElement("iframe");
+                iframe.id = "custom-downloader";
+                document.body.appendChild(iframe);
+
+                var iframeDocument = iframe.contentDocument;
+                var form  = document.createElement("form");
+
+                //CSRF
+                var input = document.createElement("input");
+                var csrfObj = UT.csrf();
+                input.name = csrfObj.csrfParameter;
+                input.value = csrfObj.csrf;
+                input.type = "hidden";
+
+                form.appendChild(input);
+
+                // Parameter
+                var paramObj = {
+                        spms_pims_appl  : data.result.spms_pims_appl
+                       ,sys_gubn : data.result.sys_gubn
+                       ,user_id : data.result.user_id
+                       ,emst_corp_code : data.result.emst_corp_code
+                       ,emst_cost_gubn : data.result.emst_cost_gubn
+                       ,emst_part_no : data.result.emst_part_no
+                       ,emst_eono : data.result.emst_eono
+                       ,emst_cumt_no : data.result.emst_cumt_no
+                       ,emst_cumto_no : data.result.emst_cumto_no
+                       ,emst_aprv_date : data.result.emst_aprv_date
+                       ,saveFileName : me.get("fileName")
+                       ,date : data.result.date
+                       ,path : me.get("path")
+                       ,validChk : data.result.timestamp
+                };
+
+                for(var prop in paramObj){
+                    input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = prop;
+                    input.value = paramObj[prop];
+
+                    form.appendChild(input);
+                };
+                form.method = "POST";
+                form.target = "_blank";
+                form.action = "/ozCR01.jsp";
+
+                iframeDocument.body.appendChild(form);
+                form.submit();
+                iframeDocument.body.removeChild(form);
+            },
+
+            /**
+             * 결재 프로세스
+             */
+            approvalProcess : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                var itemList = [];
+
+                // 체크 통과시 결재 팝업 활성화
+                if (me.checkFlag.MESG_CODE == 'IQ-001') {
+                    for(var i = 0 ; i < me.apprvList.length ; i++) {
+                        var obj = UT.copy(me.apprvList[i]);
+                        var part_nm = obj.comd_part_name;
+
+                        if (UT.isEmpty(part_nm)) {
+                            part_nm = ' ';
+                        }
+
+                        //결재공통 팝업 호출
+                        var item = {};
+                        item.aprv_typcd    = "COST";           // 결재유형코드
+                        item.job_docno     = "";               // 업무문서번호
+
+                        // 제목은 원가구분만 기본으로 설정 처리 GYD
+                        // 젝목은 공란으로 처리 수정
+                        item.doc_tit       = "";
+                        item.job_docno_rev = 1;                // 업무문서번호 차수
+                        //item.md_nm         = "/modules/bp/wcams/cd/aprv/EMAprvDetail.swf";           // 모듈명 poAprv.swf
+                        item.md_param      = "emst_corp_code="   + obj.comd_corp_code    +
+                            "|emst_cost_gubn=" + obj.comd_cost_gubn    +
+                            "|emst_part_no="   + obj.comd_part_no      +
+                            "|emst_part_name=" + part_nm +
+                            "|emst_eono="      + obj.comd_eono         +
+                            "|emst_cumt_no="   + obj.comd_cumt_no      +
+                            "|emst_cumto_no="  + obj.comd_cumto_no
+                            ;         // 모듈파라미터
+                        item.emst_cost_gubn = obj.comd_cost_gubn;
+                        item.emst_part_no   = obj.comd_part_no;
+                        item.emst_eono      = obj.comd_eono;
+                        item.emst_cumto_no  = obj.comd_cumto_no;
+                        item.emst_cumt_no   = obj.comd_cumt_no;
+
+                        item.cnt1           = me.checkFlag.CNT1;
+                        item.cnt2           = me.checkFlag.CNT2;
+
+                        item.iframe_yn     = "N";                          // iframe여부 Y/N
+                        item.vd_cd         = "";                           // 업체코드
+                        item.aprv_amt      = "";                           // 결재 금액
+                        item.cur_cd        = "";                           // 통화 코드
+                        item.add_cond3     = "";                           // 업체일련번호
+                        item.add_cond2     = "";                           // 변경구분
+                        item.add_cond1     = "";                           // 조직일련번호
+                        item.cur_cd        = "KRW";                        // 통화
+                        item.aprv_amt      = obj.comd_cumt_pric;// 계산단가
+
+                        itemList.push(item);
+                    }
+
+                    if(!me.es_aprv_input){
+                        me.es_aprv_input = UT.popup('es-aprv-input', me, 800, 430, {
+                            'save-complete' : function(popup, e) {
+                                var result = e.detail;
+                                if(result.err_cd == 'E'){
+                                    UT.alert(result.err_msg);
+                                } else {
+                                    UT.alert("결재상신 되었습니다.");
+                                     me.searchParam['prog_sts'] = '30';
+                                     // 결재 처리되면 END 하위 TAB을 전부 닫는다.
+                                    me.es_aprv_input.close();
+                                     commonAS.closeAllTab(me.resultMenu);
+                                     me.getList();
+                                }
+                            },
+                            'save-complete-multi' : function(popup, e) {
+                                var result = e.detail;
+                                for(var i=0 ; i < result.length ; i++) {
+                                    if(result[i].err_cd == 'E') {
+                                        UT.alert(result.err_msg);
+                                        return;
+                                    }
+                                }
+                                UT.alert("결재상신 되었습니다.");
+                                 me.searchParam['prog_sts'] = '30';
+                                 // 결재 처리되면 END 하위 TAB을 전부 닫는다.
+                                me.es_aprv_input.close();
+                                 commonAS.closeAllTab(me.resultMenu);
+                                 me.getList();
+                            },
+                            'close-aprv' : function(popup, e) {
+                                var result = e.detail;
+                                    UT.alert("결재요청이 취소되었습니다.");
+                            }
+                        }, {title : "결재기안"});
+                    }
+                    me.es_aprv_input.show();
+                    me.es_aprv_input.getWindowContent().load(itemList);
+
+                } else {
+                    UT.alert(me.checkFlag.MESG);
+                }
+            },
+
+            /**
+             * 추가 버튼 Click 이벤트
+             */
+             addItem: function() {
+                var me = this,
+                row = {},
+                sDate = new Date(),
+                lsToDate = UT.formatDate(sDate, 'yyyyMMdd'),
+                provider = me.$.gridPanel.getDataProvider();
+
+                // 그리드 신규행 추가
+                if (me.searchParam.chk_dept == "ST") {
+                    row = {
+                            new0_item_gubn: "Y",
+                            chk           : "Y",
+                            comd_corp_code: "K1",
+                            comd_stnd_gubn: "H",
+                            comd_tmcd_code: "NONE",
+                            comd_base_date: lsToDate,
+                            file_cnt      : 0,
+                            comd_pass_stat: "20"
+                    };
+                } else {
+                    row = {
+                            new0_item_gubn: "Y",
+                            chk           : "Y",
+                            comd_corp_code: "K1",
+                            comd_stnd_gubn: "H",
+                            comd_base_date: lsToDate,
+                            file_cnt      : 0,
+                            comd_pass_stat: "20"
+                    };
+
+                }
+
+                provider.addItemAt(0, row);
+
+                me.set("lockColCount", 9);
+                me.applyFormula();    // formulas 적용
+
+            },
+
+            chkEnter: function(e) {
+                if(e.keyCode === 13) {
+                    this.$.dialog1.hide();
+                }
+            },
+
+             /**
+              * 저장 버튼 클릭 시 이벤트
+              */
+             saveList : function() {
+                var me = this;
+                var addIdx = 0;
+                // 초기화
+                me.set("messageFlag", "N");
+                me.set("resultInsert", []);
+                me.set("resultUpdate", []);
+                me.set("resultDelete", []);
+                me.set("messageDev"  , []);
+
+                var provider = me.$.gridPanel.getDataProvider();
+                var created = provider.getNewItems();
+                var updated = provider.getUpdateItems();
+                var deleted = provider.removeItems();
+
+                // 신규/수정건이 있을 경우에만 저장
+                if (created.length + updated.length + deleted.length === 0) {
+
+                    me.set("searchParam.msg","저장 할 내역이 없습니다.");
+                    me.$.dialog1.show({
+                        titleText          : "알림",
+                        modal              : true,
+                        draggable          : true,
+                        /*
+                        collapsible        : false,
+                        closable           : true,
+                        maximizable        : false,
+                        interactResizable  : false,
+                        hideOnEscKey       : false,
+                        hideOnOutsideClick : false,
+                        */
+                        buttons            : 'ok',
+                    });
+
+                    /*
+                    UT.confirm("저장 할 내역이 없습니다.", function() {
+                        console.log("Hi!");
+                    });
+                    */
+                    return;
+                }
+
+                // 저장 유효성 체크
+                if (!me.validation("s")) {
+                    return;
+                }
+
+                if (created.length == 0 && updated.length == 0 && deleted.length > 0) {
+                    commonAS.confirm("삭제확인", "삭제 하시겠습니까?", function() {
+                        for (var d=0; d < deleted.length; d++) {
+                            // 휴지통 공간으로 보내기 위해 taget 위치를 설계구분에 따라 지정함
+                            deleted[d].cost_gubn = "X" + deleted[d].comd_cost_gubn.substring(1,2);
+                        }
+                        me.set("resultDelete", UT.copy(deleted));
+                        me.$.deleteListRPC.body = {
+                            param: me.get("resultDelete")
+                        };
+                        UT.request(me.$.deleteListRPC);
+                    });
+                }
+
+                if (created.length > 0 || updated.length > 0) {
+                    if (me.vendflag == "Y") {
+                        UT.alert("등록되지 않은 업체코드입니다.<br>확인 후 작업하세요.");
+                        return;
+                    }
+
+                    me.set("messageFlag", "Y");
+                    me.set("resultInsert", UT.copy(created));
+                    me.set("resultUpdate", UT.copy(updated));
+                    me.$.insertListRPC.body = {
+                            paramI: me.get("resultInsert"),
+                            paramU: me.get("resultUpdate"),
+                    };
+
+                    if (me.get("flag_req") =='Y') {
+                        commonAS.confirm("Warning", "[원가계산 기준일,승상구분,업체] 변경시<br>원가재계산해야 합니다.저장하시겠습니까?", function() {
+                            me.$.insertListRPC.service();
+                        });
+                    } else {
+                        me.$.insertListRPC.service();
+                    }
+                }
+            },
+
+
+             /**
+              * 복사 버튼 클릭 시 이벤트
+              */
+             copyAlert : function() {
+                var me = this,
+                    checkNum = 0,
+                    provider = me.$.gridPanel.getDataProvider();
+
+                // 메시지 초기화
+                me.set("messageDev", []);
+
+                for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y" ){
+                        if ( provider.getItemAt(indexI).new0_item_gubn == "Y") {
+                            UT.alert("저장되지 않은 PART입니다.<br>복사를 하려면 저장후에 선택하여 주십시오.");
+                            return;
+                        }
+                        checkNum++;
+                        me.resultCopy.comd_corp_code = provider.getItemAt(indexI).comd_corp_code;
+                        me.resultCopy.comd_cost_gubn = provider.getItemAt(indexI).comd_cost_gubn;
+                        me.resultCopy.comd_part_no   = provider.getItemAt(indexI).comd_part_no;
+                        me.resultCopy.comd_eono      = provider.getItemAt(indexI).comd_eono;
+                        me.resultCopy.comd_cumt_no   = provider.getItemAt(indexI).comd_cumt_no;
+                    }
+                }
+                if (checkNum == 0) {
+                    UT.alert("복사 할 내역이 없습니다.");
+                    return;
+                } else if (checkNum > 1) {
+                    UT.alert("복사는 1개의 item만 가능합니다.");
+                    return;
+                }
+
+                var me = this;
+                var param = {popControl:'Y'};
+                if(!me.ep_cr01_02){
+                    me.ep_cr01_02 = UT.popup('ep-cr01-02', me, 250, 150, {
+                        'save-complete' : function(popup, e) {
+                            var result = e.detail;
+
+                            me.set("resultCopy.comd_cost_gubn_P", result.comd_cost_gubn_P);
+                            //UT.alert(me.searchParam.comd_cost_gubn_P);
+                            me.$.copyListRPC.service();
+                            popup.close();
+                        }
+                    }, {title : "복사"});
+                }
+                me.ep_cr01_02.show();
+                me.ep_cr01_02.getWindowContent().load(param);
+
+            },
+
+             /**
+              * 임시 이동 버튼 클릭
+              */
+             moveAlert : function() {
+                var me = this,
+                    checkNum = 0,
+                    provider = me.$.gridPanel.getDataProvider();
+
+                me.resultMove = [];
+
+                // 메시지 초기화
+                me.set("messageDev", []);
+
+                for(var m=0 ; m<provider.getItemSize(); m++ ){
+                    if(provider.getItemAt(m).chk == "Y" ){
+                        if (provider.getItemAt(m).new0_item_gubn == "Y") {
+                            UT.alert("저장되지 않은 PART입니다.<br>임시 계산으로 이동하려면 저장후에 선택하여 주십시오.");
+                            return;
+                        }
+
+                        me.resultMove.push({new0_item_gubn: "Y"
+                                           ,comd_corp_code: provider.getItemAt(m).comd_corp_code
+                                           ,comd_cost_gubn: provider.getItemAt(m).comd_cost_gubn
+                                           ,comd_part_no  : provider.getItemAt(m).comd_part_no
+                                           ,comd_eono     : provider.getItemAt(m).comd_eono
+                                           ,comd_cumt_no  : provider.getItemAt(m).comd_cumt_no
+                                           ,cost_gubn     : "RC"});
+                        checkNum++;
+                    }
+                }
+                if (checkNum == 0) {
+                    UT.alert("임시 계산으로 이동할 내역이 없습니다.");
+                    return;
+                }
+                commonAS.confirm("Warning", "선택한 Item을 임시 계산으로 이동 하시겠습니까?", function() {
+                    me.$.moveListRPC.service();
+                });
+            },
+
+             /**
+              * 배포 버튼 클릭 시 이벤트
+              */
+             distibutionPopup : function() {
+                var me = this,
+                    checkNum = 0,
+                    provider = me.$.gridPanel.getDataProvider();
+
+                // 메시지 초기화
+                me.set("messageDev", []);
+
+                me.set("distList", []);
+                for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y" ){
+
+                        checkNum++;
+                        me.set("distObj", {});
+
+                        me.distObj.init_cman = provider.getItemAt(indexI).comd_init_cman;
+                        me.distObj.corp_code = provider.getItemAt(indexI).comd_corp_code;
+                        me.distObj.cost_gubn = provider.getItemAt(indexI).comd_cost_gubn;
+                        me.distObj.part_no   = provider.getItemAt(indexI).comd_part_no;
+                        me.distObj.eono      = provider.getItemAt(indexI).comd_eono;
+                        me.distObj.cumt_no   = provider.getItemAt(indexI).comd_cumt_no;
+
+
+                        if(provider.getItemAt(indexI).comd_pass_stat == '50'){
+                            UT.alert('반려된 품목은 배포할 수 없습니다.');
+                            return;
+                        }
+
+                        //[2020.11.25] MASTER 권한이 있으면 배포 가능해야함(요청:우한섭 책임)
+                        if (SCSessionManager.getCurrentUser().m10_role != "Y") {
+                            if(SCSessionManager.getCurrentUser().usr_id != provider.getItemAt(indexI).comd_init_cman) {
+                                UT.alert('본인이 작성하지않은 품목은 배포할 수 없습니다.');
+                                return;
+                            }
+                        }
+                        me.distList.push(me.distObj);
+                    }
+                }
+
+                if (checkNum == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                } else if (checkNum > 1) {
+                    //UT.alert("배포는 한건씩만 가능합니다. --> " + checkNum);
+                    //return;
+                }
+
+                if(!me.ep_cr01_01){
+                    me.ep_cr01_01 = UT.popup('ep-cr01-01', me, 800, 500, {
+                        'selected-item' : function(popup, e) {
+                             me.getList();
+                            popup.close();
+                        }
+                    }, {title : "배포"});
+                }
+                me.ep_cr01_01.show();
+                me.ep_cr01_01.getWindowContent().load(me.distList);
+            },
+
+            /**
+             * 전체 엑셀 버튼 Click 이벤트
+             */
+             getExcel: function() {
+                var me = this;
+
+                me.excelParam.comd_cost_gubn_R = me.searchParam.comd_cost_gubn_R;
+                me.excelParam.comd_eono_R      = me.searchParam.comd_eono_R;
+                me.excelParam.comd_cumt_no_R   = '';
+                me.excelParam.comd_dev0_bumn_R = '';
+                //me.excelParam.comd_debn_code_R = '';
+                me.excelParam.comd_cars_code_R = me.searchParam.comd_cars_code_R;
+                me.excelParam.comd_inds_code_R = me.searchParam.comd_inds_code_R;
+                me.excelParam.comd_pass_stat_R = me.searchParam.comd_pass_stat_R;
+                me.excelParam.comd_part_no_R   = me.searchParam.comd_part_no_R;
+                me.excelParam.tmcdCodeStr      = me.searchParam.tmcdCodeStr;
+                me.excelParam.encdContStr      = me.searchParam.encdContStr;
+                me.excelParam.comd_part_name_R = me.searchParam.comd_part_name_R;
+                me.excelParam.comd_init_name_R = me.searchParam.comd_init_name_R;
+                me.excelParam.comd_sub0_part   = me.searchParam.comd_sub0_part;
+
+                me.$.getExcelListRPC.service();
+            },
+
+            /**
+             * 갑을지 출력전 CHECK
+             */
+             compareCostCnt : function() {
+                var me = this,
+                    provider = me.$.gridPanel.getDataProvider();
+
+                for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).new0_item_gubn == "Y") {
+                        UT.alert("저장후 진행 가능합니다.");
+                        return;
+                    }
+                    if(provider.getItemAt(indexI).chk == "Y"){
+                        me.searchParam1.comd_part_no   = provider.getItemAt(indexI).comd_part_no;
+                        me.searchParam1.comd_eono      = provider.getItemAt(indexI).comd_eono;
+                        me.searchParam1.comd_cumt_no   = provider.getItemAt(indexI).comd_cumt_no;
+                    }
+                }
+                me.searchParam1.user = SCSessionManager.getCurrentUser().usr_id;
+                me.searchParam1.func = 'CR01';
+                me.$.getCompareRPC.service();
+            },
+
+
+            /**
+             * 기종 변경 시 이벤트
+             */
+            changeHandler_tmcdcode : function() {
+                var me = this;
+                me.set("searchParam.tmcdCodeStr", null);
+
+                if (me.get("initFlag") == "N" && UT.isNotEmpty(me.searchParam.tmcdCode)) {
+                    var tmcdCode = me.searchParam.tmcdCode.slice(",");
+
+                    if( tmcdCode.length > 0 ) {
+                        var tmcdCodeStr = "";
+                        for( var i= 0 ; i < tmcdCode.length ; i++ ) {
+                            if ( i == 0 ) {
+                                tmcdCodeStr = "'" + tmcdCode[i] + "'";
+                            } else {
+                                tmcdCodeStr = tmcdCodeStr + ",'" + tmcdCode[i] + "'";
+                            }
+                        }
+                        me.searchParam.tmcdCodeStr = tmcdCodeStr;
+                    } else {
+                        me.searchParam.tmcdCodeStr = null;
+                    }
+                    // 엔지 코드 조회
+                    me.$.getEncdcont.service();
+                }
+            },
+
+            /**
+             *  엔진 변경 시 이벤트
+             */
+            changeHandler_encdcont : function() {
+                var me = this;
+                me.set("searchParam.encdcontStr", null);
+
+                if (me.get("initFlag") == "N" && UT.isNotEmpty(me.searchParam.encdcont)) {
+                    var encdcont = me.searchParam.encdcont.slice(",");
+
+                    if( encdcont.length > 0 ) {
+                        var encdcontStr = "";
+                        for( var i = 0 ; i < encdcont.length ; i++ ) {
+                            if ( i == 0 ) {
+                                encdcontStr = "'" + encdcont[i] + "'";
+                            } else {
+                                encdcontStr = encdcontStr + ",'" + encdcont[i] + "'";
+                            }
+                        }
+                        me.searchParam.encdcontStr = encdcontStr;
+                    } else {
+                        me.searchParam.encdcontStr = null;
+                    }
+                }
+            },
+
+            /**
+             *  grid item edit end 이벤트
+             */
+            itemEditEndHandler : function(event) {
+                var me = this, e = event.detail,
+                data = e.data,
+                item = e.item,
+                rowIndex = e.item.rowIndex,
+                oldValue = event.detail.oldValue,
+                newValue = event.detail.newValue,
+                provider = e.provider;
+
+                switch(item.dataField) {
+                    case 'comd_stnd_gubn':
+                    case 'comd_inds_code':
+                    case 'comd_vehl_gubn':
+                    case 'comd_base_date':
+                        if(newValue != oldValue) {
+                            me.set("flag_req",'Y');
+                        } else  {
+                            me.set("flag_req",'N');
+                        }
+                        break;
+
+                    case 'comd_vend_code':
+                        me.vend_info = {};
+
+                        me.set("vendPopflag", "N");
+
+                        if (oldValue != newValue) {
+                            provider.setItemAt(rowIndex, { comd_vend_code : ""});
+                            provider.setItemAt(rowIndex, { comd_vend_name : ""});
+                            provider.setItemAt(rowIndex, { comd_vend_apfr : ""});
+
+                            me.set("flag_req",'Y');
+
+                            if (newValue != '' && newValue != null) {
+                                me.vend_param.comd_vend_code = newValue;
+                                me.vend_param.comd_indx      = item.rowIndex;
+
+                                me.$.getVendNameInfoRPC.service();
+                            }
+
+                        } else {
+                            me.set("flag_req",'N');
+                        }
+
+                        break;
+
+                    default :
+                        me.set("flag_req",'N');
+                        break;
+                }
+
+            },
+
+            /**
+             *  grid item click 이벤트
+             */
+            itemClickHandler : function(event) {
+                var me = this, e = event.detail,
+                    data = e.data,
+                    item = e.item,
+                    rowIndex = item.rowIndex,
+                    newValue = e.newValue,
+                    oldValue = e.oldValue,
+                    provider = e.provider;
+
+                var pass_desc = data.comd_pass_desc;
+
+                me.set("rowIndex", item.rowIndex);
+                switch(item.dataField) {
+                    case 'comd_part_no':
+                        // 체인 호출 : 저장안한 ROW일 경우 메세지 출력
+                        // 추가 후 저장안한 항목인가?
+                        if(data.new0_item_gubn == "Y") {
+                            UT.alert("저장 후 CHAIN 조회가 가능합니다.");
+                        } else {
+                            if (UT.isNotEmpty(data.comd_corp_code)) {
+                                if(UT.isEmpty(data.comd_corp_code)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [법인코드]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_cost_gubn)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [계산구분]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_part_no)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [PART NO]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_eono)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [EONO]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_cumt_no)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [SEQ]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_stnd_gubn)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [표준구분]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_base_date)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [적용일]");
+                                    return;
+                                } else if(UT.isEmpty(data.comd_pass_stat)) {
+                                    UT.alert("필수값이 부족하여 CHAIN 화면으로 전환할 수 없습니다.<br>사유 : [진행상태]");
+                                    return;
+                                } else {
+
+                                }
+
+                                var tmpStr = data.comd_part_name;
+                                if (tmpStr == null || tmpStr == "") {
+                                    tmpStr = " ";
+                                }
+
+                                var url = "ui/bp/tcams/cd/cd02/em-cd02.html?tit=CHAIN" +
+                                "&emst_corp_code="+data.comd_corp_code+
+                                "&emst_cost_gubn="+data.comd_cost_gubn+
+                                "&emst_part_no="  +data.comd_part_no+
+                                "&emst_eono="     +data.comd_eono+
+                                "&emst_cumt_no="  +data.comd_cumt_no+
+                                "&emst_cumto_no=" +data.comd_cumto_no+
+                                "&emst_mach_gubn=V"+
+                                "&emst_stnd_gubn="+data.comd_stnd_gubn+
+                                "&emst_cars_code="+data.comd_cars_code+
+                                "&emst_base_date="+data.comd_base_date+
+                                "&emst_pass_stat="+data.comd_pass_stat+
+                                "&emst_inds_code="+data.comd_inds_code+
+                                "&emst_cumt_yn="  +data.comd_cumt_yn+
+                                "&emst_chin_yn="  +data.comd_chin_yn+
+                                "&emst_vehl_gubn="+data.comd_vehl_gubn+
+                                "&from_menu_id=PCA00010"+
+                                "&emst_part_name="+tmpStr.replaceAll("&", "＆")+
+                                "&chk_dept="      +me.searchParam.chk_dept ;
+                                ;
+
+                                UT.createWindow("PCX00020", "CHAIN", url);
+                            }
+                        }
+                    break;
+
+                    case 'img_partno':
+                        // 추가 아이템인가?
+                        if(data.new0_item_gubn == "Y") {
+
+                            var me = this;
+                            var param = {popControl:'Y'};
+                            if(!me.es_co02_01){
+                                me.es_co02_01 = UT.popup('es-co02-01', me, 1000, 600, {
+                                    'selected-item' : function(popup, e) {
+                                        var result = e.detail;
+
+                                            provider = me.$.gridPanel.getDataProvider();
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_part_no   : result.comd_part_no});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_part_name : result.comd_part_name});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_eono      : result.comd_eono});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_src0      : result.comd_src0_code});
+                                            me.$.tb_part_no_R.value = result.comd_part_no;
+
+                                        popup.close();
+                                    }
+                                }, {title : "PART NO 선택"});
+                            }
+                            me.es_co02_01.show();
+                            me.es_co02_01.getWindowContent().load(param);
+                        }
+                        break;
+
+                    case 'img_tmcdcode':
+
+                        if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                            break;
+                        } else {
+                            var me = this;
+                            var param = {tmcd_code:data.comd_tmcd_code};
+
+                            if(!me.es_ci21_01){
+                                me.es_ci21_01 = UT.popup('es-ci21-01', me, 1200, 615, {
+                                    'selected-item' : function(popup, e) {
+                                        var result = e.detail;
+
+                                            provider = me.$.gridPanel.getDataProvider();
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_tmcd_code : result.tmcd_code});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_encd_cont : result.encd_cont});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_capa_cont : result.capa_cont});
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_tf_code   : result.tf_code});
+                                        popup.close();
+                                    }
+                                }, {title : "사양선택"});
+                            }
+                            me.es_ci21_01.show();
+                            me.es_ci21_01.getWindowContent().load(param);
+                        }
+                        break;
+
+                    case 'check':
+                        break;
+
+                    case 'comd_cars_code':
+                        if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                            break;
+                        } else {
+                            me.popup_ESCI02_SEL();
+                        }
+                        break;
+
+                    case 'img_indscode':
+
+                        if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                            break;
+                        } else {
+                            var me = this;
+                            var param = UT.copy(item);
+                            if(!me.popup_ci04){
+                                me.popup_ci04 = UT.popup('es-ci04-01', me, 800, 600, {
+                                    'selected-item' : function(popup, e) {
+                                        var result = e.detail;
+                                            provider = me.$.gridPanel.getDataProvider();
+                                            provider.setItemAt(me.$.gridPanel.getCurrentCell().rowIndex, { comd_inds_code : result.comd_inds_code});
+                                        popup.close();
+                                    }
+                                }, {title : "업종 선택"});
+                            }
+                            me.popup_ci04.show();
+                            me.popup_ci04.getWindowContent().load(param);
+                        }
+
+                        break;
+
+                    case 'file_cnt':
+                        break;
+
+                    case 'img_file_attach':
+                        /*
+                        var popup_file:ESFileAttach = new ESFileAttach();
+                        var popupWrapper:IFlexDisplayObject;
+                        var param:Object = new Object();
+
+                        param['comd_corp_code']  = item['comd_corp_code'];
+                        param['comd_cost_gubn']  = item['comd_cost_gubn'];
+                        param['comd_part_no']    = item['comd_part_no'];
+                        param['comd_eono']       = item['comd_eono'];
+                        param['comd_cumt_no']    = item['comd_cumt_no'];
+                        param['file_cnt']        = item['file_cnt'];
+                        param['comd_att_grp_cd'] = item['comd_att_grp_cd'];
+                        param['comd_pass_stat']  = item['comd_pass_stat'];
+
+                        popup_file.popup(param);
+                        popupWrapper = SCPopupManager.getInstance().createPopUp("파일첨부", 450, 350, popup_file, Application.application as DisplayObject, true, "center");
+
+                        popupWrapper.addEventListener("closeAtt", function(event:SCEvent):void {
+                            PopUpManager.removePopUp(popupWrapper);
+                        });
+
+                        popupWrapper.addEventListener("saveComplete", function(event:SCEvent):void {
+                            PopUpManager.removePopUp(popupWrapper);
+                            //SCAlert.show("첨부파일이 등록되었습니다.");
+                            getList();
+                        });
+                        */
+
+                        break;
+
+                    case 'img_remk':
+                        var me = this;
+                        var param = {};
+                        param.comd_corp_code = data.comd_corp_code;
+                        param.comd_cost_gubn = data.comd_cost_gubn;
+                        param.comd_part_endi = data.comd_part_no;
+                        param.comd_eono_endi = data.comd_eono;
+                        param.comd_cumt_endi = data.comd_cumt_no;
+
+                        if(!me.ep_cd02_03){
+                            me.ep_cd02_03 = UT.popup('ep-cd02-03', me, 744, 450, {
+                                'selected-item' : function(popup, e) {
+                                    popup.close();
+                                }
+                            }, {title : "주기정보 조회"});
+                        }
+                        me.ep_cd02_03.show();
+                        me.ep_cd02_03.getWindowContent().load(param);
+                        break;
+
+                    case 'comd_pass_desc':
+                        //popup으로 변경
+                        if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                            if(UT.isNotEmpty(data.comd_aprv_no)){
+
+                                var appParam = {};
+
+                                appParam.aprv_docno     = data.comd_aprv_no;
+                                appParam.emst_part_no   = data['comd_part_no'];
+                                appParam.emst_eono      = data['comd_eono'];
+                                appParam.emst_corp_code = data['comd_corp_code'];
+                                appParam.emst_cumt_no   = data['comd_cumt_no'];
+                                appParam.emst_cumto_no  = data['comd_cumto_no'];
+                                appParam.emst_cost_gubn = data['comd_cost_gubn'];
+                                appParam.emst_part_name = data['comd_part_name'];
+                                appParam.md_param =  "emst_corp_code=" + data.comd_corp_code    +
+                                                    "|emst_cost_gubn=" + data.comd_cost_gubn    +
+                                                    "|emst_part_no="   + data.comd_part_no      +
+                                                    "|emst_part_name=" + data.comd_part_name    +
+                                                    "|emst_eono="      + data.comd_eono         +
+                                                    "|emst_cumt_no="   + data.comd_cumt_no      +
+                                                    "|emst_cumto_no="  + data.comd_cumto_no
+                                ;
+
+                                appParam.pop        = "Y";
+                                appParam.aprvMain    = "Y";
+
+                                if (!me.es_aprv_detail_new) {
+                                    me.es_aprv_detail_new = UT.popup("es-aprv-detail-new", me, 1750, 930, {
+                                    }, {title: "결재내용상세"});
+                                }
+                                me.es_aprv_detail_new.show();
+                                me.es_aprv_detail_new.getWindowContent().load(appParam);
+                            }
+                        }
+
+                        break;
+
+                    case 'img_vend_name':
+                        if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                            break;
+                        } else {
+                            me.popup_ESCD02_SEL();
+                        }
+                        break;
+
+                    default :
+                        break;
+                }
+
+            },
+
+
+            popup_ESCI02_ALL : function() {
+                var me = this;
+                me.set("funcGubn", "all");
+                me.popup_ESCI02_01();
+            },
+
+            popup_ESCI02_SEL : function() {
+                var me = this;
+                me.set("funcGubn", "sel");
+                me.popup_ESCI02_01();
+            },
+
+            /**
+             * 차종 팝업 오픈 (기본원가 정보를 팝업으로 보여줌 선택한 모든로우에 셀렉티드 로우를 깔아줌)
+             */
+            popup_ESCI02_01 : function() {
+
+                var me = this,
+                    cnt = 0,
+                    pass_stat = "",
+                    gubn = me.get("funcGubn"),
+                    provider = me.$.gridPanel.getDataProvider();
+
+                var param = {};
+                for(var i=0; i<provider.getItemSize(); i++ ){
+                    if(provider.getItemAt(i).chk == "Y"){
+                        pass_stat = provider.getItemAt(i).comd_pass_stat;
+                        if(pass_stat == '40' || pass_stat == '30' || pass_stat == "2C") {
+                            UT.alert("[결재 진행중/결재 완료/계산 완료] ITEM은 수정할 수 없습니다.");
+                            return;
+                        }
+                        cnt++;
+                    }
+                    //Row 선택시에는 기존 체크된 항목을 해지. 선택한값만 체크하도록한다.
+                    if(gubn == 'sel') {
+                        provider.setItemAt(i, { check : "N"});
+                    }
+                }
+
+
+                if (me.get("rowIndex") == -1 && cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                } else {
+                    provider.setItemAt(me.get("rowIndex"), { "chk" : "Y"});
+                }
+
+                if(!me.popup_ci02){
+                    me.popup_ci02 = UT.popup('es-ci02-01', me, 900, 600, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail;
+
+                            for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                                if(provider.getItemAt(indexI).chk == "Y"){
+                                    provider.setItemAt(indexI, { comd_cars_code : result.comd_cars_code});
+                                    if(!(UT.isEmpty(provider.getItemAt(indexI).comd_vehl_gubn))){
+                                        if(provider.getItemAt(indexI).comd_vehl_gubn != result.comd_vehl_gubn)  {
+                                            me.set("flag_req",'Y');
+                                        }
+                                        provider.setItemAt(indexI, { comd_vehl_gubn : result.comd_vehl_gubn});
+                                    }
+                                }
+                            }
+                            popup.close();
+                        }
+                    }, {title : "차종선택"});
+                }
+                me.popup_ci02.show();
+                me.popup_ci02.getWindowContent().load(param);
+            },
+
+
+
+            popup_ESCD02_ALL : function() {
+                var me = this;
+                me.set("funcGubn", "all");
+                me.popup_ESCD02_01_02();
+
+            },
+
+            popup_ESCD02_SEL : function() {
+                var me = this;
+                me.set("funcGubn", "sel");
+                me.popup_ESCD02_01_02();
+            },
+
+            /**
+             * 업체 팝업 오픈 (기본원가 정보를 팝업으로 보여줌 선택한 모든로우에 셀렉티드 로우를 깔아줌)
+             */
+            popup_ESCD02_01_02 : function() {
+
+                var me = this,
+                    cnt = 0,
+                    gubn = me.get("funcGubn"),
+                    provider = me.$.gridPanel.getDataProvider();
+                var param = {};
+
+                for(var i=0; i<provider.getItemSize(); i++ ){
+                    if(provider.getItemAt(i).chk == "Y"){
+                        cnt++;
+                    }
+                    //Row 선택시에는 기존 체크된 항목을 해지. 선택한값만 체크하도록한다.
+                    if(gubn == 'sel') {
+                        provider.setItemAt(i, { "chk" : "N"});
+                    }
+                }
+
+                if (me.get("rowIndex") == -1 && cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                } else {
+                    provider.setItemAt(me.get("rowIndex"), { "chk" : "Y"});
+                }
+
+                me.set("flag_req",'N');
+
+                if(!me.popup_cd02_01_02){
+                    me.popup_cd02_01_02 = UT.popup('ep-cd02-01-02', me, 880, 600, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail,
+                            provider = me.$.gridPanel.getDataProvider()
+
+
+                            me.set("vendPopflag", "Y");
+
+                            for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                                var obj = provider.getItemAt(indexI);
+                                if(obj.chk == "Y"){
+                                    if(obj.comd_vend_code != result.comd_vend_code) {
+                                        me.set("flag_req",'Y');
+
+                                        provider.setItemAt(indexI, { comd_vend_code : result.comd_vend_code});
+                                        provider.setItemAt(indexI, { comd_vend_apfr : result.comd_vend_apfr});
+                                        provider.setItemAt(indexI, { comd_vend_name : result.comd_vend_name});
+
+                                    }
+                                }
+                            }
+                            popup.close();
+                        }
+                    }, {title : "업체선택"});
+                }
+                me.popup_cd02_01_02.show();
+                me.popup_cd02_01_02.getWindowContent().load();
+
+            },
+
+            /**
+             * 업종 팝업 오픈 (기본원가 정보를 팝업으로 띄워서보여줌 선택한 모든로우에 셀렉티드 로우를 깔아줌)
+             */
+            popup_ESCI04_01 : function() {
+
+                var me = this
+                    cnt = 0,
+                    pass_stat = "",
+                    provider = me.$.gridPanel.getDataProvider();
+                var param = {};
+
+                for(var i=0; i<provider.getItemSize(); i++ ){
+                    if(provider.getItemAt(i).chk == "Y"){
+                        pass_stat = provider.getItemAt(i).comd_pass_stat;
+                        if(pass_stat == '40' || pass_stat == '30' || pass_stat == "2C") {
+                            UT.alert("[결재 진행중/결재 완료/계산 완료] ITEM은 수정할 수 없습니다.");
+                            return;
+                        }
+                        cnt++;
+                    }
+                }
+
+                if (cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+
+                param.matl_mach_gubn = 'V';
+                me.set("flag_req",'N');
+
+                if(!me.popup_ci04_01){
+                    me.popup_ci04_01 = UT.popup('es-ci04-01', me, 1200, 600, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail;
+
+                            me.set("vendPopflag", "Y");
+
+                            for(var indexI=0; indexI<provider.getItemSize(); indexI++ ){
+                                if(provider.getItemAt(indexI).chk == "Y"){
+                                    if(provider.getItemAt(indexI).comd_inds_code != result.comd_inds_code) {
+                                        me.set("flag_req",'Y');
+                                    }
+
+                                    provider.setItemAt(indexI, { comd_inds_code : result.comd_inds_code});
+                                }
+                            }
+                            popup.close();
+                        }
+                    }, {title : "업종선택"});
+                }
+                me.popup_ci04_01.show();
+                me.popup_ci04_01.getWindowContent().load(param);
+            },
+
+            /**
+             * 담당자 변경
+             */
+            popup_ESCD01_01_01 : function() {
+
+                var me = this,
+                pass_stat = "",
+                provider = me.$.gridPanel.getDataProvider();
+
+                var tempSC = [];
+                for(var i=0; i<provider.getItemSize(); i++ ){
+                    if (provider.getItemAt(i).chk == "Y"){
+                        pass_stat = provider.getItemAt(i).comd_pass_stat;
+                        if(UT.isNotEmpty(provider.getItemAt(i).esti_pass_stat)){
+                            UT.alert("업체견적중인 PART[ "+provider.getItemAt(i).comd_part_no+" ]가 있어\r담당자 변경이 불가합니다.");
+                            return;
+                        } else if (pass_stat == '40' || pass_stat == '30' || pass_stat == "2C"){
+                            UT.alert("[결재 진행중/결재 완료/계산 완료] ITEM은 수정할 수 없습니다.");
+                            return;
+                        }
+                        tempSC.push(provider.getItemAt(i));
+                    }
+                }
+
+                if (tempSC.length == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+
+                if(!me.ep_cd01_01_01){
+                    me.ep_cd01_01_01 = UT.popup('ep-cd01-01-01', me, 550, 600, {
+                        'selected-item' : function(popup, e) {
+                            me.getList();
+                            popup.close();
+                        }
+                    }, {title : "담당자 변경"});
+                }
+                me.ep_cd01_01_01.show();
+                me.ep_cd01_01_01.getWindowContent().load(tempSC);
+            },
+
+            /**
+             * 원가비교 조회 팝업
+             */
+            compareCost : function() {
+
+                var me = this,
+                    cnt = 0,
+                    newData = [],
+                    provider = me.$.gridPanel.getDataProvider();
+
+                for(var i=0; i<provider.getItemSize(); i++ ) {
+                    if (provider.getItemAt(i).chk == "Y"){
+                        cnt++;
+                        newData.push({comd_cost_gubn : provider.getItemAt(i).comd_cost_gubn
+                                     ,comd_part_no   : provider.getItemAt(i).comd_part_no
+                                     ,comd_part_name : provider.getItemAt(i).comd_part_name
+                                     ,comd_eono      : provider.getItemAt(i).comd_eono
+                                     ,comd_cumt_no   : provider.getItemAt(i).comd_cumt_no
+                        });
+                    }
+                }
+
+                if (cnt ==0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+                if (cnt > 6) {
+                    UT.alert("원가비교계산은 7개미만의 ITEM선택만 가능합니다.");
+                    return;
+                }
+
+                if(!me.popup_cd04_01){
+                    me.popup_cd04_01 = UT.popup('es-cd04-01', me, 1150, 860, {
+                        'selected-item' : function(popup, e) {
+                            popup.close();
+                        }
+                    }, {title : "END-PART 원가비교계산"});
+                }
+                me.popup_cd04_01.show();
+                me.popup_cd04_01.getWindowContent().load(newData);
+            },
+
+            // [2023.01.26] CHECK 추가
+            chkChin: function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+                var items = [];
+
+                for(var i = 0 ; i < provider.getItemSize(); i++) {
+                    if(provider.getItemAt(i).chk == "Y"){
+                        items.push(provider.getItemAt(i));
+                    }
+                }
+
+                me.$.chkChin.body = {
+                    items : items
+                };
+
+                commonJS.callService(me.$.chkChin).then(function(data) {
+                    console.log(data);
+                    if(data.result.code == "N") {
+                        UT.alert(data.result.mesg, null, null, {autoGrowMessageBox:true});
+                        return;
+                    }
+
+                    me.approval();
+                });
+            },
+
+            /**
+             * 결재 버튼 클릭 시 이벤트
+             */
+             approval: function() {
+
+                var me = this,
+                    cnt = 0,
+                    provider = me.$.gridPanel.getDataProvider();
+
+                me.set("apprvList", []);
+
+                for (var indexI=0; indexI < provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y"){
+                        cnt++;
+                        me.apprvObj = {};
+                        me.set("apprvObj", provider.getItemAt(indexI));
+                        me.apprvList.push(me.apprvObj);
+                    }
+                }
+
+                if (cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                } else if (cnt > 1) {
+                    console.log(me.apprvList);
+                    //UT.alert("1건만 선택하여주십시오.");
+                    //return;
+                } else {
+
+                    if (me.apprvObj.comd_pass_stat == '20' || me.apprvObj.comd_pass_stat == '2C') {
+                        // 작성중과 계산완료는 pass
+                    } else {
+                        UT.alert("작성중인 ITEM만 결재가 가능합니다.");
+                        return;
+                    }
+
+                    if (UT.isEmpty(me.apprvObj.comd_sum0_date)) {
+                        UT.alert("원가계산 집계처리가 되지 않았습니다. 집계처리 후 다시 작업하세요.");
+                        return;
+                    }
+                }
+
+                //[20200729] 일괄처리를 위해 list 전달
+                me.$.getCheckCmms.body = {
+                    apprvList : me.apprvList
+                };
+                // 고도화 3차 사용자 편의 개선 사항  - 계산후 미집게 품목 결재 상신 불가능 하도록 처리 요청
+                // 미집계 품목이 존재하는 지 체크  추가 : 20170822 LSM
+                me.$.getCheckCmms.service();
+            },
+
+            /**
+             * 계산완료 버튼 클릭 시 이벤트
+             */
+            complete : function() {
+
+                var me = this,
+                    cnt = 0,
+                    compObj = {},
+                    provider = me.$.gridPanel.getDataProvider();
+
+                me.set("resultPassStat", []);
+
+                for (var indexI=0; indexI < provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y"){
+
+                        if (provider.getItemAt(indexI).comd_pass_stat != '20') {
+                            UT.alert("작성중인 ITEM만 계산완료가 가능합니다.");
+                            return;
+                        }
+                        compObj = UT.copy(provider.getItemAt(indexI));
+                        compObj.new0_pass_stat = "2C";
+                        me.resultPassStat.push(compObj);
+                        cnt++;
+                    }
+                }
+
+                if (cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+
+                me.$.updateStatus.body = {
+                        params: me.get("resultPassStat"),
+                };
+                // 상태코드 변경 호출
+                me.$.updateStatus.service();
+            },
+
+            // [2023.07.12] CHECK 추가
+            chkCancel: function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+                var items = [];
+
+                for(var i = 0 ; i < provider.getItemSize(); i++) {
+                    if(provider.getItemAt(i).chk == "Y"){
+                        items.push(provider.getItemAt(i));
+                    }
+                }
+
+                if(items.length < 1) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+
+                me.$.chkCancel.body = {
+                    items : items
+                };
+
+                commonJS.callService(me.$.chkCancel).then(function(data) {
+                    console.log(data);
+                    if(data.result.code == "N") {
+                        UT.alert(data.result.mesg, null, null, {autoGrowMessageBox:true});
+                        return;
+                    }
+
+                    me.cancel();
+                });
+            },
+
+            /**
+             * 계산완료취소 버튼 클릭 시 이벤트
+             */
+            cancel: function() {
+
+                var me = this,
+                    cnt = 0,
+                    cancelObj = {},
+                    provider = me.$.gridPanel.getDataProvider();
+
+                me.set("resultPassStat", []);
+
+                for (var indexI=0; indexI < provider.getItemSize(); indexI++ ){
+                    if(provider.getItemAt(indexI).chk == "Y"){
+
+                        if (provider.getItemAt(indexI).comd_pass_stat != '2C') {
+                            UT.alert("계산완료인 ITEM만 계산완료취소가 가능합니다.");
+                            return;
+                        }
+                        cancelObj = UT.copy(provider.getItemAt(indexI));
+                        cancelObj.new0_pass_stat = "20";
+                        me.resultPassStat.push(cancelObj);
+                        cnt++;
+                    }
+                }
+
+                if (cnt == 0) {
+                    UT.alert("선택된 ITEM이 없습니다.");
+                    return;
+                }
+
+                me.$.updateStatus.body = {
+                        params: me.get("resultPassStat"),
+                };
+                // 상태코드 변경 호출
+                me.$.updateStatus.service();
+            },
+
+            /**
+             * 복사 처리 후 로직
+             */
+             updateStatus_resultHandler : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                //me.set("messageDev", UT.copy(me.resultPass));
+
+                // 메세지 처리 (실패 시)
+                if (me.resultPass.MESG_CODE == 'SA-002') {
+                    UT.alert(me.resultPass.MESG);
+                }
+
+                // 메세지 처리 (성공 시)
+                if (me.resultPass.MESG_CODE == 'SA-001') {
+                    UT.alert(me.resultPass.MESG);
+                    //재조회
+                    me.getList();
+                }
+            },
+
+            /*
+            * DataGrid 컬럼 별 enabled 처리
+            */
+            isItemEnabled: function(data, item) {
+
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+
+                switch(item.dataField) {
+                    // 조정단가는 신규일때 입력 불가
+                    case "comd_neg0_pric" :
+                        if(data.new0_item_gubn == "Y") return false;
+                        else return true;
+                        break;
+                    case "comd_cost_gubn" :
+                        if(data.new0_item_gubn == "Y") return true;
+                        else return false;
+                        break;
+                    case "comd_vend_code" :
+                        return true;
+                        break;
+
+                    case "file_cnt" :
+                        break;
+
+                    case "chk" :
+                        return true;
+
+                    default:
+                        return true;
+                }
+            },
+
+             /**
+              * 그리드 저장 유효성 체크
+              */
+            validation: function(gubn) {
+                var me = this;
+
+                var provider = me.$.gridPanel.getDataProvider();
+                var created = provider.getNewItems();
+                var updated = provider.getUpdateItems();
+                var deleted = provider.removeItems();
+
+                //삭제 체크
+                for (var d = 0; d < deleted.length; d++) {
+                    if (deleted[d].comd_pass_stat != '20') {
+                        UT.alert("작성중인 품목만 삭제가 가능합니다.");
+                        return false;
+                    }
+                }
+
+                //수정 체크
+                for (var u = 0; u <updated.length; u++ ){
+                    var o = updated[u];
+                    if(UT.isEmpty(o['comd_part_no'])) {
+                        UT.alert("PART NO는 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_stnd_gubn'])) {
+                        UT.alert("표준구분은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_tmcd_code'])) {
+                        UT.alert("기종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_cars_code'])) {
+                        UT.alert("차종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_inds_code'])) {
+                        UT.alert("업종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_vehl_gubn'])) {
+                        UT.alert("승상구분은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_base_date'])) {
+                        UT.alert("적용일은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(gubn != "copy"){
+                        if(o['comd_pass_stat'] == '30' || o['comd_pass_stat'] == '40' || o['comd_pass_stat'] == '2C' ) {
+                            UT.alert("[결재 진행중/결재 완료/계산 완료] ITEM은 수정할 수 없습니다.");
+                            return false;
+                        }
+                    }
+                }
+
+                // 신규 저장 체크
+                for(var c=0; c < created.length; c++ ){
+                    var o = created[c];
+
+                    if(UT.isEmpty(o['comd_part_no'])) {
+                        UT.alert("PART NO는 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_stnd_gubn'])) {
+                        UT.alert("표준구분은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_tmcd_code'])) {
+                        UT.alert("기종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_cars_code'])) {
+                        UT.alert("차종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_inds_code'])) {
+                        UT.alert("업종은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_vehl_gubn'])) {
+                        UT.alert("승상구분은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(UT.isEmpty(o['comd_base_date'])) {
+                        UT.alert("적용일은 필수 항목입니다.");
+                        return false;
+                    }
+                    if(gubn != "copy"){
+                        if(o['comd_pass_stat'] == '30' || o['comd_pass_stat'] == '40' || o['comd_pass_stat'] == '2C') {
+                            UT.alert("[결재 진행중/결재 완료/계산 완료] ITEM은 수정할 수 없습니다.");
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            },
+
+            /**
+             * Grid Column Style 제어
+             */
+            passColor : function(data, item) {
+                var me = this,
+                    dataField = item.dataField;
+
+                var pass_desc = data.comd_pass_desc;
+                if(dataField == 'comd_pass_desc') {
+
+                    if (pass_desc == "결재요청" || pass_desc == "결재완료" || pass_desc == "반송") {
+                        return {fontColor : "#0000ff"};
+                    }
+                }
+                return {};
+            },
+
+            /**
+             * Grid Column 이미지 제어
+             */
+            onImageChange : function(data, item) {
+                var dataField = item.dataField;
+                if(   dataField == "img_partno"
+                   || dataField == "img_tmcdcode"
+                   || dataField == "img_indscode"
+                   || dataField == "img_vend_name") {
+
+                    if (UT.isEmpty(data.comd_pass_desc) || (UT.isNotEmpty(data.comd_pass_desc) && data.comd_pass_desc == "작성중")) {
+                        return "ui/assets/img/bull_choice.gif";
+                    } else {
+                        return null;
+                    }
+                } else if (dataField == "img_remk") {
+                    return "ui/assets/img/bull_choice.gif";
+                } else if (dataField == "img_file_attach") {
+                    return "ui/assets/img/clip.gif";
+                } else {
+                    return null;
+                }
+             },
+
+            /**
+             * 첨부파일 업로드 후 이벤트
+             */
+            onUploadComplete : function(e, data) {
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+                // 첨부 그룹코드 set
+                provider.setItemAt(data.itemIndex, { comd_att_grp_cd : data.grpCd});
+
+                // 자동 저장 로직 추가
+                me.saveList();
+            },
+
+            onUploadEditable: function(data, item) {
+                var me = this;
+
+                if (data.comd_pass_stat == "20") {
+                    return true;
+                } else {
+                    return false;
+                }
+               },
+
+            /**
+             * 삭제 컬럼 컨트롤
+             **/
+            onChangeCheckDelCol : function() {
+                var me = this;
+
+                if (me.$.chk_del.inputValue == "Y") {
+                    me.$.gridPanel.useSelection  = true;
+                    me.$.gridPanel.selectionType = "eliminate";
+                } else {
+                    me.$.gridPanel.useSelection  = false;
+                }
+            }
+
+        });
+    </script>
+</dom-module>

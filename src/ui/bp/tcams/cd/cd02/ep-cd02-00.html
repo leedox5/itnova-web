@@ -1,0 +1,184 @@
+<dom-module id="ep-cd02-00">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 적용일
+        ** @Description     : 공통율 정보 목록 조회
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.19
+        ** @History         : 2019.12.19 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- 공통율 정보 조회 -->
+        <sc-service-provider id="getListRPC" descriptor="bp/tcams/cd/cd00" service-id="get.cortlist" on-response="Result">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="cortList" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+       
+        <cc-page-title-bar page-title="공통율정보 목록">
+        	<sc-button text="조회"        on-click="getList"></sc-button>
+        	<sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container search-button-hidden="true">
+			<table>
+				<colgroup>
+					<col style="width:40px">  <!-- 업종 -->
+					<col style="width:70px">  <!-- 업종코드 입력 -->
+					<col>																				
+				</colgroup>
+				<tr>
+					<th><sc-label text="업종"></sc-label></th>
+					<td>
+                        <sc-text-field id="tb_indscode" max-length="2"
+                                value="{{searchParam.cort_inds_code}}" disabled="true">
+                        </sc-text-field>
+					</td>
+					<td></td>					
+				</tr> 
+			</table>					
+		</cc-search-container>
+		<div class="vbox flex">
+			<sc-grid id="gridPanel"
+					  use-selection="false"
+	                  use-state="false" show-number-line="false"
+	                  data-provider="{{resultList}}"
+	                  on-item-click="itemClickHandler"
+	                  use-dummy="true" fit-row-height="true">
+	                  
+	            <cc-grid-toolbar></cc-grid-toolbar>	
+	            <sc-grid-columns>
+	                <sc-data-column  data-field="comd_vend_degr"  header-text="협력사"   width="50"  text-align="center"></sc-data-column>
+	                <sc-data-column  data-field="comd_inds_code"  header-text="업종"   width="40"  text-align="center"></sc-data-column>
+	                <sc-data-column  data-field="comd_inds_name"  header-text="업종명"   width="110"  text-align="left"></sc-data-column>
+	                <sc-data-column  data-field="comd_appl_date"  header-text="적용일"   width="85" text-align="center"></sc-data-column>
+	            </sc-grid-columns>
+	        </sc-grid>	
+		</div>
+
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-00",
+            properties: {
+                titleText   : {type : String, value : "공통율정보 목록"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+				// 메세지
+                message     : {type : Object, value : function() {return {};}},
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}},
+                
+                isPopup     : {type : Object, value: function() {return false;}} 				// Popup으로 호출됐는지 여부
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+
+                me.set("searchParam.comd_corp_code", obj.comd_corp_code);
+                me.set("searchParam.cort_stnd_gubn", obj.comd_stnd_gubn);
+                me.set("searchParam.cort_inds_code", obj.comd_inds_code);
+
+                me.isPopup = true;
+                me.getList();
+            },
+	        /**
+	         * 성명 조회
+	         */ 
+	         getList : function() {
+                var me = this;
+                me.$.getListRPC.service();
+            },
+
+            /**
+             * 주기 조회 후 처리
+             */            
+            Result : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(data.length == 0){
+					UT.alert("조회된 건수가 없습니다.");
+					return;
+				}
+            },
+
+            /**
+             *  grid item click 이벤트
+             */           
+            itemClickHandler : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item;
+				switch(item.dataField) {
+
+					case 'comd_vend_degr':  
+					case 'comd_inds_code':
+					case 'comd_inds_name':
+					case 'comd_appl_date':
+						if(me.isPopup) {					
+							me.throwItem(data);
+							me.onClose();		
+						}		
+						break;
+
+					default :
+						if(me.isPopup) {					
+							me.throwItem(data);
+							me.onClose();		
+						}		
+						break;
+				}
+
+			},
+
+			/**
+			 * 파트넘버 팝업 클릭시 이벤트 생성 
+			 */
+			 throwItem : function(data){
+				 var me = this;
+				// 그리드 editable 옵션을 false로 바꿈 
+				me.fire("selected-item", data);	
+			},	 	        
+            			                                     
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            }
+            
+        });
+    </script>
+
+</dom-module>

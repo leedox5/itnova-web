@@ -1,0 +1,321 @@
+<sc-link rel="import" href="../../ci/ci08/es-ci08-01.html"></sc-link>
+<dom-module id="ep-cd02-12">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 운반비/팔레트비 계산 (왼쪽-운반비)
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.01.02
+        ** @History         : 2020.01.02최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+
+    <template>
+        <!-- 코드 조회 -->
+        <sc-service-provider id="commonSP" descriptor="bp/tcams/cd/cd02" service-id="get.trpr">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="list"    target="{{chCarston001SC}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 운반비 조회 -->
+        <sc-service-provider id="getTrptRPC" descriptor="bp/tcams/ci/ci08" service-id="get.trprlist" on-response="getTrptRPCResult" >
+            <outputs>
+                <sc-service-output name="trptList"    target="{{resultTrptList}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 운반차량  파렛트비 정보조회 -->
+        <sc-service-provider id="getTnszListRPC" descriptor="bp/tcams/cd/cd02" service-id="get.Tnszlist" on-response="onChangeTon">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result"    target="{{result}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+            
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+		<div class="vbox flex">
+			<sc-label text="[ 운반비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+			<tr>
+				<td><sc-label text="운반비 계산" style="font-weight:bold"></sc-label></td>
+			</tr>
+			<form name="matlData">
+			<table class="come-form" style="padding-top:20px; width:375px">							 													
+				<tr height = "35">
+					<th>
+						<sc-label text="출발지" style="font-weight:bold"></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_area_leav"  value="{{searchParam.trpt_area_leav}}" editable = "true"></sc-text-field>
+					</td>
+				</tr>	
+				 
+				<tr height = "35">
+					<th>
+						<sc-label text="도착지" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_area_arvl" value="{{searchParam.trpt_area_arvl}}" editable = "true"></sc-text-field>
+					</td>
+				</tr>
+				
+				<tr height = "35">
+					<th>
+						<sc-label text="운반거리[편도]" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_sing_dist" value="{{searchParam.trpt_sing_dist}}" editable="true" on-change="distChangeResult" editVal class="align-right"></sc-text-field>
+ 						<sc-text-field id="tb_snds_apdt" value="{{searchParam.trpt_snds_apdt}}" editable="true" hidden="true"></sc-text-field>
+					</td>
+				</tr>
+				
+				<tr height = "35">
+					<th>
+						<sc-label text="차량 TON수" ></sc-label>
+					</th>
+					<td>
+						<sc-combobox-field id="sb_cars_ton0" display-field="label" value-field="data" input-clear="false" placeholder="선택"
+                        	items="{{chCarston001SC}}" value="{{searchParam.trpt_cars_ton0}}" on-change="ton0ChangeResult">
+                        </sc-combobox-field>
+					</td>
+				</tr>
+					
+				<tr height = "35">
+					<th>
+						<sc-label text="거리별운반비" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_dist_carg" format-type="number" input-cover="true" value="{{searchParam.trpt_dist_carg}}" disabled="true" class="align-right"></sc-text-field>
+					</td>
+				</tr>							
+				
+				<tr height = "35">
+					<th>
+						<sc-label text="차량당 파렛트 적재수량" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_palt_qty0" value="{{searchParam.trpt_palt_qty0}}" editable = "false" disabled="true" max-length="10" mask-re="/[0-9]/" strip-chars-re="/[ㄱ-힣]/"  class="align-right"></sc-text-field>
+					</td> 
+				</tr>	
+
+				<tr height = "35">
+					<th>
+						<sc-label text="파렛트당 부품적재수량" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_cary_qty0" value="{{searchParam.trpt_cary_qty0}}" editable="true"  max-length="10" mask-re="/[0-9]/" strip-chars-re="/[ㄱ-힣]/" on-change="changeProd" editVal class="align-right"></sc-text-field>
+					</td> 
+				</tr>
+			</table>
+			<table class="come-form"  style="padding-top:20px; width:375px">			
+				<tr height = "35">				
+					<th>
+						<sc-label text="부품당 운반비" ></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_part_carg" value="{{searchParam.trpt_part_carg}}" disabled="true"  class="align-right"></sc-text-field>
+					</td>
+				</tr>
+			</table>
+			</form>	
+		</div>
+
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-12",
+
+			properties: {
+             	// 조회조건
+                searchParam    : {type: Object, value : function() { return {};},notify : true},
+                chCarston001SC : {type : Array , value : function() { return [];}}, 
+                resultTrptList : {type : Array , value : function() { return [];}},
+
+		    	// 초기 진입 구분값
+		    	initFlag      : {type: Boolean, value: true }
+                               
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+                me.set('initFlag'    , true);
+                
+				me.set("searchParam", UT.copy(obj.searchParam));
+
+				me.$.commonSP.service();
+
+				me.set('initFlag'    , false);
+
+            },
+
+            /**
+             * 유효성 체크
+             **/
+             validationCheck: function() {
+                var me = this;
+
+				if(UT.isEmpty(me.get("searchParam.trpt_sing_dist"))) {
+					UT.alert('운반거리를 입력하세요.');
+					return false;
+				}
+				
+				if(UT.isEmpty(me.get("searchParam.trpt_cary_qty0"))) {
+					UT.alert('파렛트당 부품 적재수량을 입력하세요.');
+					return false;
+				}
+
+				return true;
+            },
+
+            /**
+             * 운반차량 파렛트  변경
+             **/
+            onChangeTon: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 초기화
+            	me.set("searchParam.tnsz_leng", "");
+            	me.set("searchParam.tnsz_widt", "");
+            	me.set("searchParam.tnsz_heig", "");
+
+				for (var i= 0; i < data.result.length; i++) {
+					if (data.result[i].tnsz_ton0 == me.get("searchParam.trpt_cars_ton0")) {
+						me.set("searchParam.tb_cars_leng", data.result[i].tnsz_leng);
+						me.set("searchParam.tb_cars_widt", data.result[i].tnsz_widt);
+						me.set("searchParam.tb_cars_heig", data.result[i].tnsz_heig);
+						break;
+					}	
+				}
+            },
+
+            /**
+             * 운반거리 변경 시 이벤트
+             **/
+            distChangeResult: function() {
+                var me = this;
+
+                if (!me.get('initFlag')) {
+    				if(UT.isEmpty(me.get("searchParam.trpt_cars_ton0"))) {
+    					return;
+    				} else {
+    					me.ton0ChangeResult();
+    				}
+                }
+            },
+
+            /**
+             * 차량톤수 변경 시 이벤트
+             **/
+            ton0ChangeResult: function() {
+                var me = this;
+
+                if (!me.get('initFlag')) {
+    				if(UT.isEmpty(me.get("searchParam.trpt_sing_dist"))) {
+    					UT.alert("운반거리[편도]를 입력하십시요.");
+    					me.$.tb_sing_dist.focus();					
+    					return;
+    				}
+    				
+    				if(UT.isEmpty(me.get("searchParam.trpt_cars_ton0"))) {
+    					UT.alert("차량 TON수를 선택하십시요.");
+    					me.$.sb_cars_ton0.focus();
+    					return;
+    				}
+
+    				me.set("searchParam.trpt_snds_apdt", me.$.sb_cars_ton0.selectedItem.comd_appl_date);
+
+    				var vParam = {};
+    				vParam.trpr_stnd_gubn = "H";
+    				vParam.trpr_ton0 = me.get("searchParam.trpt_cars_ton0");
+    				vParam.trpt_sing_dist = me.get("searchParam.trpt_sing_dist");
+    				vParam.trpr_appl_date = me.get("searchParam.base_date");
+    				vParam.curr_appl = "Y";
+
+                    me.$.getTrptRPC.body = {
+                    		searchParam: vParam
+    	                };				
+                    me.$.getTrptRPC.service();
+                }
+            }, 
+
+            /**
+             * 운반비 조회 후 처리
+             **/
+            getTrptRPCResult: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(data.trptList.length > 0 ) {
+
+					me.set("searchParam.trpt_snds_apdt", data.trptList[0].trpr_appl_date);
+					me.set("searchParam.tnsz_appl_date", data.trptList[0].trpr_appl_date);
+					
+					var cost= UT.toNumber(data.trptList[0].trpr_cost);
+					var costCoef1 = UT.toNumber(data.trptList[0].trpr_cost_coef1);
+					var singDist = UT.toNumber(me.get("searchParam.trpt_sing_dist"));
+					
+					if (!UT.isNumber(cost)) 		cost = 0;
+					if (!UT.isNumber(costCoef1)) 	costCoef1 = 0;
+					if (!UT.isNumber(singDist)) 	singDist = 0;
+
+					me.set("searchParam.trpt_dist_carg", UT.toNumber(( cost * singDist ) + costCoef1).toString() );
+					me.$.getTnszListRPC.service();
+				}
+				
+            }, 
+
+            /**
+             * 초기 플래그값 셋팅(팝업 닫기/전송 버튼 클릭 시 콤보 체인지 오류 현상을 위해)
+             **/
+             setFlag: function() {
+                var me = this;
+                me.set('initFlag', true);
+            },
+
+            /**
+             * 운반거리 변경 시 이벤트
+             **/
+            changeProd: function() {
+                var me = this;
+
+                me.fire("change-prod");
+            }
+
+        });
+	</script>
+</dom-module>

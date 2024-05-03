@@ -1,0 +1,195 @@
+<dom-module id="ep-cd02-01-02">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 업체 검색 팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.03.06
+        ** @History         : 2020.03.06 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!-- 코드 조회 -->
+		<sc-service-group id="codes" on-result="resultHandler">
+	    	<sc-code-provider code="CA_VENDDEGR" target="{{codes.caVendDegr}}" ></sc-code-provider>
+		</sc-service-group>    
+    
+        <!-- 조회 -->
+	    <sc-service-provider id="searchSP" descriptor="bp/tcams/cd/cd02" service-id="get.vendlist">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="vendList" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+        
+	    <cc-page-title-bar>
+            <sc-button text="조회"   on-click="getList"></sc-button>
+            <sc-button text="닫기"   on-click="onClose"></sc-button>
+		</cc-page-title-bar>
+	    <cc-search-container search-button-hidden="true">
+	      	<table>
+	            <colgroup>
+	            	<col style="width:80px"/>
+	            	<col style="width:100px"/>
+	            	<col style="width:60px"/>
+	            	<col style="width:200px"/>
+<!-- 	            	<col style="width:60px"/> -->
+<!-- 	            	<col style="width:100px"/> -->
+	            	<col style="width:60px"/>
+	            	<col style="width:50px"/>	            	
+	            	<col style="width:60px"/>
+	            	<col style="width:200px"/>
+			        <col></col>
+	            </colgroup>
+	            <tr>
+	            	<th>
+	                	<sc-label text="업체코드"></sc-label>
+	                </th>
+	                <td>
+	                    <sc-text-field value="{{searchParam.tb_vend_code}}"   on-enter="getList" maxLength="18" ></sc-text-field>
+	                </td>
+	                <th>
+	                	<sc-label text="업체명"></sc-label>
+	                </th>
+	                <td>
+	                	<sc-text-field value="{{searchParam.tb_vend_name}}"   on-enter="getList" maxLength="100"></sc-text-field>
+	                </td>
+<!-- 	                <th> -->
+<!-- 	                	<sc-label text="협력사"></sc-label> -->
+<!-- 	                </th> -->
+<!-- 	                <td> -->
+<!-- 	              		<sc-combobox-field items="{{codes.caVendDegr}}" display-field="label" value-field="data" value="{{searchParam.sb_vend_degr}}" -->
+<!-- 	                         placeholder="전체"></sc-combobox-field> -->
+<!-- 	                </td> -->
+	                <th>
+	                	<sc-label text="특수업체"></sc-label>
+	                </th>
+	                <td>
+	                	<sc-checkbox-field id="cb_spcl_vend" input-value="{{searchParam.cb_spcl_vend}}" checked-value="Y" un-checked-value="N" on-tap="onCurrentCheck"></sc-checkbox-field>
+	                </td>	                
+	                <th>
+	                	<sc-label text="현재적용"></sc-label>
+	                </th>
+	                <td>
+	                	<sc-checkbox-field id="cb_curr_appl" input-value="{{searchParam.cb_curr_appl}}" checked-value="Y" un-checked-value="N" on-tap="onCurrentCheck"></sc-checkbox-field>
+	                </td>
+	                <td></td>
+	            </tr>
+	        </table>
+        </cc-search-container>
+              
+        <div class="vbox flex">
+            <sc-grid id="gridPanel" class="flex" use-state="false" use-selection="false" data-provider="{{resultList}}" on-item-click="onItemClick" use-dummy="false">
+	        <cc-grid-toolbar>
+	        </cc-grid-toolbar>
+               <sc-grid-columns>
+	                <sc-data-column data-field="comd_vend_code" header-text="업체코드" width="100" text-align="center" ></sc-data-column>
+	                <sc-data-column data-field="comd_vend_name" header-text="업체명" width="180" text-align="left" max-length="100"></sc-data-column>
+	                <sc-combobox-column data-field="comd_vend_degr" header-text="협력사" width="50" text-align="center"
+	                          items="{{codes.caVendDegr}}" value-field="data" display-field="label"></sc-combobox-column>
+	                <sc-date-column data-field="comd_appl_date" header-text="적용일"width="100" text-align="center" format-type="date"></sc-date-column>
+	                <sc-data-column data-field="comd_inds_code" header-text="업종" width="50" text-align="center"
+	                          items="{{codes.indsCode}}" value-field="data" display-field="data"></sc-data-column>
+	                <sc-data-column data-field="comd_pay0_rate" header-text="임율" width="65" text-align="right" format-type="amt" data-type="number"></sc-data-column>
+	                <sc-data-column data-field="comd_spcl_memo" header-text="비고" width="250" text-align="center" item-style-function="setStyle"></sc-data-column>
+               </sc-grid-columns>
+            </sc-grid>
+        </div>
+        
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-01-02",
+            properties: {
+                titleText   : {type : String, value : "업체코드 목록"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}},
+            },
+            
+            /****************************************************************************************************
+             * Init
+             ****************************************************************************************************/
+             
+            //Initialize
+            initialized : function() {
+                var me = this;
+
+                me.$.codes.service();
+            },
+            
+            //Load
+            load: function(options) {
+                var me = this;
+
+                me.set("searchParam.cb_curr_appl", "Y");
+                
+                me.getList();
+            },
+            /****************************************************************************************************
+             * Event
+             ****************************************************************************************************/
+             
+            //조회 버튼 클릭
+            getList: function() {
+                var me = this;
+                me.$.searchSP.service();
+                
+            },
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            },
+            
+            /****************************************************************************************************
+             * Grid Event
+             ****************************************************************************************************/
+             
+            //Grid Column Click 제어
+            onItemClick : function(event) {
+                
+                var me = this, 
+                    detail = event.detail,
+                    data = detail.data,
+                    item = detail.item,
+                    dataField = item.dataField;
+                
+                if (dataField === "comd_vend_code"){
+                    me.fire("selected-item", data);
+                }
+                
+            },
+
+            /**
+             * row 별 스타일
+             */             
+             setStyle : function(data, item) {
+            	var me = this,
+            	dataField = item.dataField;
+
+            	if (dataField == "comd_spcl_memo") {
+    				return {fontColor : "#ff0000"};
+            	} 
+
+				return {};
+			}            
+            
+        });
+    </script>
+
+</dom-module>

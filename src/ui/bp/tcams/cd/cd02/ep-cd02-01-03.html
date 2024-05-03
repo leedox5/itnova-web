@@ -1,0 +1,141 @@
+<dom-module id="ep-cd02-01-03">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 업체 검색 팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.03.06
+        ** @History         : 2020.03.06 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+        <!-- 조회 -->
+	    <sc-service-provider id="searchSP" descriptor="bp/tcams/common/popup" service-id="get.sgvd6">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+        
+	    <cc-page-title-bar>
+            <sc-button text="조회"   on-click="getList"></sc-button>
+            <sc-button text="닫기"   on-click="onClose"></sc-button>
+		</cc-page-title-bar>
+	    <cc-search-container search-button-hidden="true">
+	      	<table>
+	            <colgroup>
+	            	<col style="width:60px"/>
+	            	<col style="width:100px"/>
+	            	<col style="width:50px"/>
+	            	<col style="width:100px"/>
+	            	<col></col>
+	            </colgroup>
+	            <tr>
+	            	<th>
+	                	<sc-label text="업체코드"></sc-label>
+	                </th>
+	                <td>
+	                    <sc-text-field value="{{searchParam.vd_cd}}"   on-enter="getList"></sc-text-field>
+	                </td>
+	            	<th>
+	                	<sc-label text="업체명"></sc-label>
+	                </th>
+	                <td>
+	                    <sc-text-field value="{{searchParam.vd_nm_loc}}"   on-enter="getList"></sc-text-field>
+	                </td>
+	                <td></td>
+	            </tr>
+	        </table>
+        </cc-search-container>
+              
+        <div class="vbox flex">
+            <sc-grid id="gridPanel" class="flex" use-state="false" use-selection="false" data-provider="{{resultList}}" on-item-click="onItemClick" use-dummy="false">
+	        <cc-grid-toolbar>
+	        </cc-grid-toolbar>
+               <sc-grid-columns>
+                   <sc-data-column data-field="vd_cd"  header-text="업체코드"   width="100"  text-align="center" style-name="link"></sc-data-column>
+                   <sc-data-column data-field="vd_nm_loc"  header-text="업체명(Loc)"     width="200"  text-align="left"></sc-data-column>
+                   <sc-data-column data-field="vd_nm_eng"  header-text="업체명(Eng)"     width="200"  text-align="left"></sc-data-column>
+                   <sc-data-column data-field="biz_reg_no" header-text="등록번호"         width="200"  text-align="left"></sc-data-column>
+               </sc-grid-columns>
+            </sc-grid>
+        </div>
+        
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-01-03",
+            properties: {
+                titleText   : {type : String, value : "업체코드 목록"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}},
+            },
+            
+            /****************************************************************************************************
+             * Init
+             ****************************************************************************************************/
+             
+            //Initialize
+            initialized : function() {
+                var me = this;
+            },
+            
+            //Load
+            load: function(options) {
+                var me = this;
+                me.getList();
+            },
+            /****************************************************************************************************
+             * Event
+             ****************************************************************************************************/
+             
+            //조회 버튼 클릭
+            getList: function() {
+                var me = this;
+                me.$.searchSP.service();
+                
+            },
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            },
+            
+            /****************************************************************************************************
+             * Grid Event
+             ****************************************************************************************************/
+             
+            //Grid Column Click 제어
+            onItemClick : function(event) {
+                
+                var me = this, 
+                    detail = event.detail,
+                    data = detail.data,
+                    item = detail.item,
+                    dataField = item.dataField;
+                
+                if (dataField === "vd_cd"){
+                    me.fire("selected-item", data);
+                }
+                
+            },
+            
+        });
+    </script>
+
+</dom-module>

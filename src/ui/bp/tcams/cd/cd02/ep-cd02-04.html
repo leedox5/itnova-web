@@ -1,0 +1,271 @@
+<dom-module id="ep-cd02-04">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : CHIN UPLOAD
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.20
+        ** @History         : 2019.12.20 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- 조회 -->
+        <sc-service-provider id="getListRPC" descriptor="bp/tcams/cd/cd02" service-id="getList.upload" on-response="getListRPC_resultHandler">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- PART 등록 전 체크 -->
+        <sc-service-provider id="makeChainRPC" descriptor="bp/tcams/cd/cd02" service-id="make.chain" on-response="resultCheck">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>        
+            <outputs>
+                <sc-service-output name="result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 임시저장 -->
+        <sc-service-provider id="saveListRPC" descriptor="bp/tcams/cd/cd02" service-id="save.uploadList" on-response="uploadComplete">
+            <outputs>
+                <sc-service-output name="result" target="{{message}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>        
+        
+		
+        <cc-page-title-bar page-title="Chain Upload">
+           <sc-button text="조회"        on-click="getList"></sc-button>
+           <sc-button text="임시저장"     on-click="save"></sc-button>
+           <sc-button text="등록"        on-click="makeChain"></sc-button>
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container>
+			<table>
+				<colgroup>
+					<col style="width:80px"> <!-- END PART -->
+					<col style="width:180px"><!-- END PART 입력-->
+					<col style="width:60px"> <!-- EO NO -->						
+					<col style="width:120px"><!-- EO NO 입력 -->	
+					<col style="width:50px"> <!-- SEQ -->	
+					<col style="width:120px"><!-- SEQ 입력-->
+					<col>																				
+				</colgroup>
+				<tr>
+					<th><sc-label text="END PART"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_PART_NO" value="{{searchParam.comc_part_no}}" on-enter="getList" max-length="20" disabled="true"
+						mask-re="/[a-zA-Z0-9]/" strip-chars-re="/[ㄱ-힣]/" upper-case="true" style="width:160px"></sc-text-field>
+					</td>
+					<th><sc-label text="EO NO"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_EONO" value="{{searchParam.comc_eono}}" on-enter="getList" max-length="20" disabled="true"
+						mask-re="/[a-zA-Z0-9]/" strip-chars-re="/[ㄱ-힣]/" upper-case="true" ></sc-text-field>
+					</td>
+					<th><sc-label text="SEQ"></sc-label></th>
+					<td>
+						<sc-text-field id="TB_SEQ0" value="{{searchParam.comc_cumt_no}}" mask-re="/[0-9]/" on-enter="getList" max-length="10" 
+						disabled="true"></sc-text-field>
+					</td>
+					<td></td>					
+				</tr>
+			</table>					
+		</cc-search-container>
+		<div class="vbox flex">
+			<sc-grid id="gridPanel"
+					  use-selection="false"
+					  locked-column-count="1"
+					  header-height="30" class="flex"
+	                  use-state="false" show-number-line="false"
+	                  data-provider="{{resultList}}" editable="true"
+	                  use-dummy="true">
+	                  
+	            <cc-grid-toolbar></cc-grid-toolbar>	
+	            <sc-grid-columns>
+	            	<sc-group-column header-text="입 력 정 보" text-align="center" width="560" >
+	            		<sc-data-column  data-field="comd_col1"  header-text="LVL" editable="true" width="50"  text-align="center"></sc-data-column>
+	            		<sc-data-column  data-field="comd_col2"  header-text="PART NO" editable="true" width="130"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_col4"  header-text="PART NAME" editable="true" width="180"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_col3"  header-text="EONO" editable="true" width="100"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_col5"  header-text="USG" editable="true" width="50"  text-align="right"></sc-data-column>
+	            		<sc-data-column  data-field="comd_col6"  header-text="업종" editable="true" width="50"  text-align="center"></sc-data-column>
+	            	</sc-group-column>
+	            	
+	            	<sc-group-column header-text="오 류 정 보" text-align="center" width="1500">
+	            		<sc-data-column  data-field="comd_err1"  header-text="LVL" width="250"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_err2"  header-text="PART NO" width="250"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_err4"  header-text="PART NAME" width="250"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_err3"  header-text="EONO" width="250"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_err5"  header-text="USG" width="250"  text-align="left"></sc-data-column>
+	            		<sc-data-column  data-field="comd_err6"  header-text="업종" width="250"  text-align="left"></sc-data-column>
+	            	</sc-group-column>	            		
+	            	<sc-date-field  data-field="comd_init_date"  header-text="처리일" width="80"  text-align="center" string-date="true"></sc-date-field>
+	            </sc-grid-columns>
+	            
+				<sc-grid-fields>
+					<!-- 반드시 필요!!!! -->
+					<sc-grid-field data-field="new0_item_gubn"></sc-grid-field> <!-- 신규 행추가 구분 -->
+				</sc-grid-fields>	
+	        </sc-grid>	
+		</div>
+
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-04",
+            properties: {
+                titleText   : {type : String, value : "Chain Upload"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+				// 메세지
+                message     : {type : Object, value : function() {return {};}},
+                result      : {type : Object, value : function() {return {};}},
+
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}},
+                flag        : {type :Object , value : function() { return false;}},               
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+                
+                me.set("searchParam.comc_corp_code", obj.comc_corp_code);
+                me.set("searchParam.comc_cost_gubn", obj.comc_cost_gubn);
+                me.set("searchParam.comc_part_no"  , obj.comc_part_no);
+                me.set("searchParam.comc_eono"     , obj.comc_eono);
+                me.set("searchParam.comc_cumt_no"  , obj.comc_cumt_no);
+
+				for( var initMakeCnt =0 ; initMakeCnt < 1000 ; initMakeCnt++ ) {
+					var obj = {new0_item_gubn:"Y", comd_col1:'', comd_col2:'', comd_col3:'', comd_col4:'', comd_col5:'', comd_col6:''};
+					provider.addItemAt(initMakeCnt, obj);
+				} 
+				               
+            },
+	        /**
+	         * 조회 클릭 이벤트
+	         */ 
+	         getList : function() {
+                var me = this;
+                me.$.getListRPC.service();
+            },
+
+            /**
+             * 조회 후 이벤트
+             */            
+            getListRPC_resultHandler : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id,
+            	provider = me.$.gridPanel.getDataProvider();
+
+				for( var addMakeCnt = provider.getItemSize() ; addMakeCnt < 1000 ; addMakeCnt++ ) {
+					var obj = {new0_item_gubn:"Y", comd_col1:'', comd_col2:'', comd_col3:'', comd_col4:'', comd_col5:'', comd_col6:''};
+					provider.addItemAt(addMakeCnt, obj);
+				}             	
+            },            
+
+	        /**
+	         * 임시저장
+	         */ 
+	        save : function() {
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+
+				me.set("flag", false);
+				me.set("resultList", provider.getItems());
+
+                me.$.saveListRPC.body = {
+                	searchParam : me.get("searchParam"),
+                	uploadList  : me.get("resultList")
+                };                
+                me.$.saveListRPC.service();
+            },
+
+	        /**
+	         * 등록
+	         */ 
+	        makeChain : function() {
+                var me = this,
+                provider = me.$.gridPanel.getDataProvider();
+
+				me.set("flag", true);
+				me.set("resultList", provider.getItems());
+
+                me.$.saveListRPC.body = {
+                	searchParam : me.get("searchParam"),
+                	uploadList  : me.get("resultList")
+                };                
+                me.$.saveListRPC.service();
+            },            
+
+            /**
+             * 조회 후 이벤트
+             */            
+             uploadComplete : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				UT.alert(me.message['MESG']);
+				if(me.get("flag") == true){
+					me.$.makeChainRPC.service();
+				}            	
+            },                        
+
+            /**
+             * 생성 후 처리
+             */            
+             resultCheck : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if (me.result['MESG_CODE'] != 'SA-001') {
+					UT.alert('[ERROR!!  ]   ' + '<br>'
+				            +'[MESG_CODE] : ' + me.result['MESG_CODE'] + '<br>'
+				            +'[MESG     ] : ' + me.result['MESG'] + '<br>' 
+				          	);
+				} else {
+					// 오류정보를 보기위해 무조건 재조회함
+					me.getList();	
+				}
+            },                         
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.fire("selected-item");
+                me.reset();
+                me.fire("close");
+            }
+        });
+    </script>
+
+</dom-module>

@@ -1,0 +1,331 @@
+<sc-link rel="import" href="ep-cd02-12.html"></sc-link>
+<sc-link rel="import" href="ep-cd02-13.html"></sc-link>
+
+<dom-module id="ep-cd02-11">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 운반비/팔레트비 계산 메인
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.01.02
+        ** @History         : 2020.01.02최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 코드 조회 -->
+        <sc-service-provider id="getCodeInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.codeInfo"  on-response="codeInfo">
+            <outputs>
+                <sc-service-output name="palt_kind_list"    target="{{palt_kind_list}}"    change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 입력factor Count -->
+        <sc-service-provider id="getInfoCountRPC" descriptor="bp/tcams/cd/cd02" service-id="get.transPaltInfoCount" on-response="countInfo" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="transPalt_count"    target="{{result}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 입력factor 조회 -->
+        <sc-service-provider id="getInfoRPC" descriptor="bp/tcams/cd/cd02" service-id="get.transPaltInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="transPalt_info"    target="{{result}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 입력factor 저장 -->
+        <sc-service-provider id="saveTransPaltRPC" descriptor="bp/tcams/cd/cd02" service-id="save.TransPalt" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="messageCode"    target="{{messageCode}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 입력factor 삭제 -->
+        <sc-service-provider id="deleteTransPaltRPC" descriptor="bp/tcams/cd/cd02" service-id="delete.TransPalt" on-response="afterDelete" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="messageCode"    target="{{messageCode}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider>
+        
+        <!-- 운반비 / 파렛트비 계산 & 결과 조회 -->
+        <sc-service-provider id="getTransCalcResRPC" descriptor="bp/tcams/cd/cd02" service-id="get.TransCalcRes" on-response="calcComplete" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result"    target="{{calcResult}}"    change-comparable="true"></sc-service-output>
+                <sc-service-output name="messageCode"    target="{{messageCode}}"    change-comparable="true"></sc-service-output>
+            </outputs>            
+        </sc-service-provider> 
+        
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+   		<div class="vbox flex">
+			<cc-page-title-bar id="endItemMaster" page-title="{{titleText}}" on-click="onTitleClick">
+	            <sc-button text="초기화"       on-click="initDataEvent" ></sc-button>
+	            <sc-button text="계산실행"      on-click="calculation"  ></sc-button>
+	            <sc-button text="전송"         on-click="send"         ></sc-button>
+	            <sc-button text="닫기"         on-click="onClose"	      ></sc-button>
+			</cc-page-title-bar>   		   		
+    		<div class="hbox flex">
+		        <ep-cd02-12 id="left" class="flex-4" search-param="{{searchParam}}" on-change-ton="onChangeTon" on-change-prod="onChangeProd"></ep-cd02-12>
+		        <sc-splitter split-type="vertical"></sc-splitter>
+				<ep-cd02-13 id="right" class="flex-6" search-param="{{searchParam}}"></ep-cd02-13>
+   			</div>
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "ep-cd02-11",
+
+			properties: {
+             	// 조회조건
+                searchParam    : {type: Object, value : function() { return {};},notify : true},
+                searchParamOrg : {type: Object, value : function() { return {};}},
+                // 조회 결과
+                result         : {type: Object, value : function() { return {};}},
+				// 메시지 코드
+                messageCode    : {type: Object, value : function() { return {};}},
+                
+                // list
+                palt_kind_list : {type: Array , value : function() { return [];}},
+                calcResult     : {type: Array , value : function() { return [];}},
+
+				gubnFlag      : {type: String, value : function() { return '';}},
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				me.set("searchParam.corp_code", obj.comd_corp_code);
+				me.set("searchParam.cumt_no"  , obj.comd_cumt_no);
+				me.set("searchParam.part_no"  , obj.comd_part_no);
+				me.set("searchParam.eono"     , obj.comd_eono);
+				me.set("searchParam.stnd_gubn", obj.comd_stnd_gubn);
+				me.set("searchParam.cars_code", obj.comd_cars_code);
+				me.set("searchParam.base_date", obj.comd_base_date);
+				
+				me.set("searchParam.trpt_corp_code", obj.comd_corp_code);
+				me.set("searchParam.trpt_cost_gubn", obj.comd_cost_gubn);
+				me.set("searchParam.trpt_part_no"  , obj.comd_part_no);
+				me.set("searchParam.trpt_eono"     , obj.comd_eono);
+				me.set("searchParam.trpt_cumt_no"  , obj.comd_cumt_no);			
+
+				
+				if (obj.comd_etc0_gubn == 'END') {
+					me.set("searchParam.proc_type"  , 'E'); // //End-Item 단위 삭제시 필요. Part 단위 삭제시 : P
+				} else {
+					me.set("searchParam.proc_type"  , 'S'); // //End-Item 단위 삭제시 필요. Part 단위 삭제시 : P
+				}
+
+				// 삭제처리를 대비한 backup 처리
+				me.set("searchParamOrg", UT.copy(me.get("searchParam")));
+
+				me.$.getCodeInfoRPC.service();
+
+            },
+
+            /**
+             * 코드 조회 후 결과 처리
+             **/
+            codeInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				// 기등록 데이터 확인
+				me.$.getInfoCountRPC.service();
+            },            
+
+            /**
+             * 공법입력 조회 후 결과 처리
+             **/
+            countInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(me.get("result.trpt_count") == 0 || me.get("result.trpt_count") == '0'){
+
+					var obj = {searchParam:me.get("searchParam"),paltKindList:me.get("palt_kind_list")};
+	            	me.$.left.load(obj);
+	            	me.$.right.load(obj);
+
+				} else {
+					// 입력 데이터 조회
+					me.$.getInfoRPC.service();
+				}            	
+            },
+
+            /**
+             * 공법입력 조회 후 결과 처리
+             **/
+            resultInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				// 결과를 searchParam에 통합
+				if (UT.isNotEmpty(me.get("result"))) {
+					me.set("searchParam", commonAS.mergeObj(me.get("searchParam"), me.get("result")));
+				}
+
+				var obj = {searchParam:me.get("searchParam"),paltKindList:me.get("palt_kind_list")};
+
+				// 파라미터 전달
+            	me.$.left.load(obj);
+            	me.$.right.load(obj);
+
+            },
+
+            /**
+             * 초기화  버튼  click 이벤트
+             **/
+            initDataEvent: function() {
+                var me = this;
+
+				me.$.deleteTransPaltRPC.service();	
+            },
+
+            /**
+             * 삭제 후 처리
+             **/
+            afterDelete : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	me.$.left.setFlag();
+            	// 초기화 처리
+            	me.set("searchParam", {});
+            	me.set("result"     , {});
+            	me.set("searchParam", UT.copy(me.get("searchParamOrg")));
+
+				// 입력 데이터 조회
+				me.$.getInfoRPC.service();
+
+            },            
+            
+
+            /**
+             * 계산실행  버튼  click 이벤트
+             **/
+             calculation: function() {
+                var me = this;
+
+				me.$.saveTransPaltRPC.service();	
+            },
+
+
+            /**
+             * 계산 실행
+             **/
+             goCalc : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	//운반비 유효성 체크 후 저장
+				if (me.$.left.validationCheck()) {
+					me.$.getTransCalcResRPC.service();	
+				}
+            },
+
+            /**
+             * 저장 결과 이벤트 처리
+             **/
+            calcComplete : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if (me.messageCode['MESG_CODE'] == 'SA-001') {
+					UT.alert('계산 되었습니다.');
+					me.$.getInfoRPC.service();
+					
+				} else {
+					commonAS.comeAlert(me.get("messageCode"));
+				}            	
+            },
+
+            /**
+             *  차량 톤수 변경 시
+             **/
+             onChangeTon: function(e, data) {
+            	var me = this;
+            	me.$.right.changeTon();
+            }, 
+
+            /**
+             * 파렛트당 부품적재수량 변경 시
+             **/
+            onChangeProd: function(e, data) {
+            	var me = this;
+            	me.$.right.changeProd();
+            },                      
+
+              
+
+            /**
+             * Data 결과 처리(전송)
+             **/
+            send: function() {
+                var me = this;
+
+                me.$.left.setFlag();
+                me.fire("selected-item", me.get("searchParam"));
+            },                         
+
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.$.left.setFlag();
+                me.fire("close");
+            }            
+
+        });
+	</script>
+</dom-module>

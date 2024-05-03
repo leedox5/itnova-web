@@ -1,0 +1,480 @@
+<sc-link rel="import" href="ep-cd02-06.html"></sc-link>
+<dom-module id="ep-cd02-05">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 부품구입가조회  팝업
+        ** @Description     :
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2019.12.24
+        ** @History         : 2019.12.24 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- OEM1(PPIMS 품의기준) 조회 -->
+        <sc-service-provider id="getMPRICListRPC" descriptor="bp/tcams/cd/cd02" service-id="get.MPRICInfo" on-response="resultSearch_resultHandler">
+            <outputs>
+                <sc-service-output name="resultList1" target="{{listPageData1}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- OEM2(HPT 미품의) 조회 -->
+        <sc-service-provider id="getHKSRListRPC" descriptor="bp/tcams/cd/cd02" service-id="get.HKSRInfo">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList2" target="{{listPageData2}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider> 
+        
+        <cc-page-title-bar page-title="부품구입가조회 현황">
+           <sc-button text="조회"        on-click="getList"></sc-button>
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<cc-search-container>
+			<table>
+				<colgroup>
+					<col style="width:550px">  <!-- 현재적용 -->
+					<col style="width:80px">  <!-- 현재적용 -->
+					<col style="width:40px">  <!-- 현재적용 체크박스 -->
+				</colgroup>
+				<tr>
+					<th><sc-label text="OEM1(PPIMS 품의기준)" ></sc-label></th>
+					<th><sc-label text="현재적용" text-align="right"></sc-label></th>
+					<td>
+						<sc-checkbox-field id="ck_curr_appl" input-value="{{searchParam.comd_curr_appl}}" checked-value="Y" un-checked-value="N"></sc-checkbox-field>
+					</td>
+				</tr>
+			</table>					
+		</cc-search-container>
+<!-- 		<div class="hbox flex"> -->
+
+			<sc-grid id="datagrid1" class="flex"
+	                  use-state="false" 
+	                  editable="true"
+	                  use-selection="false" 
+	                  data-provider="{{listData1}}" 
+	                  on-item-click="datagrid1_itemClickHandler"
+	                  on-item-double-click="itemDoubleClickHandler1"
+	                  use-dummy="true">
+	            <cc-grid-toolbar></cc-grid-toolbar>
+				<sc-grid-paging id="pagingControl1" scroll-append="on" scroll-auto-load="true" 
+				                scroll-page-size="50" paging-function="search1" ajax-ref="getMPRICListRPC" 
+				                list-data="{{listPageData1}}" scroll-paging="true"></sc-grid-paging>
+				                
+	            <sc-grid-columns>
+	                <sc-data-column data-field="pims_part_no" header-text="PART NO" width="100" text-align="left"></sc-data-column>
+	                <sc-data-column  data-field="pims_vend_code"  header-text="업체코드"   width="80"  text-align="center"></sc-data-column>
+	                <sc-data-column data-field="pims_vend_name" header-text="업체명" width="120" text-align="left"></sc-data-column>
+	                <sc-data-column  data-field="pims_appl_seq0"  header-text="SEQ"    width="50" text-align="center"></sc-data-column>
+	                <sc-data-column data-field="pims_part_pric" header-text="구입가" width="80" text-align="right" data-type="number" item-label-function="onItemLabelFunction"></sc-data-column>
+	                <sc-data-column  data-field="pims_curr_code"  header-text="화폐구분"   width="80" text-align="center" item-style-function="currColor"></sc-data-column>
+	                <sc-image-column data-field="img_curr_code"   header-text="" width="20" text-align="center" singular-source="ui/assets/img/bull_calculation.gif" 
+	                				 sortable="false" item-editable-function="isItemEnabled1"></sc-image-column>
+	                <sc-date-column	 data-field="pims_appl_date" header-text="적용일"	    width="80" text-align="center" format-type="date"></sc-date-column>
+	                <sc-date-column	 data-field="pims_cfrm_date" header-text="승인일"	    width="80" text-align="center" format-type="date"></sc-date-column>
+	            </sc-grid-columns>
+				<sc-grid-fields>
+					<sc-grid-field data-field="pims_trif_pric"></sc-grid-field> <!-- 관세 -->
+					<sc-grid-field data-field="pims_src0_gubn"></sc-grid-field> <!-- 단가구분 -->
+					<sc-grid-field data-field="impt_impt_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_impt_cost"></sc-grid-field>
+					<sc-grid-field data-field="impt_nati_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_gubn"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_mogb"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_apdt"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_mony"></sc-grid-field>
+					<sc-grid-field data-field="impt_exch_user"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_stnd"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_code"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_apdt"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_ldcr_user"></sc-grid-field>
+					<sc-grid-field data-field="impt_matl_pric"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_carr_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_carr_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_insu_rate"></sc-grid-field>
+					<sc-grid-field data-field="impt_insu_inpt"></sc-grid-field>
+					<sc-grid-field data-field="impt_trif_pric"></sc-grid-field>
+				</sc-grid-fields>	            
+	        </sc-grid>
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-05",
+            properties: {
+                titleText   : {type : String, value : "부품구입가조회 현황"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+                //결과목록
+                listData1     : {type : Array,  value : function() {return [];}},
+                listData2     : {type : Array,  value : function() {return [];}},
+                listPageData1 : {type : Array,  value : function() {return [];}},
+                listPageData2 : {type : Array,  value : function() {return [];}}
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+                me.set("searchParam", UT.copy(obj));
+                me.set("searchParam.comd_curr_appl", "Y");
+                me.getMPRICList();
+				//me.getHKSRList();               
+            },
+	        /**
+	         * 조회 버튼 클릭 시
+	         */ 
+	        getList : function() {
+                var me = this;
+				me.getMPRICList();
+				//me.getHKSRList();   
+            },
+
+	        /**
+	         * OEM1(PPIMS 품의기준) 조회
+	         */ 
+	        getMPRICList : function() {
+                var me = this;
+                
+		        me.$.pagingControl1.pagingParam.endRowNum        = 0;
+				me.$.pagingControl1.pagingParam.comd_part_no   = me.searchParam.comd_part_no;
+
+				if (me.searchParam.comd_part_no.substring(5,1) != '-' ) {
+					pagingControl1.pagingParam.comd_part_no1 = me.searchParam.comd_part_no.substr(0,5) + "-" + me.searchParam.comd_part_no.substr(5);
+				} else {
+					pagingControl1.pagingParam.comd_part_no1 = '';
+				}
+				pagingControl1.pagingParam.comd_vend_cd   = me.searchParam.comd_vend_cd;
+				pagingControl1.pagingParam.comd_curr_appl = me.searchParam.comd_curr_appl;				
+				
+		        me.search1(me.$.pagingControl1.pagingParam);
+            },
+
+	        /**
+	         * OEM2(HPT 미품의) 조회
+	         */ 
+// 	         getHKSRList : function() {
+//                 var me = this;
+                
+// 		        me.$.pagingControl2.pagingParam.endRowNum        = 0;
+// 				me.$.pagingControl2.pagingParam.comd_part_no   = me.searchParam.comd_part_no;
+
+// 				if (me.searchParam.comd_part_no.substring(5,1) != '-' ) {
+// 					pagingControl2.pagingParam.comd_part_no1 = me.searchParam.comd_part_no.substr(0,5) + "-" + me.searchParam.comd_part_no.substr(5);
+// 				} else {
+// 					pagingControl2.pagingParam.comd_part_no1 = '';
+// 				}
+// 				pagingControl2.pagingParam.comd_vend_cd   = me.searchParam.comd_vend_cd;
+// 				pagingControl2.pagingParam.comd_curr_appl = me.searchParam.comd_curr_appl;				
+				
+// 		        me.search2(me.$.pagingControl2.pagingParam);
+//             },            
+
+            /**
+             * 조회 버튼 Click 이벤트
+             */            
+             search1: function(param) {
+            	var me = this;
+                me.$.getMPRICListRPC.addInput("searchParam", param);
+                me.$.getMPRICListRPC.service();
+
+            },
+
+            /**
+             * 조회 후 이벤트
+             */            
+            resultSearch_resultHandler : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            },             
+
+            /**
+             * 조회 버튼 Click 이벤트
+             */            
+             search2: function(param) {
+            	var me = this;
+                me.$.getHKSRListRPC.addInput("searchParam", param);
+                //me.$.getHKSRListRPC.service();
+            },                       
+
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+                
+            },
+            
+			/*
+			* DataGrid 컬럼 별 enabled 처리
+			*/
+            isItemEnabled1 : function(data, item) {
+
+	            var me = this,
+                provider = me.$.datagrid1.getDataProvider();                
+
+				switch(item.dataField) {
+					// 조정단가는 신규일때 입력 불가
+					case "img_curr_code" :
+						if (data.pims_curr_code != 'KRW') {
+							return true;
+						} else {
+							return false;
+						}
+						break;
+					default:
+						return true;
+				}
+			},
+
+            /**
+             *  상단 grid item click 이벤트
+             */           
+           datagrid1_itemClickHandler : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item,
+					param = {};
+
+				var provider = me.$.datagrid1.getDataProvider();
+
+				switch(item.dataField) {
+		            case 'img_curr_code':
+			            
+						if (data.pims_curr_code != 'KRW') {
+							param['comd_corp_code'] = me.searchParam['comd_corp_code'];
+							param['comd_stnd_gubn'] = me.searchParam['comd_stnd_gubn'];
+							if(UT.isEmpty(me.searchParam.comd_base_date)) {
+								// [2023.01.27]원단위에서 온 경우
+								param['comd_base_date'] = data.pims_appl_date;
+						    } else {
+							    // [2023.01.27]체인에서 온경우
+								param['comd_base_date'] = me.searchParam['comd_base_date'];
+							}
+							
+							param['comd_part_pric'] = data.pims_part_pric;
+
+							param['impt_yn'] = me.searchParam.impt_yn;
+							param.row = me.searchParam.row;
+
+							param['impt_cw_yn'] = me.searchParam.impt_cw_yn;
+							param.row_cw = me.searchParam.row_cw;
+
+				            if(!me.ep_cd02_06){
+				                me.ep_cd02_06 = UT.popup('ep-cd02-06', me, 750, 300, {
+				            		'selected-item' : function(popup, e) {
+					            		
+				            			var result = e.detail,
+				            			provider = me.$.datagrid1.getDataProvider();
+
+										if (UT.isNotEmpty(result.part_pric)) {
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { pims_part_pric : result.part_pric});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { pims_trif_pric : result.trif_pric});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { pims_curr_code : "KRW"});
+
+											// [2023.01.16] impt 저장 처리
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_impt_code : result.impt_impt_code});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_impt_cost : result.impt_impt_cost});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_nati_code : result.impt_nati_code});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_exch_gubn : result.impt_exch_gubn});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_exch_mogb : result.impt_exch_mogb});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_exch_apdt : result.impt_exch_apdt});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_exch_mony : result.impt_exch_mony});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_exch_user : result.impt_exch_user});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_ldcr_stnd : result.impt_ldcr_stnd});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_ldcr_code : result.impt_ldcr_code});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_ldcr_apdt : result.impt_ldcr_apdt});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_ldcr_rate : result.impt_ldcr_rate});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_ldcr_user : result.impt_ldcr_user});
+
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_matl_pric : result.impt_matl_pric});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_trif_rate : result.impt_trif_rate});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_trif_inpt : result.impt_trif_inpt});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_carr_rate : result.impt_carr_rate});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_carr_inpt : result.impt_carr_inpt});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_insu_rate : result.impt_insu_rate});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_insu_inpt : result.impt_insu_inpt});
+											provider.setItemAt(me.$.datagrid1.getCurrentCell().rowIndex, { impt_trif_pric : result.impt_trif_pric});
+										}				            			
+				            			
+				                        popup.close();
+				            		}
+				                }, {title : "환산단가 선택"});
+				            }
+				            me.ep_cd02_06.show();
+							me.ep_cd02_06.getWindowContent().load(param);
+							
+						}
+					case "pims_vend_name":
+					case "pims_appl_seq0":
+					case "pims_part_pric":
+					case "pims_appl_date":
+					case "pims_cfrm_date":
+						break;						
+					break;
+					default :
+						break;
+				}
+			},
+
+            /**
+             *  하단 grid item click 이벤트
+             */           
+//            datagrid2_itemClickHandler : function(event) {
+// 				var me = this, e = event.detail,
+// 					data = e.data,
+// 					item = e.item,
+// 					param = {};
+
+// 				var provider = me.$.datagrid1.getDataProvider();
+
+// 				switch(item.dataField) {
+				
+// 					case "pims_vend_name":
+// 					case "pims_appl_seq0":
+// 					case "pims_part_pric":
+// 					case "pims_appl_date":
+// 					case "pims_cfrm_date":
+// 						break;						
+// 					break;
+// 					default :
+// 						break;
+// 				}
+// 			},
+
+            /**
+             *  상단 grid item double click 이벤트
+             */           
+             itemDoubleClickHandler1 : function(event) {
+				var me = this, e = event.detail,
+					data = e.data,
+					item = e.item,
+					retObj = {},
+					cRowIndex = 0;
+
+				var provider = me.$.datagrid1.getDataProvider();
+				cRowIndex = me.$.datagrid1.getCurrentCell().rowIndex;
+				switch(item.dataField) {
+				    case "pims_part_no"  : 
+					case "pims_vend_name":
+					case "pims_appl_seq0":
+					case "pims_part_pric":
+					case "pims_curr_code":
+					case "pims_appl_date":
+					case "pims_cfrm_date":
+						// 그리드 라디오 버튼 버그로 
+						if (provider.getItemAt(cRowIndex).pims_curr_code != 'KRW') {
+							UT.alert("단위 환산이 필요합니다. 확인 후 작업하세요.");
+							break;
+						} else {
+							provider.setItemAt(cRowIndex, { pims_part_pric : commonAS.substr2num(data.pims_part_pric + "")});
+							provider.setItemAt(cRowIndex, { pims_trif_pric : commonAS.substr2num(data.pims_trif_pric + "")});
+							retObj = UT.copy(provider.getItemAt(cRowIndex));
+
+							me.fire("selected-item", retObj);	
+							me.onClose();
+						}
+						
+						break;						
+					break;
+					default :
+						break;
+				}
+			},
+
+			onItemLabelFunction: function(data, item) {
+				var me = this;
+				if(data.pims_curr_code == "KRW") {
+					var result = Polymer.$Formatter.format("decimalprecision2", data.pims_part_pric);
+				} else {
+					var result = Polymer.$Formatter.format("decimalprecision4", data.pims_part_pric);
+				}
+                if(result){
+                    return result;    
+                }else{
+                    return data[item.dataField];
+                }
+			},
+            /**
+             *   하단 grid item double click 이벤트
+             */           
+//              itemDoubleClickHandler2 : function(event) {
+// 				var me = this, e = event.detail,
+// 					data = e.data,
+// 					item = e.item,
+// 					item = {},
+// 					cRowIndex = 0;
+
+// 				var provider = me.$.datagrid2.getDataProvider();
+// 				cRowIndex = me.$.datagrid2.getCurrentCell().rowIndex;
+// 				switch(item.dataField) {
+// 					case "pims_vend_name":
+// 					case "pims_appl_seq0":
+// 					case "pims_part_pric":
+// 					case "pims_curr_code":
+// 					case "pims_appl_date":
+// 					case "pims_cfrm_date":
+
+// 						provider.setItemAt(cRowIndex, { pims_part_pric : commonAS.substr2num(data.pims_part_pric)});
+// 						provider.setItemAt(cRowIndex, { pims_trif_pric : commonAS.substr2num(data.pims_trif_pric)});
+// 						item = UT.copy(provider.getItemAt(i));
+// 						item["pims_src0_gubn"] = "H";
+// 						me.fire("selected-item", item);	
+// 						me.onClose();
+						
+// 						break;						
+// 					break;
+// 					default :
+// 						break;
+// 				}
+// 			},							
+
+            /**
+             * 통화 색상 지정
+             */             
+            currColor : function(data, item) {
+            	var me = this,
+            	dataField = item.dataField;
+
+            	if (dataField == "pims_curr_code") {
+
+    				if(data.pims_curr_code != 'KRW') {
+    					return {fontColor:'#0000ff'};
+    				} else {
+    					return {};
+        			}
+                } else {
+                	return {};
+                }
+			}						
+            
+        });
+    </script>
+
+</dom-module>

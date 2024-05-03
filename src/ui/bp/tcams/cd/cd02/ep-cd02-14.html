@@ -1,0 +1,115 @@
+<dom-module id="ep-cd02-14">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 공법계산 불량비
+        ** @Description     : 공법계산 불량비 조회
+        ** @Author          : G.Y.D
+        ** @Create Date     : 2020.01.03
+        ** @History         : 2020.01.03 최초작성
+        *****************************************************************************************************
+    -->
+    <style>
+       :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    
+    <template>
+    
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->    
+        <!-- 사원명조회 -->
+        <sc-service-provider id="getcmctRPC" descriptor="bp/tcams/cd/cd02" service-id="get.cmctlist">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <cc-page-title-bar page-title="[ 공법계산 불량비 ]">
+           <sc-button text="닫기"        on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<div class="vbox flex">
+			<sc-grid id="gridPanel"
+					  use-selection="false"
+	                  use-state="false" show-number-line="false"
+	                  data-provider="{{resultList}}"
+	                  use-dummy="true" fit-row-height="true">
+	            <sc-grid-columns>
+	                <sc-data-column  data-field="cmct_remk_0001"  header-text="불량비명"   width="170"  text-align="center"></sc-data-column>
+	                <sc-data-column  data-field="cmct_pdab_rate"  header-text="불량율"   width="80"  text-align="right"></sc-data-column>
+	                <sc-data-column  data-field="cmct_pdab_matl"  header-text="대상재료비"   width="100"  text-align="right"></sc-data-column>
+	                <sc-data-column  data-field="cmct_pdab_proc"  header-text="대상가공비"   width="100"  text-align="right"></sc-data-column>
+	                <sc-data-column  data-field="cmct_pdab_totl"  header-text="합계"   width="100"  text-align="right"></sc-data-column>
+	                <sc-data-column  data-field="cmct_pdab_cost"  header-text="불량비"   width="100"  text-align="right"></sc-data-column>
+	            </sc-grid-columns>
+	        </sc-grid>	
+		</div>
+
+    </template>
+    
+    <script>
+        Polymer({
+            is: "ep-cd02-14",
+            properties: {
+                titleText   : {type : String, value : "불량비 계산내역"},
+                //조회조건
+                searchParam : {type : Object, value : function() {return {};}},
+                //결과목록
+                resultList  : {type : Array,  value : function() {return [];}}
+            },
+
+	        /**
+	         * 초기화 완료 후 호출 함수
+	         */             
+            initialized : function() {
+                var me = this;
+            },
+            
+	        /**
+	         * 부모에서 파라미터 전달
+	         */
+            load: function(obj) {
+                var me = this;
+                me.set("searchParam", obj);
+
+                me.getList();
+            },
+	        /**
+	         * 불량비 조회
+	         */ 
+	         getList : function() {
+                var me = this;
+                me.$.getcmctRPC.service();
+            },
+
+            /**
+             * 불량비 조회 후 처리
+             */            
+            Result : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(data.length == 0){
+					UT.alert("조회된 건수가 없습니다.");
+					return;
+				}
+            },                         
+            
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+            }
+            
+        });
+    </script>
+
+</dom-module>
