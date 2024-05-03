@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/cr/cr01/2023">
+
+ <service id="chkChin">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var param = new Map();
+    var chk = new Map();
+    var err = new List();
+    var mesg = "";
+    
+    try {
+    	for(var i = 0 ; i < $data.items.size() ; i++) {
+    		param = $data.items[i];
+    		$logger.info(param);
+        	chk = $jdbc.query("bp/tcams/cr/cr01/2023", "chk.CHIN", param);
+        	if(chk.chk_cd != "00") {
+        	    err = $jdbc.queryList("bp/tcams/cr/cr01/2023", "get.ERROR", chk);
+        	    $logger.info(err);
+        	    for(var i = 0 ; i < err.size() ; i++) {
+        	        if(i > 0) {
+        	            mesg += "<br>";
+        	        }
+        	        mesg += err[i].c3;
+        	    }
+        	    throw new Exception(mesg);
+        	}
+        	// [2023.07.12] 원단위 체크 추가
+        	chk = $jdbc.query("bp/tcams/cr/cr01/2023", "CHK.230701", param);
+        	if(chk.chk_cd != "00") {
+        	    err = $jdbc.queryList("bp/tcams/cr/cr01/2023", "ERR.230701", chk);
+        	    $logger.info(err);
+        	    for(var i = 0 ; i < err.size() ; i++) {
+        	        if(i > 0) {
+        	            mesg += "<br>";
+        	        }
+        	        mesg += err[i].c3;
+        	    }
+        	    throw new Exception(mesg);
+        	}
+     	}
+     	
+    	var auth = $jdbc.query("bp/tcams/ci/ci03/conf/USER", "select", null);
+    	if(auth.testing_yn == "Y") {
+    	    throw new Exception("Testing...");
+    	}
+       	
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+        $logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+   	$data.result = result;
+   ]]>
+  </script>   
+ </service>
+
+ <service id="chkCancel">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var param = new Map();
+    var chk = new Map();
+    var err = new List();
+    var auth = new Map();
+    var sqlId = "CHK.230701";
+    var mesg = "";
+    
+    try {
+    	auth = $jdbc.query("bp/tcams/ci/ci03/conf/USER", "select", null);
+    	if(auth.checking_yn == "Y") {
+    	    sqlId += ".T";
+    	}
+    	for(var i = 0 ; i < $data.items.size() ; i++) {
+    		param = $data.items[i];
+    		$logger.info(param);
+        	chk = $jdbc.query("bp/tcams/cr/cr01/2023", sqlId, param);
+        	if(chk.chk_cd != "00") {
+        	    err = $jdbc.queryList("bp/tcams/cr/cr01/2023", "ERR.230701", chk);
+        	    $logger.info(err);
+        	    for(var i = 0 ; i < err.size() ; i++) {
+        	        if(i > 0) {
+        	            mesg += "<br>";
+        	        }
+        	        mesg += err[i].c3;
+        	    }
+        	    throw new Exception(mesg);
+        	}
+     	}
+    	if(auth.testing_yn == "Y") {
+    	    throw new Exception("Testing...");
+    	}
+
+   	    result.code = "Y";
+   	    result.mesg = "OK"
+    } catch(e) {
+        $logger.info(e.message);
+    	result.code = "N";
+    	result.mesg = e.message;
+    }
+   	$data.result = result;
+   ]]>
+  </script>   
+ </service>
+
+</service-descriptor>

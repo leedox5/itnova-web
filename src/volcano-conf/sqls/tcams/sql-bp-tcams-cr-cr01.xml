@@ -1,0 +1,1319 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/cr/cr01" data-source="tcamsDS">
+
+  	<sql id="emstlist.select" comment="END ITEM">
+        <![CDATA[
+            SELECT A.*
+              FROM (
+                    SELECT ROWNUM AS ROWNUM1, B.*
+                      FROM (
+                            SELECT *
+                              FROM
+                                   (
+                                    SELECT EMST_CORP_CODE                                            COMD_CORP_CODE
+                                          ,EMST_COST_GUBN                                            COMD_COST_GUBN
+                                          ,EMST_PART_NO                                              COMD_PART_NO
+                                          ,(
+                                            SELECT CRFT_IMST_PART_NAME(
+                                                                        RTRIM(EMST_CORP_CODE)
+                                                                       ,RTRIM(EMST_PART_NO)
+                                                                       ,RTRIM(EMST_CUMT_NO)
+                                                                      )
+                                              FROM DUAL
+                                           )                                                         COMD_PART_NAME
+                                          ,EMST_EONO                                                 COMD_EONO
+                                          ,EMST_CUMT_NO                                              COMD_CUMT_NO
+                                         ,NVL(EMST_CUMTO_NO, DECODE(EMST_PASS_STAT, '40', 1, 90001)) COMD_CUMTO_NO
+                                         ,EMST_STND_GUBN                                             COMD_STND_GUBN
+                                         ,EMST_MACH_GUBN                                             COMD_MACH_GUBN
+                                         ,EMST_VEHL_GUBN                                             COMD_VEHL_GUBN
+                                         ,EMST_DEV0_BUMN                                             COMD_DEV0_BUMN
+                                         ,EMST_DEBN_CODE                                             COMD_DEBN_CODE
+                                         ,EMST_TOOL_GUBN                                             COMD_TOOL_GUBN
+                                         ,EMST_TOOL_GUBN                                             COMD_TOOL_GUBN_O
+                                         ,EMST_PASS_STAT                                             COMD_PASS_STAT
+                                         ,CASE EMST_PASS_STAT
+                                             WHEN '10' THEN '대상'
+                                             WHEN '20' THEN '작성중'
+                                             WHEN '2C' THEN '계산완료'
+                                             WHEN '30' THEN '결재요청'
+                                             WHEN '40' THEN '결재완료'
+                                             WHEN '50' THEN '반송'
+                                             ELSE 'ERROR'
+                                          END                                                        COMD_PASS_DESC
+                                         ,EMST_TMCD_CODE                                             COMD_TMCD_CODE
+                                         ,EMST_CARS_CODE                                             COMD_CARS_CODE
+                                         ,EMST_ENCD_CONT                                             COMD_ENCD_CONT
+                                         ,EMST_CAPA_CONT                                             COMD_CAPA_CONT
+                                         ,EMST_TF_CODE                                               COMD_TF_CODE
+                                         ,EMST_INDS_CODE                                             COMD_INDS_CODE
+                                         ,EMST_VEND_CODE                                             COMD_VEND_CODE
+                                         ,(
+                                           SELECT VD_NM_LOC
+                                             FROM ESMVDGL
+                                            WHERE VD_CD = EMST_VEND_CODE
+                                              AND ROWNUM = 1
+                                          )                                                          COMD_VEND_NAME
+                                         ,EMST_VEND_APFR                                             COMD_VEND_APFR
+                                         ,EMST_SRC0                                                  COMD_SRC0
+                                         ,NVL(EMST_BASE_DATE, TO_CHAR(SYSDATE, 'YYYYMMDD'))          COMD_BASE_DATE
+                                         ,EMST_SUM0_DATE                                             COMD_SUM0_DATE
+                                         ,CASE EMST_COST_GUBN
+                                            WHEN 'R1' THEN '1차'
+                                            WHEN 'R2' THEN '2차'
+                                            WHEN 'R3' THEN '3차'
+                                          END                                                        COMD_COST_GUBN_DESC
+                                         ,CASE
+                                             WHEN EMST_TOOL_GUBN IN ('TT') THEN NVL(EMST_CUMT_PRIC, 0.00)
+                                             ELSE NVL(ESUM_CUMT_PRIC,0.00)
+                                          END                                                        COMD_CUMT_PRIC
+                                         ,CASE
+                                            WHEN EMST_PASS_STAT IN ('40') THEN EMST_RSCH_PRIC
+                                            ELSE 0.00
+                                          END                                                        COMD_RSCH_PRIC
+                                         ,CASE
+                                             WHEN EMST_PASS_STAT IN ('40') THEN EMST_FIXD_PRIC
+                                             WHEN EMST_PASS_STAT IN ('20', '30', '50') THEN NVL(EMST_FIXD_PRIC,0.00)
+                                             ELSE 0.00
+                                          END                                                        COMD_FIXD_PRIC
+                                         ,EMST_UPDT_DATE                                             COMD_UPDT_DATE
+                                         ,EMST_UPDT_TEAM                                             COMD_UPDT_TEAM
+                                         ,EMST_UPDT_CMAN                                             COMD_UPDT_CMAN
+                                         ,EMST_INIT_DATE                                             COMD_INIT_DATE
+                                         ,EMST_INIT_TEAM                                             COMD_INIT_TEAM
+                                         ,EMST_INIT_CMAN                                             COMD_INIT_CMAN
+                                         ,(
+                                           SELECT USR_NM
+                                             FROM ESAUSER
+                                            WHERE USR_ID = EMST_INIT_CMAN
+                                          )                                                          COMD_INIT_NAME
+                                         ,(
+                                           SELECT CASE COUNT(*)
+                                                    WHEN 0 THEN 'N'
+                                                    ELSE 'Y'
+                                                  END
+                                             FROM CRTBCHIN
+                                            WHERE 1 = 1
+                                              AND  CHIN_CORP_CODE = EMST_CORP_CODE
+                                              AND CHIN_COST_GUBN  = EMST_COST_GUBN
+                                              AND CHIN_PART_NO    = EMST_PART_NO
+                                              AND CHIN_EONO       = EMST_EONO
+                                              AND CHIN_CUMT_NO    = EMST_CUMT_NO
+                                          )                                                          COMD_CHIN_YN
+                                         ,RPT_DATE                                                   COMD_RPT0_DATE
+                                         ,LAST_APRVDATE                                              COMD_APRV_DATE
+                                         ,(
+                                           SELECT COUNT(E.ATT_SEQ) FILE_CNT
+                                             FROM ESAATTH E
+                                            WHERE 1 = 1
+                                              AND E.STS <> 'D'
+                                              AND E.SYS_ID = #sys_id#
+                                              AND E.GRP_CD = EMST_ATT_GRP_CD
+                                          )                                                          FILE_CNT
+                                         ,EMST_APRV_NO                                               COMD_APRV_NO
+                                         ,EMST_ATT_GRP_CD                                            COMD_ATT_GRP_CD
+                                         ,'N'                                                        CHK
+                                     FROM CRTBEMST EMST
+                                         @dstdQryStr@
+                                         LEFT OUTER JOIN
+                                          CRTBESUM ESUM
+                                         ON     ESUM_CORP_CODE = EMST_CORP_CODE
+                                            AND ESUM_COST_GUBN = EMST_COST_GUBN
+                                            AND ESUM_PART_NO   = EMST_PART_NO
+                                            AND ESUM_EONO      = EMST_EONO
+                                            AND ESUM_CUMT_NO   = EMST_CUMT_NO
+                                            AND ESUM_CUMT_GUBN = 'A'
+                                         LEFT OUTER JOIN
+                                          ESGMSTR
+                                         ON     SYS_ID     = EMST_APRV_ID
+                                            AND APRV_DOCNO = EMST_APRV_NO
+                                   WHERE 1 = 1
+                                     AND EMST_CORP_CODE  = #corp_cd#
+                                     AND EMST_COST_GUBN  IN ('R0', 'R1' , 'R2' , 'R3' )
+                                     AND (EMST_LINK_METH IS NULL OR EMST_LINK_METH != 'B')
+                                    [AND EMST_COST_GUBN = #comd_cost_gubn_R#]
+                                    [AND EMST_EONO      = #comd_eono_R#]
+                                    [AND EMST_CUMT_NO   = #comd_cumt_no_R#]
+                                    [AND EMST_DEV0_BUMN = #comd_dev0_bumn_R#]
+                                    [AND EMST_DEBN_CODE = #comd_debn_code_R#]
+                                    [AND EMST_TMCD_CODE LIKE #comd_tmcd_code_R# || '%']
+                                    [AND EMST_ENCD_CONT LIKE #comd_encd_cont_R# || '%']
+                                    [AND EMST_CARS_CODE LIKE #comd_cars_code_R# || '%']
+                                    [AND EMST_INDS_CODE LIKE #comd_inds_code_R# || '%']
+                                    [AND EMST_PASS_STAT = #comd_pass_stat_R#]
+                                    [AND EMST_CUMTO_NO  = #comd_cumto_no_R#]
+                                    -- 2018.07.17 BJM 추가 (소순철CI 요청)
+                                    -- 해당 SUB PART NO를 사용하는 END ITEM 검색가능 하도록 조건 수정
+                                    {
+                                        var cond_sql = "";
+
+                                        //console 창에서의 줄맞춤을 위해 강제 공백 추가
+                                        if ($data.comd_sub0_part == "Y") {  //PART NO 기준 정렬
+                                            cond_sql  = "AND EMST_PART_NO IN (\n"
+                                            cond_sql += "                                                         SELECT DISTINCT\n";
+                                            cond_sql += "                                                                CHIN_PART_NO\n";
+                                            cond_sql += "                                                           FROM CRTBCHIN CHIN\n";
+                                            cond_sql += "                                                               INNER JOIN\n";
+                                            cond_sql += "                                                                CRTBEMST EMST\n";
+                                            cond_sql += "                                                               ON    EMST.EMST_CORP_CODE  = CHIN.CHIN_CORP_CODE\n";
+                                            cond_sql += "                                                                 AND EMST.EMST_COST_GUBN  = CHIN.CHIN_COST_GUBN\n";
+                                            cond_sql += "                                                                 AND EMST.EMST_PART_NO    = CHIN.CHIN_PART_NO\n";
+                                            cond_sql += "                                                                 AND EMST.EMST_EONO       = CHIN.CHIN_EONO\n";
+                                            cond_sql += "                                                                 AND EMST.EMST_CUMT_NO    = CHIN.CHIN_CUMT_NO\n";
+                                            cond_sql += "                                                                 AND EMST.EMST_COST_GUBN IN ('R0','R1', 'R2', 'R3')\n";
+                                            cond_sql += "                                                               INNER JOIN\n";
+                                            cond_sql += "                                                                CRTBSPMS SPMS\n";
+                                            cond_sql += "                                                               ON    SPMS_CORP_CODE = CHIN.CHIN_CORP_SUB0\n";
+                                            cond_sql += "                                                                 AND SPMS_PART_NO   = CHIN.CHIN_PART_SUB0\n";
+                                            cond_sql += "                                                                 AND SPMS_EONO      = CHIN.CHIN_EONO_SUB0\n";
+                                            cond_sql += "                                                                 AND SPMS_CUMT_NO   = CHIN.CHIN_CUMT_SUB0\n";
+                                            cond_sql += "                                                          WHERE CHIN_PART_SUB0 LIKE '%' || #comd_part_no_R# || '%'\n";
+                                            cond_sql += "                                                        )";
+                                        } else {
+                                            cond_sql  = "AND EMST_PART_NO   LIKE '%' || #comd_part_no_R# || '%'"
+                                        }
+
+                                        cond_sql;
+                                    }
+                                    [AND (    EMST_BASE_DATE >= #comd_base_frdt#
+                                          AND EMST_BASE_DATE <= #comd_base_todt#)]
+                                    [AND (    EMST_INIT_DATE >= #comd_from_date#
+                                          AND EMST_INIT_DATE <= #comd_to_date#)]
+                                     {
+                                       var s = "";
+                                       if ($data.login_id != 'GE000615') {
+                                         s= " AND EMST_INIT_CMAN =(CASE WHEN EMST_PASS_STAT in ('2C','30','40') THEN EMST_INIT_CMAN ELSE #reg_id# END)";
+                                       }
+                                       s;
+                                     }
+                                     @tmcdQryStr@
+                                     @encdQryStr@
+                                   )
+                             WHERE 1 = 1
+                              [AND UPPER(COMD_PART_NAME) LIKE '%' || UPPER(#comd_part_name_R#) || '%']
+                              [AND UPPER(COMD_INIT_NAME) LIKE '%' || UPPER(#comd_init_name_R#) || '%']
+                             ORDER BY COMD_CORP_CODE
+                                     ,COMD_COST_GUBN
+                                     ,COMD_PART_NO
+                                     ,COMD_EONO
+                                     ,COMD_CUMT_NO
+                                     ,COMD_UPDT_DATE DESC
+                           ) B
+                      WHERE ROWNUM <= (#endRowNum#+#pageRowNum#)
+                   ) A
+             WHERE  1 = 1
+               AND ROWNUM1 >= (#endRowNum#+1)
+               AND ROWNUM1 <= (#endRowNum#+#pageRowNum#)
+        ]]>
+  	</sql>
+  
+  	<sql id="get.emstExcelList.select" comment="END ITEM EXCEL">
+        <![CDATA[
+            SELECT *
+              FROM (
+                    SELECT EMST_CORP_CODE                                             COMD_CORP_CODE
+                          ,EMST_COST_GUBN                                             COMD_COST_GUBN
+                          ,EMST_PART_NO                                               COMD_PART_NO
+                          ,(
+                            SELECT CRFT_IMST_PART_NAME(
+                                                        RTRIM(EMST_CORP_CODE)
+                                                       ,RTRIM(EMST_PART_NO)
+                                                       ,RTRIM(EMST_CUMT_NO)
+                                                      )
+                              FROM DUAL
+                           )                                                          COMD_PART_NAME
+                          ,EMST_EONO                                                  COMD_EONO
+                          ,EMST_CUMT_NO                                               COMD_CUMT_NO
+                          ,NVL(EMST_CUMTO_NO, DECODE(EMST_PASS_STAT, '40', 1, 90001)) COMD_CUMTO_NO
+                          ,EMST_STND_GUBN                                             COMD_STND_GUBN
+                          ,EMST_MACH_GUBN                                             COMD_MACH_GUBN
+                          ,EMST_VEHL_GUBN                                             COMD_VEHL_GUBN
+                          ,EMST_DEV0_BUMN                                             COMD_DEV0_BUMN
+                          ,EMST_DEBN_CODE                                             COMD_DEBN_CODE
+                          ,EMST_TOOL_GUBN                                             COMD_TOOL_GUBN
+                          ,EMST_TOOL_GUBN                                             COMD_TOOL_GUBN_O
+                          ,EMST_PASS_STAT                                             COMD_PASS_STAT
+                          ,CASE EMST_PASS_STAT
+                              WHEN '10' THEN '대상'
+                              WHEN '20' THEN '작성중'
+                              WHEN '2C' THEN '계산완료'
+                              WHEN '30' THEN '결재요청'
+                              WHEN '40' THEN '결재완료'
+                              WHEN '50' THEN '반송'
+                              ELSE 'ERROR'
+                            END                                                       COMD_PASS_DESC
+                          ,EMST_TMCD_CODE                                             COMD_TMCD_CODE
+                          ,EMST_CARS_CODE                                             COMD_CARS_CODE
+                          ,EMST_ENCD_CONT                                             COMD_ENCD_CONT
+                          ,EMST_CAPA_CONT                                             COMD_CAPA_CONT
+                          ,EMST_TF_CODE                                               COMD_TF_CODE
+                          ,EMST_INDS_CODE                                             COMD_INDS_CODE
+                          ,EMST_VEND_CODE                                             COMD_VEND_CODE
+                          ,EMST_VEND_APFR                                             COMD_VEND_APFR
+                          ,(
+                            SELECT VD_NM_LOC
+                              FROM ESMVDGL
+                             WHERE VD_CD = EMST_VEND_CODE
+                           )                                                          COMD_VEND_NAME                          
+                          ,EMST_SRC0                                                  COMD_SRC0
+                          ,NVL(EMST_BASE_DATE, TO_CHAR(SYSDATE, 'YYYYMMDD'))          COMD_BASE_DATE
+                          ,EMST_SUM0_DATE                                             COMD_SUM0_DATE
+                          ,CASE EMST_COST_GUBN
+                             WHEN 'R1' THEN '1차'
+                             WHEN 'R2' THEN '2차'
+                             WHEN 'R3' THEN '3차'
+                           END                                                        COMD_COST_GUBN_DESC
+                          ,CASE
+                             WHEN EMST_TOOL_GUBN IN ('TT') THEN NVL(EMST_CUMT_PRIC, 0.00)
+                             ELSE NVL(ESUM_CUMT_PRIC,0.00)
+                           END                                                        COMD_CUMT_PRIC
+                          ,CASE
+                             WHEN EMST_PASS_STAT IN ('40') THEN EMST_RSCH_PRIC
+                             ELSE 0.00
+                           END                                                        COMD_RSCH_PRIC
+                          ,CASE
+                             WHEN EMST_PASS_STAT IN ('40') THEN EMST_FIXD_PRIC
+                             WHEN EMST_PASS_STAT IN ('20', '30', '50') THEN NVL(EMST_FIXD_PRIC,0.00)
+                             ELSE 0.00
+                           END                                                        COMD_FIXD_PRIC
+                          ,EMST_UPDT_DATE                                             COMD_UPDT_DATE
+                          ,EMST_UPDT_TEAM                                             COMD_UPDT_TEAM
+                          ,EMST_UPDT_CMAN                                             COMD_UPDT_CMAN
+                          ,EMST_INIT_DATE                                             COMD_INIT_DATE
+                          ,EMST_INIT_TEAM                                             COMD_INIT_TEAM
+                          ,EMST_INIT_CMAN                                             COMD_INIT_CMAN
+                          ,(
+                            SELECT USR_NM
+                              FROM ESAUSER
+                             WHERE USR_ID = EMST_INIT_CMAN
+                           )                                                          COMD_INIT_NAME
+                          ,(
+                            SELECT CASE COUNT(*) WHEN 0 THEN 'N' ELSE 'Y' END
+                              FROM CRTBCHIN
+                             WHERE 1 = 1
+                               AND  CHIN_CORP_CODE = EMST_CORP_CODE
+                               AND CHIN_COST_GUBN  = EMST_COST_GUBN
+                               AND CHIN_PART_NO    = EMST_PART_NO
+                               AND CHIN_EONO       = EMST_EONO
+                               AND CHIN_CUMT_NO    = EMST_CUMT_NO
+                           )                                                          COMD_CHIN_YN
+                          ,RPT_DATE                                                   COMD_RPT0_DATE
+                          ,LAST_APRVDATE                                              COMD_APRV_DATE
+                          ,ATTFILE_GRPCD                                              COMD_STND_FILE
+                          ,(
+                            SELECT COUNT(E.ATT_SEQ) FILE_CNT
+                              FROM ESAATTH E
+                             WHERE 1 = 1
+                               AND E.STS <> 'D'
+                               AND E.SYS_ID = #sys_id#
+                               AND E.GRP_CD = EMST_ATT_GRP_CD
+                           )                                                          FILE_CNT
+                          ,EMST_APRV_NO                                               COMD_APRV_NO
+                          ,EMST_ATT_GRP_CD                                            COMD_ATT_GRP_CD
+                      FROM CRTBEMST EMST
+                           @dstdQryStr@
+                          LEFT OUTER JOIN
+                           CRTBESUM ESUM
+                          ON     ESUM_CORP_CODE = EMST_CORP_CODE
+                             AND ESUM_COST_GUBN = EMST_COST_GUBN
+                             AND ESUM_PART_NO   = EMST_PART_NO
+                             AND ESUM_EONO      = EMST_EONO
+                             AND ESUM_CUMT_NO   = EMST_CUMT_NO
+                             AND ESUM_CUMT_GUBN = 'A'
+                          LEFT OUTER JOIN
+                           ESGMSTR
+                          ON     SYS_ID     = EMST_APRV_ID
+                             AND APRV_DOCNO = EMST_APRV_NO
+                     WHERE 1 = 1
+                       AND EMST_CORP_CODE  = #corp_cd#
+                       AND EMST_COST_GUBN  IN ( 'R0', 'R1' , 'R2' , 'R3' )
+                      [AND EMST_COST_GUBN = #comd_cost_gubn_R#]
+                      [AND EMST_EONO      = #comd_eono_R#]
+                      [AND EMST_CUMT_NO   = #comd_cumt_no_R#]
+                      [AND EMST_DEV0_BUMN = #comd_dev0_bumn_R#]
+                      [AND EMST_DEBN_CODE = #comd_debn_code_R#]
+                      [AND EMST_TMCD_CODE LIKE #comd_tmcd_code_R# || '%']
+                      [AND EMST_ENCD_CONT LIKE #comd_encd_cont_R# || '%']
+                      [AND EMST_CARS_CODE LIKE #comd_cars_code_R# || '%']
+                      [AND EMST_INDS_CODE LIKE #comd_inds_code_R# || '%']
+                      [AND EMST_PASS_STAT = #comd_pass_stat_R#]
+                      -- 2018.07.17 BJM 추가 (소순철CI 요청)
+                      -- 해당 SUB PART NO를 사용하는 END ITEM 검색가능 하도록 조건 수정
+                      {
+                           var cond_sql = "";
+
+                           //console 창에서의 줄맞춤을 위해 강제 공백 추가
+                           if ($data.comd_sub0_part == "Y") {  //PART NO 기준 정렬
+                               cond_sql  = "AND EMST_PART_NO IN (\n"
+                               cond_sql += "                                                         SELECT DISTINCT\n";
+                               cond_sql += "                                                                CHIN_PART_NO\n";
+                               cond_sql += "                                                           FROM CRTBCHIN CHIN\n";
+                               cond_sql += "                                                               INNER JOIN\n";
+                               cond_sql += "                                                                CRTBEMST EMST\n";
+                               cond_sql += "                                                               ON    EMST.EMST_CORP_CODE  = CHIN.CHIN_CORP_CODE\n";
+                               cond_sql += "                                                                 AND EMST.EMST_COST_GUBN  = CHIN.CHIN_COST_GUBN\n";
+                               cond_sql += "                                                                 AND EMST.EMST_PART_NO    = CHIN.CHIN_PART_NO\n";
+                               cond_sql += "                                                                 AND EMST.EMST_EONO       = CHIN.CHIN_EONO\n";
+                               cond_sql += "                                                                 AND EMST.EMST_CUMT_NO    = CHIN.CHIN_CUMT_NO\n";
+                               cond_sql += "                                                                 AND EMST.EMST_COST_GUBN IN ('R0', 'R1', 'R2', 'R3')\n";
+                               cond_sql += "                                                               INNER JOIN\n";
+                               cond_sql += "                                                                CRTBSPMS SPMS\n";
+                               cond_sql += "                                                               ON    SPMS_CORP_CODE = CHIN.CHIN_CORP_SUB0\n";
+                               cond_sql += "                                                                 AND SPMS_PART_NO   = CHIN.CHIN_PART_SUB0\n";
+                               cond_sql += "                                                                 AND SPMS_EONO      = CHIN.CHIN_EONO_SUB0\n";
+                               cond_sql += "                                                                 AND SPMS_CUMT_NO   = CHIN.CHIN_CUMT_SUB0\n";
+                               cond_sql += "                                                               WHERE CHIN_PART_SUB0 LIKE '%' || #comd_part_no_R# || '%'\n";
+                               cond_sql += "                                                             )";
+                           } else {
+                               cond_sql  = "AND EMST_PART_NO   LIKE '%' || #comd_part_no_R# || '%'"
+                           }
+
+                           cond_sql;
+                      }
+                      [AND (    EMST_BASE_DATE >= #comd_base_frdt#
+                            AND EMST_BASE_DATE <= #comd_base_todt#)]
+                      [AND (    EMST_INIT_DATE >= #comd_from_date#
+                            AND EMST_INIT_DATE <= #comd_to_date#)]
+                      @tmcdQryStr@
+                      @encdQryStr@
+                   )
+              WHERE 1 = 1
+               [AND UPPER(COMD_PART_NAME) LIKE '%' || UPPER(#comd_part_name_R#) || '%']
+               [AND UPPER(COMD_INIT_NAME) LIKE '%' || UPPER(#comd_init_name_R#) || '%']
+              ORDER BY COMD_CORP_CODE
+                      ,COMD_COST_GUBN
+                      ,COMD_PART_NO
+                      ,COMD_EONO
+                      ,COMD_CUMT_NO
+                      ,COMD_UPDT_DATE DESC
+        ]]>
+  	</sql>  
+
+  	<sql id="emstlist.select.total" comment="END ITEM COUNT(페이징 처리용)">
+        <![CDATA[
+            SELECT COUNT(*) total_row_num
+              FROM (
+                    SELECT
+                          (
+                           SELECT CRFT_IMST_PART_NAME(
+                                                      EMST_CORP_CODE
+                                                     ,EMST_PART_NO
+                                                     ,EMST_CUMT_NO
+                                                     )
+                             FROM DUAL
+                           ) COMD_PART_NAME
+                          ,(
+                            SELECT USR_NM
+                               FROM ESAUSER
+                              WHERE USR_ID = EMST_INIT_CMAN
+                           ) COMD_INIT_NAME
+                      FROM CRTBEMST EMST
+                           @dstdQryStr@
+                          LEFT OUTER JOIN
+                           CRTBESUM ESUM
+                          ON     ESUM_CORP_CODE = EMST_CORP_CODE
+                             AND ESUM_COST_GUBN = EMST_COST_GUBN
+                             AND ESUM_PART_NO   = EMST_PART_NO
+                             AND ESUM_EONO      = EMST_EONO
+                             AND ESUM_CUMT_NO   = EMST_CUMT_NO
+                             AND ESUM_CUMT_GUBN = 'A'
+                          LEFT OUTER JOIN
+                           ESGMSTR
+                          ON     SYS_ID     = EMST_APRV_ID
+                             AND APRV_DOCNO = EMST_APRV_NO
+                    WHERE 1 = 1
+                      AND EMST_CORP_CODE  = #corp_cd#
+                      AND EMST_COST_GUBN  IN ('R0', 'R1' , 'R2' , 'R3' )
+                      AND (EMST_LINK_METH IS NULL OR EMST_LINK_METH != 'B')
+                     [AND EMST_COST_GUBN = #comd_cost_gubn_R#]
+                     [AND EMST_EONO      = #comd_eono_R#]
+                     [AND EMST_CUMT_NO   = #comd_cumt_no_R#]
+                     [AND EMST_DEV0_BUMN = #comd_dev0_bumn_R#]
+                     [AND EMST_DEBN_CODE = #comd_debn_code_R#]
+                     [AND EMST_TMCD_CODE LIKE #comd_tmcd_code_R# || '%']
+                     [AND EMST_ENCD_CONT LIKE #comd_encd_cont_R# || '%']
+                     [AND EMST_CARS_CODE LIKE #comd_cars_code_R# || '%']
+                     [AND EMST_INDS_CODE LIKE #comd_inds_code_R# || '%']
+                     [AND EMST_PASS_STAT = #comd_pass_stat_R#]
+                     -- 2018.07.17 BJM 추가 (소순철CI 요청)
+                     -- 해당 SUB PART NO를 사용하는 END ITEM 검색가능 하도록 조건 수정
+                     {
+                         var cond_sql = "";
+
+                         //console 창에서의 줄맞춤을 위해 강제 공백 추가
+                         if ($data.comd_sub0_part == "Y") {  //PART NO 기준 정렬
+                             cond_sql  = "AND EMST_PART_NO IN (\n"
+                             cond_sql += "                                          SELECT DISTINCT\n";
+                             cond_sql += "                                                 CHIN_PART_NO\n";
+                             cond_sql += "                                            FROM CRTBCHIN CHIN\n";
+                             cond_sql += "                                                INNER JOIN\n";
+                             cond_sql += "                                                 CRTBEMST EMST\n";
+                             cond_sql += "                                                ON    EMST.EMST_CORP_CODE  = CHIN.CHIN_CORP_CODE\n";
+                             cond_sql += "                                                  AND EMST.EMST_COST_GUBN  = CHIN.CHIN_COST_GUBN\n";
+                             cond_sql += "                                                  AND EMST.EMST_PART_NO    = CHIN.CHIN_PART_NO\n";
+                             cond_sql += "                                                  AND EMST.EMST_EONO       = CHIN.CHIN_EONO\n";
+                             cond_sql += "                                                  AND EMST.EMST_CUMT_NO    = CHIN.CHIN_CUMT_NO\n";
+                             cond_sql += "                                                  AND EMST.EMST_COST_GUBN IN ('R0', 'R1', 'R2', 'R3')\n";
+                             cond_sql += "                                                INNER JOIN\n";
+                             cond_sql += "                                                 CRTBSPMS SPMS\n";
+                             cond_sql += "                                                ON    SPMS_CORP_CODE = CHIN.CHIN_CORP_SUB0\n";
+                             cond_sql += "                                                  AND SPMS_PART_NO   = CHIN.CHIN_PART_SUB0\n";
+                             cond_sql += "                                                  AND SPMS_EONO      = CHIN.CHIN_EONO_SUB0\n";
+                             cond_sql += "                                                  AND SPMS_CUMT_NO   = CHIN.CHIN_CUMT_SUB0\n";
+                             cond_sql += "                                           WHERE CHIN_PART_SUB0 LIKE '%' || #comd_part_no_R# || '%'\n";
+                             cond_sql += "                                         )";
+                         } else {
+                             cond_sql  = "AND EMST_PART_NO   LIKE '%' || #comd_part_no_R# || '%'"
+                         }
+
+                         cond_sql;
+                     }
+                     [AND EMST_CUMTO_NO   = #comd_cumto_no_R#]
+                     [AND (    EMST_BASE_DATE >= #comd_base_frdt#
+                           AND EMST_BASE_DATE <= #comd_base_todt#)]
+                     [AND (    EMST_INIT_DATE >= #comd_from_date#
+                           AND EMST_INIT_DATE <= #comd_to_date#)]
+                     {
+                       var s = "";
+                       if ($data.login_id != 'GE000615') {
+                         s= " AND EMST_INIT_CMAN =(CASE WHEN EMST_PASS_STAT in ('2C','30','40') THEN EMST_INIT_CMAN ELSE #reg_id# END)";
+                       }
+                       s;
+                     }
+                     @tmcdQryStr@
+                     @encdQryStr@
+                   )
+              WHERE 1 = 1
+               [AND COMD_PART_NAME LIKE '%' || #comd_part_name_R# || '%']
+               [AND UPPER(COMD_INIT_NAME) LIKE '%' || UPPER(#comd_init_name_R#) || '%']
+               [AND COMD_CUMTO_NO = #comd_cumto_no#]
+        ]]>
+  	</sql>
+  
+ 	<sql id="checkEndpart1" comment="END ITEM CHECK(자동공법)">
+ 	<!-- 
+ 		체크 대상
+ 		1. 직접입력가 구분이 없는 SUB PART NO인 경우,
+ 	   	      재료비, 가공비 내역과 집계테이블 내역을 비교한다.
+ 		2. 직접입력가 구분이 존재하는 경우.
+ 	               해당 레벨 및 하위 레벨의 정합성 체크는 제외한다.
+  	-->
+        <![CDATA[
+            SELECT A.EMST_CORP_CODE
+                  ,A.EMST_COST_GUBN
+                  ,A.EMST_PART_NO
+                  ,A.EMST_EONO
+                  ,A.EMST_CUMT_NO
+                  ,A.EMST_CUMTO_NO
+                  ,A.SPMS_CORP_CODE
+                  ,A.SPMS_PART_NO
+                  ,A.SPMS_EONO
+                  ,A.SPMS_CUMT_NO
+                  ,A.CMMS_COME_CODE
+                  ,A.CMMS_METH_GUBN
+                  ,A.CHIN_USG0_TOTL
+                  ,CASE
+                     WHEN     A.CHIN_USG0_TOTL > 0 
+                          AND A.SPMS_PIMS_APPL IS NULL
+                          THEN CASE
+                                 WHEN NVL(A.CMAT_MATL_COST,0) = NVL(A.SPCR_MATL_COST,0)
+                                      THEN 'Y'
+                                 ELSE 'N'
+                               END
+                     WHEN     A.CHIN_USG0_TOTL > 0 
+                          AND A.SPMS_PIMS_APPL IN ('A', 'M', 'U')
+                          THEN 'Y'                               
+                     ELSE 'Y'
+                   END CMAT_CHECK
+                  ,CASE
+                     WHEN     A.CHIN_USG0_TOTL > 0 
+                          AND A.SPMS_PIMS_APPL IS NULL
+                          THEN CASE
+                                 WHEN NVL(A.CPRO_PROC_COST,0) = NVL(A.SPCR_PROC_COST, 0)
+                                      THEN 'Y'
+                                 ELSE 'N'
+                               END
+                     WHEN     A.CHIN_USG0_TOTL > 0 
+                          AND A.SPMS_PIMS_APPL IN ('A', 'M', 'U')
+                          THEN 'Y'                                
+                     ELSE 'Y'
+                   END CPRO_CHECK
+                  ,A.CMAT_MATL_COST
+                  ,A.SPCR_MATL_COST
+                  ,A.CPRO_PROC_COST
+                  ,A.SPCR_PROC_COST
+                  ,MTCD.MTCD_METH_NAME AS CMMS_COME_NAME
+              FROM (
+			        SELECT CHIN.EMST_CORP_CODE
+                          ,CHIN.EMST_COST_GUBN
+                          ,CHIN.EMST_PART_NO
+                          ,CHIN.EMST_EONO
+                          ,CHIN.EMST_CUMT_NO
+                          ,CHIN.EMST_CUMTO_NO
+			              ,CHIN.SPMS_CORP_CODE
+                          ,CHIN.SPMS_PART_NO
+                          ,CHIN.SPMS_EONO
+                          ,CHIN.SPMS_CUMT_NO
+                          ,CHIN.CHIN_USG0_TOTL
+                          ,CHIN.SPMS_PIMS_APPL
+                          ,CMMS.CMMS_COME_CODE
+                          ,CMMS.CMMS_METH_GUBN
+                          ,(
+                            SELECT SUM(CMAT_MATL_COST)
+                              FROM CRTBCMAT CMAT
+                             WHERE CMAT.CMAT_CORP_CODE = CHIN.SPMS_CORP_CODE
+                               AND CMAT.CMAT_PART_NO   = CHIN.SPMS_PART_NO
+                               AND CMAT.CMAT_EONO      = CHIN.SPMS_EONO
+                               AND CMAT.CMAT_CUMT_NO   = CHIN.SPMS_CUMT_NO
+                               AND CMAT.CMAT_CUMT_GUBN = CMMS.CMMS_CUMT_GUBN
+                               AND CMAT.CMAT_COME_CODE = CMMS.CMMS_COME_CODE
+                               AND CMAT.CMAT_APPL_GUBN = 'Y'
+                           ) CMAT_MATL_COST
+                          ,(
+                            SELECT SUM(SPCR_MATL_COST)
+                              FROM CRTBSPCR SPCR
+                             WHERE SPCR.SPCR_CORP_CODE = CHIN.SPMS_CORP_CODE
+                               AND SPCR.SPCR_PART_NO   = CHIN.SPMS_PART_NO
+                               AND SPCR.SPCR_EONO      = CHIN.SPMS_EONO
+                               AND SPCR.SPCR_CUMT_NO   = CHIN.SPMS_CUMT_NO
+                               AND SPCR.SPCR_CUMT_GUBN = CMMS.CMMS_CUMT_GUBN
+                               AND SPCR.SPCR_COME_CODE = CMMS.CMMS_COME_CODE
+                           ) SPCR_MATL_COST
+                          ,(
+                            SELECT SUM(CPRO_PROC_COST)
+                              FROM CRTBCPRO CPRO
+                             WHERE CPRO.CPRO_CORP_CODE = CHIN.SPMS_CORP_CODE
+                               AND CPRO.CPRO_PART_NO   = CHIN.SPMS_PART_NO
+                               AND CPRO.CPRO_EONO      = CHIN.SPMS_EONO
+                               AND CPRO.CPRO_CUMT_NO   = CHIN.SPMS_CUMT_NO
+                               AND CPRO.CPRO_CUMT_GUBN = CMMS.CMMS_CUMT_GUBN
+                               AND CPRO.CPRO_COME_CODE = CMMS.CMMS_COME_CODE
+                               AND CPRO.CPRO_APPL_GUBN = 'Y'
+                           ) CPRO_PROC_COST
+                          ,(
+                            SELECT SUM(SPCR_PROC_COST)
+                              FROM CRTBSPCR SPCR
+                             WHERE SPCR.SPCR_CORP_CODE = CHIN.SPMS_CORP_CODE
+                               AND SPCR.SPCR_PART_NO   = CHIN.SPMS_PART_NO
+                               AND SPCR.SPCR_EONO      = CHIN.SPMS_EONO
+                               AND SPCR.SPCR_CUMT_NO   = CHIN.SPMS_CUMT_NO
+                               AND SPCR.SPCR_CUMT_GUBN = CMMS.CMMS_CUMT_GUBN
+                               AND SPCR.SPCR_COME_CODE = CMMS.CMMS_COME_CODE
+                           ) SPCR_PROC_COST
+			          FROM CRVTCHIN CHIN
+			              LEFT OUTER JOIN
+			               CRTBCMMS CMMS
+			              ON    CMMS.CMMS_CORP_CODE = CHIN.SPMS_CORP_CODE
+			                AND CMMS.CMMS_PART_NO   = CHIN.SPMS_PART_NO
+			                AND CMMS.CMMS_EONO      = CHIN.SPMS_EONO
+			                AND CMMS.CMMS_CUMT_NO   = CHIN.SPMS_CUMT_NO
+			                AND CMMS.CMMS_METH_GUBN = 'A'
+                     WHERE 1 = 1
+                       AND CHIN.EMST_CORP_CODE = #comd_corp_code#
+                       AND CHIN.EMST_COST_GUBN = #comd_cost_gubn# 
+                       AND CHIN.EMST_PART_NO   = #comd_part_no#
+                       AND CHIN.EMST_EONO      = #comd_eono#
+                       AND CHIN.EMST_CUMT_NO   = #comd_cumt_no#
+
+                   ) A
+                  LEFT OUTER JOIN
+                   CITBMTCD MTCD
+                  ON    MTCD.MTCD_CORP_CODE = A.EMST_CORP_CODE
+                    AND MTCD.MTCD_METH_GUBN = A.CMMS_METH_GUBN
+                    AND MTCD.MTCD_COME_CODE = A.CMMS_COME_CODE                   
+             WHERE 1 = 1
+        ]]>
+  	</sql>
+
+  	<sql id="checkCmms" comment="결재 상신 전 계산되지 않은 공법이 존재하는지 체크">
+        <![CDATA[
+			SELECT SPMS_PART_NO
+			      ,CHIN_LEVL
+			      ,CMMS_COME_CODE
+			  FROM (
+			        SELECT CHIN_SORT_KEY0
+			              ,CHIN_LEVL
+			              ,CHIN_CUMT_NO
+			              ,SPMS_PART_NO
+			              ,CMMS_COME_CODE
+			          FROM CRVTCHIN
+			              INNER JOIN
+			               CRTBCMMS
+			              ON     CMMS_CORP_CODE = SPMS_CORP_CODE
+			                 AND CMMS_PART_NO   = SPMS_PART_NO
+			                 AND CMMS_EONO      = SPMS_EONO
+			                 AND CMMS_CUMT_NO   = SPMS_CUMT_NO
+			         WHERE CHIN_CORP_CODE = #comd_corp_code#
+			           AND CHIN_COST_GUBN = #comd_cost_gubn#
+			           AND CHIN_PART_NO   = #comd_part_no#
+			           AND CHIN_EONO      = #comd_eono#
+			           AND CHIN_CUMT_NO   = #comd_cumt_no#
+			           AND CMMS_METH_GUBN IN ('A','M')
+			           AND (
+			                    NVL(SPMS_PIMS_APPL, 'X') NOT IN('A', 'M', 'U') -- 단가구분이 존재하는 않는 대상만 추출
+			                AND (
+			                         NVL(CMMS_SUM0_GUBN,' ') <> 'Y'
+			                     OR (    NVL(CMMS_SUM0_GUBN,' ') = 'Y'
+			                         AND NVL(EMST_SUM0_GUBN,' ') <> 'Y'
+			                        )
+			                     )
+			               )
+			         ORDER BY CHIN_SORT_KEY0
+			       )        
+        ]]>
+  	</sql>
+  
+  	<!-- 개발부문 -->
+ 	<sql id="get.comm.codes" comment="code 를 조회함">
+    	<![CDATA[
+			SELECT A.DTL_CD AS DATA
+			      ,A.DTL_CD AS LABEL
+			    --,COALESCE(B.DTL_CD_NM, C.DTL_CD_NM) AS LABEL
+			      ,A.DTL_CD
+			      ,COALESCE(B.DTL_CD_NM, C.DTL_CD_NM) DTL_CD_NM
+			      ,B.DTL_CD_USE1
+			      ,B.DTL_CD_USE2
+			      ,B.DTL_CD_USE3
+			  FROM ESACDDT A
+			      ,(
+			        SELECT SYS_ID
+			              ,GRP_CD
+			              ,DTL_CD
+			              ,DTL_CD_NM
+			              ,DTL_CD_USE1
+			              ,DTL_CD_USE2
+			              ,DTL_CD_USE3
+			          FROM ESACDDL
+			         WHERE LANG_CD = #locale#
+			        ) B
+			       ,(
+			         SELECT SYS_ID
+			               ,GRP_CD
+			               ,DTL_CD
+			               ,DTL_CD_NM
+			               ,DTL_CD_USE1
+			               ,DTL_CD_USE2
+			               ,DTL_CD_USE3
+			            FROM ESACDDL
+			           WHERE LANG_CD = 'ko_KR'
+			        ) C
+			   WHERE A.SYS_ID = #sys_id#
+			     AND A.STS   <> 'D'
+			     AND A.USE_YN = 'Y'
+			     AND A.GRP_CD = 'CA_DEBNCODE'
+			    [AND B.GRP_CD = #dtl_cd#]
+			     AND B.SYS_ID (+) = A.SYS_ID
+			     AND B.GRP_CD (+) = A.GRP_CD
+			     AND B.DTL_CD (+) = A.DTL_CD
+			     AND C.SYS_ID = A.SYS_ID
+			     AND C.GRP_CD = A.GRP_CD
+			     AND C.DTL_CD = A.DTL_CD
+			   ORDER BY A.SORT_ORD   
+    	]]>
+	</sql>
+
+ <sql id="get.chk" comment="PT/시트 팀 체크">
+  <![CDATA[
+WITH PARAM AS (
+  SELECT #dept_cd# DEPT_CD FROM DUAL
+)  	
+SELECT CASE WHEN B.DTL_CD IS NOT NULL THEN 'PT' WHEN C.DTL_CD IS NOT NULL THEN 'ST' ELSE 'XX' END CHK_DEPT
+      ,A.*
+  FROM PARAM A
+      LEFT OUTER JOIN
+       ESACDDT B
+      ON    B.SYS_ID = '100'
+        AND B.GRP_CD = 'DEPT_PT'
+        AND B.DTL_CD = A.DEPT_CD
+      LEFT OUTER JOIN
+       ESACDDT C
+      ON    C.SYS_ID = '100'
+        AND C.GRP_CD = 'DEPT_ST'
+        AND C.DTL_CD = A.DEPT_CD
+  ]]>
+ </sql>
+
+
+  	<!-- END ITEM TMCD -->
+  	<sql id="tmcd_code.select" comment="기종 코드 가져오기">
+        <![CDATA[
+			SELECT DISTINCT SPEC_TMCD_CODE AS DATA
+			     ,SPEC_TMCD_CODE AS LABEL
+			  FROM CITBSPEC
+			 WHERE 1 = 1
+			   AND SPEC_CORP_CODE = #corp_cd#
+			   AND SPEC_STS      != 'D'
+			   AND SPEC_USE_YN    = 'Y'
+			 ORDER BY 1 ASC
+        ]]>
+  	</sql>
+
+  	<!-- END ITEM ENCD -->
+  	<sql id="encd_cont.select" comment="엔진 cont 가져오기">
+        <![CDATA[
+			SELECT DISTINCT
+			       NVL( TRIM(SPEC_ENCD_CONT) , ' ' ) AS DATA
+			      ,NVL( TRIM(SPEC_ENCD_CONT) , ' ' ) AS LABEL
+			  FROM CITBSPEC
+			 WHERE 1 = 1
+			   AND SPEC_CORP_CODE = #corp_cd#
+			   AND SPEC_STS      != 'D'
+			   AND SPEC_USE_YN    = 'Y'
+			 --AND SPEC_TMCD_CODE = 'F4A51'
+			  @tmcdQryStr@
+			 ORDER BY 1 ASC
+        ]]>
+  	</sql>
+
+  	<!-- END ITEM LIST -->
+ 	<sql id="cars_code.select" comment="차종 코드 가져오기">
+        <![CDATA[
+			SELECT DISTINCT
+			       CAYR_CARS_CODE AS DATA
+			      ,CAYR_CARS_CODE AS LABEL
+			  FROM CITBCAYR
+			 WHERE CAYR_CORP_CODE = #corp_cd#
+			 ORDER BY CAYR_CARS_CODE
+        ]]>
+  	</sql>
+
+	<sql id="inds_code.select" comment="업종 코드 가져오기">
+        <![CDATA[
+			SELECT DISTINCT
+			       INDS_CODE AS DATA
+			      ,INDS_CODE AS LABEL
+			  FROM CITBINDS
+			 WHERE INDS_CORP_CODE = #corp_cd#
+			 ORDER BY INDS_CODE
+        ]]>
+  	</sql>
+
+  	<sql id="insert.emstlist" comment="end item insert (프로시저)" callable="true">
+         <![CDATA[
+			CALL CRSPEMST_I05 (
+			                    #corp_cd:varchar:in#
+			                   ,#reg_id:varchar:in#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   ,'20'
+			                   ,#comd_base_date:varchar:in#
+			                   ,#comd_stnd_gubn:varchar:in#
+			                   ,#comd_mach_gubn:varchar:in#
+			                   ,#comd_vehl_gubn:varchar:in#
+			                   ,#comd_dev0_bumn:varchar:in#
+			                   ,#comd_debn_code:varchar:in#
+			                   ,'SS'
+			                   ,#comd_tmcd_code:varchar:in#
+			                   ,#comd_cars_code:varchar:in#
+			                   ,#comd_encd_cont:varchar:in#
+			                   ,#comd_capa_cont:varchar:in#
+			                   ,#comd_tf_code:varchar:in#
+			                   ,#comd_inds_code:varchar:in#
+			                   ,#comd_vend_code:varchar:in#
+			                   ,#comd_vend_apfr:varchar:in#
+			                   ,#comd_src0:varchar:in#
+			                   ,#comd_rsch_pric:varchar:in#
+			                   ,#comd_cumt_pric:varchar:in#
+			                   
+			                   ,#emst_cumt_no:varchar:out#
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+  	</sql>
+
+  	<sql id="insert.chinlist" comment="chain insert (프로시저) " callable="true">
+         <![CDATA[
+			BEGIN
+			
+			   INSERT INTO CRTBSPMS
+			   (
+			     SPMS_CORP_CODE
+			    ,SPMS_PART_NO
+			    ,SPMS_EONO
+			    ,SPMS_CUMT_NO
+			    ,SPMS_CORP_ENDI
+			    ,SPMS_COST_ENDI
+			    ,SPMS_PART_ENDI
+			    ,SPMS_EONO_ENDI
+			    ,SPMS_CUMT_ENDI
+			    ,SPMS_STND_GUBN
+			    ,SPMS_CARS_CODE
+			    ,SPMS_INDS_CODE
+			    ,SPMS_SRC0
+			    ,SPMS_UPDT_DATE
+			    ,SPMS_UPDT_CMAN
+			    ,SPMS_INIT_DATE
+			    ,SPMS_INIT_CMAN
+			   ) VALUES (
+			              #corp_cd#
+			             ,#comd_part_no#
+			             ,#comd_eono#
+			             ,#comd_cumt_no#
+			             ,#corp_cd#
+			             ,#comd_cost_gubn#
+			             ,#comd_part_no#
+			             ,#comd_eono#
+			             ,#comd_cumt_no#
+			             ,''
+			             ,#comd_cars_code#
+			             ,''
+			             ,#comd_src0#
+			             ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			             ,#reg_id#
+			             ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			             ,#reg_id#
+			            );
+			   
+			   INSERT INTO CRTBCHIN VALUES (
+			    TRIM(#corp_cd#)
+			   ,TRIM(#comd_cost_gubn#)
+			   ,TRIM(#comd_part_no#)
+			   ,TRIM(#comd_eono#)
+			   ,TRIM(#comd_cumt_no#)
+			   ,1
+			   ,1
+			   ,1
+			   ,#corp_cd#
+			   ,#comd_part_no#
+			   ,#comd_eono#
+			   ,#comd_cumt_no#
+			   ,1
+			   
+			   ,0
+			   ,0.00
+			   ,0.00
+			   ,''
+			   ,NULL
+			   ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			   ,#reg_id#
+			   ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			   ,#reg_id#
+			   );
+			
+			END;
+         ]]>
+  	</sql>
+
+  	<sql id="update.emstlist" comment="end item update (프로시저)" callable="true">
+         <![CDATA[
+			CALL CRSPEMST_I04 (
+			                    #reg_id#
+			                   ,#corp_cd#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   ,#comd_pass_stat:varchar:in#
+			                   ,#comd_base_date:varchar:in#
+			                   ,#comd_stnd_gubn:varchar:in#
+			                   ,#comd_mach_gubn:varchar:in#
+			                   ,#comd_vehl_gubn:varchar:in#
+			                   ,#comd_dev0_bumn:varchar:in#
+			                   ,#comd_debn_code:varchar:in#
+			                   ,'SS'
+			                   ,#comd_tmcd_code:varchar:in#
+			                   ,#comd_cars_code:varchar:in#
+			                   ,#comd_encd_cont:varchar:in#
+			                   ,#comd_capa_cont:varchar:in#
+			                   ,#comd_tf_code:varchar:in#
+			                   ,#comd_inds_code:varchar:in#
+			                   ,#comd_vend_code:varchar:in#
+			                   ,#comd_vend_apfr:varchar:in#
+			                   ,#comd_src0:varchar:in#
+			                   ,#comd_rsch_pric:varchar:in#
+			                   ,#comd_cumt_pric:varchar:in#
+			                   
+			                   ,#CHANGE_FLAG:varchar:out#
+			                   ,#comd_cumt_new0:varchar:out#
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+  	</sql>
+
+  	<sql id="delete.emstlist" comment="end item delete (프로시저)" callable="true">
+         <![CDATA[
+			CALL CRSPEMST_D01 (
+			                    #reg_id:varchar:in#
+			                   ,#corp_cd#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+  	</sql>
+
+  	<sql id="delete.distribution" comment="배포정보 삭제">
+         <![CDATA[
+          DELETE
+            FROM CRTBDSTB
+           WHERE DSTB_CORP_CODE = #comd_corp_code#
+             AND DSTB_COST_GUBN = #comd_cost_gubn#
+             AND DSTB_PART_NO   = #comd_part_no#
+             AND DSTB_EONO      = #comd_eono#
+             AND DSTB_CUMT_NO   = #comd_cumt_no#
+         ]]>
+  	</sql>
+
+  	<sql id="copy.emstlist.check" comment="문제품목 체크">
+        <![CDATA[
+			SELECT NVL(CRFT_EMST_VALD_CHCK
+			       (
+			         'ALL0'
+			        ,#comd_corp_code#
+			        ,#comd_cost_gubn#
+			        ,#comd_part_no#
+			        ,#comd_eono#
+			        ,#comd_cumt_no#
+			        ,''
+			       ), '') CHECK_VALUE
+			  FROM DUAL
+        ]]>
+  	</sql>
+
+  	<sql id="copy.emstlist" comment="end item copy (프로시저)" callable="true">
+         <![CDATA[
+			CALL CRSPEMST_S01 (
+			                    #reg_id:varchar:in#
+			                   ,'NP'
+			                   ,'MIRR'
+			                   ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			                   ,#comd_corp_code:varchar:in#
+			                   ,#comd_cost_gubn:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:in#
+			                   
+			                   ,#comd_cost_gubn_P:varchar:in#
+			                   ,#comd_part_no:varchar:in#
+			                   ,#comd_eono:varchar:in#
+			                   ,#comd_cumt_no:varchar:inout#
+			                   
+			                   ,#CUMT_NO:varchar:out#
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )
+         ]]>
+  	</sql>
+  
+  	<sql id="move.emstlist" comment="end item move (프로시저)" callable="true">
+         <![CDATA[
+			CALL CRSPEMST_S01(
+			                   #reg_id:varchar:in#
+			                  ,'MV'
+			                  ,'MIRR'
+			                  ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+			                  ,#comd_corp_code:varchar:in#
+			                  ,#comd_cost_gubn:varchar:in#
+			                  ,#comd_part_no:varchar:in#
+			                  ,#comd_eono:varchar:in#
+			                  ,#comd_cumt_no:varchar:in#
+			                  
+			                  ,#cost_gubn:varchar:in#
+			                  ,#comd_part_no:varchar:in#
+			                  ,#comd_eono:varchar:in#
+			                  ,#comd_cumt_no:varchar:inout#
+			                  
+			                  ,#CUMT_NO:varchar:out#
+			                  ,#MESG_CODE:varchar:out#
+			                  ,#MESG:varchar:out#
+			                  ,#SQL0_CODE:varchar:out#
+			                  ,#PRGM_ID:varchar:out#
+			                  ,#LINE_NO:varchar:out#
+			                 )
+         ]]>
+  	</sql>  
+
+  	<sql id="emplname.select" comment="사원명 가져오기">
+        <![CDATA[
+			SELECT USR_NM
+			  FROM ESAUSER
+			 WHERE USR_ID = #empl_numb_new0#
+        ]]>
+  	</sql>
+
+  	<sql id="change.cman" comment="담당자 변경 " callable="true">
+         <![CDATA[
+			CALL CRSPCMAN_S01(
+			                   #reg_id:varchar:in#
+			                  ,#comd_corp_code:varchar:in#
+			                  ,#comd_cost_gubn:varchar:in#
+			                  ,#comd_eono:varchar:in#
+			                  ,#comd_part_no:varchar:in#
+			                  ,#comd_cumt_no:varchar:in#
+			
+			                  ,#comd_init_cman:varchar:in#
+			                  ,#empl_numb_new0:varchar:in#
+			
+			                  ,#MESG_CODE:varchar:out#
+			                  ,#MESG:varchar:out#
+			                  ,#SQL0_CODE:varchar:out#
+			                  ,#PRGM_ID:varchar:out#
+			                  ,#LINE_NO:varchar:out#
+			                 )
+         ]]>
+  	</sql>
+
+  	<sql id="get.team.code" comment="부서코드 가져오기">
+        <![CDATA[
+			SELECT DEPT_CD
+			      ,DEPT_NM
+			      ,DEPT_EN_NM
+			      ,UP_DEPT_CD
+			  FROM ESAOGDP
+			 WHERE DEPT_CD LIKE UPPER(#dept_cd#) || '%'
+			   AND DEPT_NM LIKE '%' || UPPER(#dept_nm#) || '%'
+			   AND USE_YN = 'Y'
+			 ORDER BY DEPT_NM
+        ]]>
+  	</sql>
+
+  	<sql id="get.target.team" comment="배포 팀 조회">
+        <![CDATA[
+			SELECT DSTB_DEPT_CODE AS DEPT_CD
+			      ,DEPT_NM
+			  FROM CRTBDSTB
+			      LEFT OUTER JOIN
+			       ESAOGDP
+			      ON     SYS_ID  = '100'
+			         AND COMP_CD = '1000'
+			         AND PLT_CD  = 'ALL'
+			         AND DEPT_CD = DSTB_DEPT_CODE
+			 WHERE DSTB_CORP_CODE = #corp_code#
+			   AND DSTB_COST_GUBN = #cost_gubn#
+			   AND DSTB_PART_NO   = #part_no#
+			   AND DSTB_EONO      = #eono#
+			   AND DSTB_CUMT_NO   = #cumt_no#
+			 ORDER BY DEPT_NM
+        ]]>
+  	</sql>
+
+  	<sql id="team.code.delete" comment="배포팀 입력전 초기화">
+        <![CDATA[
+			DELETE
+			  FROM CRTBDSTB
+			 WHERE DSTB_CORP_CODE = #corp_code#
+			   AND DSTB_COST_GUBN = #cost_gubn#
+			   AND DSTB_PART_NO   = #part_no#
+			   AND DSTB_EONO      = #eono#
+			   AND DSTB_CUMT_NO   = #cumt_no#
+        ]]>
+  	</sql>
+
+  	<sql id="team.dist" comment="배포">
+        <![CDATA[
+          INSERT INTO CRTBDSTB
+          SELECT #corp_code#
+                ,#cost_gubn#
+                ,#part_no#
+                ,#eono#
+                ,#cumt_no#
+                ,#dept_cd#
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+            FROM DUAL
+        ]]>
+  	</sql>
+
+  	<!-- 결재용 쿼리 -->
+  	<sql id="update.emst.apprv.stat.T" comment="결재상신">
+        <![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_PASS_STAT = '30'
+			      ,EMST_APRV_ID   = #sys_id#
+			      ,EMST_APRV_NO   = #aprv_docno#
+			      ,EMST_APPR_DATE = #aprv_date#
+			 WHERE EMST_CORP_CODE = #emst_corp_code#
+			   AND EMST_COST_GUBN = #emst_cost_gubn#
+			   AND EMST_PART_NO   = #emst_part_no#
+			   AND EMST_EONO      = #emst_eono#
+			   AND EMST_CUMT_NO   = #emst_cumt_no#
+        ]]>
+  	</sql>
+
+  	<sql id="update.emst.apprv.stat.C" comment="결재완료">
+        <![CDATA[
+          UPDATE CRTBEMST EMST
+             SET EMST_PASS_STAT = '40'
+                ,EMST_APPR_DATE = #aprv_date#
+                ,EMST_CUMTO_NO = NVL(
+                                    ( SELECT MAX(EMST_CUMTO_NO)
+                                      FROM CRTBEMST SA
+                                      WHERE 1 = 1
+                                      AND SA.EMST_CORP_CODE = EMST.EMST_CORP_CODE
+                                      AND SA.EMST_COST_GUBN = EMST.EMST_COST_GUBN
+                                      AND SA.EMST_PART_NO   = EMST.EMST_PART_NO
+                                      AND SA.EMST_EONO      = EMST.EMST_EONO
+                                      AND SA.EMST_PASS_STAT =  '40'
+                                    )
+                                  , 0
+                                  ) + 1
+             WHERE EMST_CORP_CODE = #emst_corp_code#
+               AND EMST_COST_GUBN = #emst_cost_gubn#
+               AND EMST_PART_NO   = #emst_part_no#
+               AND EMST_EONO      = #emst_eono#
+               AND EMST_CUMT_NO   = #emst_cumt_no#
+               AND EMST_APRV_ID   = #sys_id#
+               AND EMST_APRV_NO   = #aprv_docno#
+        ]]>
+  	</sql>
+
+  	<sql id="update.emst.apprv.stat.B" comment="반려">
+        <![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_PASS_STAT = '50'
+			      ,EMST_APPR_DATE = #aprv_date#
+			 WHERE EMST_CORP_CODE = #emst_corp_code#
+			   AND EMST_COST_GUBN = #emst_cost_gubn#
+			   AND EMST_PART_NO   = #emst_part_no#
+			   AND EMST_EONO      = #emst_eono#
+			   AND EMST_CUMT_NO   = #emst_cumt_no#
+			   AND EMST_APRV_ID   = #sys_id#
+			   AND EMST_APRV_NO   = #aprv_docno#
+        ]]>
+  	</sql>
+  	
+  	<sql id="save.EscModInfoVendor.X.aprv" comment="회수">
+        <![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_PASS_STAT = '20'
+			      ,EMST_APPR_DATE = #aprv_date#
+			      ,EMST_APRV_ID   = null
+			      ,EMST_APRV_NO   = null			      
+			 WHERE EMST_CORP_CODE = #emst_corp_code#
+			   AND EMST_COST_GUBN = #emst_cost_gubn#
+			   AND EMST_PART_NO   = #emst_part_no#
+			   AND EMST_EONO      = #emst_eono#
+			   AND EMST_CUMT_NO   = #emst_cumt_no#
+			   AND EMST_APRV_ID   = #sys_id#
+			   AND EMST_APRV_NO   = #aprv_docno#
+        ]]>
+  	</sql>
+  	
+  	<sql id="save.Vendor.X.aprv" comment="회수">
+        <![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_PASS_STAT = '2C'
+			      ,EMST_APPR_DATE = #aprv_date#
+			      ,EMST_APRV_ID   = null
+			      ,EMST_APRV_NO   = null
+			 WHERE EMST_CORP_CODE = #emst_corp_code#
+			   AND EMST_COST_GUBN = #emst_cost_gubn#
+			   AND EMST_PART_NO   = #emst_part_no#
+			   AND EMST_EONO      = #emst_eono#
+			   AND EMST_CUMT_NO   = #emst_cumt_no#
+			   AND EMST_APRV_ID   = #sys_id#
+			   AND EMST_APRV_NO   = #aprv_docno#
+        ]]>
+  	</sql>    	
+
+	<sql id="get.vendNameInfo.select" comment="업체 조회">
+        <![CDATA[
+			SELECT *
+			  FROM (
+			         SELECT VEND_CODE    COMD_VEND_CODE
+			               ,VEND_NAME    COMD_VEND_NAME
+			           FROM CITBVEND
+			          WHERE 1 = 1
+			            AND VEND_CORP_CODE = #corp_cd#
+			            AND VEND_CODE      = #comd_vend_code#
+			        UNION ALL
+			         SELECT VD_CD        COMD_VEND_CODE
+			               ,VD_NM_LOC    COMD_VEND_NAME
+			           FROM ESMVDGL
+			          WHERE 1 = 1
+			            AND VD_CD = #comd_vend_code#
+			       )
+			  WHERE ROWNUM = 1
+        ]]>
+	</sql>  
+	
+	<sql id="select.spms.vend" comment="SPMS 1LVEL">
+        <![CDATA[
+			SELECT CHIN_CUMT_SUB0
+			  FROM CRTBCHIN
+			 WHERE CHIN_CORP_CODE = #comd_corp_code#
+			   AND CHIN_COST_GUBN = #comd_cost_gubn#
+			   AND CHIN_PART_NO   = #comd_part_no#
+			   AND CHIN_EONO      = #comd_eono#
+			   AND CHIN_CUMT_NO   = #comd_cumt_no#
+			   AND CHIN_LEVL      = 1
+        ]]>
+  	</sql>
+  	
+	<sql id="update.spms.vend" comment="SPMS업체 UPDATE">
+        <![CDATA[
+			UPDATE CRTBSPMS
+			   SET SPMS_VEND_CODE = #comd_vend_code#
+			      ,SPMS_VEND_APFR = #comd_vend_apfr#
+			 WHERE SPMS_CORP_CODE = #comd_corp_code#
+			   AND SPMS_PART_NO   = #comd_part_no#
+			   AND SPMS_EONO      = #comd_eono#
+			   AND SPMS_CUMT_NO   = #chin_cumt_no#
+			   AND SPMS_CORP_ENDI = #comd_corp_code#
+			   AND SPMS_COST_ENDI = #comd_cost_gubn#
+			   AND SPMS_PART_ENDI = #comd_part_no#
+			   AND SPMS_EONO_ENDI = #comd_eono#
+			   AND SPMS_CUMT_ENDI = #comd_cumt_no#
+        ]]>
+  	</sql>
+  	
+	<sql id="update.emst.att_grd_cd" comment="END-ITEM MASTER 첨부파일 그룹 코드 수정">
+		<![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_ATT_GRP_CD = #comd_att_grp_cd#
+			 WHERE EMST_CORP_CODE = #comd_corp_code#
+			   AND EMST_COST_GUBN = #comd_cost_gubn#
+			   AND EMST_PART_NO   = #comd_part_no#
+			   AND EMST_EONO      = #comd_eono#
+			   AND EMST_CUMT_NO   = #comd_cumt_no#
+        ]]>
+	</sql>
+	
+	<sql id="update.status" comment="상태코드 변경">
+		<![CDATA[
+			UPDATE CRTBEMST
+			   SET EMST_PASS_STAT = #new0_pass_stat#
+			 WHERE EMST_CORP_CODE = #comd_corp_code#
+			   AND EMST_COST_GUBN = #comd_cost_gubn#
+			   AND EMST_PART_NO   = #comd_part_no#
+			   AND EMST_EONO      = #comd_eono#
+			   AND EMST_CUMT_NO   = #comd_cumt_no#
+        ]]>
+	</sql>	  		
+
+	<sql id="get.attachInfo.select" comment="첨부파일 정보 조회">
+        <![CDATA[
+             SELECT ATT_FILE_PATH
+                   ,ORGN_FILE_NM
+                   ,ATT_FILE_NM
+               FROM ESAATTH
+              WHERE 1 = 1
+                AND STS <> 'D'
+                AND SYS_ID = #sys_id#
+                AND GRP_CD = #comd_att_grp_cd#
+        ]]>
+  	</sql>  	
+  	
+</sql-descriptor>

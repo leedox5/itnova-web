@@ -1,0 +1,811 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/cr/cr01">
+	<service id="get.emstlist" label="END-ITEM 조회">
+		<script>
+			<![CDATA[
+				var map;
+				$data.param.login_id = $user.reg_id;
+				$data.param.tmcdQryStr = "";
+        		$data.param.encdQryStr = "";
+        		$data.param.dstdQryStr = "";
+
+				if($data.param.comd_cost_gubn_R == "AA") {
+				    $data.param.comd_cost_gubn_R = null;
+				}
+								
+                if( !( $data.param.tmcdCodeStr == null || $data.param.tmcdCodeStr == '' ) ) {
+            		$data.param.tmcdQryStr = "AND EMST_TMCD_CODE IN (" + $data.param.tmcdCodeStr + ")";    
+                }
+                
+                if( !( $data.param.encdContStr == null || $data.param.encdContStr == '' ) ) {
+                	$data.param.encdQryStr = "AND NVL( TRIM(EMST_ENCD_CONT) , ' ' )  IN (" + $data.param.encdContStr + ")";
+                }
+                
+                $logger.info($user);
+                
+                if ($user.rx_role == 'N') {
+	                if ($user.rd_role == 'Y' || $user.ds_role == 'Y') {
+						$data.param.dstdQryStr += "INNER JOIN                            ";
+						$data.param.dstdQryStr += " CRTBDSTB DSTM                        ";
+						$data.param.dstdQryStr += "ON     DSTB_CORP_CODE = EMST_CORP_CODE";
+						$data.param.dstdQryStr += "   AND DSTB_COST_GUBN = EMST_COST_GUBN";
+						$data.param.dstdQryStr += "   AND DSTB_PART_NO   = EMST_PART_NO  ";
+						$data.param.dstdQryStr += "   AND DSTB_EONO      = EMST_EONO     ";
+						$data.param.dstdQryStr += "   AND DSTB_CUMT_NO   = EMST_CUMT_NO  ";
+						$data.param.dstdQryStr += "   AND DSTB_DEPT_CODE = '"+ $user.dept_cd +"'";
+	                }
+                }
+
+				$data.chinList = $jdbc.queryList("bp/tcams/cr/cr01", "emstlist.select", $data.param);
+				
+				if($data.param.endRowNum == "0"){
+					map = $jdbc.query("bp/tcams/cr/cr01","emstlist.select.total",$data.param);
+					$data.total_row_num = map.total_row_num;
+				}
+			]]>
+		</script>
+	</service>
+
+ <service id="checkCmms">
+  <script>
+   <![CDATA[
+    var ret = new Map();
+    var result = new List();
+    var resultAll = new List();
+    
+    try {
+    	for(var i=0 ; i < $data.apprvList.size() ; i++) {
+            result = $jdbc.queryList("bp/tcams/cr/cr01", "checkCmms", $data.apprvList[i]);
+            resultAll.addAll(result);
+        }
+           
+        ret.MESG_CODE = "SA-001";
+    } catch(e) {
+        $logger.info('Error: ' + e.message);
+        ret.MESG_CODE = "SA-002";
+        ret.MESG      = e.message;
+    }
+    
+    $data.resultAll = resultAll;
+    $data.ret    = ret;
+   ]]>
+  </script>
+ </service>	
+	<service id="checkCmms0" label="결재 상신 전 계산되지 않은 공법이 존재하는지 체크">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "checkCmms", $data.param);
+			]]>
+		</script>
+	</service>
+	
+ <service id="checkEndpart">
+  <script>
+   <![CDATA[
+	var message = new Map();
+
+    var result = new List();
+    var result2 = new List();
+    
+	var errAutoCount = 0;
+	var errMoldCount = 0;
+	
+    for(var k = 0 ; k < $data.apprvList.size() ; k++) { 
+		// 자동 공법 체크
+		result  = $jdbc.queryList("bp/tcams/cr/cr01", "checkEndpart1"      , $data.apprvList[k]);
+		result2 = $jdbc.queryList("bp/tcams/cr/cr05", "check.count.esprchd", $data.apprvList[k]);
+		message.CNT1 = result2.size();
+		//2020.01.31  쿼리결과가 있어도 size가 0이 뜨는 현상이 있음 수정해야함.
+		if(result2.size() > 0){
+			message.CNT2 = result2[0].cnt2;
+		}
+		for (var i=0; i < result.size(); i++) {
+			if (result[i].cmat_check == 'N' || result[i].cpro_check == 'N') {
+				errAutoCount++;
+				message.MESG_CODE = 'IQ-002';
+				message.MESG = 'SUB PART NO['
+				             + result[i].spms_part_no
+				             + ']의<br>'
+				             + '['
+				             + result[i].cmms_come_name
+				             + ']원가계산에서 정합성 오류가 발생했습니다.<br>'
+				             + '확인 후 작업하세요.';
+				break;
+			}
+		}
+		if(errAutoCount > 0) {
+		    break;
+		}
+    }				
+    
+	if (errAutoCount == 0 && errMoldCount == 0) {
+		message.MESG_CODE = 'IQ-001';
+		message.MESG      = '정합성 체크 통과하였습니다.';
+	}
+	
+	$data.result = message;
+   
+   ]]>
+  </script>
+ </service>	
+	<service id="checkEndpart0" label="END-ITEM CHECK">
+		<script>
+			<![CDATA[
+			    // 자동 공법 체크
+				var result  = $jdbc.queryList("bp/tcams/cr/cr01", "checkEndpart1"      , $data.param);
+				var result2 = $jdbc.queryList("bp/tcams/cr/cr05", "check.count.esprchd", $data.param);
+				var errAutoCount = 0;
+				var errMoldCount = 0;
+				var message = new Map();
+				message.CNT1 = result2.size();
+				//2020.01.31  쿼리결과가 있어도 size가 0이 뜨는 현상이 있음 수정해야함.
+				if(result2.size() > 0){
+					message.CNT2 = result2[0].cnt2;
+				}
+				for (var i=0; i < result.size(); i++) {
+					if (result[i].cmat_check == 'N' || result[i].cpro_check == 'N') {
+						errAutoCount++;
+						message.MESG_CODE = 'IQ-002';
+						message.MESG = 'SUB PART NO['
+						             + result[i].spms_part_no
+						             + ']의<br>'
+						             + '['
+						             + result[i].cmms_come_name
+						             + ']원가계산에서 정합성 오류가 발생했습니다.<br>'
+						             + '확인 후 작업하세요.';
+						break;
+					}
+				}
+				/*
+				// 금형 체크
+				if (errAutoCount == 0) {
+				
+					var result = $jdbc.queryList("bp/tcams/cr/cr01", "checkEndpart2", $data.param);
+					
+					for (var i=0; i < result.size(); i++) {
+						if (result[i].mmat_check == 'N' || result[i].mpro_check == 'N') {
+							errMoldCount++;
+							message.MESG_CODE = 'IQ-002';
+							message.MESG = 'SUB PART NO['
+							             + result[i].spms_part_no
+							             + ']의<br>'
+							             + '['
+							             + result[i].cmms_come_name
+							             + ']원가계산에서 정합성 오류가 발생했습니다.<br>'
+							             + '확인 후 작업하세요.';
+							break;
+						}
+					}
+				}
+				*/
+				
+				if (errAutoCount == 0 && errMoldCount == 0) {
+					message.MESG_CODE = 'IQ-001';
+					message.MESG      = '정합성 체크 통과하였습니다.';
+				}
+				
+				$data.result = message;
+				
+			]]>
+		</script>
+	</service>	
+	
+	<service id="get.emstExcelList" label="END-ITEM EXCEL 조회">
+		<script>
+			<![CDATA[
+			
+				var map;
+				$data.param.login_id = $user.reg_id;
+				$data.param.tmcdQryStr = "";
+                $data.param.encdQryStr = "";
+                $data.param.dstdQryStr = "";
+                
+				if($data.param.comd_cost_gubn_R == "AA") {
+				    $data.param.comd_cost_gubn_R = null;
+				}
+                
+                if( !( $data.param.tmcdCodeStr == null || $data.param.tmcdCodeStr == '' ) ) {
+            		$data.param.tmcdQryStr = "AND EMST_TMCD_CODE IN (" + $data.param.tmcdCodeStr + ")";    
+                }
+                
+                if( !( $data.param.encdContStr == null || $data.param.encdContStr == '' ) ) {
+                	$data.param.encdQryStr = "AND NVL( TRIM(EMST_ENCD_CONT) , ' ' )  IN (" + $data.param.encdContStr + ")";
+                }
+        			
+                if ($user.rd_role == 'Y') {
+					$data.param.dstdQryStr += "INNER JOIN                            ";
+					$data.param.dstdQryStr += " CRTBDSTB DSTM                        ";
+					$data.param.dstdQryStr += "ON     DSTB_CORP_CODE = EMST_CORP_CODE";
+					$data.param.dstdQryStr += "   AND DSTB_COST_GUBN = EMST_COST_GUBN";
+					$data.param.dstdQryStr += "   AND DSTB_PART_NO   = EMST_PART_NO  ";
+					$data.param.dstdQryStr += "   AND DSTB_EONO      = EMST_EONO     ";
+					$data.param.dstdQryStr += "   AND DSTB_CUMT_NO   = EMST_CUMT_NO  ";
+                }
+        			
+				$data.excelList = $jdbc.queryList("bp/tcams/cr/cr01", "get.emstExcelList.select", $data.param);
+			]]>
+		</script>
+	</service>	
+
+	<!-- 개발부문 -->
+	<service id="get.comm.codes" label="공통코드 제공">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/tcams/cr/cr01","get.comm.codes",$data.param);
+			var chkList = new List();
+			$data.param.dept_cd = $user.dept_cd;
+			chkList = $jdbc.queryList("bp/tcams/cr/cr01", "get.chk", $data.param);
+			$data.chk = chkList[0];
+			]]>
+		</script>
+	</service>
+
+	<!-- END ITEM tmcd -->
+	<service id="get.ca_tmcdcode.list" label="기종 가져오기">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "tmcd_code.select", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<!-- END ITEM encd -->
+	<service id="get.ca_encdcont.list" label="엔진 cont 가져오기">
+		<script>
+			<![CDATA[
+			  $data.param.tmcdQryStr = "";
+			  if( !( $data.param.tmcdCodeStr == null || $data.param.tmcdCodeStr == '' ) )
+			      $data.param.tmcdQryStr = "AND SPEC_TMCD_CODE IN (" + $data.param.tmcdCodeStr + ")";
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "encd_cont.select", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<!-- END ITEM KJM -->
+	<service id="get.ca_carscode.list" label="차종 가져오기">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "cars_code.select", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_indscode.list" label="업종 가져오기">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "inds_code.select", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<!-- 저장 -->
+	<service id="insert.emstlist" label="END-ITEM INSERT">
+		<script>
+		<![CDATA[
+			$data.result = new Map();
+			try {
+				
+				// 설계 봄구성
+				function makeStruct_dsgn(obj, dept) {
+					
+					var estr = $jdbc.queryList("bp/tcams/co/co03", "get.list.estr.dsgn", obj);
+					var currLevel = dept;
+					
+					
+					// 데이터가 없을 시 아무것도 안한다.
+					if (estr.size() == 0 || dept > 9) {
+					// 데이터가 있으면 재귀하면서 structure 구성	
+					} else {
+					
+						for(var i = 0; i < estr.size(); i++) {
+							sortKey++;
+							
+							obj.comd_part_no = estr[i].estr_part_comp;
+							
+							obj.comd_corp_code = estr[i].estr_corp_code;
+							//obj.comd_mach_gubn = $data.searchParam.comd_mach_gubn;
+							obj.comd_fact_code = estr[i].estr_fact_code;
+							obj.comd_part_assy = estr[i].estr_part_assy;
+							obj.comd_part_comp = estr[i].estr_part_comp;
+							// obj.comd_lvl0; 레벨은 상단에서 얻는다.
+							obj.comd_lvl0 = currLevel;
+							obj.comd_seq0      = sortKey;
+							obj.comd_part_name = estr[i].estr_part_name;
+							obj.comd_src0      = estr[i].estr_src0     ;
+							obj.comd_eono_in   = estr[i].estr_eono_in  ;  
+							obj.comd_eono_out  = estr[i].estr_eono_out ;
+							obj.comd_eoin_date = estr[i].estr_eoin_date;
+							obj.comd_eoot_date = estr[i].estr_eoot_date;
+							obj.comd_qty0      = estr[i].estr_qty0     ;
+							obj.comd_sub0_unit = estr[i].estr_sub0_unit;
+							
+							$jdbc.update("bp/tcams/co/co03", "get.insert.estr", obj);
+							
+							makeStruct_dsgn(obj, (dept+1));
+							
+						} // end for
+						
+					} // end else
+					
+				} // end function
+				
+				
+				System.out.println("#   $data.paramI.size #:" + $data.paramI.size());
+				// INSERT
+				for (var i=0; $data.paramI.size() > i ; i++) {
+					//System.out.println("##########################################");
+					//System.out.println("##########################################");
+					
+					var rootCost = $data.paramI[i].comd_cost_gubn;
+					var rootPart = $data.paramI[i].comd_part_no;
+					var rootEono = $data.paramI[i].comd_eono;
+					
+					var result = $jdbc.call("bp/tcams/cr/cr01", "insert.emstlist", $data.paramI[i]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.paramI[i].comd_part_no;
+					$data.result.CURR_ROW  = i;
+					$data.paramI[i].cumt_no      = result.emst_cumt_no;
+					$data.paramI[i].comd_cumt_no = result.emst_cumt_no;
+					//System.out.println("cumt_no: "+$data.paramI[i].cumt_no);
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					} else {
+						////////// EMST 등록시 bom 정보를 취해 CHAIN 구성/////////////
+						////////// EMST 등록시 bom 정보를 취해 CHAIN 구성/////////////
+						
+						//0. 선언부
+						var obj     = $data.paramI[i];
+						var sortKey = 1;
+						
+						//1. TEMP TABLE 초기화
+						$jdbc.update("bp/tcams/co/co03", "get.init.temp", $data.paramI[i]);
+						
+						
+						//2. ROOT 등록
+						$jdbc.update("bp/tcams/co/co03", "get.insert.root", $data.paramI[i]);
+						
+						//3. STRUCT 구성
+						makeStruct_dsgn(obj, 2);
+						
+						var bomList = $jdbc.queryList("bp/tcams/co/co03", "get.list.bom", $data.paramI[i]);
+						
+						//System.out.println("##########################################");
+						//System.out.println("##########################################");
+						//System.out.println("##########################################");
+						//System.out.println("##########################################");
+						//System.out.println("#### : " + bomList.size());
+						
+						for(var j=0; j < bomList.size(); j++) {
+							//System.out.println("#### : " + bomList[j].temp_lvl0);
+							//System.out.println("#### : " + bomList[j].temp_lvl0);
+							//System.out.println("#### : " + bomList[j].temp_lvl0);
+							//System.out.println("##########################################");
+							
+							if (bomList[j].temp_lvl0 != '1') {
+								bomList[j].temp_dev0_bumn = rootCost;
+								bomList[j].temp_dev0_bumn = rootCost;
+								bomList[j].temp_root_part = rootPart;
+								bomList[j].temp_root_eono = rootEono;
+								bomList[j].temp_root_cumt = result.emst_cumt_no;
+								//var spms_cumt = $jdbc.query("bp/tcams/co/co03", "get.cumt_no.spms", bomList[j]);
+								
+								//System.out.println("#### spms_cumt_no : " + spms_cumt.cumt_no);
+								//System.out.println("#### cost_endi : " + rootCost);
+								//System.out.println("#### part_endi : " + rootPart);
+								//System.out.println("#### eono_endi : " + rootEono);
+								//System.out.println("#### cumt_endi : " + result.emst_cumt_no);
+								//System.out.println("##########################################");
+								
+								//bomList[j].temp_spms_cumt = spms_cumt.cumt_no;
+								
+								bomList[j].temp_sort_key0 = bomList[j].temp_seq0;
+								
+								if (bomList[j].temp_src0 == null || bomList[j].temp_src0 == "") {
+									bomList[j].temp_src0 = "L";
+								}	
+
+								//$jdbc.update("bp/tcams/co/co03", "insert.chin.spms", bomList[j]);
+								$jdbc.call("bp/tcams/co/co03", "insert.chin.spms.new", bomList[j]);
+								
+							}
+							
+						}
+						
+						// 첨부 파일 updata 추가
+						$jdbc.update("bp/tcams/cr/cr01", "update.emst.att_grd_cd", $data.paramI[i]);						
+					}
+				}
+				
+				
+				// UPDATE
+				for (var j=0; $data.paramU.size() > j; j++) {
+
+					var result = $jdbc.call("bp/tcams/cr/cr01", "update.emstlist", $data.paramU[j]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.paramU[j].comd_part_no;
+					$data.result.CURR_ROW  = i;
+					
+					//System.out.println("#### : " + result.LINE_NO);
+					//System.out.println("#### : " + result.MESG);
+					
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+					var cumt_no = $jdbc.query("bp/tcams/cr/cr01", "select.spms.vend", $data.paramU[j]);
+					$data.paramU[j].chin_cumt_no = cumt_no.chin_cumt_sub0;
+					
+					$jdbc.update("bp/tcams/cr/cr01", "update.spms.vend", $data.paramU[j]);
+					
+					// 첨부 파일 updata 추가
+					$jdbc.update("bp/tcams/cr/cr01", "update.emst.att_grd_cd", $data.paramU[j]);					
+					
+				} //end for
+				
+				
+			} catch (e) {
+				if($data.result.MESG_CODE == 'SA-002'){
+					$data.result.MESG_CODE = result.MESG_CODE;
+					$data.result.MESG      = result.MESG;
+					$data.result.SQL0_CODE = result.SQL0_CODE;
+					$data.result.PRGM_ID   = result.PRGM_ID;
+					$data.result.LINE_NO   = result.LINE_NO;
+				}else{
+				
+					$data.result.MESG = 'END-ITEM(설계)저장 실패하였습니다.';
+					$data.result.MESG_CODE = 'SA-002';
+					$data.result.PRGM_ID = 'END-ITEM(설계)';		
+					$data.result.LINE_NO = 0;
+					
+					var index = e.message.indexOf('JDBC');
+					if ("JDBC-11048" == e.message.substr(index, 10)) {
+						$data.result.SQL0_CODE='JDBC-11048';
+						$data.result.MESG="수치 또는 값 오류<br>* 숫자 정도가 너무 큽니다<br>* 입력값을 다시 확인 하시길 바랍니다!";
+					} else if ("JDBC-10005" == e.message.substr(index, 10)) {
+						$data.result.SQL0_CODE='JDBC-10005';
+						$data.result.MESG="NULL을 입력할 수 없습니다.";
+					} else if ("JDBC-10007" == e.message.substr(index, 10)) {
+						$data.result.MESG = "중복된 데이터가 존재합니다.";
+					} else if ("JDBC-8030" == e.message.substr(index, 9)) {
+						$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+					} else {
+						$data.result.MESG = e.message;
+					}
+				}				
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+			
+			
+						
+		]]>
+		</script>
+	</service>
+
+	<!-- 삭제 -->
+	<service id="delete.emstlist" label="END-ITEM DELETE">
+		<script>
+		<![CDATA[
+			
+			try {
+				
+				// DELETE
+				for (var j=0; $data.param.size() > j ; j++) {
+					
+					var result = $jdbc.call("bp/tcams/cr/cr01", "move.emstlist", $data.param[j]);
+					$data.result = result;
+					$data.result.CURR_PART = $data.param[j].comd_part_no;
+					$data.result.CURR_ROW  = j;
+					
+					if(result.MESG_CODE == 'SA-002') {
+						throw e;
+					}
+					
+					$jdbc.update("bp/tcams/cr/cr01", "delete.distribution", $data.param[j]);
+				} // end for
+				
+			} catch (e) {
+				
+				System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+				System.out.println("#### ERROR MESG #### : " + result.MESG   );
+				if (result.MESG_CODE == 'SA-002') {
+					$data.result.MESG_CODE = result.MESG_CODE;
+					$data.result.MESG      = result.MESG;
+					$data.result.SQL0_CODE = result.SQL0_CODE;
+					$data.result.PRGM_ID   = result.PRGM_ID;
+					$data.result.LINE_NO   = result.LINE_NO;				
+				} else {
+					$data.result.MESG = 'END-ITEM(설계)삭제 실패하였습니다.';
+					$data.result.MESG_CODE = 'SA-002';
+					$data.result.PRGM_ID = 'END-ITEM(설계)';		
+					$data.result.LINE_NO = 0;
+				}
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+						
+		]]>
+		</script>
+	</service>
+
+	<!-- 복사 전 문제품목 검사 -->
+	<service id="copy.emstlist" label="체크로직">
+		<script>
+			<![CDATA[
+				
+					$data.result = $jdbc.query("bp/tcams/cr/cr01", "copy.emstlist.check", $data.searchParam);
+					
+					var bad0_code = $data.result.check_value;
+					
+					
+					// 정상인 경우 (SUB-PART/COME가 문제인 경우에는 체인 복사시에 체크한다.)
+					
+					if (bad0_code == null || bad0_code == '' || bad0_code == 'S' || bad0_code == 'C') {
+					
+					//System.out.println("#####################################");
+					//System.out.println("################ :: 복사 프로시져 진입");
+					//System.out.println("#####################################");
+					
+						// 복사 프로시져 Call
+						var result = $jdbc.call("bp/tcams/cr/cr01", "copy.emstlist", $data.searchParam);
+						$data.result = result;
+						System.out.println("#### ERROR MESG #### : " + result.PRGM_ID);
+						System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+						System.out.println("#### ERROR MESG #### : " + result.MESG   );
+						System.out.println("#### ERROR MESG #### : " + result.MESG_CODE   );
+						
+						if (result.MESG_CODE == 'SA-002') {
+							$jdbc.update("bp/tcams/ca/common", "rollback", null);
+						}
+					} else {
+						throw e;
+					}
+					
+				
+			]]>
+		</script>
+	</service>
+	
+	<!-- 임시 계산 이동 -->
+	<service id="move.emstlist" label="임시 계산으로 이동 처리(복사 프로시져를 이용)">
+		<script>
+			<![CDATA[
+					// 임시 이동 품목 체크
+					var bad0_code;
+					for (var i=0; i < $data.moveParam.size()  ; i++) {
+						$data.result = $jdbc.query("bp/tcams/cr/cr01", "copy.emstlist.check", $data.moveParam[i]);
+						
+						bad0_code = $data.result.check_value;
+						
+						//정상인 경우 (SUB-PART/COME가 문제인 경우에는 체인 복사시에 체크한다.)
+						
+						if (bad0_code == null || bad0_code == '' || bad0_code == 'S' || bad0_code == 'C') {
+							System.out.println("#####################################");
+							System.out.println("################ :: 임시 계산 이동 프로시져 진입");
+							System.out.println("#####################################");
+							
+							// 임시 계산 이동 프로시져 Call
+							var result = $jdbc.call("bp/tcams/cr/cr01", "move.emstlist", $data.moveParam[i]);
+							$data.result = result;
+							System.out.println("#### ERROR MESG #### : " + result.PRGM_ID);
+							System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+							System.out.println("#### ERROR MESG #### : " + result.MESG   );
+							System.out.println("#### ERROR MESG #### : " + result.MESG_CODE   );
+							
+							if (result.MESG_CODE == 'SA-002') {
+								$jdbc.update("bp/tcams/ca/common", "rollback", null);
+							}												
+						} else {
+							throw e;
+						}
+						
+					}
+			]]>
+		</script>
+	</service>	
+	
+
+	<!-- 사원명 구하기 -->
+	<service id="get.emplname" label="사원명 구하기">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.query("bp/tcams/cr/cr01", "emplname.select", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<!-- 담당자 변경하기 -->
+	<service id="change.cman" label="담당자 변경">
+		<script>
+		<![CDATA[
+			
+			var result = $jdbc.call("bp/tcams/cr/cr01", "change.cman", $data.searchParam);
+			$data.result = result;
+			
+			//System.out.println("############## : " + result.MESG_CODE);
+			//System.out.println("############## : " + result.MESG);
+			//System.out.println("############## : " + result.LINE_NO);
+			//System.out.println("############## : " + result.PRGM_ID);
+			
+					
+		]]>
+		</script>
+	</service>
+
+	<service id="get.team.code" label="부서정보 얻기">
+		<script>
+			<![CDATA[
+				$data.result       = $jdbc.queryList("bp/tcams/cr/cr01", "get.team.code", $data.param);
+			]]>
+		</script>
+	</service>
+
+ <service id="get.targetList">
+  <script>
+   <![CDATA[
+    var resultTarget = new List();
+    var result       = new List();
+    
+    try {
+        for(var i=0; i < $data.distList.size(); i++) {
+            result = $jdbc.queryList("bp/tcams/cr/cr01", "get.target.team", $data.distList[i]);
+        	resultTarget.addAll(result);
+        }
+        var newList = new List();
+        for(var j=0; j < resultTarget.size(); j++) {
+            if(!newList.contains(resultTarget[j])) {
+                newList.add(resultTarget[j]);
+            }
+        }
+    } catch(e) {
+        $logger.info("Error: " + e.message);
+    }
+    $data.resultTarget = newList;
+   ]]>
+  </script>
+ </service>
+ 	
+	<service id="get.targetList0" label="부서정보 얻기">
+		<script>
+			<![CDATA[
+				$data.resultTarget = $jdbc.queryList("bp/tcams/cr/cr01", "get.target.team", $data.param);
+			]]>
+		</script>
+	</service>	
+
+	<!-- 배포 -->
+	<service id="team.dist" label="배포">
+		<script>
+		<![CDATA[
+			
+			try {
+			    
+			    for (var j=0; j < $data.distList.size(); j++) {
+					$jdbc.update("bp/tcams/cr/cr01", "team.code.delete", $data.distList[j]);
+					
+					for (var i=0; i < $data.saveParam.size(); i++) {
+						$data.saveParam[i].corp_code = $data.distList[j].corp_code;
+					    $data.saveParam[i].cost_gubn = $data.distList[j].cost_gubn;
+					    $data.saveParam[i].part_no   = $data.distList[j].part_no;
+					    $data.saveParam[i].eono      = $data.distList[j].eono;
+					    $data.saveParam[i].cumt_no   = $data.distList[j].cumt_no;
+					
+						$jdbc.update("bp/tcams/cr/cr01", "team.dist", $data.saveParam[i]);
+					}
+			    }
+				
+				$data.result = new Map();
+				
+				$data.result.MESG_CODE = 'SA-001';
+				$data.result.MESG      = '정상적으로 배포 되었습니다.';
+			} catch (e) {
+				var msg = e.message;
+				var index = msg.indexOf('JDBC');
+				
+				$data.result = new Map();
+				$data.result.MESG_CODE = 'SA-002';
+				
+				System.out.println("##########################################");
+				System.out.println("## ERROR CODE : " + msg.substr(index, 10));
+				System.out.println("##########################################");
+				
+				if ("JDBC-10007" == msg.substr(index, 10)) {
+					$data.result.MESG = "중복된 데이터가 존재합니다.";
+				} else if ("JDBC-11048" == msg.substr(index, 10)) {
+					$data.result.MESG = "허용된 자리수를 초과하였습니다.";					
+				} else if ("JDBC-8030" == msg.substr(index, 9)) {
+					$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+				} else if ("JDBC-10005" == msg.substr(index, 10)) {
+					$data.result.MESG = "NULL을 입력할 수 없습니다.";					
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다.";
+				}				
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+					
+		]]>
+		</script>
+	</service>
+	
+	<!-- 상태코드 변경 -->
+	<service id="update.status" label="상태코드 변경">
+		<script>
+		<![CDATA[
+			
+			try {
+			
+				var func = "";
+				
+				for (var i=0; i < $data.params.size(); i++) {
+					$jdbc.update("bp/tcams/cr/cr01", "update.status", $data.params[i]);
+					
+					if ( i == 0) {
+						if ($data.params[i].new0_pass_stat == "2C") {
+							func = "2C";
+						} else {
+							func = "20";
+						}					
+					}
+				}
+				
+				$data.result = new Map();
+				$data.result.MESG_CODE = 'SA-001';
+				
+				if (func == "2C") {
+					$data.result.MESG      = '계산완료 되었습니다.';
+				} else {
+					$data.result.MESG      = '계산완료취소 되었습니다.';
+				}				
+				
+
+				
+			} catch (e) {
+				var msg = e.message;
+				var index = msg.indexOf('JDBC');
+				
+				$data.result = new Map();
+				$data.result.MESG_CODE = 'SA-002';
+				
+				System.out.println("##########################################");
+				System.out.println("## ERROR CODE : " + msg.substr(index, 10));
+				System.out.println("##########################################");
+				System.out.println("## ERROR MESG : " + msg);
+				
+				if ("JDBC-10007" == msg.substr(index, 10)) {
+					$data.result.MESG = "중복된 데이터가 존재합니다.";
+				} else if ("JDBC-11048" == msg.substr(index, 10)) {
+					$data.result.MESG = "허용된 자리수를 초과하였습니다.";					
+				} else if ("JDBC-8030" == msg.substr(index, 9)) {
+					$data.result.MESG = "값의 수가 충분하지 않습니다.";					
+				} else if ("JDBC-10005" == msg.substr(index, 10)) {
+					$data.result.MESG = "NULL을 입력할 수 없습니다.";					
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다.";
+				}				
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+					
+		]]>
+		</script>
+	</service>	
+
+	<service id="get.vendNameInfo" label="업체명 조회">
+		<script>
+			<![CDATA[
+				$data.vend_name = $jdbc.queryList("bp/tcams/cd/cd02", "get.vendNameInfo.select", $data.param);
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.attachInfo" label="첨부파일 정보 조회 조회">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.queryList("bp/tcams/cr/cr01", "get.attachInfo.select", $data.param);
+			]]>
+		</script>
+	</service>	
+	
+</service-descriptor>

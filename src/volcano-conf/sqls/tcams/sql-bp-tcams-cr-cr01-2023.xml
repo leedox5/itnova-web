@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/cr/cr01/2023" data-source="tcamsDS">
+
+ <sql id="get.ERROR">
+  <![CDATA[
+WITH T1 (C1, C2, C3) AS (
+       SELECT '10', 1, 'OEM(또는 사급가)지정 SUB품목 중, 구매단가 정보가 구성되지 않은 품목이 존재합니다.' FROM DUAL
+ UNION SELECT '10', 2, '품목수=' || #cnt# FROM DUAL
+ UNION SELECT '10', 3, '품목=' || #part_no# FROM DUAL
+ UNION SELECT '10', 4, 'CHAIN확인 (또는 운영자에 연락요망)' FROM DUAL
+) 
+SELECT *
+  FROM T1
+ WHERE C1 = #chk_cd#
+ ORDER BY C2  
+  ]]>
+ </sql>
+
+ <sql id="chk.CHIN">
+  <![CDATA[
+WITH T1 AS (        
+ SELECT COUNT(*) CNT
+       ,MIN(SPMS_PART_NO) PART_NO
+   FROM CRVTCHIN
+  WHERE EMST_CORP_CODE = #comd_corp_code#
+    AND EMST_COST_GUBN = #comd_cost_gubn#
+    AND EMST_PART_NO   = #comd_part_no#
+    AND EMST_EONO      = #comd_eono#
+    AND EMST_CUMT_NO   = #comd_cumt_no#
+    AND SPMS_PIMS_APPL IN ('M','U','H')
+    AND (SPMS_PIMS_VEND IS NULL OR SPMS_PIMS_SEQ IS NULL)
+)        
+SELECT CASE WHEN CNT > 0 THEN '10' ELSE '00' END CHK_CD
+      ,A.*
+  FROM T1 A
+  ]]>
+ </sql>
+
+ <sql id="chk.CHIN.TEST">
+  <![CDATA[
+WITH T1 AS (        
+ SELECT 1 CNT
+       ,'CHK-ERR-TEST' PART_NO
+   FROM DUAL    
+)        
+SELECT CASE WHEN CNT > 0 THEN '10' ELSE '00' END CHK_CD
+      ,A.*
+  FROM T1 A
+  ]]>
+ </sql>
+
+ <sql id="ERR.230701">
+  <![CDATA[
+WITH T1 (C1, C2, C3) AS (
+       SELECT '20', 1, '원단위에서 결재 진행 중인 건입니다.' FROM DUAL
+ UNION SELECT '20', 2, '원단위 결재상태를 확인후 처리하시기 바랍니다.' FROM DUAL
+ UNION SELECT '20', 3, '▶관리번호=' || #proj_mgno# FROM DUAL
+) 
+SELECT *
+  FROM T1
+ WHERE C1 = #chk_cd#
+ ORDER BY C2  
+  ]]>
+ </sql>
+
+ <sql id="CHK.230701">
+  <![CDATA[
+WITH T1 AS ( 
+SELECT COUNT(*) CNT
+      ,MAX(PROJ_MGNO) PROJ_MGNO
+  FROM ESS.CRTBEMST
+      ,ESS.CWTBPROJ
+      ,ESS.CWTBWONM
+ WHERE EMST_CORP_CODE = #comd_corp_code#
+   AND EMST_COST_GUBN = #comd_cost_gubn#
+   AND EMST_PART_NO   = #comd_part_no#
+   AND EMST_EONO      = #comd_eono#
+   AND EMST_CUMT_NO   = #comd_cumt_no#
+   AND EMST_CORP_CODE = PROJ_CORP_CODE
+   AND PROJ_FLAG = 'T' --결재진행중  
+   AND PROJ_CORP_CODE = WONM_CORP_CODE
+   AND PROJ_MGNO      = WONM_PROJ_MGNO
+   AND WONM_CORP_01   = EMST_CORP_CODE
+   AND WONM_COST_01   = EMST_COST_GUBN
+   AND WONM_PART_01   = EMST_PART_NO  
+   AND WONM_EONO_01   = EMST_EONO     
+   AND WONM_CUMT_01   = EMST_CUMT_NO  
+)        
+SELECT CASE WHEN CNT > 0 THEN '20' ELSE '00' END CHK_CD
+      ,A.*
+  FROM T1 A
+  ]]>
+ </sql>
+
+ <sql id="CHK.230701.T">
+  <![CDATA[
+WITH T1 AS ( 
+SELECT 1 CNT
+      ,'CHECKING-001' PROJ_MGNO
+  FROM DUAL  
+)        
+SELECT CASE WHEN CNT > 0 THEN '20' ELSE '00' END CHK_CD
+      ,A.*
+  FROM T1 A
+  ]]>
+ </sql>
+
+</sql-descriptor> 
