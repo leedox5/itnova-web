@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/ci/ci11">
+
+ <service id="get.come_list" label="조회">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+
+    var result = new Map();
+    var chk = new Map();
+
+    try {
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0001", null);
+        chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0002", chk);
+        $data.searchParam.cur_date = chk.cur_date;
+    
+        if($data.searchParam.mach_gubn=='T'){
+            $data.searchParam.sql="AND MTCD_METH_GUBN = 'T' ";
+        } else {
+            $data.searchParam.sql="AND MTCD_METH_GUBN <> 'T' ";
+        }
+        
+        if ($data.searchParam.cb_curr_appl == "N") {
+            $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "mtcdList.select1", $data.searchParam);
+        } else if ($data.searchParam.cb_curr_appl == "Y") {
+            $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "mtcdList.select2", $data.searchParam);
+        }
+        
+        var row_str ="";
+        for(var i = 0 ; i < $data.resultList.size() ; i++) {
+            var proc_name = "CASP" + $data.resultList[i].comd_come_code + "_A" + $data.resultList[i].comd_stnd_degr;
+            if(i == 0) {
+                row_str  = "           SELECT ";
+            } else {
+                row_str  = " UNION ALL SELECT ";
+            }
+            row_str +=   "'" + $data.resultList[i].mtdg_corp_code  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_meth_gubn  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_come_code  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_stnd_degr  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_regt_no    + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_revi_date  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_appl_date  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_hkmc_degr  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_degr_cont  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_stnd_file  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_stnd_man1  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_phon_no1   + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_stnd_man2  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_phon_no2   + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_menu_id    + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_mxml_path  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_att_grp_cd + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_appl_yn    + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_updt_date  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_updt_cman  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_init_date  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_init_cman  + "'" ;
+            row_str += ", '" + $data.resultList[i].mtdg_tran_degr  + "'" ;
+            row_str += " FROM DUAL";
+            row_str = StringUtil.replace(row_str, "'null'", "NULL");
+            $data.resultList[i].row_str = row_str;
+        }
+        result.MESG_CODE = "SA-001";
+        result.MESG = "OK";
+    } catch(e) {
+        $logger.info(e.message);
+        result.MESG_CODE = "SA-002";
+        result.MESG = e.message;
+    }
+    
+    $data.result = result;
+  ]]>
+  </script>
+ </service>
+
+    <service id="get.methCode" label="공법 LIST">
+        <script>
+        <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/ci/ci11", "get.methCode", $data.param);
+        ]]>
+        </script>
+    </service>
+
+    <service id="get.roll" label="권한">
+        <script>
+        <![CDATA[
+            $data.roll = $jdbc.query("bp/tcams/ci/ci11", "get.roll", $data.param);
+        ]]>
+        </script>
+    </service>
+
+    <!-- CI11_02 -->
+    <service id="get.come_list.name" label="공법 LIST">
+        <script>
+        <![CDATA[
+            $data.searchParam.sql1 = "AND MTCD_METH_GUBN <> 'T' ";
+            if(   $data.searchParam.mtcd_come_code!='MCFO'
+               && $data.searchParam.mtcd_come_code!='MHFO'
+               && $data.searchParam.mtcd_come_code!='MDIE' ){
+
+                $data.searchParam.sql2 = "                  UNION ALL" + "\n"
+                                       + "                  SELECT PKMS_COME_CODE  AS COMD_COME_CODE" + "\n"
+                                       + "                        ,'공용'           AS COMD_COME_NAME" + "\n"
+                                       + "                        ,PKMS_TABL_ID    AS COMD_TABL_ID" + "\n"
+                                       + "                        ,PKMS_SORT_NUMB  AS COMD_SORT_NUMB" + "\n"
+                                       + "                        ,PKMS_TABL_NAME  AS COMD_TABL_NAME" + "\n"
+                                       + "                    FROM CITBPKMS" + "\n"
+                                       + "                   WHERE PKMS_CORP_CODE ="
+                                       + "'" + $user.corp_cd + "'" + "\n"
+                                       + "                     AND PKMS_COME_CODE = 'ALL0'";
+            }
+
+            $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "come_list.select", $data.searchParam);
+        ]]>
+        </script>
+    </service>
+
+    <service id="get.come_code.list" label="공법 코드,">
+        <script>
+        <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/ci/ci11", "come_code.select", $data.searchParam);
+        ]]>
+        </script>
+    </service>
+
+ <service id="get.come_header.list" label="공법 헤더">
+  <script>
+   <![CDATA[
+    $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "come_header.select", $data.searchParam);
+    var chks = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select", null);
+    $data.DEV_AUTH = chks[0].dev_auth;
+   ]]>
+  </script>
+ </service>
+
+    <service id="get.come_allHeader.list" label="공법 전체 헤더">
+        <script>
+        <![CDATA[
+
+            $data.resultList = new Map();
+
+            for (var i = 0; i < $data.searchParam.size(); i++) {
+                var temp = new Object();
+                temp =  $jdbc.queryList("bp/tcams/ci/ci11", "come_header.select", $data.searchParam[i]);
+                $data.resultList.put("_headList"+i, temp);
+            }
+
+        ]]>
+        </script>
+    </service>
+
+ <service id="get.come_detail.list" label="공법 상세 LIST">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+
+    var row_str = "";
+
+    try {
+        $logger.info($data.searchParam);
+        $logger.info($data.headerParam.size());
+
+        $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "come_detail.select", $data.searchParam);
+        for(var i = 0 ; i < $data.resultList.size() ; i++) {
+            if(i == 0) {
+                row_str = "           SELECT ";
+            } else {
+                row_str = " UNION ALL SELECT ";
+            }
+            for(var j = 0 ; j < $data.headerParam.size() ; j++) {
+                if(j == 0) {
+                    row_str +=  "'" + $data.resultList[i][$data.headerParam[j].pkcl_colm_id.toLowerCase()] + "' ";
+                } else {
+                    row_str += ",'" + $data.resultList[i][$data.headerParam[j].pkcl_colm_id.toLowerCase()] + "' ";
+                }
+            }
+            row_str += " FROM DUAL";
+            row_str = StringUtil.replace(row_str, "'null'", "NULL");
+            $logger.info(row_str);
+            $data.resultList[i].row_str = row_str;
+        }
+    } catch(e) {
+        $logger.info(e.message);
+    }
+   ]]>
+  </script>
+ </service>
+
+
+    <service id="get.come_allDetail.list" label="공법 전체 데이터">
+        <script>
+        <![CDATA[
+
+            $data.resultList = new Map();
+
+            for (var i = 0; i < $data.searchParam.size(); i++) {
+                var temp = new Object();
+                temp =  $jdbc.queryList("bp/tcams/ci/ci11", "come_allDetail.select", $data.searchParam[i]);
+                $data.resultList.put("_detailList"+i, temp);
+            }
+
+        ]]>
+        </script>
+    </service>
+
+    <service id="save.mtcdlist" label="공법정보 저장">
+        <script>
+            <![CDATA[
+            try {
+
+                $data.result = new Map();
+                for (var i = 0; i < $data.inserts.size(); i++) {
+                    var result = $jdbc.query("bp/tcams/ci/ci11", "mtcdlist.insert.check", $data.inserts[i]);
+
+                    // MTCD는 기 존재하면 입력하지 않는다.
+
+                    //System.out.println("##### MTCD CNT : "+ result.cnt);
+                    $logger.info($data.inserts[i]);
+                    if (result.cnt > 0 ) {
+                        if($data.inserts[i].comd_stnd_degr == null) {
+                            $data.inserts[i].comd_stnd_degr = $data.inserts[i].comd_tran_degr;
+                        }
+                        $jdbc.update("bp/tcams/ci/ci11", "mtdglist.insert", $data.inserts[i]);
+                    } else {
+                        $jdbc.update("bp/tcams/ci/ci11", "mtcdlist.insert", $data.inserts[i]);
+                        $jdbc.update("bp/tcams/ci/ci11", "mtdglist.insert", $data.inserts[i]);
+                    }
+                    // 첨부 파일 updata 추가
+                    $jdbc.update("bp/tcams/ci/ci11", "update.mtdg.att_grd_cd", $data.inserts[i]);
+                }
+
+                for (var j = 0; j < $data.updates.size(); j++) {
+                    if($data.updates[j].comd_stnd_degr == null) {
+                        $data.updates[j].comd_stnd_degr = $data.updates[j].comd_hkmc_degr;
+                    }
+                    var mtdg_cnt = $jdbc.query("bp/tcams/ci/ci11", "mtdglist.insert.check", $data.updates[j]);
+
+                    // MTDG 미 존재시 추가한다.
+                    if (mtdg_cnt.cnt < 1) {
+                        $jdbc.update("bp/tcams/ci/ci11", "mtdglist.insert", $data.updates[j]);
+                    }
+                    $jdbc.update("bp/tcams/ci/ci11", "mtcdlist.update", $data.updates[j]);
+
+                    // 첨부 파일 updata 추가
+                    $jdbc.update("bp/tcams/ci/ci11", "update.mtdg.att_grd_cd", $data.updates[j]);
+                }
+
+                for (var k = 0; k < $data.deletes.size(); k++) {
+                    $jdbc.update("bp/tcams/ci/ci11", "mtcdlist.delete", $data.deletes[k]);
+                }
+
+                $data.result.MESG_CODE = "SA-001";
+                $data.result.MESG      = "저장 되었습니다.";
+            } catch (e) {
+                var rollback = new Map();
+                var msg = e.message;
+                var index = msg.indexOf('JDBC');
+
+                $data.result.MESG_CODE = 'SA-002';
+
+                System.out.println("##########################################");
+                System.out.println("## ERROR MEG  : " + msg);
+                System.out.println("##########################################");
+
+                if ("JDBC-10007" == msg.substr(index, 10)) {
+                    $data.result.MESG = "중복된 데이터가 존재합니다.";
+                } else if ("JDBC-8030" == msg.substr(index, 9)) {
+                    $data.result.MESG = "값의 수가 충분하지 않습니다.";
+                } else if ("JDBC-10005" == msg.substr(index, 10)) {
+                    $data.result.MESG = "NULL을 입력할 수 없습니다.";
+                } else {
+                    $data.result.MESG = "저장 시 문제가 발생하였습니다.";
+                }
+
+                $jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+            }
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.stnd_degr.list" label="공법 차수 정보">
+        <script>
+        <![CDATA[
+
+            $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "get.stnd_degr.list", $data.searchParam);
+
+        ]]>
+        </script>
+    </service>
+
+</service-descriptor>
