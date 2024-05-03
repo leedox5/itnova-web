@@ -49,7 +49,12 @@ WITH T1 (
  ,MTDG_INIT_CMAN
  ,MTDG_TRAN_DEGR
 ) AS ( 
-           SELECT 'K1','A','PLIJ','23'  ,NULL,'20200101','20200103','23'  ,NULL,NULL,'안정환','5374','한창선',NULL,'PCF30190','ui/bp/tcams/ca/plij/em-caplij-p23.html' ,NULL,'Y','20200206','ADMIN'   ,'20200206','ADMIN'   ,'2'  FROM DUAL
+           SELECT 'K1' ,'A' ,'HOSE' ,'14-3' ,NULL ,'20140101' ,'20150901' ,NULL ,'연료단가 변경' ,NULL ,'우한섭' ,'5295' ,'한창선' ,NULL ,'PCF20090' ,'ui/bp/tcams/ca/hose/em-cahose-p17.html' ,'13330' ,'N' ,'20151207' ,'ADMIN' ,'20151207' ,'ADMIN' ,NULL  FROM DUAL
+ UNION ALL SELECT 'K1' ,'A' ,'HOSE' ,'15' ,NULL ,'20171201' ,'20171201' ,'15' ,'원가계산기준 일원화' ,NULL ,'우한섭' ,'5295' ,'한창선' ,'5272' ,'PCF30250' ,'ui/bp/tcams/ca/hose/em-cahose-p17.html' ,'13621' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM' ,'1'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'A' ,'HOSE' ,'17' ,NULL ,'20200101' ,'20200102' ,'17' ,'VMQ(실리콘) 공정 or FVMQ(불소실리콘) 공정 추가 外' ,NULL ,'나종훈' ,'5393' ,'우한섭' ,NULL ,'PCF30250' ,'ui/bp/tcams/ca/hose/em-cahose-p17.html' ,'1586735432601' ,'Y' ,'20200408' ,'GE00059' ,'20200408' ,'GE00059' ,'2'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'A' ,'HOSE' ,'17-2' ,NULL ,'20220701' ,'20220701' ,'17-2' ,'개정 2022' ,NULL ,'나종훈' ,'5393' ,'우한섭' ,NULL ,'PCF30250' ,'ui/bp/tcams/ca/hose/em-cahose-p17.html' ,'1586735432601' ,'Y' ,'20221021' ,'SYSTEMPG' ,'20220722' ,'SYSTEMPG' ,'3'  FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'HOSE', '17-4', NULL, '20231001', '20231001', '17-4', NULL, NULL, '나종훈', '5393', '우한섭', NULL, 'PCF30250', 'ui/bp/tcams/ca/hose/em-cahose-p17.html', NULL, 'Y', '20230930', 'ADMIN', '20230930', 'ADMIN', '4' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'HOSE', '17-6', NULL, '20240215', '20240215', '17-6', '전력단가/5.1.2 부재료비 LNG GAS비 변경', NULL, '안정환', '5374', '오원규', NULL, 'PCF30250', 'ui/bp/tcams/ca/hose/em-cahose-p17.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '5' FROM DUAL
 )
 SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,CASE WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'N' ELSE 'Y' END UPDATED_YN
