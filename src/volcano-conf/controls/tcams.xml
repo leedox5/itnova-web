@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<controller-decriptor id="tcams" comment="">
+
+ <control id="pkms" comment="Test"
+        descriptor="" service-id=""
+        page="" page-attributes=""
+        public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importPackage(java.io);
+    importPackage(Packages.kr.co.itnova.util);
+
+    var met = $request.getMethod();
+    $logger.info(met);
+    $logger.info($data);
+    var param = Packages.smartsuite.servlet.util.ServletRequestUtil.getAjaxData($request);
+    $logger.info(param);
+
+    var mgr = XMLManager.getInstance().getDescriptor("conf");
+    var repo = mgr.getDescriptorElement("repo").getTextTrim();
+    $logger.info(repo);
+    $response.getWriter().write(repo);
+
+    var loader = RepoLoader(repo);
+    var pkms = loader.getObj();
+    pkms.performMain();
+
+  ]]>
+ </control>
+
+ <control id="cload" comment="Test"
+        descriptor="" service-id=""
+        page="" page-attributes=""
+        public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importPackage(java.io);
+    importPackage(Packages.kr.co.itnova.util);
+
+    var mgr = XMLManager.getInstance().getDescriptor("aip");
+    var repo = mgr.getDescriptorElement("repo").getTextTrim();
+    $logger.info(repo);
+    $response.getWriter().write(repo);
+
+    var loader = RepoLoader(repo);
+    var aipUtil = loader.getObj();
+    aipUtil.performMain();
+  ]]>
+ </control>
+
+ <control id="test" comment="Test"
+        descriptor="" service-id=""
+        page="" page-attributes=""
+        public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importClass(com.transys.drm.Drm);
+
+    var drm = new Drm();
+
+    $logger.info("START!");
+
+    /*
+    try {
+        var ret = drm.IsAipUser("TSA00024", true);
+        System.out.println("IsAipUser-->" + ret);
+        var ret = drm.IsAipUser("82102064", true);
+        System.out.println("IsAipUser-->" + ret);
+        $logger.info(ret);
+    } catch(e) {
+        System.out.println(e.getMessage());
+        $logger.info(e.message);
+    }
+    */
+
+    /*
+    var srcFile = "\\\\10.6.124.26\\tcamsdev-aip\\sample.xlsx";
+
+    var aipProps = new Map();
+
+    aipProps.RemoteLoginId = "aipadmin";
+    aipProps.RemoteLoginPw = "Msmb123!";
+    aipProps.AipSrcFile    = "\\\\10.6.124.26\\tcamsdev-aip\\sample.xlsx";
+
+    $logger.info(aipProps);
+
+    try {
+        var result = drm.IsAipFileEncrypted(srcFile, aipProps);
+        $logger.info("IsAipFileEncrypted --> " + result);
+    } catch (e) {
+        $logger.info(e.message);
+    }
+    */
+
+    var aipProps = new Map();
+
+    aipProps.FileExt = "xlsx";
+    aipProps.AipSrcFile = "\\\\10.6.124.26\\tcamsdev-aip\\ex1.xlsx";
+    aipProps.IsRemote = "true";
+    aipProps.RemoteLoginId = "aipadmin";
+    aipProps.RemoteLoginPw = "Msmb123!";
+    aipProps.RemoteServer =  "\\\\10.6.124.26\\tcamsdev-aip";
+    aipProps.OutputDirectory = "\\\\10.6.124.26\\tcamsdev-aip\\temp2\\";
+
+    var result = drm.DecryptAIPMAP(aipProps);
+
+    $logger.info(result);
+  ]]>
+ </control>
+
+ <control id="cont" comment="Controller"
+        descriptor="" service-id=""
+        page="" page-attributes=""
+        public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importPackage(java.io);
+    importPackage(Packages.kr.co.itnova.util);
+
+    var responseMap = new Map();
+    var message = new Map();
+    var param = new Map();
+
+    if($request.getMethod() == "GET") {
+        if($request.getParameter("grp_cd") == null) {
+            param.grp_cd = "CW02-07-01";
+        } else {
+            param.grp_cd = $request.getParameter("grp_cd");
+        }
+    } else {
+        var requestBody = Packages.smartsuite.servlet.util.ServletRequestUtil.getAjaxData($request);
+        param = requestBody.param;
+    }
+
+    $response.setContentType("application/json; charset=UTF-8");
+
+    try {
+        var mgr = XMLManager.getInstance().getDescriptor("conf");
+        var repo = mgr.getDescriptorElement("202310.01").getTextTrim();
+
+        var loader = RepoLoader(repo);
+        var cont = loader.getObj();
+        $response.getWriter().write(cont.getRows(param));
+    } catch(e) {
+        $logger.info(e.message);
+        message.code = "E";
+        message.mesg = e.message;
+        responseMap.message = message;
+        $response.getWriter().write(responseMap);
+    }
+
+    $response.flushBuffer();
+  ]]>
+ </control>
+
+ <control id="emst" comment="Controller"
+          descriptor="" service-id=""
+          page="" page-attributes=""
+          public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importPackage(Packages.kr.co.itnova.conf);
+    try {
+        ChkLoader("202310.02").getObj().chk($request, $response);
+    } catch(e) {
+        $logger.info(e.message);
+        var message = new Map();
+        message.code = "E";
+        message.mesg = e.message;
+        $response.getWriter().write(message); 
+    }
+  ]]>
+ </control>
+
+ <control id="conf" comment="Controller"
+          descriptor="" service-id=""
+          page="" page-attributes=""
+          public-access="true" access-log="true" dispatch-type="none">
+  <![CDATA[
+    importClass(java.util.HashMap);
+    importPackage(Packages.kr.co.itnova.conf);
+    
+    var id = $request.getParameter("id");
+    
+    try {
+        if(null == id) {
+            throw new Exception("Param [id] is required!");
+        }
+        
+        ChkLoader(id).getObj().chk($request, $response);
+    } catch(e) {
+        $logger.info(e.message);
+        
+        var res = new HashMap();
+        var message = new Map();
+        
+        message.code = "E";
+        message.mesg = e.message;
+        
+        res.putAll(message);
+        
+        var json = Packages.org.json.JSONObject(res);
+        
+        $response.setContentType("application/json; charset=UTF-8");
+        $response.getWriter().write(json.toString(2));
+        $response.flushBuffer(); 
+    }
+  ]]>
+ </control>
+
+</controller-decriptor>

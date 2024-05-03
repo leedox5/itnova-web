@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config-descriptor id="conf">
+
+ <config id="svr">LOCAL</config>
+ <config id="repo">C:/workspace1/TCAMS/target/classes/kr/co/itnova/util/PkmsConf.class</config>
+ <config id="mtdg">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/MtdgConfig.class</config>
+ <config id="pkms">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/Pkms.class</config>
+ <config id="pkcl">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/Pkcl.class</config>
+ <config id="pres">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/Pres.class</config>
+ <config id="src">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/ProcConfig.class</config>
+ <config id="data">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/DataConfig.class</config>
+
+ <config id="202310.01">C:/workspace1/TCAMS/target/classes/kr/co/itnova/util/Cont.class</config>
+ <config id="202310.02">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/Emst.class</config>
+
+ <config id="202312.01">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/Proc.class</config>
+
+ <config id="202401.01">C:/workspace1/TCAMS/target/classes/kr/co/itnova/conf/PkclHelper.class</config>
+</config-descriptor>
