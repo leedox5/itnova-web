@@ -1,0 +1,280 @@
+<dom-module id="es-cd09-01-01">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 적용차수 선택
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        *****************************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+    <template>
+    
+	    <sc-service-provider id="getDegrInfoRPC" descriptor="bp/tcams/cc/cc02" service-id="get.comecode_degr.list" on-response="setSeqData">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- page title toolbar -->
+		<cc-page-title-bar page-title="적용차수 선택"></cc-page-title-bar>
+		<div id="textDiv" style="font-weight: bold; color: red;">(※ 선택한 공법차수 적용일이 원가계산 기준일보다 후일입니다.)</div>
+		
+		<cc-search-container search-button-hidden="true">
+			<table>
+				<colgroup>
+					<col style="width:50px"/>
+					<col style="width:180px"/></col>
+					<col></col>
+				</colgroup>
+				<tr>
+					<th>
+						<sc-label text="공법명"></sc-label>
+					</th>
+					<td>
+						<sc-text-field id="tb_comename" value="{{searchParam.come_name}}" disabled="true"></sc-text-field>
+						<sc-text-field id="tb_comecode" value="{{searchParam.come_code}}" disabled="true" hidden="true"></sc-text-field>
+					</td>
+					<td></td>
+				</tr>
+			</table>
+		</cc-search-container>
+		
+		<sc-grid id="gridPanel" class="flex" use-dummy="true" data-provider="{{resultList}}" show-number-line="true" editable="true"
+				 use-state="false" use-selection="false" on-item-double-click="getData" row-style-function="rowStyleFn">
+			<cc-grid-toolbar>
+				<sc-button text="조회" on-click="getDegrData" hidden="true"></sc-button>
+				<sc-button text="확인" on-click="getData"></sc-button>
+				<sc-button text="닫기" on-click="close"></sc-button>
+			</cc-grid-toolbar>
+			<sc-grid-columns>
+				<sc-radio-column		data-field="select"     header-text="선택"   width="35" editable="true" text-align="center" check-value="Y" un-checked-value="N"></sc-radio-column>
+				<sc-data-column	data-field="comd_meth_name"	header-text="공법명" width="180" editable="false" text-align="left"></sc-data-column>
+				<sc-attachment-column data-field="file_cnt" shared-group-field="comd_att_grp_cd"  header-text="첨부" width="70" text-align="right" editable="false"></sc-attachment-column>
+				<sc-data-column			data-field="comd_tran_degr"	header-text="HTS 차수"	width="100"	editable="false" text-align="center"></sc-data-column>
+				<sc-data-column	data-field="comd_hkmc_degr"	header-text="HMC 차수" width="100" editable="false" text-align="left"></sc-data-column>
+				<sc-date-column			data-field="comd_appl_date"	header-text="적용일"	width="100"	editable="false" text-align="center"></sc-date-column>
+				<sc-data-column			data-field="comd_degr_cont"	header-text="개정내용"	width="390"	editable="false" text-align="left"></sc-data-column>
+				<sc-data-column			data-field="comd_come_code"	header-text="공법코드"	visible="false"></sc-data-column>
+			</sc-grid-columns>
+			<sc-grid-fields>
+				<sc-grid-field data-field="code" ></sc-grid-field>
+				<sc-grid-field data-field="comd_att_grp_cd" ></sc-grid-field> <!-- 첨부파일그룹코드 -->
+			</sc-grid-fields>
+		</sc-grid>
+    </template>
+	<!-- 화면 구성 끝-->
+    
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'es-cd09-01-01',
+            properties : {
+            	searchParam : {type  : Object,value : function() {return {};}},
+            	param		: {type  : Object,value : function() {return {};}},
+            	
+				resultList  : {type  : Array, value : function() {return []}}
+            },
+            
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+            // 1. 화면 로딩시 최초 호출 함수
+			initialized : function() {
+				
+			},
+
+			/*
+			 *	적용차수 데이터 Get
+			 */
+			getDegrData : function() {
+				var me = this;
+				me.$.getDegrInfoRPC.service();
+			},
+
+			/*
+			 *	적용차수 공법코드 데이터 Set
+			 */
+			setDegrData : function(data, name) {
+				var me = this;
+				me.param['come_code'] = data;
+				me.param['come_name'] = name;
+			},
+
+			/*
+			*	적용차수 공법코드 데이터 Set
+			*/
+			setParam : function(parameter) {
+				if (parameter.newItem != "created") {
+					me.param['base_date'] = parameter['comd_base_date'];
+				}
+			},
+
+			/**
+			 * 그리드 클릭 이벤트
+			 * 원가계산적용일보다 공법차수 적용일이 큰 경우 메시지 보여주기 추가 : 20170831 LSM
+			 */
+			itemClickHandler : function(event) {
+				var me = this;
+	            var data  = event.detail.data;
+	            var item  = event.detail.item;
+	            var datafield = item.dataField;
+	            
+				switch(datafield) {
+				
+				// 적용차수 선택 라디오 버튼 클릭 
+				case "select":						 
+					// 라디오 버튼 클릭 값 설정
+					data['select'] = 'Y';
+					
+					// 원가계산기준일 보다 공법차수 적용일이 클 경우, 메시지 보여주기
+					if (me.param['base_date'] < data['comd_appl_date']) {
+						msg.text = "(※ 선택한 공법차수 적용일이 원가계산 기준일보다 후일입니다.)";
+					} else {
+						msg.text = "";
+					}
+					
+					break;
+				
+				default:
+					break;
+				}
+			},
+
+			/**
+			 * 그리드 더블클릭 이벤트
+			 */
+			itemDoubleClickHandler : function(event) {
+				var me = this;
+	            var data  = event.detail.data;
+	            var item  = event.detail.item;
+	            var datafield = item.dataField;
+	            var provider = me.$.gridPanel.getDataProvider();
+	            
+				// 그리드 라디오 버튼 버그로 클릭 이벤트 시 라디오 버튼을
+				// 변경하려면 그 전 라디오 버튼 선택값을 닦고
+				// 새로운 선택값을 화면과 dataProvider해 놓은 SCCollection 객체에
+				// 반영해야 정상 동작함
+				for (var i = 0; me.resultList.length > i ; i++) {
+// 					me.resultList[i].select = false;
+					provider.setItemAt(i, {select : "N"});
+				}
+				
+				switch(datafield) {
+					case "select":
+						break;
+					case "cnt":
+					case "comd_meth_name":
+					case "code":
+					case "comd_appl_date":
+					case "comd_degr_cont":
+						// 그리드 라디오 버튼 버그로 
+						data['select'] = "Y";
+						provider.setItemAt(item.rowIndex,{select : "Y"});
+						me.getData();
+						break;
+					default:
+						break;
+				}				
+			},
+
+			/*
+			 *	확인버튼 or 더블클릭 이벤트 처리
+			 */
+			getData : function() {
+				var me = this;
+				var item = [];
+	            var provider = me.$.gridPanel.getDataProvider();
+	            
+				for(var i = 0; i < me.resultList.length; i++){
+					if(provider.getItemAt(i).select == "Y"){
+						item = provider.getItemAt(i);
+						me.fire("selected-item", item);
+					}
+				}
+			},
+
+			/**
+			 *	SET SEQ DATA
+			 */
+			setSeqData : function() {
+				var me = this;
+				var provider = me.$.gridPanel.getDataProvider();
+				if(me.resultList.length > 0) {
+					// 라디오버튼 체크값이 없으면(첫 조회시 ) 최신 적용차수 체크되도록
+					var isExist = false;
+					for(var i = 0; i < me.resultList.length; i++) {
+						
+						if(me.resultList[i].select == "Y") {
+							isExist = true;
+						}
+						
+						me.resultList[i].cnt = i+1;						
+					}
+					
+					if(!isExist) {
+						provider.setItemAt(me.resultList.length - 1, { select : "Y"});
+					}
+
+				}				
+			},
+			
+            isItemEnabled: function(data, item) {	
+				var me = this;
+            	switch(item.dataField){
+					case "file_cnt" :
+						if(item["file_cnt"] != 0) { 
+							return true;
+						} else { 
+							return false;
+						}
+						break;
+						default :
+					return false;
+				}
+				
+			},
+			
+			// 화면 load
+			load : function(data) {
+				var me = this;
+// 				me.setParam();
+				me.setSeqData();
+				me.$.textDiv.style.display = data.isViewTextDiv ? "" : "none";
+				me.set("searchParam.come_code", data.come_code); 
+				me.set("searchParam.come_name", data.come_name); 
+
+				me.getDegrData();
+			},
+			
+            // 닫기 버튼
+            close : function() {
+				var me = this;
+                me.fire("close");
+            },
+
+            rowStyleFn: function() {
+                var me = this;
+                var style = {};
+                
+                style.paddingLeft = 10;
+                style.paddingRight = 10;
+
+                return style;
+            },
+        });
+    </script>
+<!-- Polymer script 끝 -->
+
+</dom-module>

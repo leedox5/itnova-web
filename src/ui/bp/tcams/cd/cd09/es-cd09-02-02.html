@@ -1,0 +1,97 @@
+<dom-module id="es-cd09-02-02">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 주기정보 POP-UP
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.17
+        ** @History         : 2019.12.17 최초작성
+        *****************************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+    <template>
+    
+	    <sc-service-provider id="getListRPC" descriptor="bp/tcams/cd/cd09" service-id="get.periodlist_endpart" on-response="Result">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="periodList" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- page title toolbar -->
+		<cc-page-title-bar page-title="공법주기정보">
+			<sc-button text="닫기" on-click="close"></sc-button>
+		</cc-page-title-bar>
+		<sc-grid id="dgDatas" class="flex" use-dummy="true" use-state="false" use-selection="false" data-provider="{{resultList}}" fit-row-height="true">
+			<sc-grid-columns>
+				<sc-data-column	data-field="mtcd_meth_name"	width="150"	header-text="공법명"	width="150"></sc-data-column>
+				<sc-data-column	data-field="remk_rem1"		width="650"	header-text="주기" use-multi-line="true"	text-align="left"></sc-data-column>
+			</sc-grid-columns>
+		</sc-grid>
+    </template>
+	<!-- 화면 구성 끝-->
+    
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'es-cd09-02-02',
+            properties : {
+            	searchParam : {type  : Object,value : function() {return {};}},
+				resultList  : {type  : Array, value : function() {return []}}
+            },
+            
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+            // 1. 화면 로딩시 최초 호출 함수
+			initialized : function() {
+				var me = this;
+			},
+
+			Result : function() {
+				var me = this;
+				var provider = me.$.dgDatas.getDataProvider();
+				if (me.resultList.length == 0) {
+					UT.alert("조회된 건수가 없습니다.");
+					return false;
+				} else {
+					for (var i = 0; i < me.resultList.length; i++) {
+						var tempStr = me.resultList[i].remk_rem1;
+						var paramArr = tempStr.split('¿');
+ 						me.resultList[i].remk_rem1 = paramArr[0] + '\n' + paramArr[1] + '\n' + paramArr[2];
+						provider.setItemAt(i, { remk_rem1 :me.resultList[i].remk_rem1});
+					}
+				}
+
+			},
+
+			load : function(param) {
+				var me = this;
+				me.searchParam['remk_corp_code'] = param['comd_corp_code'];
+				me.searchParam['remk_cost_gubn'] = param['comd_cost_gubn'];
+				me.searchParam['remk_part_no']   = param['comd_part_endi'];
+				me.searchParam['remk_eono']      = param['comd_eono_endi'];
+				me.searchParam['remk_cumt_no']   = param['comd_cumt_endi'];
+
+				me.$.getListRPC.service();				
+			},
+
+			close : function() {
+				var me = this;
+				me.fire("close");
+			},
+
+        });
+    </script>
+<!-- Polymer script 끝 -->
+
+</dom-module>

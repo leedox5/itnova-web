@@ -1,0 +1,1431 @@
+<sc-link rel="import" href="es-cd09-01-01.html"></sc-link>
+<sc-link rel="import" href="es-cd09-02-01.html"></sc-link>
+<sc-link rel="import" href="es-cd09-02-02.html"></sc-link>
+<dom-module id="es-cd09-02">
+    <!--
+        ******************************************************************************************
+        ** @Program-name    : 공법선택
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        ******************************************************************************************
+    -->
+    <!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+    <!-- 화면 구성 시작-->
+    <template>
+
+        <sc-service-provider id="getCompareRPC" descriptor="bp/tcams/cd/cd11" service-id="oz.cnt" on-response="paramSetEncode">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam1}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="flag" target="{{flag}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="getSelectedComecodeRPC" descriptor="bp/tcams/cd/cd09" service-id="get.selected_moldcomecode">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{paramName}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultSelectedComeCode}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="getComecodeRPC" descriptor="bp/tcams/cd/cd09" service-id="get.moldcomecode.list">
+            <inputs>
+                <sc-service-input name="searchParam2" value="{{paramName}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{resultComeCodeList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <sc-service-provider id="saveSelectedcomecodeRPC" descriptor="bp/tcams/cd/cd09" service-id="save.selected_comecode" on-response="resultsaveName">
+        </sc-service-provider>
+
+        <sc-service-provider id="saveComecodeRPC" descriptor="bp/tcams/cd/cd09" service-id="save.comecode.list" on-response="resultsaveUser">
+        </sc-service-provider>
+
+        <!-- 공법마스터 삭제  -->
+        <sc-service-provider id="delSelectedcomecodeRPC" descriptor="bp/tcams/cd/cd09" service-id="del.selected_comecode" on-response="resultDelF">
+            <inputs>
+                <sc-service-input name="param" value="{{resultDelete}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultDel}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 공법차수 변경 -->
+        <sc-service-provider id="replaceStndDegrRPC" descriptor="bp/tcams/cd/cd09" service-id="replace.selected_comecode" on-response="resultReplaceF">
+            <inputs>
+                <sc-service-input name="degrParam" value="{{degrParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultReplace}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 결재코드 -->
+        <sc-service-provider id="pass_stat" descriptor="bp/tcams/ca/common" service-id="get.pass_stat" on-response="resultPassF">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{passParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultPass}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 고도화 3차 사용자편의개선 - 결재 반송된 품목  수정/재상신 가능하도록 요청 -->
+        <!-- 진행상태 '반송'인 경우, 체인 목록 변경이 일어나면 진행상태 '작성중'으로 변경 및 결제정보 삭제 : 20170824 LSM -->
+        <sc-service-provider id="returnPassStatRPC" descriptor="bp/tcams/cd/cd09" service-id="save.return">
+            <inputs>
+                <sc-service-input name="searchParam" value="{{passParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{resultReturn}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 변수 암호화 -->
+        <sc-service-provider id="paramSetEncodeRPC" descriptor="bp/tcams/common" service-id="encode.params" on-response="print" >
+            <outputs>
+                <sc-service-output name="result" target="{{resultEncode}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+
+        <cc-page-title-bar page-title="원가계산 공법선택">
+            <sc-label id="passMsg" style="color:red"></sc-label>
+        </cc-page-title-bar>
+        <cc-search-container search-button-hidden="true">
+            <table>
+                <tr>
+                    <th style="width:50px"/>
+                        <sc-label text="공법구분" ></sc-label>
+                    </th>
+                    <td style="width:120px"/>
+                        <sc-radio-group-field id="sb_meth_gubn" value="{{paramName.cmms_meth_gubn}}" on-change="checkMechGubn">
+                            <sc-radio-field label="자동" input-value="A"></sc-radio-field>
+                            <sc-radio-field label="금형" input-value="M"></sc-radio-field>
+                        </sc-radio-group-field>
+                    </td>
+                    <th style="width:60px">
+                        <sc-label text="SUB PART" ></sc-label>
+                    </th>
+                    <td style="width:120px">
+                        <sc-text-field id="TB_PART_NO" value="{{paramName.cmms_part_no}}" mask-re="/[a-zA-Z0-9]/" disabled="true" max-length="200"></sc-text-field>
+                    </td>
+                    <td style="width:120px">
+                        <sc-text-field id="TB_PART_NAME" value="{{paramName.cmms_part_name}}" mask-re="/[a-zA-Z0-9]/" disabled="true" max-length="200"></sc-text-field>
+                    </td>
+                    <th style="width:40px">
+                        <sc-label text="EO NO" ></sc-label>
+                    </th>
+                    <td style="width:120px">
+                        <sc-text-field id="TB_EONO" value="{{paramName.cmms_eono}}" mask-re="/[a-zA-Z0-9]/" disabled="true" max-length="10"></sc-text-field>
+                    </td>
+                    <th style="width:30px">
+                        <sc-label text="SEQ" ></sc-label>
+                    </th>
+                    <td style="width:80px">
+                        <sc-text-field id="TB_SEQ0" value="{{paramName.cmms_cumt_no}}" mask-re="/[a-zA-Z0-9]/" disabled="true" max-length="10"></sc-text-field>
+                        <sc-text-field id="TB_STND_GUBN" value="{{paramName.cmms_stnd_gubn}}" mask-re="/[a-zA-Z0-9]/" hidden="true"></sc-text-field>
+                    </td>
+                    <th style="width:100px">
+                        <sc-label text="원가계산 기준일" ></sc-label>
+                    </th>
+                    <td style="width:80px">
+                        <sc-date-field id="TB_APPL_DATE" value="{{paramName.cmms_base_date}}" string-date="true" disabled="true"></sc-date-field>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+
+        </cc-search-container>
+
+        <div class="hbox flex">
+            <div class="vbox flex-8">
+                <sc-grid id="selectedGridPanel" class="flex" editable="true" use-dummy="true" data-provider="{{resultSelectedComeCode}}" show-number-line="false" use-selection="false"
+                         on-item-click="nameClickHandler" row-style-function="bgColor" header-height="40">
+                    <cc-grid-toolbar title-text="금형공법 적용리스트">
+                        <sc-button id="searchBtn"       text="조회"            on-click="getSelectedList"     ></sc-button>
+                        <sc-button id="searchResultBtn" text="결과조회"        on-click="getSelectResult"     ></sc-button>
+                        <sc-button id="delSPBtn"        text="공법삭제"        on-click="onDelete"     ></sc-button>
+                        <sc-button id="btn_remark"      text="공법주기"        on-click="popup_ESCD09_02_01"     ></sc-button>
+                        <sc-button id="btn_remark1"     text="주기정보"        on-click="popup_ESCD09_02_02"     ></sc-button>
+                        <sc-button id="gabBtn"          text="갑/을지 출력"        on-click="compareCostCnt"     ></sc-button>
+                    </cc-grid-toolbar>
+                    <sc-grid-columns>
+                        <sc-checkbox-column data-field="chk"  header-text="선택" width="45"  text-align="center" check-value="Y" un-checked-value="N" item-editable-function="isItemEnabled"
+                                            editable="true" id="chk" visible="true" display-checkbox="false"></sc-checkbox-column>
+
+                        <sc-data-column   data-field="comd_cmms_numb" header-text="SEQ"        editable="false" width="40"  text-align="center" data-type="number"    format-type="integer"></sc-data-column>
+                        <sc-data-column   data-field="comd_meth_name" header-text="금형공법"   editable="false" width="140" text-align="left" style-name="link"></sc-data-column>
+                        <sc-data-column   data-field="comd_mold_code" header-text="금형코드"   editable="false" width="80"  text-align="center"></sc-data-column>
+                        <sc-data-column              data-field="comd_hkmc_degr" header-text="HMC&#xa;차수"    width="45"    text-align="center" editable="false"></sc-data-column>
+                        <sc-data-column              data-field="comd_tran_degr" header-text="HTS&#xa;차수"    width="45"    text-align="center" editable="false"></sc-data-column>
+                        <sc-data-column   data-field="comd_rpay_gubn" header-text="상각구분"   editable="false" width="70"  text-align="center"></sc-data-column>
+                        <sc-data-column   data-field="comd_tmld_cost" header-text="계산금형비" editable="false" width="120" text-align="right"></sc-data-column>
+                        <sc-data-column   data-field="comd_adel_pric" header-text="조정금액"   editable="false" width="120" text-align="right"></sc-data-column>
+                        <sc-data-column   data-field="comd_totl_cost" header-text="결정금형비" editable="false" width="120" text-align="right"></sc-data-column>
+                        <sc-data-column   data-field="comd_cavt"      header-text="CAVITY"     editable="false" width="65"  text-align="right"></sc-data-column>
+                        <sc-data-column   data-field="comd_rpay_cont" header-text="상각수량"   editable="false" width="80"  text-align="right"></sc-data-column>
+                        <sc-data-column   data-field="comd_dmld_cost" header-text="상각금형비" editable="false" width="120" text-align="right"></sc-data-column>
+                    </sc-grid-columns>
+                    <sc-grid-fields>
+                        <sc-data-column   data-field="comd_degr_desc" header-text="차수"       editable="false" width="60"  text-align="center"></sc-data-column>
+                        <sc-grid-field         data-field="comd_part_no  "  headerText="SUB PART NO"       width="0"       editable="false" textAlign="center"  id="col_part_no"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_eono     "  headerText="EONO SUB"          width="0"       editable="false" textAlign="center"  id="col_eono"       visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_cumt_no  "  headerText="CUMT NO"           width="0"       editable="false" textAlign="center"  id="col_cumt_no"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_cumt_gubn"  headerText="계산구분"              width="0"       editable="false"    textAlign="center"    id="col_cumt_gubn"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_meth_gubn"  headerText="공법구분"              width="0"       editable="false"    textAlign="center"    id="col_meth_gubn"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_inds_code"  headerText="업종"                  width="0"       editable="false" textAlign="center"                                visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_come_code"  headerText="공법코드"              width="0"       editable="false"    textAlign="center"    id="col_come_code"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_stnd_degr"  headerText="공법차수"              width="0"       editable="false"    textAlign="center"    id="col_stnd_degr"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_degr_cont"  headerText="개정내용"              width="0"       editable="false"    textAlign="center"    id="col_degr_cont"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_stnd_man1"  headerText="표준담당"              width="0"       editable="false"    textAlign="center"    id="col_stnd_man1"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_stnd_gubn"  headerText="표준구분"              width="0"       editable="false"    textAlign="center"    id="col_stnd_gubn"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_base_date"  headerText="원가계산기준일"       width="0"       editable="false"    textAlign="center"    id="col_base_date"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_sort_key0"  headerText="SEQ"                   width="0"       editable="false"    textAlign="center"    id="col_sort_key0"    visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_init_cman"  headerText="작성자"              width="0"       editable="false" textAlign="center"  id="col_init_cman"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_emst_cumt"  headerText=""                width="0"       editable="false" textAlign="center"  id="col_emst_cumt"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_cost_gubn"  headerText=""                width="0"       editable="false" textAlign="center"  id="col_cost_gubn"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_pass_stat"  headerText=""                width="0"       editable="false" textAlign="center"  id="col_pass_stat"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_mold_seq0"  headerText="금형코드SEQ"     width="0"      editable="false" textAlign="center"  id="col_mold_seq0"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_mxml_path"  headerText="파일경로"        width="0"       editable="false" textAlign="center"  id="col_mxml_path"  visible="false" ></sc-grid-field>
+                        <sc-grid-field         data-field="comd_menu_id  "  headerText="메뉴아이디"      width="0"       editable="false" textAlign="center"  id="col_menu_id"    visible="false" ></sc-grid-field>
+
+                    </sc-grid-fields>
+                </sc-grid>
+            </div>
+
+            <sc-splitter split-type="vertical" id="rightBoxSplitter"></sc-splitter>
+            <div class="vbox flex-2" id="rightBox">
+                <cc-search-container search-button-hidden="true">
+                      <table>
+                        <tr>
+                            <th>
+                                <sc-label text="공법명"></sc-label>
+                            </th>
+                            <td style="width:220px;">
+                                <sc-text-field id="tb_meth_name" value="{{paramName.comd_meth_name}}" on-enter="getUserList" ></sc-text-field>
+                            </td>
+                        </tr>
+                    </table>
+                </cc-search-container>
+
+                <sc-grid id="comeCodeGridPanel" class="flex" editable="true" use-dummy="true" validation-group="save" data-provider="{{resultComeCodeList}}" show-number-line="false"
+                         use-selection="false" use-state="false" on-item-click="itemClickHandler" on-item-double-click="itemDoubleClick" header-height="40">
+                    <cc-grid-toolbar title-text="공법목록">
+                        <sc-button text="조회"  on-click="getUserList" ></sc-button>
+                    </cc-grid-toolbar>
+                    <sc-grid-columns>
+                        <sc-data-column         data-field="comd_sort_key0"    width="40"    text-align="center" visible="false"></sc-data-column>
+                        <sc-data-column            data-field="comd_seq"        header-text="SEQ"    width="40"    text-align="center" editable="false"></sc-data-column>
+                        <sc-data-column            data-field="comd_meth_name"    header-text="공법명"    width="160"    text-align="left"     editable="false"></sc-data-column>
+                        <sc-attachment-column     data-field="file_cnt"         shared-group-field="comd_att_grp_cd"  header-text="" width="40"
+                                                text-align="right"             editable="false"></sc-attachment-column>
+                        <sc-data-column              data-field="comd_hkmc_degr" header-text="HMC&#xa;차수"    width="45"    text-align="center" editable="false"></sc-data-column>
+                        <sc-data-column              data-field="comd_tran_degr" header-text="HTS&#xa;차수"    width="45"    text-align="center" editable="false"></sc-data-column>
+                        <sc-image-column        data-field="img_stnd_degr"    header-text=" " width="20"    text-align="center" editable="false" visible="[[formula('isVisibleSearch')]]"
+                                                image-cls="search" id="col_img_stnddegr" singular-source="/assets/images/ifproxy/search.png" ></sc-image-column>
+                    </sc-grid-columns>
+                    <sc-grid-fields>
+                        <sc-grid-field         data-field="comd_come_code"></sc-grid-field>
+                        <sc-grid-field         data-field="comd_meth_gubn"></sc-grid-field>
+                        <sc-grid-field         data-field="comd_inds_code"></sc-grid-field>
+                        <sc-grid-field         data-field="comd_appl_date"></sc-grid-field>
+                        <sc-grid-field         data-field="comd_stnd_degr"></sc-grid-field>
+                    </sc-grid-fields>
+                </sc-grid>
+            </div>
+        </div>
+    </template>
+    <!-- 화면 구성 끝-->
+
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'es-cd09-02',
+            properties : {
+                passParam         : {type: Object , value: function() { return {}; }},
+                searchParam1   : {type: Object , value: function() { return {}; }},
+                flag             : {type: Object , value: function() { return {}; }},
+                resultPass     : {type: Object , value: function() { return {}; }},
+                item           : {type: Object , value: function() { return {}; }},
+                messageCode    : {type: Object , value: function() { return {}; }},  // 프로시저 용
+                headerParam    : {type: Object , value: function() { return {}; }},  // 프로시저 용
+                inserts           : {type: Object , value: function() { return {}; }},
+                eventObj       : {type: Object , value: function() { return {}; }},
+
+                // 검색조건 -- 명칭용.
+                paramName      : {type: Object , value: function() { return {}; }},
+                // 차수정보 파라메터
+                degrParam      : {type: Object , value: function() { return {}; }},
+                resultDel      : {type: Object , value: function() { return {}; }},
+                resultReplace  : {type: Object , value: function() { return {}; }},
+                paramUser         : {type: Object , value: function() { return {}; }},
+                paramDegr         : {type: Object , value: function() { return {}; }},
+                resultReturn   : {type: Object , value: function() { return {}; }},
+                returnPopFunc  : {type: Object , value: function() { return {}; }},
+
+                resultSelectedComeCode  : {type : Array , value: function() { return []; }},
+                resultComeCodeList      : {type : Array , value: function() { return []; }},
+
+                aprvln_clscd       : {type : String, value : function() { return '';}},
+                sDclickedComeCode  : {type : String, value : function() { return '';}},
+                sDclickedStndDegr  : {type : String, value : function() { return '';}},
+                msg                 : {type : String, value : function() { return '';}},
+                initFlag             : {type : String, value : function() { return 'N';}},
+
+                isEnd            : {type :Object , value : function() { return false;}},
+
+                resultDelete              : {type : Array , value: function() { return []; }},
+                resultList     : {type : Array , value: function() { return []; }},
+
+                resultEncode   : {type: Object , value: function() { return {}; }}
+            },
+
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+            // 1. 화면 로딩시 최초 호출 함수
+            initialized : function() {
+                var me = this;
+                   me.sDclickedComeCode = ""; // 선택된 공법코드
+                   me.sDclickedStndDegr = ""; // 선택된  공법차수
+                   me.initFlag = 'Y';
+            },
+
+            onDelete : function() {
+                var me = this;
+                me.msg = 'del';
+                me.$.pass_stat.service();
+            },
+
+            formulas : {
+
+                isVisibleSearch : function() {
+                    var me = this;
+                    // 그리드의 생성여부를 확인후 작업
+                    if (me.paramName.cmms_pass_stat == "20") {
+                        return true;
+                       } else {
+                           return false;
+                    }
+                }
+            },
+
+            /**
+             * 팝업시 - 선택
+             */
+            selectName : function() {
+                var me = this;
+                if (me.returnPopFunc != null) {
+                    // 선택된 항목을 찾는다.
+                    var item = null;
+                    for (var i = 0; i < me.resultSelectedComeCode.length; i++) {
+                        var obj = me._cboSch_come_code_all.list[i];
+                        if (obj['radio'] == "Y") {
+                            item = obj;
+                            break;
+                        }
+                    }
+
+                    if (item != null) {
+                        me.isEnd = true;
+                        me.getUserList(item);
+                    } else {
+                        UT.alert("선택된 항목이 없습니다.");
+                        return;
+                    }
+
+                } else {
+//                     trace(logString+"ERROR: undefined return function !!! ");
+                }
+            },
+
+            /**
+             * 공법 구분 체크 (다르면 재 조회)
+             */
+            checkMechGubn : function() {
+                var me = this;
+                if (me.initFlag == 'Y') {
+                    if (me.paramName.cmms_meth_gubn == "A") {
+                        var searchParam = me.paramName;
+                        me.fire("auto-come-select", searchParam);
+                    }
+                }
+            },
+
+            /**
+             * 선택공법 조회
+             */
+             getSelectedList : function() {
+                var me = this;
+                me.$.getSelectedComecodeRPC.service();
+                me.$.getComecodeRPC.service();
+            },
+
+            /**
+             * 공법 추가
+             */
+            addName : function(obj) {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var scitem = {newitem : "I"};
+
+                scitem['comd_part_no']   = me.paramName['cmms_part_no'];
+                scitem['comd_eono']      = me.paramName['cmms_eono'];
+                scitem['comd_cumt_no']   = me.paramName['cmms_cumt_no'];
+                scitem['comd_stnd_gubn'] = me.paramName['cmms_stnd_gubn'];
+                scitem['comd_meth_gubn'] = obj['comd_meth_gubn'];
+                scitem['comd_come_code'] = obj['comd_come_code'];
+                scitem['comd_meth_name'] = obj['comd_meth_name'];
+                scitem['comd_inds_code'] = obj['comd_inds_code'];
+                scitem['comd_cmms_cnt0'] = me.resultSelectedComeCode.length;
+                scitem['comd_stnd_degr'] = obj['comd_stnd_degr'];
+
+                if (obj['comd_come_code'] == "MANU") {
+                    scitem['comd_auto_gubn'] = "수동";
+                } else {
+                    scitem['comd_auto_gubn'] = "자동";
+                }
+
+                provider.addItemAt(provider.getItemSize(), scitem);
+            },
+
+            /**
+             * 공법차수 변경
+             */
+             replaceStndDegr : function(event) {
+                var me = this;
+                //파라메터
+                me.degrParam['comd_part_no']   = me.paramName['cmms_part_no'];
+                me.degrParam['comd_eono']      = me.paramName['cmms_eono'] ;
+                me.degrParam['comd_cumt_no']   = me.paramName['cmms_cumt_no'] ;
+                me.degrParam['comd_meth_gubn'] = "A" ;
+                me.degrParam['comd_come_code'] = me.sDclickedComeCode;
+                me.degrParam['comd_stnd_degr'] = me.sDclickedStndDegr;
+                me.$.replaceStndDegrRPC.service();
+
+            },
+
+            /**
+             * 명칭저장
+             */
+            saveName : function() {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var created = provider.getNewItems();
+                var updated = provider.getUpdateItems();
+                var deleted = provider.removeItems();
+
+                // 신규/수정/삭제 건이 있을 경우에만 저장
+                if(created.length == 0 && updated.length == 0) {
+                    UT.alert("저장 할 내역이 없습니다.");
+                    return;
+                }
+
+                me.$.saveSelectedcomecodeRPC.body={
+                      inserts    : created
+                }
+                  me.$.saveSelectedcomecodeRPC.service();
+
+            },
+
+            resultPassF : function() {
+                var me = this;
+                if (me.resultPass.pass_cnt!='0') {
+                    if(me.msg=="del") UT.alert("진행상태가 작성중이 아니면 공법 삭제가 불가능 합니다.");
+                    if(me.msg=="dbl") UT.alert("진행상태가 작성중이 아니면 공법 추가 및 차수변경이 불가능 합니다.");
+                    return;
+                } else {
+                    if(me.msg=="del") me.delComeCode_check();
+                    if(me.msg=="dbl") me.itemDoubleClickAct(me.item);
+                }
+            },
+
+            /**
+             * 공법마스터 삭제 확인
+             */
+             delComeCode_check : function() {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var updated = provider.getUpdateIndexes();
+                var allRows = provider.getItems();
+
+                //삭제 건이 있을 경우에만 저장
+                if(updated.length == 0) {
+                    UT.alert("선택된 공법이 없습니다.");
+                    return;
+                }
+
+                UT.confirm(me.translate("삭제 하시겠습니까?"),function(){
+                    me.afterDelete();
+                });
+            },
+
+            afterDelete : function(){
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var updated  = provider.getUpdateIndexes();
+                var allRows  = provider.getItems();
+
+                for(var indexI = 0; indexI < allRows.length; indexI++) {
+//                        // 삭제 확인
+//                        var name:String = _resultSelectedComeCode[indexI].comd_menu_id; //메뉴코드
+//                        var loaderType:String = "module";
+
+//                        // 새로운 URL 호출시 해당 윈도우 객체를 리무브 후 새로운 파라메터로 받아서 연다. (이런 호출에서 조회함수는 호출 불가함)
+//                        var mdiWin:Window = Application.application.mdi.mdiContent.getChildByName(name) as Window;
+
+//                        // 기존의 윈도우가 호출된 상태인가?
+//                        if(mdiWin != null){
+//                            var objIndex:int = Application.application.mdi.mdiContent.getChildIndex(mdiWin);
+
+//                            // 윈도우 객체를 지움.
+//                            Application.application.mdi.mdiContent.removeWindow(mdiWin);//.restoreWindows();
+//                        }
+
+                    if (provider.getItemAt(indexI).chk == 'Y') {
+                        // 삭제 확인
+                        var name = allRows[indexI].comd_menu_id; //메뉴코드
+                        var loaderType = "module";
+
+                        commonAS.closeAllTab(name);
+                    }
+                }
+
+                // 파라미터 추가
+                me.resultDelete = provider.getUpdateItems();
+                me.$.delSelectedcomecodeRPC.service();
+            },
+             /**
+             * 공법목록 조회
+             */
+             getUserList : function(item) {
+                var me = this;
+                me.$.getComecodeRPC.service();
+            },
+
+            // 저장후 처리
+            resultsaveName : function() {
+                var me = this;
+                me.$.getSelectedComecodeRPC.service();
+                me.returnStat();
+            },
+
+            /**
+             * 진행상태 : 반송 → 진행중으로 변경
+             * 결제마스터, 결제라인 삭제 후 처리
+             **/
+             returnStat : function() {
+                var me = this;
+                me.$.returnPassStatRPC.service();
+            },
+
+            /**
+             * 프로시저 삭제 처리 함수
+            */
+            resultDelF : function(e, res) {
+                var me = this;
+                if(me.resultDel.MESG_CODE === "SA-002"){
+                    UT.alert("PART_NO   : " + me.resultDel.CURR_PART + "<br>"
+                            +"MESG_CODE : " + me.resultDel.MESG_CODE + "<br>"
+                            +"LINE_NO   : " + me.resultDel.LINE_NO   + "<br>"
+                            +"MESG      : " + me.resultDel.MESG      + "<br>"
+                        );
+                }
+
+                if(me.resultDel.MESG_CODE === "SA-001"){
+                    UT.alert("삭제 되었습니다.");
+                }
+
+                me.$.getSelectedComecodeRPC.service();
+                me.returnStat();
+            },
+
+            /**
+             * 공법차수 변경 적용후 처리 함수
+            */
+            resultReplaceF : function() {
+                var me = this;
+                if(me.resultReplace.MESG_CODE === "SA-002"){
+                    UT.alert("PART_NO   : " + me.resultReplace.CURR_PART + "<br>"
+                            +"MESG_CODE : " + me.resultReplace.MESG_CODE + "<br>"
+                            +"LINE_NO   : " + me.resultReplace.LINE_NO   + "<br>"
+                            +"MESG      : " + me.resultReplace.MESG      + "<br>"
+                        );
+                }
+
+                if(me.resultReplace.MESG_CODE === "SA-001"){
+                    UT.alert("공법 차수가 변경 되었습니다.");
+                }
+
+                me.$.getSelectedComecodeRPC.service();
+                me.returnStat();
+            },
+
+            /**
+             * 그리드 클릭 이벤트 : 명칭관리
+             */
+            nameClickHandler : function(event) {
+                var me    = this;
+                var data  = event.detail.data;
+                var item  = event.detail.item;
+                var index = item.rowIndex;
+                var datafield = item.dataField;
+
+                switch(datafield)
+                {
+                    case 'comd_meth_name':
+                        if(UT.isEmpty(data['comd_mxml_path'])){
+                            UT.alert("공법화면 진입이 불가한 차수입니다. 결과조회로 내역확인바랍니다.");
+                            return false;
+                        }
+                        // 공법화면 호출 : 저장안한 ROW일 경우 메세지 출력
+                        // 추가 후 저장안한 항목인가?
+                        if(data["newitem"] == "I") {
+                            UT.alert("공법 입력화면을 보시려면 먼저 저장을 하세요.");
+                        } else {
+                                // 합계는 공법창으로 넘기지 않는다.
+                                if(data['comd_meth_name'] == '합 계') {
+                                    return;
+                                }
+                                if(data['comd_corp_code'] == '' || data['comd_corp_code'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [법인코드]");
+                                    return;
+                                } else if(me.paramName['cmms_cost_gubn'] == '' || me.paramName['cmms_cost_gubn'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [계산구분]");
+                                    return;
+                                } else if(data['comd_part_no'] == '' || data['comd_part_no'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [PART NO]");
+                                    return;
+                                } else if(data['comd_eono'] == '' || data['comd_eono'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [EONO]");
+                                    return;
+                                } else if(data['comd_cumt_no'] == '' || data['comd_cumt_no'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [계산번호]");
+                                    return;
+                                } else if(data['comd_cumt_gubn'] == '' || data['comd_cumt_gubn'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [계산구분]");
+                                    return;
+                                } else if(data['comd_meth_gubn'] == '' || data['comd_meth_gubn'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [공법구분]");
+                                    return;
+                                } else if(data['comd_come_code'] == '' || data['comd_come_code'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [공법코드]");
+                                    return;
+                                } else if(data['comd_stnd_degr'] == '' || data['comd_stnd_degr'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [공법차수]");
+                                    return;
+                                } else if(data['comd_stnd_gubn'] == '' || data['comd_stnd_gubn'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [표준구분]");
+                                    return;
+                                } else if(me.paramName['cmms_cars_code'] == '' || me.paramName['cmms_cars_code'] == null) {
+                                    //UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [차종]");
+                                    //return;
+                                } else if(data['comd_base_date'] == '' || data['comd_base_date'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [원가계산 적용일]");
+                                    return;
+                                } else if(data['comd_inds_code'] == '' || data['comd_inds_code'] == null) {
+                                    if ( data['comd_come_code'] != "MANU"){
+                                        UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [업종]"+data['comd_inds_code']);
+                                        return;
+                                    }
+                                } else if(me.paramName['cmms_usg0'] == '' || me.paramName['cmms_usg0'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [USG]");
+                                    return;
+                                } else if(me.paramName['cmms_vehl_gubn'] == '' || me.paramName['cmms_vehl_gubn'] == null) {
+                                    UT.alert("필수값이 부족하여 해당공법 화면으로 전환할 수 없습니다.\n사유 : [승상구분]");
+                                    return;
+                                } else {
+
+                                }
+
+                            var title = data['comd_meth_name'];
+                            var url = data['comd_mxml_path'] +"?tit=" + title  +
+                                             "&cmms_corp_code="+data['comd_corp_code']+
+                                             "&cmms_part_no="  +data['comd_part_no']  +
+                                             "&cmms_eono="     +data['comd_eono']     +
+                                             "&cmms_cumt_no="  +data['comd_cumt_no']  +
+                                             "&cmms_emst_cumt="+data['comd_emst_cumt']  + //151223 고도화 2차 추가 END data의 CUMT_NO (수정금형 주기정보 추가용)
+                                             "&cmms_cumt_gubn="+data['comd_cumt_gubn']+
+                                             "&cmms_mold_seq0="+data['comd_mold_seq0']+
+                                             "&cmms_meth_gubn="+data['comd_meth_gubn']+
+                                             "&cmms_meth_name="+data['comd_meth_name']+
+                                             "&cmms_come_code="+data['comd_come_code']+
+                                             "&cmms_mold_code="+data['comd_mold_code']+
+                                             "&cmms_stnd_degr="+data['comd_stnd_degr']+
+                                             "&cmms_degr_desc="+data['comd_degr_desc']+
+                                             "&cmms_stnd_man1="+data['comd_stnd_man1']+
+                                             "&cmms_degr_cont="+data['comd_degr_cont']+
+                                             "&cmms_stnd_gubn="+data['comd_stnd_gubn']+
+                                             "&cmms_base_date="+data['comd_base_date']+
+                                             "&cmms_inds_code="+data['comd_inds_code']+
+                                             "&cmms_init_cman="+data['comd_init_cman']+
+                                             "&cmms_part_name="+me.paramName['cmms_part_name']+
+                                             "&cmms_cars_code="+me.paramName['cmms_cars_code']+
+                                             "&cmms_vend_code="+me.paramName['cmms_vend_code']+
+                                             "&cmms_usg0="+me.paramName['cmms_usg0']+
+                                             "&cmms_seq0="+me.paramName['cmms_seq0']+
+                                             "&cmms_vehl_gubn="+me.paramName['cmms_vehl_gubn']+
+                                             //"&cmms_mach_gubn="+me.paramName['cmms_mach_gubn']+//차량공작구분
+                                             "&cmms_cost_gubn="+me.paramName['cmms_cost_gubn']+
+                                             "&cmms_pass_stat="+me.paramName['cmms_pass_stat']+
+                                             "&cmms_link_meth="+me.paramName['cmms_link_meth']+    //2018.08.24 BJM추가 연동구분
+                                             "&cmms_path_gubn="+'CD09';
+                            var name = data['comd_menu_id']; //메뉴코드
+                            var loaderType = "module";
+
+                            // 새로운 URL 호출시 해당 윈도우 객체를 리무브 후 새로운 파라메터로 받아서 연다. (이런 호출에서 조회함수는 호출 불가함)
+//                             var mdiWin = Application.application.mdi.mdiContent.getChildByName(name) as Window;
+
+//                             // 기존의 윈도우가 호출된 상태인가?
+//                             if(mdiWin != null){
+//                                 var objIndex = Application.application.mdi.mdiContent.getChildIndex(mdiWin);
+
+//                                 // 윈도우 객체를 지움.
+//                                 Application.application.mdi.mdiContent.removeWindow(mdiWin);//.restoreWindows();
+//                             }
+
+                            commonAS.closeAllTab(name);
+
+                            //Application.application.mdi.mdiContent.createWindow(name, title, url, loaderType);
+                            UT.createWindow(name, title, url);
+
+                        }
+                        break;
+
+                    default :
+                        break;
+                }
+            },
+
+            /**
+             * 그리드 클릭 이벤트
+             */
+            itemClickHandler : function(event) {
+                var me = this;
+                var data  = event.detail.data;
+                var item  = event.detail.item;
+                var index = item.rowIndex;
+                var datafield = item.dataField;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var allItems = provider.getItems();
+
+                switch(datafield) {
+                    case "img_stnd_degr":
+                        // 더블클릭 이벤트 전에  체크된 로우가 있음 지워라.
+                        for(var indexI = 0; indexI < me.resultSelectedComeCode.length; indexI++ ){
+                            provider.setItemAt(indexI, { chk : 'N'});
+                        }
+                        sDclickedComeCode = ""; // 선택된 공법코드
+                        sDclickedStndDegr = ""; // 선택된  공법차수
+
+                        // cmms에 등록된 공법은 두번 등록 하지 못하도록 구분값을 따져서 추가한다.
+                        sDclickedComeCode = data['comd_come_code'];
+
+                        var parameter = [];
+                        parameter['comd_base_date'] = me.paramName['cmms_base_date'];
+                        parameter['comd_come_code'] = data['comd_come_code'];
+                        parameter['comd_meth_name'] = data['comd_meth_name'];
+
+
+                        me.createDegrPopup1(parameter,event);
+
+
+//                         var degrPopup1:ESCD09_01_01 = new ESCD09_01_01();
+//                         var pu:IFlexDisplayObject = SCPopupManager.getInstance().createPopUp("적용차수 선택", 720, 310, degrPopup1, this, true, "right");
+//                         degrPopup1.setDegrData(item['comd_come_code'],item['comd_meth_name']);
+//                         degrPopup1.getDegrData();
+//                         degrPopup1.addEventListener("setDegrData",
+//                                  function(event:SCEvent):void{
+//                                     var selItem:Object = event.object;
+//                                     if(selItem != null){
+//                                         if(datafield == "img_stnd_degr"){
+//                                             item['comd_stnd_degr'] = selItem['code'];
+//                                             item['file_cnt']       = selItem['file_cnt'];
+//                                             item['comdatt']        = selItem['comdatt'];
+
+//                                             _paramName.comdatt = selItem['comdatt'];
+//                                             sDclickedStndDegr  = item['comd_stnd_degr'];
+
+//                                             // 차수변경 추가 같은 차수를 쓸때만 에러 메세지  (
+//                                             var isUsedComeCode:Boolean = checkUsedComeCode(sDclickedComeCode);
+//                                             var isSameStndDegr:Boolean = checkSameStndDegr(sDclickedComeCode, sDclickedStndDegr);
+
+//                                             if (isUsedComeCode == false) {
+//                                                 addName(item);
+//                                                 saveName();
+//                                             } else {
+//                                                 // 같은 차수인가?
+//                                                 if (isSameStndDegr == true) {
+//                                                     // 두번 시도할 경우 메세지 출력
+//                                                     SCAlert.show("같은 공법을 두번 적용 할 수 없습니다. 선택된 공법 리스트를 확인하세요.");
+//                                                     return;
+//                                                 } else {
+//                                                     // 차수 변경전 확인
+//                                                     SCAlert.show("차수변경을 하시겠습니까?", "차수변경 확인", true, Alert.YES | Alert.NO, null, replaceStndDegr);
+//                                                 }
+//                                             }
+//                                         }
+//                                     }
+//                                 });
+
+                        break;
+                    case 'file_cnt':
+                        break;
+                    default :
+                        break;
+                }
+            },
+
+
+            //공법차수 팝업
+            createDegrPopup1 : function(data, event){
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                me.gridData = event.detail.data;
+                var isViewTextDiv = (me.paramName.cmms_base_date < me.gridData.comd_appl_date);
+                var checkedComeCode = me.gridData.comd_come_code;
+                var checkedComeName = me.gridData.comd_meth_name;
+
+                if(!me.degrPopup){
+                    me.degrPopup = UT.popup('es-cd09-01-01', me, 1050, 310, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail;
+                            if(UT.isEmpty(result.comd_tran_degr)){
+                                UT.alert('적용할 수 없는 차수입니다.');
+                                return false;
+                            }
+                            me.gridData.comd_come_code = result.comd_come_code;
+                            me.gridData.comd_stnd_degr = result.code;
+                            me.gridData.comdatt = result.file_cnt;
+                            me.gridData.comdatt = result.comdatt;
+
+                               me.paramName.comdatt = result.comdatt;
+                               me.sDclickedComeCode    = result['comd_come_code'];
+                               me.sDclickedStndDegr    = result['code'];
+
+                            // 차수변경 추가 같은 차수를 쓸때만 에러 메세지  (
+                            var isUsedComeCode = me.checkUsedComeCode(me.sDclickedComeCode);
+                            var isSameStndDegr = me.checkSameStndDegr(me.sDclickedComeCode, me.sDclickedStndDegr);
+
+                            if (isUsedComeCode == false) {
+                                me.addName(me.gridData);
+                                me.saveName();
+                            } else {
+                                // 같은 차수인가?
+                                if (isSameStndDegr == true) {
+                                    // 두번 시도할 경우 메세지 출력
+                                    UT.alert("같은 공법을 두번 적용 할 수 없습니다. 선택된 공법 리스트를 확인하세요.");
+                                    return;
+                                } else {
+                                    // 차수 변경전 확인
+                                    UT.confirm("차수변경을 하시겠습니까?", function() {    // "삭제 하시겠습니까?"
+                                        me.replaceStndDegr();
+                                    });
+
+                                }
+                            }
+
+                            popup.close();
+                        }
+                    }, {title : "적용차수 선택"});
+                }
+                me.degrPopup.show();
+                me.degrPopup.getWindowContent().load({come_code : checkedComeCode, come_name : checkedComeName , isViewTextDiv : isViewTextDiv});
+            },
+            /**
+             * Grid 아이템(ROW) Double Click 이벤트 처리 AJH
+            */
+            itemDoubleClickAct : function(item) {
+                var me = this;
+                var datafield = item.dataField;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var allItems = provider.getItems();
+
+                me.sDclickedComeCode = ""; // 선택된 공법코드
+                me.sDclickedStndDegr = ""; // 선택된  공법차수
+
+                // cmms에 등록된 공법은 두번 등록 하지 못하도록 구분값을 따져서 추가한다.
+                me.sDclickedComeCode = item['comd_come_code'];
+                me.sDclickedStndDegr = item['comd_stnd_degr'];
+
+                // 차수변경 추가 같은 차수를 쓸때만 에러 메세지  (
+                var isUsedComeCode = me.checkUsedComeCode(me.sDclickedComeCode);
+                var isSameStndDegr = me.checkSameStndDegr(me.sDclickedComeCode, me.sDclickedStndDegr);
+
+                // 해당공법을 처음 등록하는가?
+                if (isUsedComeCode == false) {
+                    if (me.paramName.cmms_base_date < item.comd_appl_date){
+                        var isSel = false;
+
+                        var parameter = [];
+                        parameter['comd_base_date'] = me.paramName['cmms_base_date'];
+                        parameter['comd_come_code'] = item['comd_come_code'];
+                        parameter['comd_meth_name'] = item['comd_meth_name'];
+
+                        me.createDegrPopup1(parameter, me.eventObj);
+
+                    } else {
+                        me.addName(item);
+                        me.saveName();
+                    }
+                } else {
+                    // 같은 차수인가?
+                    if (isSameStndDegr == true) {
+                        // 두번 시도할 경우 메세지 출력
+                        UT.alert("같은 공법을 두번 적용 할 수 없습니다. 선택된 공법 리스트를 확인하세요.");
+                        return;
+                    } else {
+                        // 차수 변경전 확인
+                        UT.confirm("차수변경을 하시겠습니까?", function() {    // "삭제 하시겠습니까?"
+                            me.replaceStndDegr();
+                        });
+                       }
+                }
+            },
+
+            /**
+             * Grid 아이템(ROW) Double Click 이벤트 처리
+             */
+            itemDoubleClick : function(event) {
+                var me = this;
+                me.msg='dbl';
+                me.item = event.detail.data;
+                me.eventObj = event;
+                me.$.pass_stat.service();
+            },
+
+
+            /**
+             * 공법 사용 여부 체크
+             */
+            checkUsedComeCode : function(sComeCode) {
+                var me = this;
+                var isUsed = false;
+                var sSelectedComeCode = "";
+
+                // 사용된 공법인가
+                for(var i = 0; i < me.resultSelectedComeCode.length; i++){
+                    if(me.resultSelectedComeCode[i].comd_meth_name != '합 계') {
+                        sSelectedComeCode = me.resultSelectedComeCode[i].comd_come_code.toString();
+                        if (sSelectedComeCode == sComeCode) {
+                            return true;
+                        }
+                    }
+                }
+
+                return isUsed;
+            },
+
+            /**
+             * 공법 차수 체크
+            */
+            checkSameStndDegr : function(sComeCode, sStndDegr) {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var allItems = provider.getItems();
+
+                var isUsed = false;
+                var sSelectedComeCode = "";
+                var sSelectedStndDegr = "";
+
+                // 사용된 공법인가
+                for(var i = 0; i < allItems.length; i++){
+                    if(allItems[i].comd_meth_name != '합 계') {
+                        sSelectedComeCode = allItems[i].comd_come_code.toString();
+                        sSelectedStndDegr = allItems[i].comd_stnd_degr.toString();
+
+                        if (sSelectedComeCode == sComeCode && sSelectedStndDegr == sStndDegr) {
+                            return true;
+                        }
+                    }
+                }
+
+                return isUsed;
+            },
+
+            /**
+             * 체인에서 열렸을경우
+             */
+            returnCHIN : function(obj) {
+                var me = this;
+                // 체인에서 넘어온 경우 조회 조건값 변경 못하게 처리
+                me.$.TB_PART_NO.editable   = false;
+                me.$.TB_PART_NAME.editable = false;
+                me.$.TB_EONO.editable      = false;
+                me.$.TB_SEQ0.editable      = false;
+                me.$.TB_STND_GUBN.editable = false;
+
+                me.$.TB_PART_NO.text     = obj['spms_part_no'].toString();
+                me.$.TB_PART_NAME.text  = obj['spms_part_name'].toString();
+                me.$.TB_EONO.text        = obj['spms_eono'].toString();
+                me.$.TB_SEQ0.text        = obj['spms_cumt_no'].toString();
+                me.$.TB_STND_GUBN.text    = obj['spms_stnd_gubn'].toString();
+            },
+
+            /**
+             * view stac 관련 파라메터 저장 함수
+             */
+            setParam : function(obj) {
+                var me = this;
+                // 다른 화면에서 넘어온 경우 조회 조건값 변경 못하게 처리
+                me.$.TB_PART_NO.editable   = false;
+                me.$.TB_PART_NAME.editable = false;
+                me.$.TB_EONO.editable      = false;
+                me.$.TB_SEQ0.editable      = false;
+                me.$.TB_STND_GUBN.editable = false;
+
+                me.set("paramName.cmms_meth_gubn", "M");
+                me.set("paramName.cmms_part_no",   obj['spms_part_no']);
+                me.set("paramName.cmms_part_name", obj['spms_part_name']);
+                me.set("paramName.cmms_eono",      obj['spms_eono']);
+                me.set("paramName.cmms_cumt_no",   obj['spms_cumt_no']);
+                me.set("paramName.cmms_stnd_gubn", obj['spms_stnd_gubn']);
+                me.set("paramName.cmms_cars_code", obj['spms_cars_code']);
+                me.set("paramName.cmms_base_date", obj['spms_base_date']);
+                me.set("paramName.cmms_vend_code", obj['spms_vend_code']);
+                me.set("paramName.cmms_usg0",      obj['spms_usg0']);
+                me.set("paramName.cmms_seq0",      obj['spms_seq0']);
+                me.set("paramName.cmms_vehl_gubn", obj['spms_vehl_gubn']) ;
+                me.set("paramName.cmms_cost_gubn", obj['spms_cost_gubn']) ;
+                me.set("paramName.cmms_pass_stat", obj['spms_pass_stat']) ;
+                me.set("paramName.cmms_link_meth", obj['spms_link_meth']) ;     //2018.08.24 BJM 추가(연동구분)
+
+                me.set("passParam.corp_code", obj['spms_corp_code']);
+                me.set("passParam.cost_gubn", obj['spms_cost_gubn']);
+                me.set("passParam.part_no", obj['spms_part_no']);
+                me.set("passParam.eono", obj['spms_eono']);
+                me.set("passParam.cumt_no", obj['spms_cumt_no']);
+
+                if ( (obj['spms_cost_gubn'] == "RD" && SCSessionManager.getCurrentUser().rx_role == "Y") ||
+                     (obj['spms_cost_gubn'] != "RD" && obj['spms_cost_gubn'] != "RC" && SCSessionManager.getCurrentUser().rd_role == "Y") ) {
+
+                    me.$.rightBox.hidden = true;
+                    me.$.rightBoxSplitter.hidden = true;
+                    me.$.btn_remark.hidden = true;
+                    me.$.rightBox.width   = 0;
+                    me.$.comeCodeGridPanel.hidden = true;
+
+                    me.$.delSPBtn.hidden= true;
+
+                }
+
+                var passStat;
+                if (me.paramName.cmms_pass_stat == '2C' || me.paramName.cmms_pass_stat == '30' || me.paramName.cmms_pass_stat == '40') {
+                    if (me.paramName.cmms_cost_gubn == 'RD') {
+                        if (me.paramName.cmms_pass_stat == '30') {
+                            passStat = "가격관리 전송";
+                        } else {
+                            passStat = "결재완료";
+                        }
+                    } else {
+                        if(me.paramName.cmms_pass_stat == '30') {
+                            passStat = "결재요청";
+                        } else if (me.paramName.cmms_pass_stat == '2C') {
+                            passStat = "계산완료";
+                        } else {
+                            passStat = "결재완료";
+                        }
+                    }
+
+                    me.$.passMsg.text = "( 진행상태 : "+passStat+" )";
+                    me.$.delSPBtn.disabled = true;
+                }
+
+                //2018.08.24 BJM 추가
+                //연동 중인 경우 버튼 처리 (S:구간연동, B:일괄연동)
+                if (me.paramName.cmms_link_meth == 'S' || me.paramName.cmms_link_meth == 'B') {
+                    me.$.delSPBtn.disabled = true;
+                }
+
+                // Formula 적용
+                me.applyFormula();
+
+                me.getSelectedList();
+            },
+
+            /**
+             *  갑을지 출력전 CHECK
+             */
+            compareCostCnt : function() {
+                var me = this;
+                me.searchParam1.user = SCSessionManager.getCurrentUser().usr_id;
+                me.searchParam1.func = 'CM01';
+                me.$.getCompareRPC.service();
+            },
+
+            /**
+             * 파라미터 암호화 처리
+             */
+            paramSetEncode : function(e, res) {
+                var me = this,
+                index = 0,
+                data = res.response,
+                target = e.currentTarget.id,
+                provider = me.$.selectedGridPanel.getDataProvider();
+
+                // OZ 파라메터 넘길 변수
+                var come_name   = "";
+                var corp_code     = "";
+                var part_no        = "";
+                var eono         = "";
+                var cumt_no     = "";
+                var come_code     = "";
+                var updt_date    = "";
+
+                var cnt = 0;
+
+                for (var indexI = 0; indexI < provider.getItemSize(); indexI++) {
+                    // 체크된 로우만 입력된다.
+                    if (provider.getItemAt(indexI).chk == 'Y') {
+                        cnt++;
+                        come_name = provider.getItemAt(indexI).comd_meth_name;
+                        corp_code = provider.getItemAt(indexI).comd_corp_code;
+                        part_no   = provider.getItemAt(indexI).comd_part_no;
+                        eono      = provider.getItemAt(indexI).comd_eono;
+                        cumt_no   = provider.getItemAt(indexI).comd_cumt_no;
+                        come_code = provider.getItemAt(indexI).comd_come_code;
+                        updt_date = provider.getItemAt(indexI).comd_updt_date;
+                    }
+                }
+
+                if (cnt > 1) {
+                    UT.alert("하나의 공법만 선택하여 주십시오.");
+                } else if (cnt == 0) {
+                    UT.alert("선택된 공법이 없습니다.");
+                }
+
+                // CM01.jsp 로직을 끌고 옮(암호화 문제로....)
+                var fileName = "";
+                if (UT.isNotEmpty(part_no)) {
+                    fileName += part_no;
+                }
+                if (UT.isNotEmpty(cumt_no)) {
+                    fileName += "_" + cumt_no;
+                }
+
+
+                var paramsObj = {sys_gubn:"PROD"
+                        ,user_id:SCSessionManager.getCurrentUser().usr_id
+                        ,cmms_corp_code:corp_code
+                        ,cmms_part_no:part_no
+                        ,cmms_eono:eono
+                        ,cmms_cumt_no:cumt_no
+                        ,cmms_come_code:come_code
+                        ,saveFileName:fileName};
+
+                me.$.paramSetEncodeRPC.body  = {
+                        param: paramsObj
+                   };
+
+                UT.request(me.$.paramSetEncodeRPC);
+            },
+
+            /**
+             * 오즈출력 여기부터 할것
+             *
+             */
+            print : function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                var iframe = document.createElement("iframe");
+                iframe.id = "custom-downloader";
+                document.body.appendChild(iframe);
+
+                var iframeDocument = iframe.contentDocument;
+                var form  = document.createElement("form");
+
+                //CSRF
+                var input = document.createElement("input");
+                var csrfObj = UT.csrf();
+                input.name = csrfObj.csrfParameter;
+                input.value = csrfObj.csrf;
+                input.type = "hidden";
+
+                form.appendChild(input);
+
+                // Parameter
+                var paramObj = {
+                        sys_gubn : data.result.sys_gubn
+                       ,user_id : data.result.user_id
+                       ,cmms_corp_code : data.result.cmms_corp_code
+                       ,cmms_part_no : data.result.cmms_part_no
+                       ,cmms_eono : data.result.cmms_eono
+                       ,cmms_cumt_no : data.result.cmms_cumt_no
+                       ,cmms_come_code : data.result.cmms_come_code
+                       ,validChk : data.result.timestamp
+                };
+
+                for(var prop in paramObj){
+                    input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = prop;
+                    input.value = paramObj[prop];
+
+                    form.appendChild(input);
+                };
+                form.method = "POST";
+                form.target = "_blank";
+                form.action = "/ozCM01.jsp";
+
+                iframeDocument.body.appendChild(form);
+                form.submit();
+                iframeDocument.body.removeChild(form);
+            },
+
+            /**
+             * 결과조회
+             */
+            getSelectResult : function() {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+                var resultSize = me.resultSelectedComeCode.length;
+                var cnt = 0;
+                var newObj = {};
+
+                for (var indexI = 0; indexI < resultSize; indexI++) {
+                    // 체크된 로우만 입력된다.
+                    if (provider.getItemAt(indexI).chk == 'Y') {
+                        cnt++;
+
+                        newObj['corp_code']      = provider.getItemAt(indexI).comd_corp_code;
+                        newObj['part_no']        = provider.getItemAt(indexI).comd_part_no;
+                        newObj['eono']           = provider.getItemAt(indexI).comd_eono;
+                        newObj['cumt_no']        = provider.getItemAt(indexI).comd_cumt_no;
+                        newObj['come_code']      = provider.getItemAt(indexI).comd_come_code;
+                        newObj['inds_code']      = provider.getItemAt(indexI).comd_inds_code;
+                        newObj['cumt_gubn']      = provider.getItemAt(indexI).comd_cumt_gubn;
+                        newObj['mold_seq0']      = provider.getItemAt(indexI).comd_mold_seq0;
+                        newObj['stnd_degr']      = provider.getItemAt(indexI).comd_stnd_degr;
+                        newObj['come_name']      = provider.getItemAt(indexI).comd_meth_name;
+                        newObj['mold_code']      = provider.getItemAt(indexI).comd_mold_code;
+                        newObj['comd_totl_cost'] = provider.getItemAt(indexI).comd_totl_cost;
+                        newObj['come_gubn']      = me.$.sb_meth_gubn.value;
+                        newObj['cost_gubn']      = me.paramName['cmms_cost_gubn'];
+                        newObj['pass_stat']      = me.paramName['cmms_pass_stat'];
+                    }
+                }
+
+                if (cnt > 1) {
+                    UT.alert("하나의 공법만 선택하여 주십시오.");
+                } else if (cnt == 0) {
+                    UT.alert("선택된 공법이 없습니다.");
+
+                } else {
+                    // 선택된 공법이 수동공법이면 화면전환 불가
+                    // 수동금형 추가(결과조회화면이 필요 없어 막음 2010.09.16 KNK)
+                    if(newObj['come_code'] == 'MINP') {
+                        UT.alert("수동금형은 계산을 통해서만 결과를 조회하실 수 있습니다.");
+                        return;
+                    }
+                    // 조회할  내용이 없으면 튕겨낸다.
+                    // [2023.12.11] 0.00으로 들어옴
+                    if(newObj['comd_totl_cost'] == '0.00' || newObj['comd_totl_cost'] == "" || newObj['comd_totl_cost'] == null ) {
+                        UT.alert("조회할 결과가 존재하지 않습니다.\n공법화면에서 계산실행으로 결과를 확인하세요.");
+                        return;
+                    }
+
+                    var title = "공법계산결과";
+
+                    var url = "ui/bp/tcams/ca/common/es-cacm-05.html?tit=" + title +
+                                     "&tab_sign="  + 'Y' +
+                                     "&corp_code=" + newObj['corp_code'] +
+                                     "&part_no="   + newObj['part_no']   +
+                                     "&eono="      + newObj['eono']      +
+                                     "&cumt_no="   + newObj['cumt_no']   +
+                                     "&come_code=" + newObj['come_code'] +
+                                     "&inds_code=" + newObj['inds_code'] +
+                                     "&cumt_gubn=" + newObj['cumt_gubn'] +
+                                     "&mold_seq0=" + newObj['mold_seq0'] +
+                                     "&degr="      + newObj['stnd_degr'] +
+                                     "&come_name=" + newObj['come_name'] +
+                                     "&come_gubn=" + newObj['come_gubn'] +
+                                     "&mold_code=" + newObj['mold_code'] +
+                                     "&cost_gubn=" + newObj['cost_gubn'] +
+                                     "&pass_stat=" + newObj['pass_stat'];
+
+
+                    var name = "PCX00070"; //메뉴코드
+                    var loaderType = "module";
+                    }
+
+                commonAS.closeAllTab(name);
+                UT.createWindow(name, title, url);
+
+            },
+
+            isItemEnabled: function(data, item) {
+                var me = this;
+                switch(item.dataField){
+                case "chk" :
+                    if(data['comd_meth_name'] == '합 계') {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                    case "file_cnt" :
+                    if(data["file_cnt"] != 0) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    break;
+                    default :
+                        return false;
+                }
+
+            },
+
+            /**
+             * SUM Data 배경색 변경
+             */
+            bgColor : function(item){
+                var me = this;
+                if (item.comd_meth_name == "합 계") {
+                    return  {"background": "#ffffcc"};
+                } else {
+                    return {"background": "#ffffff"};
+                }
+            },
+
+            /**
+             *  공법별 주기정보 팝업 open
+             */
+            popup_ESCD09_02_01 : function() {
+                var me = this;
+                var provider = me.$.selectedGridPanel.getDataProvider();
+//                 var popup_remk:ESCD09_02_01 = new ESCD09_02_01();
+//                 var popupWrapper:IFlexDisplayObject;
+                var param = {};
+
+                // 주기정보 팝업은 체크된 공법이 한개일때만 열려야 한다.
+                var resultSize   = me.resultSelectedComeCode.length;
+                var checkSubcnt  = 0;
+                var checkedIndex = 0;
+
+                for (var indexI = 0; indexI < resultSize; indexI++) {
+                    if (provider.getItemAt(indexI).chk == 'Y') {
+                        if (provider.getItemAt(indexI).newitem == 'I') {
+                            UT.alert("선택된 공법은 저장되지 않은 공법입니다.");
+                            return false;
+                        }
+                        checkSubcnt++;
+                        checkedIndex = indexI;
+                    }
+                }
+
+                if (checkSubcnt == 0) {
+                    UT.alert("선택된 항목이 없습니다.");
+                } else if (checkSubcnt == 1) {
+                    // 한개 항목만 선택되었을 경우 파라메터 값 세팅
+                    param['comd_cost_gubn'] = provider.getItemAt(checkedIndex).comd_cost_gubn;
+                    param['comd_part_endi'] = provider.getItemAt(checkedIndex).comd_part_no;
+                    param['comd_eono_endi'] = provider.getItemAt(checkedIndex).comd_eono;
+                    param['comd_cumt_endi'] = provider.getItemAt(checkedIndex).comd_cumt_no;
+                    param['comd_seq0']      = provider.getItemAt(checkedIndex).comd_emst_cumt;
+                    param['comd_remk_gubn'] = 'M';
+                    param['comd_remk_code'] = provider.getItemAt(checkedIndex).comd_come_code;
+
+                    me.createRemkPopup(param);
+
+                    // 결재반송인 경우, 수정사항 발생 시, 작성 중 상태로 변경하도록 수정함
+                    // 따라서 수정 사항 여부 체크 하기 위해 변경  : 20170907 LSM
+//                     popupWrapper.addEventListener("close", function(event:SCEvent):void {
+//                         PopUpManager.removePopUp(popupWrapper);
+//                         getSelectedList();    // 재조회 한다.
+//                     });
+
+//                     popupWrapper.addEventListener("saveComplete", function(event:SCEvent):void {
+//                         var obj:Object = event.object;
+//                         if (!commonAS.isNull(obj.MESG)) {
+//                             SCAlert.show(obj.MESG);
+//                             returnStat();
+//                         }
+//                     });
+
+                } else {
+                    UT.alert("한 개의 공법만 선택하십시오.");
+                }
+            },
+
+            // 주기정보 팝업
+            createRemkPopup : function(data){
+                var me = this;
+                if(!me.remkPopup){
+                    me.remkPopup = UT.popup('es-cd09-02-01', me, 750, 180, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail;
+                            me.saveComplete(result);
+//                             popup.close();
+                        }
+                    }, {title : "주기정보 선택"});
+                }
+                me.remkPopup.show();
+                me.remkPopup.getWindowContent().load(data);
+            },
+
+            close : function() {
+                var me = this;
+                me.getSelectedList();
+            },
+
+            saveComplete : function(event) {
+                var me = this;
+                var obj = event;
+                if (UT.isNotEmpty(obj.MESG)) {
+                    UT.alert(obj.MESG);
+                    me.returnStat();
+                }
+            },
+
+            /**
+             *  주기정보 팝업 open
+             */
+             popup_ESCD09_02_02 : function() {
+                var me = this;
+                var param = [];
+
+                param['comd_cost_gubn'] = me.paramName['cmms_cost_gubn'];
+                param['comd_part_endi'] = me.paramName['cmms_part_no'];
+                param['comd_eono_endi'] = me.paramName['cmms_eono'];
+                param['comd_cumt_endi'] = me.paramName['cmms_cumt_no'];
+
+                me.createRemk2Popup(param);
+            },
+
+            // 주기정보 팝업
+            createRemk2Popup : function(data){
+                var me = this;
+                if(!me.remk2Popup){
+                    me.remk2Popup = UT.popup('es-cd09-02-02', me, 820, 600, {
+                        'selected-item' : function(popup, e) {
+                            var result = e.detail;
+                            popup.close();
+                        }
+                    }, {title : "주기정보 선택"});
+                }
+                me.remk2Popup.show();
+                me.remk2Popup.getWindowContent().load(data);
+            },
+
+        });
+    </script>
+<!-- Polymer script 끝 -->
+
+</dom-module>

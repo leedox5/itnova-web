@@ -1,0 +1,281 @@
+<dom-module id="es-cd09-02-01">
+    <!--
+        initialized******************************************************************************************
+        ** @Program-name    : 주기정보 POP-UP
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        *****************************************************************************************************
+    -->
+	<!-- layout Style -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<!-- 화면 구성 시작-->
+    <template>
+    
+	    <sc-service-provider id="getListRPC" descriptor="bp/tcams/cd/cd09" service-id="get.periodlist" on-response="afterGetList">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="periodList" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    <sc-service-provider id="insertListRPC" descriptor="bp/tcams/cd/cd09" service-id="insert.periodlist" on-response="resultsaveList">
+	        <outputs>
+	            <sc-service-output name="result" target="{{result}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    <sc-service-provider id="updateListRPC" descriptor="bp/tcams/cd/cd09" service-id="update.periodlist" on-response="resultsaveList">
+	        <outputs>
+	            <sc-service-output name="result" target="{{result}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    <sc-service-provider id="deleteListRPC" descriptor="bp/tcams/cd/cd09" service-id="delete.periodlist" on-response="resultsaveList">
+	        <outputs>
+	            <sc-service-output name="result" target="{{result}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+
+	    <sc-service-provider id="pass_stat" descriptor="bp/tcams/ca/common" service-id="get.end_pass_statBySub" on-response="resultPassF">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{passParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{resultPass}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    
+		<!-- page title toolbar -->
+		<cc-page-title-bar page-title="주기정보 입력">
+			<sc-button text="초기화" on-click="initData"></sc-button>
+			<sc-button text="저장"  on-click="doSave"></sc-button>
+			<sc-button text="삭제"  on-click="doDelete"></sc-button>
+			<sc-button text="닫기"  on-click="doClose"></sc-button>
+		</cc-page-title-bar>
+		<div id="textDiv">
+	      	<table id="form1" class="tb-form" style="padding-top:5px; ppadding-right:0px; border:0px; width: 700px;">
+				<tr id="remk_tr">
+	                <td style="background-color: #3a9edd; text-align-last:center; width:50px;">
+	                	<sc-text-field id="TB_PART_NO"  	value="{{searchParam.remk_part_no}}" ></sc-text-field>
+	                	<sc-text-field id="TB_COST_GUBN"    value="{{searchParam.remk_cost_gubn}}" ></sc-text-field>
+	                	<sc-text-field id="TB_EONO"  		value="{{searchParam.remk_eono}}" ></sc-text-field>
+	                	<sc-text-field id="TB_CUMT_NO"  	value="{{searchParam.remk_cumt_no}}" ></sc-text-field>
+	                	<sc-text-field id="TB_SEQ0"  		value="{{searchParam.remk_seq0}}" ></sc-text-field>
+	                </td>
+				</tr>
+				
+				<tr>
+	                <td style="background-color: #3a9edd; text-align-last:center; width:50px; color:white;">
+	                    <sc-label text="주기1"></sc-label>
+	                </td>
+	                <td style="text-align-last:left; width: 650px; height: 25px;">
+	                	<sc-text-field id="remk1" max-length="50" value="{{resultList.remk_rem1}}" ></sc-text-field>
+	                </td>
+	                <td></td>
+				</tr>
+				
+				<tr>
+	                <td style="background-color: #3a9edd; text-align-last:center; width: 50px; color:white;">
+	                    <sc-label text="주기2"></sc-label>
+	                </td>
+	                <td style="text-align-last:left; width: 650px; height: 25px;">
+	                	<sc-text-field id="remk2" max-length="50" value="{{resultList.remk_rem2}}" ></sc-text-field>
+	                </td>
+				</tr>
+				
+				<tr>
+	                <td style="background-color: #3a9edd; text-align-last:center; width: 50px; color:white;">
+	                    <sc-label text="주기3"></sc-label>
+	                </td>
+	                <td style="text-align-last:left; width: 650px; height: 25px;">
+	                	<sc-text-field id="remk3" max-length="50" value="{{resultList.remk_rem3}}" ></sc-text-field>
+	                </td>
+				</tr>
+				
+			</table>		
+		</div>
+		
+		
+		
+		
+    </template>
+	<!-- 화면 구성 끝-->
+    
+    <!-- Polymer script 시작 -->
+    <script>
+        Polymer({
+            is : 'es-cd09-02-01',
+            properties : {
+            	searchParam : {type  : Object,value : function() {return {};}},
+            	result 		: {type  : Object,value : function() {return {};}},
+            	passParam	: {type  : Object,value : function() {return {};}},
+            	resultPass	: {type  : Object,value : function() {return {};}},
+            	param		: {type  : Object,value : function() {return {};}},
+            	checkFlag   : {type  : String,value : ""},
+            	
+				resultList  : {type  : Array, value : function() {return []}}
+            },
+            
+            /**************************************************
+             * 초기화 설정
+             **************************************************/
+            // 1. 화면 로딩시 최초 호출 함수
+			initialized : function() {
+				var me = this;
+				me.$.remk_tr.hidden = true;
+			},
+			
+			afterGetList : function() {
+				var me = this;
+				if (me.resultList.length > 0) {
+					var tempStr  = me.resultList[0].remk_rem1;
+					var paramArr = tempStr.split('¿');
+					me.$.remk1.value = paramArr[0];
+					me.$.remk2.value = paramArr[1];
+					me.$.remk3.value = paramArr[2];
+				}
+			},
+
+			/*
+			 * 목록 조회
+			 */
+			getList : function() {
+				var me = this;
+				me.$.getListRPC.service();
+			},
+			
+			load : function(param) {
+				var me = this;
+				me.searchParam['remk_cost_gubn'] = param['comd_cost_gubn'];
+				me.searchParam['remk_part_no']   = param['comd_part_endi'];
+				me.searchParam['remk_eono']      = param['comd_eono_endi'];
+				me.searchParam['remk_cumt_no']   = param['comd_cumt_endi'];
+				me.searchParam['remk_seq0']      = param['comd_seq0'];
+				me.searchParam['remk_gubn']      = param['comd_remk_gubn'];
+				me.searchParam['remk_code']      = param['comd_remk_code'];
+				me.searchParam['mody_gubn']      = param['comd_mody_gubn'];
+				
+				me.passParam['corp_code'] = 'K1';
+				me.passParam['cost_gubn'] = param['comd_cost_gubn'];
+				me.passParam['part_no']   = param['comd_part_endi'];
+				me.passParam['eono']      = param['comd_eono_endi'];
+				me.passParam['cumt_no']   = param['comd_cumt_endi'];
+				
+				me.getList();
+			},
+			
+			resultPassF : function() {
+				var me = this;
+				if (me.resultPass.pass_cnt!='0') {
+					UT.alert("END ITEM 진행상태가 대상, 작성중이 아니면\n수정 불가능합니다.");
+					return ;
+				} else {
+					if (me.$.remk1.value == '' || me.$.remk1.value == 'undefined' || me.$.remk1.value == null) me.$.remk1.value = ' ';
+					if (me.$.remk2.value == '' || me.$.remk2.value == 'undefined' || me.$.remk2.value == null) me.$.remk2.value = ' ';
+					if (me.$.remk3.value == '' || me.$.remk3.value == 'undefined' || me.$.remk3.value == null) me.$.remk3.value = ' ';
+					me.searchParam.remk_rem1 = me.$.remk1.value + '¿' +me.$.remk2.value + '¿' +me.$.remk3.value;
+					if (me.checkFlag == "S") {
+						me.saveList();
+					} else if (me.checkFlag == "D") {
+						me.deleteList();
+					}
+				}
+			},
+
+			/*
+			 * 신규저장/수정
+			 */
+			saveList : function() {
+				var me = this;
+				if (me.resultList.length == 1) {
+					me.$.updateListRPC.addInput("updates", me.searchParam);
+					me.$.updateListRPC.service();
+					
+				} else {
+					me.$.insertListRPC.addInput("inserts", me.searchParam);
+					me.$.insertListRPC.service();
+				}
+			},
+			
+			deleteList : function() {
+				var me = this;
+				// 파라미터 초기화			
+				if(me.resultList.length == 1){
+					me.$.deleteListRPC.addInput("deletes", me.searchParam);
+					me.$.deleteListRPC.service();
+				} else {
+					UT.alert("삭제할 대상이 존재하지 않습니다.");
+				}					
+			},
+
+			/*
+			 * 저장 결과 이벤트 처리
+			 */
+			resultsaveList : function() {
+				var me = this;
+				me.fire("selected-item", me.result);
+				
+				// 초기화
+				me.param.remk_rem1 = "";
+				me.param.remk_rem2 = "";
+				me.param.remk_rem3 = "";
+				
+				me.$.getListRPC.service();			
+			},
+			
+			doClose : function() {
+				var me = this;
+				me.fire("close");
+			},
+			
+			initData : function() {
+				var me = this;
+				me.$.remk1.value = "";
+				me.$.remk2.value = "";
+				me.$.remk3.value = "";
+			},
+			
+			doSave : function() {
+				var me = this;
+				me.checkFlag = "S";
+				me.getPathStat();
+			},
+			
+			doDelete: function() {
+				var me = this;
+				me.checkFlag = "D";
+				me.getPathStat();
+			},
+			
+			getPathStat : function() {
+				var me = this;
+				if(me.searchParam['mody_gubn'] != 'Y') {
+					me.$.pass_stat.service();
+				} else {
+					if (me.$.remk1.value == '' || me.$.remk1.value == 'undefined' || me.$.remk1.value == null) me.$.remk1.value = ' ';
+					if (me.$.remk2.value == '' || me.$.remk2.value == 'undefined' || me.$.remk2.value == null) me.$.remk2.value = ' ';
+					if (me.$.remk3.value == '' || me.$.remk3.value == 'undefined' || me.$.remk3.value == null) me.$.remk3.value = ' ';
+					me.searchParam.remk_rem1 = me.$.remk1.value + '¿' +me.$.remk2.value + '¿' +me.$.remk3.value;
+					if (me.checkFlag == "S") {
+						me.saveList();
+					} else if (me.checkFlag == "D") {
+						me.deleteList();
+					}
+				}
+			},
+            
+        });
+    </script>
+<!-- Polymer script 끝 -->
+
+</dom-module>

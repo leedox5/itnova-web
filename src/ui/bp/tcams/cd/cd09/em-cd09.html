@@ -1,0 +1,179 @@
+<sc-link rel="import" href="es-cd09-01.html"></sc-link>
+<sc-link rel="import" href="es-cd09-02.html"></sc-link>
+<sc-link rel="import" href="../../ca/common/es-cacm-05.html"></sc-link>
+<sc-link rel="import" href="../../ca/common/es-cacm-02.html"></sc-link>
+
+<dom-module id="em-cd09">
+    <!--
+        ******************************************************************************************
+        ** @Program-name    : 공법선택
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        ******************************************************************************************
+    -->
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+    <template>
+        <sc-pages id="pages" selected="0" class="flex">
+            <es-cd09-01 id="autoCome" on-mold-come-select="onMoldComeSelect" on-find-auto-result="onFindAutoResult">
+            </es-cd09-01>
+            <es-cd09-02 id="moldCome" on-auto-come-select="onAutoComeSelect" on-find-mold-result="onFindMoldResult">
+            </es-cd09-02>
+            <es-cacm-05 id="escacm05" on-close-detail="closeMoldResult"></es-cacm-05>
+            <es-cacm-02 id="escacm02" on-close="closeAutoResult"></es-cacm-02>
+        </sc-pages>
+    </template>
+
+    <script>
+        Polymer({
+            is : 'em-cd09',
+
+            properties : {
+                searchParam : {type : Object, value : function() { return {}; } ,notify : true},
+                paramInfo   : {type : Object, value : function() {return {};}},
+                headerParam : {type : Object, value : function() {return {};}},
+            },
+
+            initialized: function() {
+                var me= this;
+
+                // Sub Part에서 넘어오는 Key 정보 get
+                if (!UT.isEmpty(this.params)) {
+                    paramInfo = {
+                         spms_corp_code : this.params.spms_corp_code
+                        ,spms_part_no   : this.params.spms_part_no
+                        ,spms_eono      : this.params.spms_eono
+                        ,spms_cumt_no   : this.params.spms_cumt_no
+                        ,spms_cumt_gubn : this.params.spms_cumt_gubn
+                        ,spms_meth_gubn : this.params.spms_meth_gubn
+                        ,spms_meth_name : this.params.spms_meth_name
+                        ,spms_come_code : this.params.spms_come_code
+                        ,spms_stnd_degr : this.params.spms_stnd_degr
+                        ,spms_degr_desc : this.params.spms_degr_desc
+                        ,spms_stnd_man1 : this.params.spms_stnd_man1
+                        ,spms_degr_cont : this.params.spms_degr_cont
+                        ,spms_stnd_gubn : this.params.spms_stnd_gubn
+                        ,spms_base_date : this.params.spms_base_date
+                        ,spms_inds_code : this.params.spms_inds_code
+                        ,spms_init_cman : this.params.spms_init_cman
+                        ,spms_cars_code : this.params.spms_cars_code
+                        ,spms_vend_code : this.params.spms_vend_code
+                        ,spms_usg0      : this.params.spms_usg0
+                        ,spms_seq0      : this.params.spms_seq0
+                        ,spms_vehl_gubn : this.params.spms_vehl_gubn
+                        ,spms_cost_gubn : this.params.spms_cost_gubn
+                        ,spms_pass_stat : this.params.spms_pass_stat
+                        ,spms_part_name : this.params.spms_part_name
+                        ,spms_cumt_gubn : this.params.spms_cumt_gubn
+                        ,chk_dept       : this.params.chk_dept
+                        ,spms_link_meth : this.params.spms_link_meth   // [2024.03.26] 추가
+                    };
+
+                    headerParam = {
+                            corp_code :  paramInfo['spms_corp_code']
+                           ,part_no   :  paramInfo['spms_part_no'  ]
+                           ,eono      :  paramInfo['spms_eono'     ]
+                           ,degr      :  paramInfo['spms_stnd_degr']
+                           ,mach_gubn :  paramInfo['spms_mach_gubn']
+                           ,vehl_gubn :  paramInfo['spms_vehl_gubn']
+                           ,stnd_gubn :  paramInfo['spms_stnd_gubn']
+                           ,come_code :  paramInfo['spms_come_code']
+                           ,cumt_gubn :  paramInfo['spms_cumt_gubn']
+                           ,cost_gubn :  paramInfo['spms_cost_gubn']
+                           ,mold_seq0 :  paramInfo['spms_mold_seq0']
+                           ,cumt_no   :  paramInfo['spms_cumt_no'  ]
+                           ,base_date :  paramInfo['spms_base_date']
+                           ,degr_desc :  paramInfo['spms_degr_desc']
+                           ,stnd_man1 :  paramInfo['spms_stnd_man1']
+                           ,meth_gubn :  paramInfo['spms_meth_gubn']
+                           ,meth_name :  paramInfo['spms_meth_name']
+                           ,inds_code :  paramInfo['spms_inds_code']
+                           ,pass_stat :  paramInfo['spms_pass_stat']
+                           }
+                    me.set("paramInfo"  , paramInfo);
+                    me.set("headerParam", headerParam);
+                    me.set("searchParam", commonAS.mergeObj(me.get("paramInfo"), me.get("headerParam")));
+                    if(this.params.menu_cd == "PCF00020" && this.params.spms_meth_gubn == "M"){
+                        me.set("searchParam", this.params);
+                        me.$.moldCome.$.sb_meth_gubn.children.item(0).hidden = true;
+                        me.onMoldComeSelect();
+                    } else {
+                        me.load(me.searchParam);
+                    }
+                }
+            },
+
+
+            load : function(param) {
+                var me = this;
+                me.set("searchParam", param);
+
+                me.onAutoComeSelect();
+            },
+
+            // 원가계산 금형공법 선택 화면 호출
+            onMoldComeSelect : function(e) {
+                var me = this;
+
+                me.set("searchParam.meth_gubn", "M");
+
+                me.$.pages.selectItem(me.$.moldCome);
+//                 me.$.moldCome.load(me.searchParam);
+                me.$.moldCome.setParam(me.searchParam);
+            },
+
+            // 원가계산 공법선택 화면 호출
+            onAutoComeSelect : function(e) {
+                var me = this;
+
+                me.set("searchParam.meth_gubn", "A");
+
+                me.$.pages.selectItem(me.$.autoCome);
+//                 me.$.autoCome.load(me.searchParam);
+                me.$.autoCome.setParam(me.searchParam);
+            },
+
+            // 결과조회 화면 호출
+            onFindAutoResult : function(e) {
+                var me = this;
+                var obj = e.detail || {};
+
+                obj.come_name = obj.meth_name;
+
+                me.$.pages.selectItem(me.$.escacm02);
+                me.$.escacm02.load(obj);
+            },
+
+            // 결과조회 화면 호출(금형)
+            onFindMoldResult : function(e) {
+                var me = this;
+                var obj = e.detail || {};
+
+                obj.come_name = obj.meth_name;
+
+                me.$.pages.selectItem(me.$.escacm05);
+                me.$.escacm05.load(obj);
+            },
+
+            // 결과조회(금형) 화면 닫기
+            closeMoldResult : function(e) {
+                var me = this;
+
+                me.$.pages.selectItem(me.$.moldCome);
+            },
+
+            // 결과조회 화면 닫기
+            closeAutoResult : function(e) {
+                var me = this;
+
+                me.$.pages.selectItem(me.$.autoCome);
+            }
+        });
+    </script>
+</dom-module>
