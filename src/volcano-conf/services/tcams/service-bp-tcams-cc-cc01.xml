@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 공통코드 관련 서비스 호출 xml 공통 콤보 관련 조회성 서비스들 -->
+<!-- CC01:콤보박스, CC02:코드 팝업 그외 추가시 반드시 주석에 해당정보를 기술할 것 -->
+<service-descriptor id="bp/tcams/cc/cc01">
+
+	<service id="get.ca_machgubn.list" label="공통코드 차량공작구분 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_machgubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_stndgubn.list" label="공통코드 표준구분 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_stndgubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_vehlgubn.list" label="승상구분 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_vehlgubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_matl_src.list" label="공통코드 src 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_matl_src.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_matlimsi.list" label="공통코드 정단가여부 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_matlimsi.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_dealtype.list" label="공통코드 거래방식 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_dealtype.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_matlclas.list" label="공통코드  재료분류 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_matlclas.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_matltype.list" label="공통코드 재료종류 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_matltype.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.ca_matlgubn.list" label="공통코드 재질구분 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_matlgubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>	
+	
+	
+
+	<!-- LOT량 용 -->
+	<service id="get.ca_lotq_gubn.list" label="LOT량 구분 코드">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_lotq_gubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_lotq_gubn_grid.list" label="LOT량 구분 코드">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_lotq_gubn.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_lotq_degr_gubn.list" label="LOT량 상세구분 코드">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_lotq_degr_gubn.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_lotq_degr_gubn_all.list" label="LOT량 상세구분 코드">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_lotq_degr_gubn_all.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<!-- 금형수명 정보용 -->
+	<service id="get.ca_mdlf_gubn.list" label="금형 구분 코드">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_mdlf_gubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_mdlf_gubn_grid.list" label="금형 구분 코드">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_mdlf_gubn.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_mdlf_mdde_gubn.list" label="금형 상세구분 코드">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_mdlf_mdde_gubn.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_ldcrcond.list" label="공통코드 LDC율 수입조건 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_ldcrcond.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_carscode.list" label="공통코드  차종코드 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_carscode.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_indscode.list" label="공통코드  업종코드 조회(차량)">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_indscode.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+	<service id="get.ca_indscode.list_t" label="공통코드  업종코드 조회(공작기계)">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_indscode.list.select_t", $data.param)
+			]]>
+		</script>
+	</service>
+	<!-- -->
+ <service id="get.ca_come_code.list" label="공법코드 조회">
+  <script>
+   <![CDATA[
+    var ret = new Map();
+    
+    try {
+        $data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_come_code.list.select", $data.param)
+    
+        var chk = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select.work", $data.param);
+        $data.param.curr_come = chk[0].curr_come;
+    	
+    	ret.code = "Y";
+    	ret.mesg = "OK";
+    } catch(e) {
+    	$logger.info(e.message)
+    	ret.code = "N";
+    	ret.mesg = e.message;
+    }
+    
+    $data.ret = ret;
+    
+   ]]>
+  </script>
+ </service>
+
+	<service id="get.ca_come_degr.list.select" label="개정차수 조회">
+		<script>
+			<![CDATA[
+			$data.resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_come_degr.list.select", $data.searchParam)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_teamcode.list" label="팀코드 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_teamcode.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="get.ca_methcode.list" label="금형공법 코드 조회">
+		<script>
+			<![CDATA[
+ 			$data.param.meth_gubn = 'M';
+			$data.result  = $jdbc.queryList("bp/tcams/ca/common", "get.resultAllCome", $data.param)
+			$data.result2 = $jdbc.queryList("bp/tcams/ca/common", "get.resultAllCome", $data.param)
+			]]>
+		</script>
+	</service>
+
+	<service id="getCTLComeCode" label="기계가공 공법 코드 조회">
+		<script>
+			<![CDATA[
+			try{
+				var resultList = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ctl_comecode.list.select", $data.param)
+				var procComboList = new List();
+				var cannComboList = new List();
+				for(var i=0; i<resultList.size(); i++){
+					if(resultList[i].gubn == "PROC"){
+						procComboList.add(resultList[i]);
+					}else{
+						cannComboList.add(resultList[i]);
+					}
+				}
+				$data.procComboList = procComboList;
+				$data.cannComboList = cannComboList;
+				
+			}catch(e){
+				System.out.println(e);
+				var rollback = new Map();
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+			
+			
+			]]>
+		</script>
+	</service>
+	
+	<service id="get.ca_exchgubn.list" label="공통코드 환율구분 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "ca_exchgubn.list.select", $data.param)
+			]]>
+		</script>
+	</service>	
+
+	<service id="get.GUBD01.list" label="공통코드 진행상태 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "GUBD01.list.select", $data.param)
+			]]>
+		</script>
+	</service>	
+	
+	<service id="get.GUBD05.list" label="공통코드 마감일 조회">
+		<script>
+			<![CDATA[
+			$data.result = $jdbc.queryList("bp/bp/tcams/cc/cc01", "GUBD05.list.select", $data.param)
+			]]>
+		</script>
+	</service>
+
+
+</service-descriptor>
