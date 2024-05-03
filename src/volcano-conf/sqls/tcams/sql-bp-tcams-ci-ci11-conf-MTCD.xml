@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci11/conf/MTCD" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  MTCD_CORP_CODE
+ ,MTCD_METH_GUBN
+ ,MTCD_COME_CODE
+ ,MTCD_METH_NAME
+ ,MTCD_INDS_CODE
+ ,MTCD_MATL_CLAS
+ ,MTCD_SORT_KEY0
+ ,MTCD_UPDT_DATE
+ ,MTCD_UPDT_CMAN
+ ,MTCD_INIT_DATE
+ ,MTCD_INIT_CMAN
+ ,MTCD_DOCU_NUMB
+) AS ( 
+           SELECT 'K1','A','ANOD','ANODIZING','CO','CO',  3,'20151207','ADMIN'   ,'20151207','ADMIN'    ,'TRANSYS-G-CO-02' FROM DUAL
+ UNION ALL SELECT 'K1','A','ALCT','AL 중력주조 ','AT','AT',  2,'20200101','ADMIN'   ,'20200101','ADMIN'    ,NULL              FROM DUAL
+)
+SELECT CASE WHEN B.MTCD_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,CASE 
+        WHEN A.MTCD_UPDT_DATE = '00000000' THEN 'D'
+        WHEN B.MTCD_CORP_CODE IS NULL THEN 'I'
+        ELSE 'X'
+       END  MG_MODE
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBMTCD B
+      ON    B.MTCD_CORP_CODE = A.MTCD_CORP_CODE
+        AND B.MTCD_METH_GUBN = A.MTCD_METH_GUBN
+        AND B.MTCD_COME_CODE = A.MTCD_COME_CODE
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBMTCD (
+  MTCD_CORP_CODE
+ ,MTCD_METH_GUBN
+ ,MTCD_COME_CODE
+ ,MTCD_METH_NAME
+ ,MTCD_INDS_CODE
+ ,MTCD_MATL_CLAS
+ ,MTCD_SORT_KEY0
+ ,MTCD_UPDT_DATE
+ ,MTCD_UPDT_CMAN
+ ,MTCD_INIT_DATE
+ ,MTCD_INIT_CMAN
+ ,MTCD_DOCU_NUMB
+) VALUES ( 
+  #mtcd_corp_code#
+ ,#mtcd_meth_gubn#
+ ,#mtcd_come_code#
+ ,#mtcd_meth_name#
+ ,#mtcd_inds_code#
+ ,#mtcd_matl_clas#
+ ,#mtcd_sort_key0#
+ ,#mtcd_updt_date#
+ ,#mtcd_updt_cman#
+ ,#mtcd_init_date#
+ ,#mtcd_init_cman#
+ ,#mtcd_docu_numb#
+)
+  ]]>
+ </sql> 
+
+ <sql id="delete" comment="삭제">
+  <![CDATA[
+DELETE CITBMTCD
+ WHERE MTCD_CORP_CODE = #mtcd_corp_code# 
+   AND MTCD_METH_GUBN = #mtcd_meth_gubn#
+   AND MTCD_COME_CODE = #mtcd_come_code#
+  ]]>
+ </sql> 
+ 
+</sql-descriptor> 

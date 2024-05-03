@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci11/conf/PROC" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  ID
+ ,NAME
+ ,COMMENTS
+ ,STAT
+) AS (
+       SELECT 1, 'CASPANOD_P12_1','원가계산' ,'A' FROM DUAL
+ UNION SELECT 2, 'CASPPLAS_P05'  ,'원가계산' ,'D' FROM DUAL
+ UNION SELECT 3, 'CRSPCMMS_D01'  ,'공법삭제' ,'A' FROM DUAL
+)
+SELECT CASE 
+        WHEN B.OBJECT_NAME IS NOT NULL AND A.STAT = 'D' THEN 'DROP' 
+        WHEN B.OBJECT_NAME IS NULL AND A.STAT = 'A' THEN 'C'
+        ELSE 'X' 
+       END MG_MODE
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN 
+       USER_PROCEDURES B
+      ON B.OBJECT_NAME = A.NAME
+  ]]>
+ </sql>
+
+ <sql id="select.param" comment="조회">
+  <![CDATA[
+WITH T1 (
+  ID
+ ,NAME
+ ,COMMENTS
+) AS (
+@data_str@
+)
+SELECT CASE WHEN B.OBJECT_NAME IS NOT NULL THEN 'Y' ELSE 'N' END CREATED_YN
+      ,CASE WHEN C.SYS_ID      IS NOT NULL THEN 'Y' ELSE 'N' END VER_YN
+      ,CASE 
+        WHEN C.FLAG  = 'D'             THEN 'N'
+        WHEN C.REM         IS NULL     THEN 'N' 
+        ELSE 'Y' 
+       END DATE_YN
+      ,C.DTL_CD VER
+      ,CASE WHEN A.NAME LIKE 'CA%' THEN 'ca' ELSE 'common' END CATE
+      ,C.REM 
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN 
+       USER_PROCEDURES B
+      ON B.OBJECT_NAME = A.NAME
+      LEFT OUTER JOIN
+       ESACDDT C
+      ON    C.SYS_ID = '100'
+        AND C.GRP_CD = A.NAME
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 

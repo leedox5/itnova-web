@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ci/ci11/conf/PKMS" data-source="tcamsDS">
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PKMS_CORP_CODE
+ ,PKMS_COME_CODE
+ ,PKMS_TABL_ID
+ ,PKMS_SORT_NUMB
+ ,PKMS_TABL_NAME
+ ,PKMS_UPDT_DATE
+ ,PKMS_UPDT_CMAN
+ ,PKMS_INIT_DATE
+ ,PKMS_INIT_CMAN
+) AS (
+       SELECT 'K1', 'COMM' ,'CITBMCIF' ,11,'기계경비'       ,'20220418' ,'SYSTEMPG' ,'20220418','SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1', 'COMM' ,'CITBLOTQ' ,12,'LOT정보'       ,'20220418' ,'SYSTEMPD' ,'20220418','SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1', 'COMM' ,'CITBPKCL' ,13,'컬럼정보'       ,'20220418','SYSTEMPG','20220418','SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1' ,'COMM' ,'ESAAUMM'  ,21 ,'메뉴'          ,'20220419','SYSTEMPD','20220419','SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1' ,'COMM' ,'ESAAUML'  ,22 ,'메뉴명'         ,'20220419','SYSTEMPD','20220419','SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1' ,'COMM' ,'ESAAUMF'  ,23 ,'메뉴 기능'       ,'20220701' ,'SYSTEMPD' ,'20220701' ,'SYSTEMPD' FROM DUAL
+ UNION SELECT 'K1' ,'COMM' ,'ESAAURF'  ,24 ,'롤 기능'        ,'20220701' ,'SYSTEMPD' ,'20220701' ,'SYSTEMPD' FROM DUAL
+ UNION SELECT 'K1' ,'PLWD' ,'CATBPLWI' ,31 ,'PL용착 입력'     ,'20220701' ,'SYSTEMPG' ,'20220701', 'SYSTEMPG' FROM DUAL
+ UNION SELECT 'K1' ,'PLWD' ,'CATBPLWP' ,32 ,'가공비'         ,'20220701' ,'SYSTEMPG' ,'20220701', 'SYSTEMPG' FROM DUAL
+)
+SELECT CASE 
+        WHEN B.TABLE_NAME IS NOT NULL AND A.PKMS_UPDT_DATE =  '00000000' THEN 'DROP'
+        WHEN B.TABLE_NAME IS NULL     AND A.PKMS_UPDT_DATE <> '00000000' THEN 'C'
+        WHEN D.PKMS_CORP_CODE IS NULL AND A.PKMS_UPDT_CMAN =  'SYSTEMPK' THEN 'I'
+        WHEN A.PKMS_UPDT_CMAN = 'SYSTEMPD'  THEN 'DATA'
+        ELSE 'X'         
+       END MG_MODE
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN 
+       USER_TABLES B
+      ON B.TABLE_NAME = A.PKMS_TABL_ID
+      LEFT OUTER JOIN 
+       USER_TAB_COMMENTS C
+      ON C.TABLE_NAME = A.PKMS_TABL_ID
+      LEFT OUTER JOIN
+       CITBPKMS D
+      ON    D.PKMS_CORP_CODE = A.PKMS_CORP_CODE
+        AND D.PKMS_COME_CODE = A.PKMS_COME_CODE
+        AND D.PKMS_TABL_ID   = A.PKMS_TABL_ID  
+ ORDER BY A.PKMS_SORT_NUMB      
+  ]]>
+ </sql>
+ 
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBPKMS (
+  PKMS_CORP_CODE
+ ,PKMS_COME_CODE
+ ,PKMS_TABL_ID
+ ,PKMS_SORT_NUMB
+ ,PKMS_TABL_NAME
+ ,PKMS_UPDT_DATE
+ ,PKMS_UPDT_CMAN
+ ,PKMS_INIT_DATE
+ ,PKMS_INIT_CMAN
+) VALUES ( 
+  #pkms_corp_code#
+ ,#pkms_come_code#
+ ,#pkms_tabl_id#
+ ,#pkms_sort_numb#
+ ,#pkms_tabl_name#
+ ,#pkms_updt_date#
+ ,#pkms_updt_cman#
+ ,#pkms_init_date#
+ ,#pkms_init_cman#
+)
+  ]]>
+ </sql> 
+</sql-descriptor> 
