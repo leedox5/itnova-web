@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ci/ci03/conf">
+
+ <service id="chkUser" label="check user">
+  <script>
+   <![CDATA[
+    var result = new Map();
+   
+    try {
+        $logger.info($data.param);
+        
+        var chks = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select", null);
+
+		result.DEV_AUTH = chks[0].dev_auth;
+		result.COME = chks[0].come;
+		result.S_KEY = chks[0].s_key;
+		result.DEGR_YN = chks[0].degr_yn;
+		        
+        result.MESG_CODE = "SA-001"
+    } catch(e) {
+		result.MESG_CODE = "SA-002"
+		result.MESG = e.message;    
+    }
+    
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="setConf" label="CONF">
+  <script>
+   <![CDATA[
+     var result = new Map();
+     
+     result.MESG_CODE = "SA-001";
+     result.MESG = "OK";
+     
+     try {
+     	//throw new Exception("Ready to work...")
+         var pkmss = $jdbc.queryList("bp/tcams/ci/ci03/conf/PKMS", "select", null);
+         for(var i = 0 ; i < pkmss.size() ; i++) {
+            	var datas = $jdbc.queryList("bp/tcams/ci/ci03/conf/" + pkmss[i].pkms_tabl_id, "select", null);
+             for(var j = 0 ; j < datas.size() ; j++) {
+                 if(datas[j].chk_yn == "N") {
+                     $jdbc.update("bp/tcams/ci/ci03/conf/" + pkmss[i].pkms_tabl_id, "insert", datas[j]);
+                 }
+             }
+         }   
+     } catch(e) {
+         $logger.info(e);
+     	result.MESG_CODE = "SA-002";
+     	result.MESG      = e.message;
+     }
+     
+     $data.result = result;
+   ]]>
+  </script>
+ </service>
+</service-descriptor>
