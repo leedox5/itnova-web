@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci11" data-source="tcamsDS">
+
+ <sql id="mtcdList.select1" comment="조회">
+  <![CDATA[
+SELECT ROW_NUMBER() OVER(ORDER BY MTCD_METH_GUBN, MTDG_APPL_DATE) COMD_SEQ
+      ,MTCD_COME_CODE  AS  COMD_COME_CODE
+      ,MTCD_METH_NAME  AS  COMD_METH_NAME
+      ,MTCD_METH_GUBN  AS  COMD_METH_GUBN
+      ,MTCD_INDS_CODE  AS  COMD_INDS_CODE
+      ,MTCD_MATL_CLAS  AS  COMD_MATL_CLAS
+      ,MTCD_SORT_KEY0  AS  COMD_SORT_KEY0
+      ,MTDG_REGT_NO    AS  COMD_REGT_NO
+      ,MTDG_REVI_DATE  AS  COMD_REVI_DATE
+      ,MTCD_METH_GUBN  AS  COMD_METH_GUBN
+      ,MTDG_APPL_DATE  AS  COMD_APPL_DATE
+      ,MTDG_UPDT_DATE  AS  COMD_UPDT_DATE
+      ,MTDG_UPDT_CMAN  AS  COMD_UPDT_CMAN
+      ,MTDG_STND_DEGR  AS  COMD_STND_DEGR
+      ,MTDG_DEGR_CONT  AS  COMD_DEGR_CONT
+      ,MTDG_STND_FILE  AS  COMD_STND_FILE
+      ,MTDG_HKMC_DEGR  AS  COMD_HKMC_DEGR
+      ,MTDG_APPL_YN    AS  COMD_APPL_YN
+      ,MTDG_STND_MAN1  AS  COMD_STND_MAN1
+      ,MTDG_PHON_NO1   AS  COMD_PHON_NO1
+      ,MTDG_STND_MAN2  AS  COMD_STND_MAN2
+      ,MTDG_PHON_NO2   AS  COMD_PHON_NO2
+      ,MTDG_MENU_ID    AS  COMD_MENU_ID
+      ,MTDG_MXML_PATH  AS  COMD_MXML_PATH
+      ,MTDG_INIT_CMAN  AS  COMD_INIT_CMAN
+      ,CRFT_USER_EMPL_NAME(MTDG_INIT_CMAN)  COMD_INIT_NAME
+      ,MTDG_INIT_DATE  AS  COMD_INIT_DATE
+      ,(SELECT COUNT(E.ATT_SEQ) AS FILE_CNT
+          FROM ESAATTH E
+         WHERE E.STS <> 'D'
+           AND E.SYS_ID = #sys_id#
+           AND E.GRP_CD = MTDG_ATT_GRP_CD) AS FILE_CNT
+      ,MTDG_ATT_GRP_CD AS COMD_ATT_GRP_CD
+      ,MTDG_TRAN_DEGR  AS COMD_TRAN_DEGR
+      ,MTCD_DOCU_NUMB  AS COMD_DOCU_NUMB
+      ,(SELECT LISTAGG(REM , ',') WITHIN GROUP(ORDER BY SORT_ORD)
+          FROM ESACDDT A
+         WHERE GRP_CD = 'PROC' || MTDG_COME_CODE
+           AND DTL_CD LIKE
+               CASE
+                WHEN INSTR(MTDG_STND_DEGR,'-') > 0 THEN
+                         SUBSTRING(MTDG_STND_DEGR,1,INSTR(MTDG_STND_DEGR,'-')-1)
+                 || LPAD(SUBSTRING(MTDG_STND_DEGR,INSTR(MTDG_STND_DEGR,'-')+1),2,'0')
+                ELSE LPAD(MTDG_STND_DEGR,2,'0') || '00'
+               END || '%'
+           ) PROC_NAME_X0831
+      ,MTDG_MODL_NAME PROC_NAME
+      ,NULL  AS PROC_MODE
+      ,C.*
+  FROM CITBMTCD B
+      LEFT OUTER JOIN
+       CITBMTDG C
+      ON    MTCD_CORP_CODE = MTDG_CORP_CODE
+        AND MTCD_METH_GUBN = MTDG_METH_GUBN
+        AND MTCD_COME_CODE = MTDG_COME_CODE
+ WHERE MTCD_CORP_CODE = #corp_cd#
+  [AND MTCD_METH_GUBN = #mtcd_meth_gubn#]
+   AND MTCD_COME_CODE = NVL(#mtcd_come_code#, MTCD_COME_CODE)
+  [AND MTCD_METH_NAME LIKE '%'||#mtcd_meth_name#||'%']
+  [AND MTDG_STND_DEGR LIKE #mtdg_stnd_degr#||'%']
+   AND MTDG_APPL_DATE <= #cur_date#
+  @sql@
+ ORDER BY MTCD_METH_GUBN, MTCD_SORT_KEY0, MTDG_APPL_DATE ASC
+  ]]>
+ </sql>
+
+    <sql id="get.roll" comment="권한 조회">
+        <![CDATA[
+            SELECT COUNT(*) cnt
+              FROM ESAAURP
+             WHERE USR_ID =#reg_id# AND ROLE_CD ='M10'
+        ]]>
+    </sql>
+
+ <sql id="mtcdList.select2" comment="조회 (현재적용)">
+  <![CDATA[
+SELECT ROW_NUMBER() OVER(ORDER BY MTCD_METH_GUBN, MTCD_SORT_KEY0) COMD_SEQ
+      ,MTCD_COME_CODE  AS  COMD_COME_CODE
+      ,MTCD_METH_NAME  AS  COMD_METH_NAME
+      ,MTCD_METH_GUBN  AS  COMD_METH_GUBN
+      ,MTCD_INDS_CODE  AS  COMD_INDS_CODE
+      ,MTCD_MATL_CLAS  AS  COMD_MATL_CLAS
+      ,MTDG_REGT_NO    AS  COMD_REGT_NO
+      ,MTDG_REVI_DATE  AS  COMD_REVI_DATE
+      ,MTDG_METH_GUBN  AS  COMD_METH_GUBN
+      ,MTDG_APPL_DATE  AS  COMD_APPL_DATE
+      ,MTDG_UPDT_DATE  AS  COMD_UPDT_DATE
+      ,MTDG_UPDT_CMAN  AS  COMD_UPDT_CMAN
+      ,MTDG_STND_DEGR  AS  COMD_STND_DEGR
+      ,MTDG_DEGR_CONT  AS  COMD_DEGR_CONT
+      ,MTDG_STND_FILE  AS  COMD_STND_FILE
+      ,MTDG_HKMC_DEGR  AS  COMD_HKMC_DEGR
+      ,MTDG_APPL_YN    AS  COMD_APPL_YN
+      ,MTDG_STND_MAN1  AS  COMD_STND_MAN1
+      ,MTDG_PHON_NO1   AS  COMD_PHON_NO1
+      ,MTDG_STND_MAN2  AS  COMD_STND_MAN2
+      ,MTDG_PHON_NO2   AS  COMD_PHON_NO2
+      ,MTDG_MENU_ID    AS  COMD_MENU_ID
+      ,MTDG_MXML_PATH  AS  COMD_MXML_PATH
+      ,MTDG_INIT_CMAN  AS  COMD_INIT_CMAN
+      ,CRFT_USER_EMPL_NAME(MTDG_INIT_CMAN)  COMD_INIT_NAME
+      ,MTDG_INIT_DATE  AS  COMD_INIT_DATE
+      ,(SELECT COUNT(E.ATT_SEQ) AS FILE_CNT
+                  FROM ESAATTH E
+                 WHERE E.STS <> 'D'
+                  AND E.SYS_ID = #sys_id#
+                 AND E.GRP_CD = MTDG_ATT_GRP_CD) AS FILE_CNT
+      ,MTDG_ATT_GRP_CD AS COMD_ATT_GRP_CD
+      ,MTDG_TRAN_DEGR  AS COMD_TRAN_DEGR
+      ,MTCD_DOCU_NUMB  AS COMD_DOCU_NUMB
+      ,MTDG_MCHH_DATE
+  FROM CITBMTDG
+  LEFT OUTER JOIN CITBMTCD
+    ON MTCD_CORP_CODE = MTDG_CORP_CODE
+   AND MTCD_METH_GUBN = MTDG_METH_GUBN
+   AND MTCD_COME_CODE = MTDG_COME_CODE
+ WHERE 1 = 1
+   AND MTCD_CORP_CODE = #corp_cd#
+  [AND MTCD_METH_GUBN = #mtcd_meth_gubn#]
+   AND MTCD_COME_CODE = NVL(#mtcd_come_code#, MTCD_COME_CODE)
+  [AND MTCD_METH_NAME LIKE '%'||#mtcd_meth_name#||'%']
+  [AND MTDG_STND_DEGR LIKE #mtdg_stnd_degr#||'%']
+   AND (MTDG_COME_CODE, MTDG_APPL_DATE) IN
+                                         (SELECT MTDG_COME_CODE
+                                                ,MAX(A.MTDG_APPL_DATE)
+                                            FROM CITBMTDG A
+                                           WHERE A.MTDG_CORP_CODE = #corp_cd#
+                                             AND A.MTDG_APPL_DATE <= #cur_date#
+                                           GROUP BY MTDG_COME_CODE
+                                          )
+ ORDER BY MTCD_METH_GUBN, MTCD_SORT_KEY0, MTDG_STND_DEGR ASC
+  ]]>
+ </sql>
+ 
+
+    <sql id="mtcdlist.insert" comment="insert">
+        <![CDATA[
+            INSERT INTO CITBMTCD
+                (MTCD_CORP_CODE
+                ,MTCD_METH_GUBN
+                ,MTCD_COME_CODE
+                ,MTCD_METH_NAME
+                ,MTCD_INDS_CODE
+                ,MTCD_MATL_CLAS
+                ,MTCD_SORT_KEY0
+                ,MTCD_UPDT_DATE
+                ,MTCD_UPDT_CMAN
+                ,MTCD_INIT_DATE
+                ,MTCD_INIT_CMAN
+                ,MTCD_DOCU_NUMB
+                ) VALUES (
+                 #corp_cd#
+                ,#comd_meth_gubn#
+                ,#comd_come_code#
+                ,#comd_meth_name#
+                ,#comd_inds_code#
+                ,#comd_matl_clas#
+                ,NULL
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+                ,#comd_docu_numb#
+                )
+        ]]>
+    </sql>
+
+    <sql id="mtdglist.insert" comment="insert">
+        <![CDATA[
+            INSERT INTO CITBMTDG
+                (MTDG_CORP_CODE
+                ,MTDG_METH_GUBN
+                ,MTDG_COME_CODE
+                ,MTDG_STND_DEGR
+                ,MTDG_REGT_NO
+                ,MTDG_REVI_DATE
+                ,MTDG_APPL_DATE
+                ,MTDG_HKMC_DEGR
+                ,MTDG_DEGR_CONT
+                ,MTDG_STND_FILE
+                ,MTDG_STND_MAN1
+                ,MTDG_PHON_NO1
+                ,MTDG_STND_MAN2
+                ,MTDG_PHON_NO2
+                ,MTDG_MENU_ID
+                ,MTDG_MXML_PATH
+                ,MTDG_ATT_GRP_CD
+                ,MTDG_APPL_YN
+                ,MTDG_UPDT_DATE
+                ,MTDG_UPDT_CMAN
+                ,MTDG_INIT_DATE
+                ,MTDG_INIT_CMAN
+                ,MTDG_TRAN_DEGR
+                ,MTDG_MCHH_DATE
+                ) VALUES (
+                 #corp_cd#
+                ,#comd_meth_gubn#
+                ,#comd_come_code#
+                ,#comd_stnd_degr#
+                ,#comd_regt_no#
+                ,#comd_revi_date#
+                ,#comd_appl_date#
+                ,#comd_hkmc_degr#
+                ,#comd_degr_cont#
+                ,#comd_stnd_file#
+                ,#comd_stnd_man1#
+                ,#comd_phon_no1#
+                ,#comd_stnd_man2#
+                ,#comd_phon_no2#
+                ,#comd_menu_id#
+                ,#comd_mxml_path#
+                ,#comdatt#
+                ,#comd_appl_yn#
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+                ,TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,#reg_id#
+                ,#comd_tran_degr#
+                ,#mtdg_mchh_date#
+                )
+        ]]>
+    </sql>
+
+    <sql id="mtcdlist.update" comment="update">
+        <![CDATA[
+        BEGIN
+           UPDATE CITBMTCD
+              SET MTCD_METH_NAME = #comd_meth_name#
+                 ,MTCD_DOCU_NUMB = #comd_docu_numb#
+                 ,MTCD_INDS_CODE = #comd_inds_code#
+                 ,MTCD_MATL_CLAS = #comd_matl_clas#
+            WHERE MTCD_CORP_CODE = #corp_cd#
+              AND MTCD_METH_GUBN = #comd_meth_gubn#
+              AND MTCD_COME_CODE = #comd_come_code#
+              ;
+
+           UPDATE CITBMTDG
+              SET MTDG_REGT_NO   = #comd_regt_no#
+                 ,MTDG_REVI_DATE = #comd_revi_date#
+                 ,MTDG_APPL_DATE = #comd_appl_date#
+                 ,MTDG_HKMC_DEGR = #comd_hkmc_degr#
+                 ,MTDG_DEGR_CONT = #comd_degr_cont#
+                 ,MTDG_STND_FILE = #comd_stnd_file#
+                 ,MTDG_STND_MAN1 = #comd_stnd_man1#
+                 ,MTDG_PHON_NO1  = #comd_phon_no1#
+                 ,MTDG_STND_MAN2 = #comd_stnd_man2#
+                 ,MTDG_PHON_NO2  = #comd_phon_no2#
+                 ,MTDG_MENU_ID   = #comd_menu_id#
+                 ,MTDG_MXML_PATH = #comd_mxml_path#
+                 ,MTDG_APPL_YN   = #comd_appl_yn#
+                 ,MTDG_ATT_GRP_CD= #comdatt#
+                 ,MTDG_TRAN_DEGR = #comd_tran_degr#
+                 ,MTDG_MCHH_DATE = #mtdg_mchh_date#
+            WHERE MTDG_CORP_CODE = #corp_cd#
+              AND MTDG_METH_GUBN = #comd_meth_gubn#
+              AND MTDG_COME_CODE = #comd_come_code#
+              AND MTDG_STND_DEGR = #comd_stnd_degr#
+              ;
+        END;
+
+
+        ]]>
+    </sql>
+
+    <sql id="mtcdlist.delete" comment="delete">
+        <![CDATA[
+
+        BEGIN
+           DELETE
+             FROM CITBMTDG
+            WHERE MTDG_CORP_CODE = #corp_cd#
+              AND MTDG_METH_GUBN = #comd_meth_gubn#
+              AND MTDG_COME_CODE = #comd_come_code#
+              AND MTDG_STND_DEGR = #comd_stnd_degr#
+              ;
+        END;
+
+        ]]>
+    </sql>
+
+    <sql id="get.methCode" comment="공법 CODE 조회(조건별)">
+        <![CDATA[
+            SELECT DISTINCT
+                   MTCD_COME_CODE  CODE
+                  ,MTCD_METH_NAME  LABEL
+                  ,MTCD_METH_GUBN
+                  ,MTCD_SORT_KEY0
+              FROM CITBMTDG
+                LEFT OUTER JOIN
+                   CITBMTCD
+                ON    MTCD_CORP_CODE = MTDG_CORP_CODE
+                  AND MTCD_METH_GUBN = MTDG_METH_GUBN
+                  AND MTCD_COME_CODE = MTDG_COME_CODE
+             WHERE MTCD_METH_GUBN = #mtcd_meth_gubn#
+             ORDER BY MTCD_METH_GUBN
+                     ,MTCD_SORT_KEY0
+        ]]>
+    </sql>
+
+    <!-- CI11_02 -->
+    <sql id="come_code.select" comment="공법 CODE 조회">
+        <![CDATA[
+            SELECT MTCD_COME_CODE AS DATA
+                  ,MTCD_METH_NAME AS LABEL
+              FROM CITBMTCD
+             ORDER BY MTCD_METH_GUBN
+                     ,MTCD_SORT_KEY0
+        ]]>
+    </sql>
+
+    <!--
+    <sql id="come_list.select" comment="공법list 조회">
+        <![CDATA[
+            SELECT PKMS_COME_CODE  AS COMD_COME_CODE
+                  ,MTCD_METH_NAME COMD_COME_NAME
+                  ,PKMS_TABL_ID    AS COMD_TABL_ID
+                  ,PKMS_SORT_NUMB  AS COMD_SORT_NUMB
+                  ,PKMS_TABL_NAME  AS COMD_TABL_NAME
+              FROM CITBPKMS,CITBMTCD
+             WHERE PKMS_CORP_CODE = #corp_cd#
+              AND PKMS_CORP_CODE = MTCD_CORP_CODE(+)
+              AND PKMS_COME_CODE =MTCD_COME_CODE(+)
+              [AND PKMS_COME_CODE = #mtcd_come_code#]
+              @sql@
+             ORDER BY PKMS_COME_CODE
+                     ,PKMS_SORT_NUMB
+        ]]>
+    </sql>
+    -->
+
+    <!-- 공용패키지 테이블은 항상 조회되도록 처리 -->
+    <sql id="come_list.select" comment="공법list 조회">
+        <![CDATA[
+            SELECT COMD_COME_CODE
+                  ,COMD_COME_NAME
+                  ,COMD_TABL_ID
+                  ,COMD_SORT_NUMB
+                  ,COMD_TABL_NAME
+              FROM (
+                    SELECT PKMS_COME_CODE  AS COMD_COME_CODE
+                          ,MTCD_METH_NAME COMD_COME_NAME
+                          ,PKMS_TABL_ID    AS COMD_TABL_ID
+                          ,PKMS_SORT_NUMB  AS COMD_SORT_NUMB
+                          ,PKMS_TABL_NAME  AS COMD_TABL_NAME
+                      FROM CITBPKMS,CITBMTCD
+                     WHERE PKMS_CORP_CODE = #corp_cd#
+                      AND PKMS_CORP_CODE = MTCD_CORP_CODE(+)
+                      AND PKMS_COME_CODE =MTCD_COME_CODE(+)
+                      [AND PKMS_COME_CODE = #mtcd_come_code#]
+                      @sql1@
+                      @sql2@
+                   ) A
+             ORDER BY A.COMD_COME_CODE
+                     ,A.COMD_SORT_NUMB
+        ]]>
+    </sql>
+
+ <sql id="come_header.select" comment="공법헤더">
+  <![CDATA[
+            SELECT PKCL_CORP_CODE
+                  ,PKCL_COME_CODE
+                  ,PKCL_TABL_ID
+                  ,PKCL_COLM_ID
+                  ,PKCL_SORT_NUMB
+                  ,PKCL_COLM_NAME
+                  ,PKCL_DATA_TYPE
+                  ,PKCL_DATA_LENG
+                  ,CASE WHEN PKCL_COLM_ALGN = 'C' THEN 'center'
+                        WHEN PKCL_COLM_ALGN = 'R' THEN 'right'
+                        WHEN PKCL_COLM_ALGN = 'L' THEN 'left'
+                        ELSE ''
+                    END  PKCL_TEXT_ALIGN
+                  ,PKCL_WITH_SCRN
+                  ,PKCL_DISP_ALLW
+                  ,PKCL_UPDT_DATE
+                  ,PKCL_UPDT_CMAN
+                  ,PKCL_INIT_DATE
+                  ,PKCL_INIT_CMAN
+                  ,CRFT_USER_EMPL_NAME(PKCL_INIT_CMAN)  COMD_INIT_NAME
+              FROM CITBPKCL
+             WHERE 1=1
+              [AND PKCL_COME_CODE = #comd_come_code#]
+              [AND PKCL_TABL_ID   = #comd_tabl_id#]
+             ORDER BY PKCL_SORT_NUMB
+  ]]>
+ </sql>
+
+    <sql id="come_detail.select" comment="공법상세">
+        <![CDATA[
+            SELECT *
+              FROM @table_id@
+             WHERE 1=1
+            [AND CMPK_GUBN_CODE LIKE #come_code# || '%']
+            [AND @column_id@_STND_DEGR = #stnd_degr#]
+            @order_str@
+        ]]>
+    </sql>
+
+    <sql id="come_allDetail.select" comment="공법상세">
+        <![CDATA[
+            SELECT *
+              FROM @comd_table_id@
+             WHERE 1=1
+            [AND CMPK_GUBN_CODE LIKE #comd_come_code# || '%']
+
+        ]]>
+    </sql>
+
+    <sql id="mtcdlist.insert.check" comment="공법차수 테이블에 데이터가 존재하는지 체크">
+        <![CDATA[
+           SELECT COUNT(*) CNT
+             FROM CITBMTCD
+            WHERE MTCD_CORP_CODE = #corp_cd#
+              AND MTCD_METH_GUBN = #comd_meth_gubn#
+              AND MTCD_COME_CODE = #comd_come_code#
+
+        ]]>
+    </sql>
+
+    <sql id="mtdglist.insert.check" comment="공법차수 테이블에 데이터가 존재하는지 체크">
+        <![CDATA[
+           SELECT COUNT(*) CNT
+             FROM CITBMTDG
+            WHERE MTDG_CORP_CODE = #corp_cd#
+              AND MTDG_METH_GUBN = #comd_meth_gubn#
+              AND MTDG_COME_CODE = #comd_come_code#
+              AND MTDG_STND_DEGR = #comd_stnd_degr#
+
+        ]]>
+    </sql>
+
+    <sql id="get.stnd_degr.list" comment="공법차수 테이블에 데이터가 존재하는지 체크">
+        <![CDATA[
+           SELECT MTDG_STND_DEGR CODE
+                 ,MTDG_STND_DEGR CODE_NAME
+             FROM CITBMTDG
+            WHERE MTDG_CORP_CODE = #corp_cd#
+              AND MTDG_COME_CODE = #mtcd_come_code#
+            ORDER BY MTDG_APPL_DATE
+
+        ]]>
+    </sql>
+
+    <sql id="update.mtdg.att_grd_cd" comment="공법차수 첨부파일 그룹 코드 수정">
+        <![CDATA[
+            UPDATE CITBMTDG
+               SET MTDG_ATT_GRP_CD = #comd_att_grp_cd#
+             WHERE MTDG_CORP_CODE = #corp_cd#
+               AND MTDG_METH_GUBN = #comd_meth_gubn#
+               AND MTDG_COME_CODE = #comd_come_code#
+               AND MTDG_STND_DEGR = #comd_stnd_degr#
+        ]]>
+    </sql>
+
+ <sql id="S.230701" comment="그리드 옵션">
+  <![CDATA[
+WITH T1 (
+  PROPERTY
+ ,COL
+) AS (
+       SELECT 'dataField' , 'data_field'  FROM DUAL
+ UNION SELECT 'headerText', 'header_text' FROM DUAL
+ UNION SELECT 'width'     , 'width'       FROM DUAL
+ UNION SELECT 'textAlign' , 'text_align'  FROM DUAL
+)
+SELECT * FROM T1
+  ]]>
+ </sql>
+
+ <sql id="ES-CI11-03" comment="그리드 컬럼">
+  <![CDATA[
+WITH T1 (
+  SEQ
+ ,DATA_FIELD
+ ,HEADER_TEXT
+ ,WIDTH
+ ,TEXT_ALIGN
+) AS (
+       SELECT 1,'comd_come_code','공법코드',60,'center' FROM DUAL
+ UNION SELECT 2,'comd_tabl_id','TABLE ID',100,'left' FROM DUAL
+ UNION SELECT 3,'comd_tabl_name','TABLE 명',200,'left' FROM DUAL
+ UNION SELECT 4,'comd_sort_numb','순서',50,'right' FROM DUAL
+ UNION SELECT 5,'comd_updt_date','수정일',80,'center' FROM DUAL
+ UNION SELECT 6,'comd_init_name','등록자',60,'center' FROM DUAL
+ UNION SELECT 7,'comd_corp_code','법인코드',100,'center' FROM DUAL
+ UNION SELECT 8,'created_yn','생성여부',100,'center' FROM DUAL
+ UNION SELECT 9,'desc_yn','DESC',80,'center' FROM DUAL
+ UNION SELECT 10,'cnt_col','컬럼수',80,'center' FROM DUAL
+ UNION SELECT 11,'cnt_col_desc','DESC CNT',80,'center' FROM DUAL
+ UNION SELECT 12,'mgt_yn','MGT',80,'center' FROM DUAL
+ UNION SELECT 13,'cmt','COMMENT',200,'left' FROM DUAL
+ UNION SELECT 14,'row_str','Row',200,'left' FROM DUAL
+)
+SELECT * FROM T1 ORDER BY SEQ
+  ]]>
+ </sql>
+
+ <sql id="ES-CI11-04" comment="그리드 컬럼">
+  <![CDATA[
+WITH T1 (
+  SEQ
+ ,DATA_FIELD
+ ,HEADER_TEXT
+ ,WIDTH
+ ,TEXT_ALIGN
+) AS (
+       SELECT 1,'comd_corp_code','법인코드',100,'center' FROM DUAL
+ UNION SELECT 2,'comd_come_code','공법코드',100,'center' FROM DUAL
+ UNION SELECT 3,'comd_tabl_id','테이블ID',100,'center' FROM DUAL
+ UNION SELECT 4,'comd_colm_id','컬럼 ID',150,'left' FROM DUAL
+ UNION SELECT 5,'comd_colm_name','컬럼명',150,'left' FROM DUAL
+ UNION SELECT 6,'comd_sort_numb','순서',40,'right' FROM DUAL
+ UNION SELECT 7,'comd_data_type','타입',80,'left' FROM DUAL
+ UNION SELECT 8,'comd_data_leng','길이',40,'right' FROM DUAL
+ UNION SELECT 9,'comd_colm_algn','정렬',40,'center' FROM DUAL
+ UNION SELECT 10,'comd_with_scrn','화면출력 넓이',90,'right' FROM DUAL
+ UNION SELECT 11,'comd_disp_allw','화면출력 여부',90,'center' FROM DUAL
+ UNION SELECT 12,'comd_updt_date','수정일',80,'center' FROM DUAL
+ UNION SELECT 13,'comd_init_name','등록자',100,'center' FROM DUAL
+ UNION SELECT 14,'chk_yn','CHECK',100,'center' FROM DUAL
+ UNION SELECT 15,'desc_yn','DESC',100,'center' FROM DUAL
+ UNION SELECT 16,'type_yn','TYPE',100,'center' FROM DUAL
+ UNION SELECT 17,'cmt','COMMENT',200,'left' FROM DUAL
+ UNION SELECT 18,'pkcl_str','STR',300,'left' FROM DUAL
+ UNION SELECT 19,'crt_str','CRT',300,'left' FROM DUAL
+)
+SELECT * FROM T1 ORDER BY SEQ
+  ]]>
+ </sql>
+
+</sql-descriptor>
