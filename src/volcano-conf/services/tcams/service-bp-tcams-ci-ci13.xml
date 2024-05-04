@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ci/ci13">
+
+ <service id="get.pkcllist" label="공법정보 컬럼 목록 조회">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+
+    var result = new Map();
+    var pkcls = new List();
+
+    var param = $data.searchParam;
+    var cmt_str  =     "     SELECT 'SYS_ID','시스템 아이디' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'SORT_ORD','정렬 순서' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'USE_YN','사용 여부' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'FLAG','플래그' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'VAL','값' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'REM','비고' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'STS','상태' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'REG_ID','등록자 아이디' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'REG_DT','등록 일시' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'MOD_ID','수정자 아이디' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'MOD_DT','수정 일시' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'LANG_CD','다국어 코드' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'MENU_CD','메뉴 코드' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'GRP_CD','그룹 코드' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'GRP_CD_NM','그룹 코드명' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'DTL_CD','상세 코드' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'COMP_CD','회사 코드' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'CD_TYP','코드 TYPE' FROM DUAL"
+    cmt_str     += "\n UNION SELECT 'CD_TYP_NM','코드 TYPE 명' FROM DUAL"
+
+    result.code = "Y";
+    result.message = "OK";
+
+    $logger.info("PARAM==>");
+    $logger.info(param);
+
+    var altStr = "       SELECT 'C1', 'C2', 0 FROM DUAL";
+
+    if(param.pkcl_come_code.length == 2 && param.mgt_yn == "Y") {
+        try {
+            var cmts = $jdbc.queryList("bp/tcams/common/" + param.pkcl_tabl_id, "select.comment", param);
+
+            for(var i = 0 ; i < cmts.size() ; i++) {
+                cmt_str += "\n UNION SELECT ";
+                cmt_str +=  "'" + cmts[i].c1  + "' " ;
+                if(StringUtil.isEmpty(cmts[i].c2)) {
+                    cmt_str += ",'' " ;
+                } else {
+                    cmt_str += ",'" + cmts[i].c2 + "' " ;
+                }
+                cmt_str += " FROM DUAL";
+            }
+
+            /* ---
+            var pkcls = $jdbc.queryList("bp/tcams/common/" + param.pkcl_tabl_id, "select", param);
+            for(var i = 0 ; i < pkcls.size() ; i++) {
+                if(pkcls[i].mg_mode == "U"){
+                    $logger.info(pkcls[i]);
+                }
+                if(pkcls[i].alt_mode == "ALT") {
+                    altStr += "\n" + " UNION SELECT ";
+                    altStr +=   "'" + pkcls[i].pkcl_colm_id + "'";
+                    altStr += ", '" + pkcls[i].pkcl_data_type + "'";
+                    altStr += ", "  + pkcls[i].pkcl_data_leng ;
+                    altStr += " FROM DUAL";
+                }
+            }
+            $logger.info(altStr);
+            --- */
+        } catch(e) {
+            $logger.info(e.message);
+            result.code = "E";
+            result.message = e.message;
+        }
+    }
+
+    param.cmt_str = cmt_str;
+    param.ALT_STR = altStr;
+
+    if($data.searchParam.curr_appl){
+        $data.pkclList = $jdbc.queryList("bp/tcams/ci/ci13", "pkcllist.select2", param);
+    } else {
+        pkcls = $jdbc.queryList("bp/tcams/ci/ci13", "pkcllist.select.sys", param);
+    }
+
+
+    var pkcl_str = "";
+    var crt_str = "";
+
+    var sel_str =   "SELECT CASE                                                   ";
+       sel_str    += "\n        WHEN B.XXXX_CORP_CODE IS NULL THEN 'I'             ";
+       sel_str    += "\n        WHEN A.XXXX_UPDT_DATE > B.XXXX_UPDT_DATE THEN 'U'  ";
+       sel_str    += "\n       END MG_MODE                                         ";
+       sel_str    += "\n      ,A.*                                                 ";
+       sel_str    += "\n  FROM T1 A                                                ";
+       sel_str    += "\n      LEFT OUTER JOIN                                      ";
+       sel_str    += "\n       CATBXXXX B                                          ";
+       sel_str    += "\n      ON    B.XXXX_CORP_CODE = A.XXXX_CORP_CODE            ";
+       sel_str    += "\n        AND B.XXXX_STND_GUBN = A.XXXX_STND_GUBN            ";
+       sel_str    += "\n        AND B.XXXX_STND_DEGR = A.XXXX_STND_DEGR            ";
+       sel_str    += "\n        AND B.XXXX_SEQ0      = A.XXXX_SEQ0                 ";
+
+    sel_str = StringUtil.replace(sel_str, "XXXX", param.pkcl_tabl_id.substring(4));
+    //$logger.info(sel_str);
+
+    for(var i = 0 ; i < pkcls.size() ; i++) {
+        //if(pkcls[i].chk_yn == "N") {
+            if(i == 0) {
+                pkcl_str = "           SELECT ";
+            } else {
+                pkcl_str = " UNION ALL SELECT ";
+            }
+            pkcl_str +=   "'" + pkcls[i].comd_corp_code + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_come_code + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_tabl_id   + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_colm_id   + "'" ;
+            pkcl_str += ", "  + pkcls[i].comd_sort_numb +  "" ;
+            pkcl_str += ", '" + pkcls[i].comd_colm_name + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_data_type + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_data_leng + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_colm_algn + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_with_scrn + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_disp_allw + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_updt_date + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_updt_cman + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_init_date + "'" ;
+            pkcl_str += ", '" + pkcls[i].comd_init_cman + "'" ;
+            pkcl_str += " FROM DUAL";
+
+            $logger.info(pkcl_str);
+            
+            pkcls[i].pkcl_str = pkcl_str ;
+        //}
+
+        if(i == 0) {
+            crt_str  = "  " + pkcls[i].comd_colm_id;
+        } else {
+            crt_str  = " ," + pkcls[i].comd_colm_id;
+        }
+        crt_str += "  " + pkcls[i].comd_data_type;
+        if(pkcls[i].comd_data_type == "NUMBER") {
+            crt_str += "(" + pkcls[i].data_precision + ", " + pkcls[i].data_scale + ")";
+        } else {
+            crt_str += "(" + pkcls[i].comd_data_leng + ")" ;
+        }
+        pkcls[i].crt_str = crt_str;
+    }
+    $logger.info(result);
+
+    $data.pkclList = pkcls;
+    $data.result = result;
+   ]]>
+  </script>
+ </service>
+
+    <service id="save.pkcllist" label="공법정보 컬럼  목록 추가/저장">
+        <update descriptor="bp/tcams/ci/ci13" sql-id="pkcllist.update"
+            parameter-name="updates" parameter-class="list" />
+        <insert descriptor="bp/tcams/ci/ci13" sql-id="pkcllist.insert"
+            parameter-name="inserts" parameter-class="list" />
+        <delete descriptor="bp/tcams/ci/ci13" sql-id="pkcllist.delete"
+            parameter-name="deletes" parameter-class="list" />
+    </service>
+
+    <service id="save2.pkcllist" label="공법정보 컬럼  자동등록">
+        <insert descriptor="bp/tcams/ci/ci13" sql-id="pkcllist.autoinsert"
+            parameter-name="inserts" parameter-class="list" />
+    </service>
+
+    <service id="get.newColumnlist" label="미등록 컬럼 조회">
+        <script>
+            <![CDATA[
+            var param = $data.searchParam;
+            $data.newColumnlist = $jdbc.queryList("bp/tcams/ci/ci13", "newColumnlist.select", param);
+            ]]>
+        </script>
+    </service>
+</service-descriptor>

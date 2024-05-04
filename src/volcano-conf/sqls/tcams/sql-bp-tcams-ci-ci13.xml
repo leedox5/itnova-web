@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci13" data-source="tcamsDS">
+
+ <sql id="pkcllist.select.sys" comment="공법정보 컬럼 조회">
+  <![CDATA[
+WITH T0 AS (
+ SELECT *
+   FROM USER_TAB_COLUMNS
+  WHERE TABLE_NAME   = #pkcl_tabl_id#    
+),T1 AS ( 
+ SELECT * 
+   FROM CITBPKCL
+  WHERE PKCL_CORP_CODE = #corp_cd#
+    AND TRIM(PKCL_COME_CODE) = #pkcl_come_code#
+   	AND TRIM(PKCL_TABL_ID)   = #pkcl_tabl_id#    
+), T2 (
+  C1
+ ,C2
+) AS (
+       SELECT 'VARCHAR', 'L' FROM DUAL
+ UNION SELECT 'CHAR'   , 'L' FROM DUAL
+ UNION SELECT 'NUMBER' , 'R' FROM DUAL
+), T3 (
+  ID
+ ,CMT
+) AS (
+  @cmt_str@
+), T4 (C1, C2, C3) AS (
+@ALT_STR@ 
+) 
+SELECT CASE WHEN A.PKCL_TABL_ID IS NULL THEN 'N' ELSE 'Y' END CHK_YN
+      ,CASE WHEN A.PKCL_SORT_NUMB = B.COLUMN_ID+1 THEN 'Y' ELSE 'N' END CHK_ORD_YN
+      ,CASE WHEN NVL(F.C1, 'Y') = 'Y' THEN 'OK' WHEN F.C2 = B.DATA_TYPE AND F.C3 = B.DATA_LENGTH THEN 'Y' ELSE 'N' END TYPE_YN
+      ,CASE 
+         WHEN C.COMMENTS IS NULL THEN 'N' 
+         WHEN C.COMMENTS <> E.CMT THEN 'E'
+         WHEN C.COMMENTS LIKE '.%' THEN 'T' 
+         ELSE 'Y' END DESC_YN
+      ,COALESCE(A.PKCL_CORP_CODE, 'K1') COMD_CORP_CODE
+      ,COALESCE(A.PKCL_COME_CODE, #pkcl_come_code#) COMD_COME_CODE
+      ,COALESCE(A.PKCL_TABL_ID, B.TABLE_NAME)   COMD_TABL_ID  
+      ,COALESCE(A.PKCL_COLM_ID, B.COLUMN_NAME)   COMD_COLM_ID  
+      ,COALESCE(A.PKCL_SORT_NUMB, B.COLUMN_ID+1) COMD_SORT_NUMB
+      ,COALESCE(A.PKCL_COLM_NAME, C.COMMENTS, E.CMT, 'TBD')  COMD_COLM_NAME
+      ,COALESCE(F.C2, A.PKCL_DATA_TYPE, B.DATA_TYPE) COMD_DATA_TYPE
+      ,COALESCE(TO_CHAR(F.C3), A.PKCL_DATA_LENG, TO_CHAR(B.DATA_LENGTH)) COMD_DATA_LENG
+      ,COALESCE(A.PKCL_COLM_ALGN, D.C2) COMD_COLM_ALGN
+      ,COALESCE(A.PKCL_WITH_SCRN, '100') COMD_WITH_SCRN
+      ,COALESCE(A.PKCL_DISP_ALLW, 'Y') COMD_DISP_ALLW
+      ,COALESCE(A.PKCL_UPDT_DATE, TO_CHAR(SYSDATE, 'YYYYMMDD')) COMD_UPDT_DATE
+      ,COALESCE(A.PKCL_UPDT_CMAN, 'SYSTEMPG') COMD_UPDT_CMAN
+      ,COALESCE(A.PKCL_INIT_DATE, TO_CHAR(SYSDATE, 'YYYYMMDD')) COMD_INIT_DATE
+      ,COALESCE(A.PKCL_INIT_CMAN, 'SYSTEMPG') COMD_INIT_CMAN
+      ,COALESCE(A.PKCL_INIT_CMAN, 'SYSTEMPG') COMD_INIT_NAME
+      ,COALESCE(C.COMMENTS, E.CMT, 'TBD') CMT
+      ,DATA_PRECISION
+      ,DATA_SCALE
+  FROM T0 B
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS C
+      ON    C.TABLE_NAME     = B.TABLE_NAME
+        AND C.COLUMN_NAME    = B.COLUMN_NAME
+ 	  LEFT OUTER JOIN
+       T1 A
+      ON    B.TABLE_NAME     = A.PKCL_TABL_ID
+        AND B.COLUMN_NAME    = A.PKCL_COLM_ID
+      LEFT OUTER JOIN
+       T2 D
+      ON  D.C1 = B.DATA_TYPE
+      LEFT OUTER JOIN
+       T3 E
+      ON E.ID = B.COLUMN_NAME
+      LEFT OUTER JOIN
+       T4 F
+      ON F.C1 = B.COLUMN_NAME
+ ORDER BY B.COLUMN_ID  
+  ]]>
+ </sql>
+
+	<sql id="pkcllist.select" comment="공법정보 컬럼 조회">
+        <![CDATA[
+			SELECT A.PKCL_CORP_CODE COMD_CORP_CODE
+			      ,A.PKCL_COME_CODE COMD_COME_CODE
+			      ,A.PKCL_TABL_ID   COMD_TABL_ID  
+			      ,A.PKCL_COLM_ID   COMD_COLM_ID  
+			      ,A.PKCL_SORT_NUMB COMD_SORT_NUMB
+			      ,A.PKCL_COLM_NAME COMD_COLM_NAME
+			      ,A.PKCL_DATA_TYPE COMD_DATA_TYPE
+			      ,A.PKCL_DATA_LENG COMD_DATA_LENG
+			      ,A.PKCL_COLM_ALGN COMD_COLM_ALGN
+			      ,A.PKCL_WITH_SCRN COMD_WITH_SCRN
+			      ,A.PKCL_DISP_ALLW COMD_DISP_ALLW
+			      ,A.PKCL_UPDT_DATE COMD_UPDT_DATE
+			      ,A.PKCL_UPDT_CMAN COMD_UPDT_CMAN
+			      ,A.PKCL_INIT_DATE COMD_INIT_DATE
+			      ,A.PKCL_INIT_CMAN COMD_INIT_CMAN
+			      ,COALESCE(B.USR_NM, A.PKCL_INIT_CMAN) COMD_INIT_NAME
+			  FROM CITBPKCL A
+			      LEFT OUTER JOIN
+			       ESAUSER B
+			      ON B.USR_ID = A.PKCL_INIT_CMAN
+			 WHERE A.PKCL_CORP_CODE = #corp_cd#
+   			   AND A.PKCL_COME_CODE = #pkcl_come_code#
+   			   AND A.PKCL_TABL_ID   = #pkcl_tabl_id# 
+             ORDER BY A.PKCL_COME_CODE, A.PKCL_TABL_ID, A.PKCL_SORT_NUMB
+        ]]>
+	</sql>
+
+	<sql id="pkcllist.autoinsert" comment="공법정보 컬럼  자동등록">
+        <![CDATA[
+			INSERT INTO CITBPKCL
+            SELECT A.PKCL_CORP_CODE
+                  ,A.PKCL_COME_CODE
+                  ,A.PKCL_TABL_ID
+                  ,A.PKCL_COLM_ID
+                  ,A.PKCL_SORT_NUMB
+                  ,A.PKCL_COLM_NAME
+                  ,A.PKCL_DATA_TYPE
+                  ,A.PKCL_DATA_LENG
+                  ,A.PKCL_COLM_ALGN
+                  ,A.PKCL_WITH_SCRN
+                  ,A.PKCL_DISP_ALLW
+                  ,A.PKCL_UPDT_DATE
+                  ,A.PKCL_UPDT_CMAN
+                  ,A.PKCL_INIT_DATE
+                  ,A.PKCL_INIT_CMAN
+              FROM (
+                    SELECT D.MTCD_CORP_CODE PKCL_CORP_CODE
+                          ,D.MTCD_COME_CODE PKCL_COME_CODE
+                          ,A.TABLE_NAME     PKCL_TABL_ID
+                          ,A.COLUMN_NAME    PKCL_COLM_ID
+                          ,A.COLUMN_ID      PKCL_SORT_NUMB
+                          ,C.COMMENTS       PKCL_COLM_NAME
+                          ,A.DATA_TYPE      PKCL_DATA_TYPE
+                          ,A.DATA_LENGTH    PKCL_DATA_LENG
+                          ,CASE WHEN A.DATA_TYPE = 'CHAR'     THEN 'C'
+                                WHEN A.DATA_TYPE = 'VARCHAR2' THEN 'L'
+                                WHEN A.DATA_TYPE = 'NUMBER'   THEN 'R'
+                                ELSE 'C'
+                           END  PKCL_COLM_ALGN
+                          ,CASE WHEN A.DATA_TYPE = 'VARCHAR2'       AND
+                                     TO_NUMBER(A.DATA_LENGTH) >  20 THEN '200'
+                                WHEN A.DATA_TYPE = 'VARCHAR2'       AND
+                                     TO_NUMBER(A.DATA_LENGTH) <= 20 THEN TO_CHAR((LENGTH(C.COMMENTS)-1)* 20 )
+                                ELSE TO_CHAR(LENGTH(C.COMMENTS)* 20 )
+                           END  PKCL_WITH_SCRN
+                          ,'Y' PKCL_DISP_ALLW
+                          ,TO_CHAR(SYSDATE, 'YYYYMMDD') PKCL_UPDT_DATE
+                          ,'SYSTEM'                     PKCL_UPDT_CMAN
+                          ,TO_CHAR(SYSDATE, 'YYYYMMDD') PKCL_INIT_DATE
+                          ,'SYSTEM'                     PKCL_INIT_CMAN
+                      FROM USER_TAB_COLUMNS A
+                          ,(
+                            SELECT A.TABLE_NAME
+                                  ,A.COLUMN_NAME
+                                  ,B.CONSTRAINT_TYPE
+                              FROM USER_CONS_COLUMNS A
+                                  ,USER_CONSTRAINTS B
+                             WHERE A.TABLE_NAME      = B.TABLE_NAME
+                               AND A.CONSTRAINT_NAME = B.CONSTRAINT_NAME
+                               AND B.CONSTRAINT_TYPE='P'
+                           ) B
+                          ,USER_COL_COMMENTS C
+                          ,CITBMTCD D
+                     WHERE A.TABLE_NAME  = B.TABLE_NAME (+)
+                       AND A.COLUMN_NAME = B.COLUMN_NAME (+)
+                       AND A.TABLE_NAME  = C.TABLE_NAME (+)
+                       AND A.COLUMN_NAME = C.COLUMN_NAME (+)
+                       AND SUBSTR(A.TABLE_NAME, 5,3) = SUBSTR(D.MTCD_COME_CODE, 1, 3)
+                       AND (A.TABLE_NAME  LIKE 'CATB'||'%' OR A.TABLE_NAME  LIKE 'CMTB'||'%' OR A.TABLE_NAME  LIKE 'CTTB'||'%')
+                       AND C.COMMENTS IS NOT NULL
+                   ) A
+                 ,   CITBPKCL B
+               WHERE A.PKCL_CORP_CODE = B.PKCL_CORP_CODE (+)
+                 AND A.PKCL_COME_CODE = B.PKCL_COME_CODE (+)
+                 AND A.PKCL_TABL_ID   = B.PKCL_TABL_ID   (+)
+                 AND A.PKCL_COLM_ID   = B.PKCL_COLM_ID   (+)
+                 AND B.PKCL_TABL_ID IS NULL
+               ORDER BY A.PKCL_TABL_ID, PKCL_SORT_NUMB
+        ]]>
+	</sql>
+
+
+	<sql id="pkcllist.insert" comment="공법정보 컬럼 추가">
+        <![CDATA[
+        	INSERT INTO CITBPKCL (
+				 PKCL_CORP_CODE
+			  	,PKCL_COME_CODE
+			  	,PKCL_TABL_ID  
+              	,PKCL_COLM_ID  
+			  	,PKCL_SORT_NUMB
+			  	,PKCL_COLM_NAME
+			  	,PKCL_DATA_TYPE
+			  	,PKCL_DATA_LENG
+		        ,PKCL_COLM_ALGN
+		        ,PKCL_WITH_SCRN
+		        ,PKCL_DISP_ALLW
+		        ,PKCL_UPDT_DATE
+		        ,PKCL_UPDT_CMAN
+		        ,PKCL_INIT_DATE
+		        ,PKCL_INIT_CMAN
+		    ) VALUES (
+             	 #corp_cd#                              
+                ,UPPER(#comd_come_code#)                    
+                ,UPPER(#comd_tabl_id#)        
+                ,UPPER(#comd_colm_id#)
+                ,#comd_sort_numb#            
+                ,#comd_colm_name#
+                ,UPPER(#comd_data_type#)
+                ,#comd_data_leng#
+                ,UPPER(#comd_colm_algn#)
+                ,#comd_with_scrn#
+                ,UPPER(#comd_disp_allw#)
+                ,TO_CHAR(SYSDATE,'YYYYMMDD')                                                              
+                ,#reg_id#                                                                                 
+                ,TO_CHAR(SYSDATE,'YYYYMMDD')                                                              
+                ,#reg_id#                                                                                 
+			)                                                                                             			
+        ]]>
+	</sql>
+
+	<sql id="pkcllist.update" comment="공법정보 컬럼 수정">
+        <![CDATA[
+	        UPDATE CITBPKCL
+   			   SET PKCL_SORT_NUMB = #comd_sort_numb#
+   			      ,PKCL_COLM_NAME = #comd_colm_name#
+   			      ,PKCL_DATA_TYPE = #comd_data_type#   
+   			      ,PKCL_DATA_LENG = #comd_data_leng#   
+   			      ,PKCL_COLM_ALGN = #comd_colm_algn#   
+   			      ,PKCL_WITH_SCRN = #comd_with_scrn#   
+   			      ,PKCL_DISP_ALLW = #comd_disp_allw#   
+       			  ,PKCL_UPDT_DATE = TO_CHAR(SYSDATE,'YYYYMMDD')
+       			  ,PKCL_UPDT_CMAN = #reg_id#
+ 			 WHERE PKCL_CORP_CODE = #corp_cd#
+   			   AND PKCL_COME_CODE = #comd_come_code#
+   			   AND PKCL_TABL_ID   = #comd_tabl_id#
+   			   AND PKCL_COLM_ID   = #comd_colm_id#   			   
+        ]]>
+	</sql>
+
+	<sql id="pkcllist.delete" comment="공법정보 컬럼 삭제">
+        <![CDATA[
+	        DELETE 
+	          FROM CITBPKCL                                     
+ 			 WHERE PKCL_CORP_CODE = #corp_cd#
+   			   AND PKCL_COME_CODE = #comd_come_code#
+   			   AND PKCL_TABL_ID   = #comd_tabl_id#
+   			   AND PKCL_COLM_ID   = #comd_colm_id#   			   
+        ]]>
+	</sql>
+
+
+	<sql id="newColumnlist.select" comment="미등록 컬럼 조회">
+        <![CDATA[
+            
+            SELECT ROWNUM            CNT
+                  ,TABLE_NAME        COMD_TABL_NAME
+                  ,COLUMN_NAME       COMD_COLM_NAME
+              FROM USER_TAB_COLUMNS
+                  ,CITBPKMS
+                  ,CITBPKCL
+             WHERE TABLE_NAME  = PKMS_TABL_ID
+               AND PKMS_CORP_CODE = #corp_cd#
+               AND TABLE_NAME     = PKCL_TABL_ID (+)
+               AND COLUMN_NAME    = PKCL_COLM_ID (+)
+               AND PKCL_CORP_CODE (+) = #corp_cd#
+               AND PKCL_COLM_NAME IS NULL
+        ]]>
+	</sql>
+</sql-descriptor> 
