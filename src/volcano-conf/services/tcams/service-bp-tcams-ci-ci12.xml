@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ci/ci12">
+
+ <declare>
+  <job id="functions">
+   <script>
+    <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    function getSqlStr() {
+        var str = "";
+        var cate = $data.searchParam.pkms_come_code.toUpperCase();
+        
+        var list = $jdbc.queryList("bp/tcams/common/PKMS/" + cate, "SELECT", null);
+        for(var i = 0 ; i < list.size() ; i++) {
+            if(i == 0) {
+               str += "           ";
+            } else {
+               str += "\n UNION ALL " ;
+            }
+            str += "SELECT 'K1', '" + cate +"'";
+        	str += ", '" + list[i].c1 + "'";
+        	str += ", "  + i ;
+        	if(StringUtil.isEmpty(list[i].c2)) {
+        	    str += ",'' " ;
+        	} else {
+        	    str += ", '" + list[i].c2 + "'";
+        	}
+        	str += ", '20221020', 'SYSTEMPG', '20221020', 'SYSTEMPG' FROM DUAL ";
+        }
+        return str;
+    }
+    ]]>   
+   </script>
+  </job>
+ </declare>
+
+ <service id="get.pkmslist" label="공법정보 테이블 목록 조회">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.CalendarUtil);
+      
+    var result = new Map();
+    
+    $service.callJob("functions");
+   
+	var param = $data.searchParam;
+	
+	$logger.info(param);
+	
+	$data.searchParam.sql="AND B.MTCD_METH_GUBN <> 'T' ";
+
+    try {
+    	if($data.searchParam.pkms_come_code.length == 2) {
+    	    param.sql_str = getSqlStr();
+    		$data.pkmsList = $jdbc.queryList("bp/tcams/common/PKMS","select", param);
+    	} else {
+    		if($data.searchParam.curr_appl){
+    			$data.pkmsList = $jdbc.queryList("bp/tcams/ci/ci12", "pkmslist.select2", param);
+    		} else {
+    			$data.pkmsList = $jdbc.queryList("bp/tcams/ci/ci12", "pkmslist.select", param);
+    		}
+    	}
+    	
+    	var row_str = "";
+    	for(var i = 0 ; i < $data.pkmsList.size() ; i++) {
+    	    if(i == 0) {
+    	        row_str = "           SELECT " ;
+    	    } else {
+    	        row_str = " UNION ALL SELECT " ;
+    	    }
+    	    row_str +=  "'" + $data.pkmsList[i].comd_corp_code + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_come_code + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_tabl_id   + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_sort_numb + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_tabl_name + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_updt_date + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_updt_cman + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_init_date + "' " ;
+    		row_str += ",'" + $data.pkmsList[i].comd_init_cman + "' " ;
+    		row_str += " FROM DUAL";
+    		
+    		$data.pkmsList[i].row_str = row_str;
+    	}
+        result.code = "Y"
+        result.message = "OK";
+    } catch(e) {
+    	$logger.info(e.message);
+        result.code = "E";
+        result.message = e.message;
+    }
+    result.crt_date = CalendarUtil.formatNow("yyyy.MM.dd HH:mm:ss");	
+    
+    $data.result = result;
+    
+   ]]>
+  </script>
+ </service>
+
+
+	<service id="save.pkmslist" label="공법정보 테이블  목록 추가/저장">
+		<script>
+			<![CDATA[
+				try {
+					$data.result = new Map();
+					var i = 0;
+					var result = 0;
+					var errorGubn = "S";
+					for (i = 0; i < $data.inserts.size(); i++) {
+						result += $jdbc.update("bp/tcams/ci/ci12", "pkmslist.update", $data.inserts[i]);
+					}
+					
+					for (i = 0; i < $data.updates.size(); i++) {
+						result += $jdbc.update("bp/tcams/ci/ci12", "pkmslist.update", $data.updates[i]);
+					}
+					
+					for (i = 0; i < $data.deletes.size(); i++) {
+						result += $jdbc.update("bp/tcams/ci/ci12", "pkmslist.delete", $data.deletes[i]);
+					}
+					
+					if (result == 0){
+						errorGubn = "B";
+						throw new Exception ( "변경된 데이터가 없습니다.");
+					} else {
+						$data.result.MESG_CODE = "SA-001";
+					}
+					
+				} catch (e) {
+					var rollback = new Map();
+	                var msg   = e.message;
+	                var index = msg.indexOf('ORA');
+	
+					$data.result.MESG = msg;
+	                $data.result.MESG_CODE = 'SA-002';
+	                
+	                if ("ORA-00001" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "중복된 데이터가 존재합니다.";
+	                } else if ("ORA-00947" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "값의 수가 충분하지 않습니다.";
+	                } else if ("ORA-01400" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "NULL을 입력할 수 없습니다.";
+	                } else {
+	                  	if (errorGubn == "S") {
+	                  		$data.result.MESG = "처리중 문제가 발생하였습니다.";
+	                  	}	
+	                }
+				
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+				}
+			]]>
+		</script>
+	</service>
+
+	<service id="save2.pkmslist" label="공법테이블  자동등록">
+		<script>
+			<![CDATA[
+				try {
+					var param = $data.searchParam;
+					var errorGubn = "S";
+					$data.result = new Map();
+					if($data.searchParam.mach_gubn=='T'){
+						$data.searchParam.sql = "AND A.TABLE_NAME LIKE 'CTTB%'"
+						                      + "AND SUBSTR(A.TABLE_NAME, 8,1) NOT IN  ('I','A','B')";
+						
+					}else{
+						$data.searchParam.sql = "AND (A.TABLE_NAME LIKE 'CATB%' OR A.TABLE_NAME LIKE 'CMTB%')"
+						                      + "AND SUBSTR(A.TABLE_NAME, 8,1) NOT IN  ('I','A','Z')";
+						}
+					
+					var result = $jdbc.update("bp/tcams/ci/ci12", "pkmslist.autoinsert", param);
+					
+					if (result == 0){
+						errorGubn = "B";
+						throw new Exception ( "자동 등록된 데이터가 없습니다.");
+					} else {
+						$data.result.MESG_CODE = "SA-001";
+					}
+				} catch (e) {
+					var rollback = new Map();
+	                var msg   = e.message;
+	                var index = msg.indexOf('ORA');
+	
+					$data.result.MESG = msg;
+	                $data.result.MESG_CODE = 'SA-002';
+	                
+	                if ("ORA-00001" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "중복된 데이터가 존재합니다.";
+	                } else if ("ORA-00947" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "값의 수가 충분하지 않습니다.";
+	                } else if ("ORA-01400" == msg.substr(index, 9)) {
+	                    $data.result.MESG = "NULL을 입력할 수 없습니다.";
+	                } else {
+	                  	if (errorGubn == "S") {
+	                  		$data.result.MESG = "처리중 문제가 발생하였습니다.";
+	                  	}	
+	                }
+				
+					$jdbc.update("bp/tcams/ca/common", "rollback", null);
+				}
+			]]>
+		</script>
+	</service>
+
+</service-descriptor>

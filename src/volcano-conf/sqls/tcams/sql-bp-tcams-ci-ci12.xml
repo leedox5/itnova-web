@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci12" data-source="tcamsDS">
+
+	<!-- 공용패키지 테이블은 항상 조회되도록 처리 -->
+	<sql id="pkmslist.select" comment="공법정보 테이블 조회">
+        <![CDATA[
+			SELECT A.COMD_CORP_CODE
+			      ,A.COMD_COME_CODE
+			      ,A.COMD_TABL_ID  
+			      ,A.COMD_SORT_NUMB
+			      ,A.COMD_TABL_NAME
+			      ,A.COMD_UPDT_DATE
+			      ,A.COMD_UPDT_CMAN
+			      ,A.COMD_INIT_DATE
+			      ,A.COMD_INIT_CMAN
+			      ,A.COMD_INIT_NAME
+                  ,CASE WHEN C.COMMENTS IS NULL THEN 'N' WHEN C.COMMENTS <> A.COMD_TABL_NAME THEN 'E' ELSE 'Y' END DESC_YN	
+              	  ,(SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = A.COMD_TABL_ID) CNT_COL
+	              ,(SELECT COUNT(*) FROM USER_COL_COMMENTS WHERE TABLE_NAME = A.COMD_TABL_ID AND COMMENTS IS NOT NULL AND SUBSTRING(COMMENTS,1,1) <> '.') CNT_COL_DESC
+                  ,C.COMMENTS CMT		      
+			  FROM (
+		   	        SELECT A.PKMS_CORP_CODE COMD_CORP_CODE
+			              ,A.PKMS_COME_CODE COMD_COME_CODE
+			              ,A.PKMS_TABL_ID   COMD_TABL_ID  
+			              ,A.PKMS_SORT_NUMB COMD_SORT_NUMB
+			              ,A.PKMS_TABL_NAME COMD_TABL_NAME
+			              ,A.PKMS_UPDT_DATE COMD_UPDT_DATE
+			              ,A.PKMS_UPDT_CMAN COMD_UPDT_CMAN
+			              ,A.PKMS_INIT_DATE COMD_INIT_DATE
+			              ,A.PKMS_INIT_CMAN COMD_INIT_CMAN
+                          ,CRFT_USER_EMPL_NAME(A.PKMS_INIT_CMAN)  COMD_INIT_NAME
+			          FROM CITBPKMS A
+			              LEFT OUTER JOIN 
+			               CITBMTCD B
+			              ON    B.MTCD_CORP_CODE = A.PKMS_CORP_CODE  
+			                AND B.MTCD_COME_CODE = A.PKMS_COME_CODE   	
+			         WHERE A.PKMS_CORP_CODE = #corp_cd#
+			          @sql@
+   			          [AND A.PKMS_COME_CODE LIKE '%'||UPPER(#pkms_come_code#)||'%']
+   			          [AND A.PKMS_TABL_NAME LIKE '%'||UPPER(#pkms_tabl_name#)||'%']
+   		            UNION ALL
+   			        SELECT PKMS_CORP_CODE COMD_CORP_CODE
+			              ,PKMS_COME_CODE COMD_COME_CODE
+			              ,PKMS_TABL_ID   COMD_TABL_ID  
+			              ,PKMS_SORT_NUMB COMD_SORT_NUMB
+			              ,PKMS_TABL_NAME COMD_TABL_NAME
+			              ,PKMS_UPDT_DATE COMD_UPDT_DATE
+			              ,PKMS_UPDT_CMAN COMD_UPDT_CMAN
+			              ,PKMS_INIT_DATE COMD_INIT_DATE
+			              ,PKMS_INIT_CMAN COMD_INIT_CMAN
+                          ,CRFT_USER_EMPL_NAME(PKMS_INIT_CMAN)  COMD_INIT_NAME
+			          FROM CITBPKMS
+			         WHERE PKMS_CORP_CODE = #corp_cd#
+			           AND PKMS_COME_CODE = 'ALL0'
+			       ) A
+			       LEFT OUTER JOIN
+			        USER_TAB_COMMENTS C
+                   ON C.TABLE_NAME = A.COMD_TABL_ID
+              ORDER BY A.COMD_SORT_NUMB
+        ]]>
+	</sql>	
+
+	<sql id="pkmslist.autoinsert" comment="공법테이블  자동등록">
+        <![CDATA[
+        	INSERT INTO CITBPKMS
+            SELECT A.PKMS_CORP_CODE
+                  ,A.PKMS_COME_CODE
+                  ,A.PKMS_TABL_ID
+                  ,ROWNUM + ( SELECT COUNT(*) FROM CITBPKMS ) PKMS_SORT_NUMB
+                  ,A.PKMS_TABL_NAME
+                  ,A.PKMS_UPDT_DATE
+                  ,A.PKMS_UPDT_CMAN
+                  ,A.PKMS_INIT_DATE
+                  ,A.PKMS_INIT_CMAN
+              FROM (
+                    SELECT DISTINCT
+                           B.MTCD_CORP_CODE PKMS_CORP_CODE
+                          ,B.MTCD_COME_CODE PKMS_COME_CODE
+                          ,A.TABLE_NAME     PKMS_TABL_ID
+                          ,C.COMMENTS       PKMS_TABL_NAME
+                          ,TO_CHAR(SYSDATE, 'YYYYMMDD') PKMS_UPDT_DATE
+                          ,'SYSTEM'                     PKMS_UPDT_CMAN
+                          ,TO_CHAR(SYSDATE, 'YYYYMMDD') PKMS_INIT_DATE
+                          ,'SYSTEM'                     PKMS_INIT_CMAN
+                      FROM USER_CONS_COLUMNS A
+                          ,CITBMTCD B
+                          ,ALL_TAB_COMMENTS C
+                     WHERE SUBSTR(A.TABLE_NAME, 5,3) = SUBSTR(B.MTCD_COME_CODE, 1, 3)
+                       AND A.TABLE_NAME = C.TABLE_NAME
+                       AND LENGTH(A.TABLE_NAME) <= 8
+                       AND B.MTCD_CORP_CODE = #corp_cd#
+                       @sql@
+                   ) A
+                 ,   CITBPKMS B
+               WHERE A.PKMS_CORP_CODE = B.PKMS_CORP_CODE(+)
+                 AND A.PKMS_COME_CODE = B.PKMS_COME_CODE(+)
+                 AND A.PKMS_TABL_ID   = B.PKMS_TABL_ID(+)
+                 AND B.PKMS_TABL_ID IS NULL
+        ]]>
+	</sql>
+
+
+	<sql id="pkmslist.insert" comment="공법정보 테이블 추가">
+        <![CDATA[
+        	INSERT INTO CITBPKMS (
+				 PKMS_CORP_CODE
+			  	,PKMS_COME_CODE
+			  	,PKMS_TABL_ID  
+              	,PKMS_SORT_NUMB
+			  	,PKMS_TABL_NAME
+			  	,PKMS_UPDT_DATE
+			  	,PKMS_UPDT_CMAN
+			  	,PKMS_INIT_DATE
+		        ,PKMS_INIT_CMAN
+		    ) VALUES (
+             	 #corp_cd#
+                ,UPPER(#comd_come_code#)
+                ,UPPER(#comd_tabl_id#)
+                ,#comd_sort_numb#
+                ,UPPER(#comd_tabl_name#)
+                ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                ,#reg_id#
+                ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                ,#reg_id#
+			)
+        ]]>
+	</sql>
+
+	<sql id="pkmslist.update" comment="공법정보 테이블 수정">
+        <![CDATA[
+	        UPDATE CITBPKMS
+   			   SET PKMS_TABL_NAME = UPPER(#comd_tabl_name#)
+   			      ,PKMS_SORT_NUMB = #comd_sort_numb#
+       			  ,PKMS_UPDT_DATE = TO_CHAR(SYSDATE,'YYYYMMDD')
+       			  ,PKMS_UPDT_CMAN = #reg_id#
+ 			 WHERE PKMS_CORP_CODE = #corp_cd#
+   			   AND PKMS_COME_CODE = #comd_come_code#
+   			   AND PKMS_TABL_ID   = #comd_tabl_id#
+        ]]>
+	</sql>
+
+	<sql id="pkmslist.delete" comment="공법정보 테이블 삭제">
+        <![CDATA[
+	        DELETE 
+	          FROM CITBPKMS                                     
+ 			 WHERE PKMS_CORP_CODE = #corp_cd#
+   			   AND PKMS_COME_CODE = #comd_come_code#
+   			   AND PKMS_TABL_ID   = #comd_tabl_id#
+        ]]>
+	</sql>
+</sql-descriptor> 
