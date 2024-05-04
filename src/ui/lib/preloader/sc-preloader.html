@@ -1,0 +1,440 @@
+<!-- 어플리케이션을 사용하기 위한 필수 라이브러리 -->
+<script src="../../../bower_components/jquery/dist/jquery.min.js"></script>
+<script src="../timeShift/timeShift.js"></script>
+<script src="../custom/js/util.js"></script>
+<script src="../custom/js/commonAS.js"></script>
+<script src="/ui/bp/tcams/common/js/Msg.js"></script>
+
+<script>
+	(function(window, document) {
+		var PRELOADER = Object.create(HTMLElement.prototype),
+			thatDoc = document,
+			thisDoc = document._currentScript.ownerDocument,
+			mdiConfig = (window.Polymer.mdiConfig = {}),
+			convert = function(value){
+				var type = typeof value;
+				switch(type){
+					case 'object':
+	 				for(var key in value){
+						value[key] = convert(value[key]);
+					}
+					break;
+	 			case 'string':
+					if(value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(Z|[+-](\d{2}:?\d{2}))?$/)){
+						value = value.replace(/([+-])(\d{2})(\d{2})/, function(m,p1,p2,p3){
+						 	return p1+p2+":"+p3;
+						});
+						value = new Date(Date.parse(value));   	  				
+					}
+					break;
+				}
+				return value;
+			},
+			csrf = (function() {
+				var doc = document,
+					meta = doc.querySelector('meta[name=_csrf]'), _csrf;
+				
+				if(meta) {
+					_csrf = {
+						csrf : meta.content,
+						csrfHeader : doc.querySelector('meta[name=_csrf_header]').content,
+						csrfParameter : doc.querySelector('meta[name=_csrf_parameter]').content
+					}
+				}
+				return _csrf;
+			}()),
+			ajaxSettings = (function() {
+				var settings = {
+					method : 'POST',
+					dataType : 'json',
+					contentType: "application/json",
+					headers : {}
+				};
+				if(csrf) {
+					settings.headers[csrf.csrfHeader] = csrf.csrf;
+				}
+				return settings;
+			}());
+
+		PRELOADER._callbacks = [];
+		PRELOADER._moduleCallbacks = [];
+
+		//csrf 토큰정보 반환
+		PRELOADER.csrf = function() {
+			return csrf;
+		};
+		
+		//jquery ajax 설정정보 반환
+		PRELOADER.ajaxSettings = function() {
+			return ajaxSettings;
+		};
+		
+		PRELOADER.convert = function() {
+			return convert;
+		};
+		
+		PRELOADER.setTimeZone = function(){
+			var currentUser = SCSessionManager.currentUser;
+	        var timezone_cd = currentUser.timezone_cd;
+	        if("string" === typeof timezone_cd){
+	        	window.Date = TimeShift.Date;   // 전체 타임존을 사용할경우 적용
+	        	
+	        	SCSessionManager.currentUser.last_login_dt = new Date(SCSessionManager.currentUser.last_login_dt);
+	        	SCSessionManager.currentUser.pw_mod_dt = new Date(SCSessionManager.currentUser.last_login_dt);
+	        	
+	            // 분단위 전환
+	            var timezoneOffset = timezone_cd * 60;
+	            TimeShift.setTimezoneOffset(-timezoneOffset);
+	        }
+		};
+		
+		
+		PRELOADER.request = function(descriptor, service, data, setting){
+			return UT.serviceRequest.apply(UT,arguments);
+		};
+		
+
+		
+		PRELOADER.createdCallback = function() {
+			this.link = thatDoc.querySelector('link[href*="sc-preloader.html"]');
+			SCI18nManager.setLocale(this.link.getAttribute("locale"));
+			SCI18nProvider.prototype._$onResponse = SCI18nProvider.prototype._onResponse; 
+			SCI18nProvider.prototype._onResponse = function() {
+				if(this.response){
+					this.response.lastUpdated = new Date(this.response.lastUpdated);
+					this.response.locale = this.i18nAjax.body.locale;
+					this.fire('i18n-load-by-lastupdated', this.response);
+				}else{
+					SCI18nProvider.prototype._$onResponse.call(this);	
+				}
+			}
+			
+			$.when(this.i18n()/*기타*/).then(function() {
+				return this.ready();
+			}.bind(this)).then(function() {
+				console.log("preloader-completed");
+				this.dispatchEvent(new Event('preloader-completed'));
+			}.bind(this)).fail(function() {
+				alert("There is an error on login. Contact to administrator.");
+				Polymer.Base.reload();
+			});
+		};
+		
+		PRELOADER.locale = function() {
+			mdiConfig.locale = this.getAttribute('locale');
+			/** [UI변환] 7.0에서는 사용 가능한 로케일 정보를 DB에서 가져오지 않고, 클라이언트단에서 하드코딩으로 사용 */
+			mdiConfig.availableLocales = [
+				{
+					"locale" : "ko_KR",
+					"displayName" : "Korean"
+				},{
+					"locale" : "en_US",
+					"displayName" : "English"
+				},{
+					"locale" : "zh_CN",
+					"displayName" : "China"
+				}
+			];
+		};
+		
+		PRELOADER.onModuleReady = function(callback) {
+			if(this._moduleReadied) {
+				return callback();
+			}
+			this._moduleCallbacks.push(callback);
+		};
+		
+		PRELOADER.onReady = function(callback) {
+			if(this._readied) {
+				return callback();	
+			}
+			this._callbacks.push(callback);
+		};
+		
+		PRELOADER.ready = function() {
+			
+			var callbacks = this._callbacks,
+				fn;
+			
+			//SCHierachicalData 클래스를 CCHierachicalData 로 사요할 수 있도록 전역클래스로 대입
+			CCHierachicalData = SCHierachicalData;
+			this._readied = true;
+			this.delayLoad();
+			//callback run
+			while((fn = callbacks.shift(0))) {
+				fn()
+			}
+		};
+		
+		/* PRELOADER.role = function() {
+			return PRELOADER.request('framework', 'get.authority', {}, ajaxSettings).done(function(response){
+				// buttons, functions, roles
+				SCRoleManager.userFuncs = [].concat(response.functions, response.buttons)
+				SCRoleManager.userRoles = response.roles;
+			}.bind(this)).fail(function(){
+				console.error("메뉴 데이터 조회중 오류가 발생하였습니다.");
+			});
+		}; */
+		
+		PRELOADER.session = function() {
+			var config = ajaxSettings.headers = {
+					'Accept' : 'application/json', 	
+				    'Content-Type' : 'application/json',
+				    'X-Requested-With' : 'XMLHttpRequest'
+			};
+			return PRELOADER.request('framework', 'get.session.user', {}, config).then(function(response) {
+				return convert(response);
+			}).done(function(response) {
+				SCSessionManager.setUserDetails(response.user);
+			}.bind(this)).fail(function() {
+				console.error("사용자 정보 조회중 오류가 발생하였습니다.");
+			});
+		};
+		
+		PRELOADER.menu = function() {
+			return PRELOADER.request('login', 'getMenus', {}, ajaxSettings).done(function(response){
+				mdiConfig.menuList = response.menus;
+			}.bind(this)).fail(function(){
+				console.error("메뉴 데이터 조회중 오류가 발생하였습니다.");
+			});
+		};
+		
+		
+		PRELOADER.i18n = function() {
+				var win = window,
+				locale = SCI18nManager.getLocale();
+			
+			return PRELOADER.request('framework', 'get.locale.bundle', {
+				param : {
+					locale : locale,
+					lastUpdated : new Date(Number(localStorage.getItem('i18n-' + locale + '.lastUpdated') || '-2209107600000'))	
+				}
+			}, ajaxSettings).then(function(response) {
+				return convert(response);	
+			}).then(function(response) {
+				var languages = {
+					lastUpdated : response.param.lastUpdated,
+					messages : {}
+				};
+				var trimStringObject = function(obj, pre, post){
+					var strObj = JSON.stringify(obj);
+					if(pre && pre == "{"){
+						var preIdx = strObj.indexOf(pre);
+						strObj = strObj.substr(preIdx+1, strObj.length);
+					}
+					if(post && post == "}"){
+						var postIdx = strObj.lastIndexOf(post);
+						strObj = strObj.substr(0, postIdx);
+					}
+					return strObj;
+				}
+				var languageBundles = "";
+				if(response.result.language){
+					var keys = Object.keys(response.result);
+					for(var i=0; i<keys.length; i++){
+						if(i==0){
+							languageBundles = trimStringObject(response.result[keys[i]], null, "}");
+						}else if(i == keys.length-1){
+							languageBundles += ","+trimStringObject(response.result[keys[i]], "{", null);
+						}else{
+							languageBundles += ","+trimStringObject(response.result[keys[i]], "{", "}");
+						}
+					}
+					languages.messages = JSON.parse(languageBundles);
+				}
+				if(typeof win.Polymer === "object") {
+					win.Polymer.i18nResponse = languages;
+				}
+				else {
+					win.Polymer.Settings.i18nResponse = languages;
+				}
+
+				/** [UI전환] ko_KR인 경우, 다국어 정보가 없기 때문에 서버 요청 하지 않음 */
+            	SCI18nProvider.prototype.$loadByKeys = SCI18nProvider.prototype.loadByKeys;
+            	SCI18nProvider.prototype.loadByKeys = function(locale, keys){
+            		if(locale === 'ko_KR'){
+            			var obj = {}, clientMsgMark='STD.', clientMsg;
+	            	 	for(var i=0,len=keys.length,key; i<len; i++) {
+	            	 		key = keys[i];
+	            	 		if(win.MSG && (key.indexOf(clientMsgMark)>=0)){
+	            	 			clientMsg = MSG[key.replace(clientMsgMark, '')];
+	            	 		}
+	            	 		obj[key] = (!clientMsg) ? key : clientMsg;
+						}
+	            	 	return obj; 
+            		}else if(locale === 'en_US'){
+            			var obj = {}, clientMsgMark='STD.', clientMsg;
+	            	 	for(var i=0,len=keys.length,key; i<len; i++) {
+	            	 		key = keys[i];
+	            	 		if(win.MSG && (key.indexOf(clientMsgMark)>=0)){
+	            	 			clientMsg = MSG[key.replace(clientMsgMark, '')];
+	            	 		}
+	            	 		obj[key] = (!clientMsg) ? key : clientMsg;
+						}
+	            	 	return obj;
+            		}else{
+            			//SCI18nProvider.prototype.$loadByKeys.call(this, locale, keys);
+            		}
+            	}
+
+            	SCI18nManager.setLocale(this.link.getAttribute('locale'));
+				SCI18nManager.setProvider(new SCI18nProvider({ byKeysUrl : 'i18n/getByKeys.do', byLastUpdatedUrl : 'i18n/getByLastUpdated.do' }));
+				PRELOADER.i18nCompleted = true;
+			}.bind(this)).fail(function() {
+				console.error("다국어 메세지 조회중 오류가 발생하였습니다.");
+			});
+		};
+		
+		PRELOADER.complete = function() {
+			if(this.parentNode) {
+				thatDoc.body.removeChild(this);
+			}
+		};
+		
+
+		
+		PRELOADER.delayLoad = function() {
+			var mdi = document.querySelector('#mdiMain'),
+				load = (function(mdi) {
+					var progress = document.querySelector('div.top_progress'),
+						progressHandler = function() {
+							count++;
+							this.style.transform = this.style.webkitTrans = 'scaleX(' + (count / total) + ')';
+						}.bind(progress),
+						taskList = (function() {
+							var portalType = this.link.getAttribute('portal-type'),
+								links = thisDoc.querySelectorAll('sc-link:not([lazy])'),
+								scripts = Polymer.dom(thisDoc.body).queryDistributedElements('sc-script');
+								tasks = [];
+								for(var i=0,len=scripts.length; i<len; i++) {
+									if(scripts[i].hasAttribute('vue') && portalType !== 'vueGrid') {
+										continue;
+									}
+									tasks.push(function(script) {
+										return function() {
+											script.load().then(progressHandler);
+										}
+									}(scripts[i]));
+								}
+								for(var i=0,len=links.length; i<len; i++) {
+									tasks.push(function(link) {
+										return function() {
+											link.load().then(progressHandler);
+										}
+									}(links[i]));
+								}
+							return tasks;
+						}.bind(this)()),
+						total = taskList.length,
+						count = 0;
+					
+					function processTaskList() {
+						var taskStartTime = window.performance.now();
+						var taskFinishTime;
+						do {
+							var nextTask = taskList.shift();
+							if(nextTask) {
+								nextTask();
+							}
+							taskFinishTime = window.performance.now();
+						}
+						while(taskFinishTime - taskStartTime < 3);
+						if(taskList.length > 0) {
+							requestAnimationFrame(processTaskList.bind(this));
+						}
+						else {
+							var callbacks = this._moduleCallbacks;
+							this._moduleReadied = true;
+							while((fn = callbacks.shift(0))) {
+								fn()
+							}
+							requestAnimationFrame(function() {
+								this.style.opacity = '0';
+							}.bind(progress));
+						}
+					};
+					requestAnimationFrame(processTaskList.bind(this));
+				}.bind(this, mdi));
+				
+			if(!mdi || (mdi && mdi.mdiInitialized)) {
+				load();
+			}
+			else {
+				var mdiInitializedHandler = function(event) {
+					event.target.removeEventListener('mdi-initialized', mdiInitializedHandler);
+					load();
+					mdiInitializedHandler = null;
+				};
+				mdi.addEventListener('mdi-initialized', mdiInitializedHandler);
+			}
+		};
+		
+		window.SCPreloader = new(document.registerElement('sc-preloader', {
+			prototype : PRELOADER
+		}));
+		
+	}(window, document));
+
+</script>
+
+<sc-script src="../custom/js/def.js" defer></sc-script>
+<sc-script src="../big-number/lib/bignumber.min.js" defer></sc-script>
+<sc-script src="../custom/js/formatters.js" defer></sc-script>
+<sc-script src="../custom/js/validators.js" defer></sc-script>
+<!-- <sc-script src="../../../bower_components/cipher-util/cipher-util.min.js" defer></sc-script> -->
+<!-- <sc-script src="../../../bower_components/password-encryptor/password-encryptor.min.js" defer></sc-script> -->
+<!-- <sc-script src="../chart/highcharts.js"> -->
+<!-- 	<sc-script src="../chart/highcharts-more.js"></sc-script> -->
+<!-- 	<sc-script src="../chart/highcharts-3d.js"></sc-script>     -->
+<!-- 	<sc-script src="../chart/plugins/draggable-points.js"></sc-script> -->
+<!-- </sc-script> -->
+<sc-script src="../smartchart/smartchart-lic.js">
+	<sc-script src="../smartchart/smart-charting.min.js"></sc-script>
+</sc-script>
+<sc-script src="../../../bower_components/smartsuite/excel/smartsuite-excel-export.min.js">
+	<sc-script src="../excelexport/export-override.js"></sc-script>
+</sc-script>
+<sc-link rel="import" href="../custom/html/cc-elements.html"></sc-link>
+<sc-link rel="import" href="script-loader.html"></sc-link>
+<sc-script src="../../../resources/lib/vue-grid/vue.min.js" vue></sc-script>
+<sc-script src="../../../resources/lib/vue-grid/vue-grid-layout.min.js" vue></sc-script>
+
+<!-- 컨버전 프로젝트 종속적인 엘리먼트 -->
+<sc-link rel="import" href="../custom/html/volcano/sc-service-provider/sc-service-provider.html"></sc-link>
+<sc-link rel="import" href="../custom/html/volcano/sc-code-provider/sc-code-provider.html"></sc-link>
+<sc-link rel="import" href="../custom/html/volcano/sc-service-group/sc-service-group.html"></sc-link>
+
+<!-- smartsuite package -->
+<!-- sc-grid -->
+<sc-link rel="import" href="../../../ui/sc-grid-paging-override.html"></sc-link>
+<sc-link rel="stylesheet" type="text/css" href="../../../bower_components/sc-grid/resources/css/sc-grid.css" lazy></sc-link>
+<sc-link rel="import" href="../../../bower_components/sc-grid/sc-grid.build.html" lazy>
+	<sc-link rel="import" href="../../../ui/grid-override.html" lazy></sc-link>
+</sc-link>
+	
+</sc-link>
+
+<!-- sc-upload -->
+<sc-link rel="import" href="../../../ui/sc-upload-override.html"></sc-link>
+<sc-link rel="stylesheet" type="text/css" href="../../../bower_components/sc-upload/sc-upload.build.css" lazy></sc-link>
+<sc-link rel="import" href="../../../bower_components/sc-upload/sc-upload.build.html" lazy></sc-link>
+
+<!-- sc-editor -->
+<sc-link rel="import" href="../../../bower_components/sc-editor/sc-editor.build.html" lazy></sc-link>
+
+<!-- smartsuite-myapp -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../bower_components/smartsuite/myapp/resources/css/smartsuite-myapp.css" lazy></sc-link> -->
+<!-- <sc-link rel="import" href="../../../bower_components/smartsuite/myapp/smartsuite-myapp.html" lazy></sc-link> -->
+<!-- smartsuite-memo -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../bower_components/smartsuite/memo/resources/css/smartsuite-memo-common.css"></sc-link> -->
+<!-- <sc-link rel="import" href="../../../bower_components/smartsuite/memo/smartsuite-memo-list.html" lazy></sc-link> -->
+<!-- smartsuite-sceduler -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../bower_components/smartsuite/scheduler/resources/css/smartsuite-scheduler-common.css" tag-name="smartsuite-scheduler-mgt-list" lazy></sc-link> -->
+<!-- <sc-link rel="import" href="../../../bower_components/smartsuite/scheduler/smartsuite-scheduler-mgt-list.html" lazy></sc-link> -->
+<!-- smartsuite-hint -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../bower_components/smartsuite/hint/resources/css/smartsuite-hint-common.css" tag-name="smartsuite-hint-view,smartsuite-hint-setting" lazy></sc-link> -->
+<!-- <sc-link rel="import" href="../../../bower_components/smartsuite/hint/smartsuite-hint-setting.html" lazy></sc-link> -->
+<!-- <sc-link rel="import" href="../../../bower_components/smartsuite/hint/smartsuite-hint-view.html" lazy></sc-link> -->
+<!-- smartsuite-portal -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../resources/css/portal.css"></sc-link> -->
+<!-- <sc-link rel="stylesheet" type="text/css" href="../../../resources/lib/vue-grid/css/vue-grid.css"></sc-link> -->
