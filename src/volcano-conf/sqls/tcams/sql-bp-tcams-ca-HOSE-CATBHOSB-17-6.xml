@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSB/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSB_CORP_CODE
+ ,HOSB_STND_GUBN
+ ,HOSB_STND_DEGR
+ ,HOSB_SEQ0
+ ,HOSB_SHAP_GRP2
+ ,HOSB_OUT0_MIN0
+ ,HOSB_OUT0_MAX0
+ ,HOSB_NET0_MIN0
+ ,HOSB_NET0_MAX0
+ ,HOSB_NET0_CYTM
+ ,HOSB_INIT_CUTT
+ ,HOSB_STRI_CNT0
+ ,HOSB_CUTT_TIME
+ ,HOSB_INIT_LENG
+ ,HOSB_APPL_GUBN
+ ,HOSB_REMK
+ ,HOSB_UPDT_CMAN
+ ,HOSB_UPDT_DATE
+ ,HOSB_INIT_CMAN
+ ,HOSB_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'GRP2_STR' ,'0' ,'16' ,'0' ,'100' ,'0' ,'10' ,'3' ,'4.5' ,'1500' ,'Y' ,'직HOSE' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'GRP2_STR' ,'16' ,'25' ,'0' ,'100' ,'0' ,'8' ,'2' ,'4.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'GRP2_STR' ,'25' ,'40' ,'0' ,'100' ,'0' ,'5' ,'1' ,'4.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'GRP2_STR' ,'40' ,'50' ,'0' ,'100' ,'0' ,'5' ,'1' ,'5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'GRP2_STR' ,'50' ,'99999999' ,'0' ,'100' ,'0' ,'5' ,'1' ,'5.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'GRP2_STR' ,'0' ,'16' ,'100' ,'200' ,'0' ,'10' ,'3' ,'5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'GRP2_STR' ,'16' ,'25' ,'100' ,'200' ,'0' ,'8' ,'2' ,'5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'GRP2_STR' ,'25' ,'40' ,'100' ,'200' ,'0' ,'5' ,'1' ,'5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'GRP2_STR' ,'40' ,'50' ,'100' ,'200' ,'0' ,'5' ,'1' ,'5.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'GRP2_STR' ,'50' ,'99999999' ,'100' ,'200' ,'0' ,'5' ,'1' ,'6' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'GRP2_STR' ,'0' ,'16' ,'200' ,'300' ,'0' ,'10' ,'3' ,'5.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'GRP2_STR' ,'16' ,'25' ,'200' ,'300' ,'0' ,'8' ,'2' ,'5.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'GRP2_STR' ,'25' ,'40' ,'200' ,'300' ,'0' ,'5' ,'1' ,'5.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'GRP2_STR' ,'40' ,'50' ,'200' ,'300' ,'0' ,'5' ,'1' ,'6' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'GRP2_STR' ,'50' ,'99999999' ,'200' ,'300' ,'0' ,'5' ,'1' ,'6.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'GRP2_STR' ,'0' ,'16' ,'300' ,'400' ,'0' ,'10' ,'3' ,'6' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'GRP2_STR' ,'16' ,'25' ,'300' ,'400' ,'0' ,'8' ,'2' ,'6' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'GRP2_STR' ,'25' ,'40' ,'300' ,'400' ,'0' ,'5' ,'1' ,'6' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'GRP2_STR' ,'40' ,'50' ,'300' ,'400' ,'0' ,'5' ,'1' ,'6.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'GRP2_STR' ,'50' ,'99999999' ,'300' ,'400' ,'0' ,'5' ,'1' ,'7' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'GRP2_STR' ,'0' ,'16' ,'400' ,'500' ,'0' ,'10' ,'3' ,'6.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'GRP2_STR' ,'16' ,'25' ,'400' ,'500' ,'0' ,'8' ,'2' ,'6.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'23' ,'GRP2_STR' ,'25' ,'40' ,'400' ,'500' ,'0' ,'5' ,'1' ,'6.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'24' ,'GRP2_STR' ,'40' ,'50' ,'400' ,'500' ,'0' ,'5' ,'1' ,'7' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'25' ,'GRP2_STR' ,'50' ,'99999999' ,'400' ,'500' ,'0' ,'5' ,'1' ,'7.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'26' ,'GRP2_STR' ,'0' ,'16' ,'500' ,'600' ,'0' ,'10' ,'3' ,'7' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'27' ,'GRP2_STR' ,'16' ,'25' ,'500' ,'600' ,'0' ,'8' ,'2' ,'7' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'28' ,'GRP2_STR' ,'25' ,'40' ,'500' ,'600' ,'0' ,'5' ,'1' ,'7' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'29' ,'GRP2_STR' ,'40' ,'50' ,'500' ,'600' ,'0' ,'5' ,'1' ,'7.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'30' ,'GRP2_STR' ,'50' ,'99999999' ,'500' ,'600' ,'0' ,'5' ,'1' ,'8' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'31' ,'GRP2_STR' ,'0' ,'16' ,'600' ,'99999999' ,'0' ,'10' ,'3' ,'7.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'32' ,'GRP2_STR' ,'16' ,'25' ,'600' ,'99999999' ,'0' ,'8' ,'2' ,'7.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'33' ,'GRP2_STR' ,'25' ,'40' ,'600' ,'99999999' ,'0' ,'5' ,'1' ,'7.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'34' ,'GRP2_STR' ,'40' ,'50' ,'600' ,'99999999' ,'0' ,'5' ,'1' ,'8' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'35' ,'GRP2_STR' ,'50' ,'99999999' ,'600' ,'99999999' ,'0' ,'5' ,'1' ,'8.5' ,'1500' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'36' ,'GRP2_CUR' ,'0' ,'10' ,'0' ,'150' ,'8.1' ,'0' ,'0' ,'0' ,'0' ,'Y' ,'곡 HOSE' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'37' ,'GRP2_CUR' ,'0' ,'10' ,'150' ,'200' ,'8.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'38' ,'GRP2_CUR' ,'0' ,'10' ,'200' ,'280' ,'8.9' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'39' ,'GRP2_CUR' ,'0' ,'10' ,'280' ,'350' ,'9.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'40' ,'GRP2_CUR' ,'0' ,'10' ,'350' ,'440' ,'9.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'41' ,'GRP2_CUR' ,'0' ,'10' ,'440' ,'520' ,'10.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'42' ,'GRP2_CUR' ,'0' ,'10' ,'520' ,'600' ,'10.8' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'43' ,'GRP2_CUR' ,'0' ,'10' ,'600' ,'800' ,'11.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'44' ,'GRP2_CUR' ,'0' ,'10' ,'800' ,'99999999' ,'12.6' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'45' ,'GRP2_CUR' ,'10' ,'20' ,'0' ,'150' ,'8.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'46' ,'GRP2_CUR' ,'10' ,'20' ,'150' ,'200' ,'8.9' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'47' ,'GRP2_CUR' ,'10' ,'20' ,'200' ,'280' ,'9.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'48' ,'GRP2_CUR' ,'10' ,'20' ,'280' ,'350' ,'9.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'49' ,'GRP2_CUR' ,'10' ,'20' ,'350' ,'440' ,'10.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'50' ,'GRP2_CUR' ,'10' ,'20' ,'440' ,'520' ,'11.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'51' ,'GRP2_CUR' ,'10' ,'20' ,'520' ,'600' ,'12.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'52' ,'GRP2_CUR' ,'10' ,'20' ,'600' ,'800' ,'13.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'53' ,'GRP2_CUR' ,'10' ,'20' ,'800' ,'99999999' ,'14.9' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'54' ,'GRP2_CUR' ,'20' ,'30' ,'0' ,'150' ,'8.9' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'55' ,'GRP2_CUR' ,'20' ,'30' ,'150' ,'200' ,'9.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'56' ,'GRP2_CUR' ,'20' ,'30' ,'200' ,'280' ,'10.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'57' ,'GRP2_CUR' ,'20' ,'30' ,'280' ,'350' ,'10.8' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'58' ,'GRP2_CUR' ,'20' ,'30' ,'350' ,'440' ,'11.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'59' ,'GRP2_CUR' ,'20' ,'30' ,'440' ,'520' ,'12.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'60' ,'GRP2_CUR' ,'20' ,'30' ,'520' ,'600' ,'13.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'61' ,'GRP2_CUR' ,'20' ,'30' ,'600' ,'800' ,'14.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'62' ,'GRP2_CUR' ,'20' ,'30' ,'800' ,'99999999' ,'15.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'63' ,'GRP2_CUR' ,'30' ,'40' ,'0' ,'150' ,'10.8' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'64' ,'GRP2_CUR' ,'30' ,'40' ,'150' ,'200' ,'11.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'65' ,'GRP2_CUR' ,'30' ,'40' ,'200' ,'280' ,'12.1' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'66' ,'GRP2_CUR' ,'30' ,'40' ,'280' ,'350' ,'12.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'67' ,'GRP2_CUR' ,'30' ,'40' ,'350' ,'440' ,'13.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'68' ,'GRP2_CUR' ,'30' ,'40' ,'440' ,'520' ,'14.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'69' ,'GRP2_CUR' ,'30' ,'40' ,'520' ,'600' ,'15.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'70' ,'GRP2_CUR' ,'30' ,'40' ,'600' ,'800' ,'16.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'71' ,'GRP2_CUR' ,'30' ,'40' ,'800' ,'99999999' ,'18' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'72' ,'GRP2_CUR' ,'40' ,'50' ,'0' ,'150' ,'11.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'73' ,'GRP2_CUR' ,'40' ,'50' ,'150' ,'200' ,'12.1' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'74' ,'GRP2_CUR' ,'40' ,'50' ,'200' ,'280' ,'12.7' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'75' ,'GRP2_CUR' ,'40' ,'50' ,'280' ,'350' ,'13.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'76' ,'GRP2_CUR' ,'40' ,'50' ,'350' ,'440' ,'14.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'77' ,'GRP2_CUR' ,'40' ,'50' ,'440' ,'520' ,'15.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'78' ,'GRP2_CUR' ,'40' ,'50' ,'520' ,'600' ,'16.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'79' ,'GRP2_CUR' ,'40' ,'50' ,'600' ,'800' ,'17.6' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'80' ,'GRP2_CUR' ,'40' ,'50' ,'800' ,'99999999' ,'19.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'81' ,'GRP2_CUR' ,'50' ,'99999999' ,'0' ,'150' ,'13.5' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'82' ,'GRP2_CUR' ,'50' ,'99999999' ,'150' ,'200' ,'14.4' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'83' ,'GRP2_CUR' ,'50' ,'99999999' ,'200' ,'280' ,'15.3' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'84' ,'GRP2_CUR' ,'50' ,'99999999' ,'280' ,'350' ,'16.2' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'85' ,'GRP2_CUR' ,'50' ,'99999999' ,'350' ,'440' ,'17.1' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'86' ,'GRP2_CUR' ,'50' ,'99999999' ,'440' ,'520' ,'18' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'87' ,'GRP2_CUR' ,'50' ,'99999999' ,'520' ,'600' ,'18.9' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'88' ,'GRP2_CUR' ,'50' ,'99999999' ,'600' ,'800' ,'19.8' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'89' ,'GRP2_CUR' ,'50' ,'99999999' ,'800' ,'99999999' ,'21.8' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSB_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSB_UPDT_DATE > B.HOSB_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSB B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSB (
+  HOSB_CORP_CODE
+ ,HOSB_STND_GUBN
+ ,HOSB_STND_DEGR
+ ,HOSB_SEQ0
+ ,HOSB_SHAP_GRP2
+ ,HOSB_OUT0_MIN0
+ ,HOSB_OUT0_MAX0
+ ,HOSB_NET0_MIN0
+ ,HOSB_NET0_MAX0
+ ,HOSB_NET0_CYTM
+ ,HOSB_INIT_CUTT
+ ,HOSB_STRI_CNT0
+ ,HOSB_CUTT_TIME
+ ,HOSB_INIT_LENG
+ ,HOSB_APPL_GUBN
+ ,HOSB_REMK
+ ,HOSB_UPDT_CMAN
+ ,HOSB_UPDT_DATE
+ ,HOSB_INIT_CMAN
+ ,HOSB_INIT_DATE
+) VALUES (
+  #hosb_corp_code#
+ ,#hosb_stnd_gubn#
+ ,#hosb_stnd_degr#
+ ,#hosb_seq0#
+ ,#hosb_shap_grp2#
+ ,#hosb_out0_min0#
+ ,#hosb_out0_max0#
+ ,#hosb_net0_min0#
+ ,#hosb_net0_max0#
+ ,#hosb_net0_cytm#
+ ,#hosb_init_cutt#
+ ,#hosb_stri_cnt0#
+ ,#hosb_cutt_time#
+ ,#hosb_init_leng#
+ ,#hosb_appl_gubn#
+ ,#hosb_remk#
+ ,#hosb_updt_cman#
+ ,#hosb_updt_date#
+ ,#hosb_init_cman#
+ ,#hosb_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSB
+HOSB_CORP_CODE = #hosb_corp_code#   SET HOSB_STND_GUBN = #hosb_stnd_gubn#
+      ,HOSB_STND_DEGR = #hosb_stnd_degr#
+      ,HOSB_SEQ0 = #hosb_seq0#
+      ,HOSB_SHAP_GRP2 = #hosb_shap_grp2#
+      ,HOSB_OUT0_MIN0 = #hosb_out0_min0#
+      ,HOSB_OUT0_MAX0 = #hosb_out0_max0#
+      ,HOSB_NET0_MIN0 = #hosb_net0_min0#
+      ,HOSB_NET0_MAX0 = #hosb_net0_max0#
+      ,HOSB_NET0_CYTM = #hosb_net0_cytm#
+      ,HOSB_STRI_CNT0 = #hosb_stri_cnt0#
+      ,HOSB_CUTT_TIME = #hosb_cutt_time#
+      ,HOSB_APPL_GUBN = #hosb_appl_gubn#
+      ,HOSB_REMK = #hosb_remk#
+      ,HOSB_UPDT_CMAN = #hosb_updt_cman#
+      ,HOSB_UPDT_DATE = #hosb_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 
