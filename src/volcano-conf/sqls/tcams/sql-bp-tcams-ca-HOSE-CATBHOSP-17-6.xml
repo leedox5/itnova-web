@@ -407,7 +407,11 @@ SELECT CASE
   FROM T1 A                                                
       LEFT OUTER JOIN                                      
        CATBHOSP B                                          
-
+      ON    B.HOSP_CORP_CODE = A.HOSP_CORP_CODE
+        AND B.HOSP_STND_GUBN = A.HOSP_STND_GUBN
+        AND B.HOSP_STND_DEGR = A.HOSP_STND_DEGR
+        AND B.HOSP_PROC_SEQ0 = A.HOSP_PROC_SEQ0
+        AND B.HOSP_PROC_GUBN = A.HOSP_PROC_GUBN
   ]]>
  </sql>
 
@@ -498,11 +502,7 @@ INSERT INTO CATBHOSP (
  <sql id="update" comment="업데이트">
   <![CDATA[
 UPDATE CATBHOSP
-HOSP_CORP_CODE = #hosp_corp_code#   SET HOSP_STND_GUBN = #hosp_stnd_gubn#
-      ,HOSP_STND_DEGR = #hosp_stnd_degr#
-      ,HOSP_PROC_SEQ0 = #hosp_proc_seq0#
-      ,HOSP_PROC_GUBN = #hosp_proc_gubn#
-      ,HOSP_HOSE_CODE = #hosp_hose_code#
+   SET HOSP_HOSE_CODE = #hosp_hose_code#
       ,HOSP_INJT_GUBN = #hosp_injt_gubn#
       ,HOSP_UJIK_CODE = #hosp_ujik_code#
       ,HOSP_SHAP_CODE = #hosp_shap_code#
@@ -533,7 +533,11 @@ HOSP_CORP_CODE = #hosp_corp_code#   SET HOSP_STND_GUBN = #hosp_stnd_gubn#
       ,HOSP_REMK = #hosp_remk#
       ,HOSP_UPDT_CMAN = #hosp_updt_cman#
       ,HOSP_UPDT_DATE = #hosp_updt_date#
-
+ WHERE HOSP_CORP_CODE = #hosp_corp_code#
+   AND HOSP_STND_GUBN = #hosp_stnd_gubn#
+   AND HOSP_STND_DEGR = #hosp_stnd_degr#
+   AND HOSP_PROC_SEQ0 = #hosp_proc_seq0#
+   AND HOSP_PROC_GUBN = #hosp_proc_gubn#
   ]]>
  </sql>
 </sql-descriptor> 

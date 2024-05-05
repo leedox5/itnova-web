@@ -84,7 +84,11 @@ SELECT CASE
   FROM T1 A                                                
       LEFT OUTER JOIN                                      
        CATBHOSM B                                          
-
+      ON    B.HOSM_CORP_CODE = A.HOSM_CORP_CODE
+        AND B.HOSM_STND_GUBN = A.HOSM_STND_GUBN
+        AND B.HOSM_STND_DEGR = A.HOSM_STND_DEGR
+        AND B.HOSM_MATL_SEQ0 = A.HOSM_MATL_SEQ0
+        AND B.HOSM_MATL_GUBN = A.HOSM_MATL_GUBN
   ]]>
  </sql>
 
@@ -147,11 +151,7 @@ INSERT INTO CATBHOSM (
  <sql id="update" comment="업데이트">
   <![CDATA[
 UPDATE CATBHOSM
-HOSM_CORP_CODE = #hosm_corp_code#   SET HOSM_STND_GUBN = #hosm_stnd_gubn#
-      ,HOSM_STND_DEGR = #hosm_stnd_degr#
-      ,HOSM_MATL_SEQ0 = #hosm_matl_seq0#
-      ,HOSM_MATL_GUBN = #hosm_matl_gubn#
-      ,HOSM_HOSE_CODE = #hosm_hose_code#
+   SET HOSM_HOSE_CODE = #hosm_hose_code#
       ,HOSM_INJT_CODE = #hosm_injt_code#
       ,HOSM_SHAP_CODE = #hosm_shap_code#
       ,HOSM_IN00_CODE = #hosm_in00_code#
@@ -168,7 +168,11 @@ HOSM_CORP_CODE = #hosm_corp_code#   SET HOSM_STND_GUBN = #hosm_stnd_gubn#
       ,HOSM_REMK = #hosm_remk#
       ,HOSM_UPDT_CMAN = #hosm_updt_cman#
       ,HOSM_UPDT_DATE = #hosm_updt_date#
-
+ WHERE HOSM_CORP_CODE = #hosm_corp_code#
+   AND HOSM_STND_GUBN = #hosm_stnd_gubn#
+   AND HOSM_STND_DEGR = #hosm_stnd_degr#
+   AND HOSM_MATL_SEQ0 = #hosm_matl_seq0#
+   AND HOSM_MATL_GUBN = #hosm_matl_gubn#
   ]]>
  </sql>
 </sql-descriptor> 
