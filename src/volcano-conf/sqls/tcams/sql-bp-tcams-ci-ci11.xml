@@ -44,8 +44,8 @@ SELECT ROW_NUMBER() OVER(ORDER BY MTCD_METH_GUBN, MTDG_APPL_DATE) COMD_SEQ
            AND DTL_CD LIKE
                CASE
                 WHEN INSTR(MTDG_STND_DEGR,'-') > 0 THEN
-                         SUBSTRING(MTDG_STND_DEGR,1,INSTR(MTDG_STND_DEGR,'-')-1)
-                 || LPAD(SUBSTRING(MTDG_STND_DEGR,INSTR(MTDG_STND_DEGR,'-')+1),2,'0')
+                         SUBSTR(MTDG_STND_DEGR,1,INSTR(MTDG_STND_DEGR,'-')-1)
+                 || LPAD(SUBSTR(MTDG_STND_DEGR,INSTR(MTDG_STND_DEGR,'-')+1),2,'0')
                 ELSE LPAD(MTDG_STND_DEGR,2,'0') || '00'
                END || '%'
            ) PROC_NAME_X0831
@@ -360,33 +360,72 @@ SELECT ROW_NUMBER() OVER(ORDER BY MTCD_METH_GUBN, MTCD_SORT_KEY0) COMD_SEQ
         ]]>
     </sql>
 
+ <sql id="CHK.2405.001" comment="CHECK">
+  <![CDATA[
+WITH T1 (
+ C1 
+) AS (
+ SELECT #comd_tabl_id# FROM DUAL 
+)  
+SELECT CASE WHEN B.PKCL_CORP_CODE IS NULL THEN 'N' ELSE 'E' END CHK_YN 
+  FROM T1 A
+      LEFT OUTER JOIN
+       CITBPKCL B
+      ON B.PKCL_TABL_ID = A.C1
+  ]]>
+ </sql>
+
  <sql id="come_header.select" comment="공법헤더">
   <![CDATA[
-            SELECT PKCL_CORP_CODE
-                  ,PKCL_COME_CODE
-                  ,PKCL_TABL_ID
-                  ,PKCL_COLM_ID
-                  ,PKCL_SORT_NUMB
-                  ,PKCL_COLM_NAME
-                  ,PKCL_DATA_TYPE
-                  ,PKCL_DATA_LENG
-                  ,CASE WHEN PKCL_COLM_ALGN = 'C' THEN 'center'
-                        WHEN PKCL_COLM_ALGN = 'R' THEN 'right'
-                        WHEN PKCL_COLM_ALGN = 'L' THEN 'left'
-                        ELSE ''
-                    END  PKCL_TEXT_ALIGN
-                  ,PKCL_WITH_SCRN
-                  ,PKCL_DISP_ALLW
-                  ,PKCL_UPDT_DATE
-                  ,PKCL_UPDT_CMAN
-                  ,PKCL_INIT_DATE
-                  ,PKCL_INIT_CMAN
-                  ,CRFT_USER_EMPL_NAME(PKCL_INIT_CMAN)  COMD_INIT_NAME
-              FROM CITBPKCL
-             WHERE 1=1
-              [AND PKCL_COME_CODE = #comd_come_code#]
-              [AND PKCL_TABL_ID   = #comd_tabl_id#]
-             ORDER BY PKCL_SORT_NUMB
+SELECT PKCL_CORP_CODE
+      ,PKCL_COME_CODE
+      ,PKCL_TABL_ID
+      ,PKCL_COLM_ID
+      ,PKCL_SORT_NUMB
+      ,PKCL_COLM_NAME
+      ,PKCL_DATA_TYPE
+      ,PKCL_DATA_LENG
+      ,CASE WHEN PKCL_COLM_ALGN = 'C' THEN 'center'
+            WHEN PKCL_COLM_ALGN = 'R' THEN 'right'
+            WHEN PKCL_COLM_ALGN = 'L' THEN 'left'
+            ELSE ''
+        END  PKCL_TEXT_ALIGN
+      ,PKCL_WITH_SCRN
+      ,PKCL_DISP_ALLW
+      ,PKCL_UPDT_DATE
+      ,PKCL_UPDT_CMAN
+      ,PKCL_INIT_DATE
+      ,PKCL_INIT_CMAN
+      ,CRFT_USER_EMPL_NAME(PKCL_INIT_CMAN)  COMD_INIT_NAME
+  FROM CITBPKCL
+ WHERE 1=1
+  [AND PKCL_COME_CODE = #comd_come_code#]
+  [AND PKCL_TABL_ID   = #comd_tabl_id#]
+ ORDER BY PKCL_SORT_NUMB
+  ]]>
+ </sql>
+
+ <sql id="come_header.select.0505" comment="공법헤더">
+  <![CDATA[
+SELECT 'K1'        PKCL_CORP_CODE
+      ,#comd_come_code#      PKCL_COME_CODE
+      ,TABLE_NAME  PKCL_TABL_ID
+      ,COLUMN_NAME PKCL_COLM_ID
+      ,COLUMN_ID   PKCL_SORT_NUMB
+      ,COLUMN_NAME PKCL_COLM_NAME
+      ,DATA_TYPE   PKCL_DATA_TYPE
+      ,DATA_LENGTH PKCL_DATA_LENG
+      ,'C'         PKCL_TEXT_ALIGN
+      ,100         PKCL_WITH_SCRN
+      ,'Y'         PKCL_DISP_ALLW
+      ,'20240505'  PKCL_UPDT_DATE
+      ,'SYSTEMPG'  PKCL_UPDT_CMAN
+      ,'20240505'  PKCL_INIT_DATE
+      ,'SYSTEMPG'  PKCL_INIT_CMAN
+      ,'SYSTEMPG'  COMD_INIT_NAME
+  FROM USER_TAB_COLUMNS
+ WHERE TABLE_NAME = #comd_tabl_id#
+ ORDER BY COLUMN_ID
   ]]>
  </sql>
 

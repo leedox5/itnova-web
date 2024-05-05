@@ -128,7 +128,16 @@
  <service id="get.come_header.list" label="공법 헤더">
   <script>
    <![CDATA[
-    $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "come_header.select", $data.searchParam);
+    var rows = new List();
+    var chk = $jdbc.query("bp/tcams/ci/ci11", "CHK.2405.001", $data.searchParam);
+    
+    if(chk.chk_yn == "N") {
+        rows = $jdbc.queryList("bp/tcams/ci/ci11", "come_header.select.0505", $data.searchParam);
+    } else {
+        rows = $jdbc.queryList("bp/tcams/ci/ci11", "come_header.select", $data.searchParam);
+    }
+    $data.resultList = rows;
+    
     var chks = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select", null);
     $data.DEV_AUTH = chks[0].dev_auth;
    ]]>
@@ -156,13 +165,29 @@
    <![CDATA[
     importClass(Packages.emro.util.StringUtil);
 
+    var rows = new List();
+    
     var row_str = "";
 
     try {
         $logger.info($data.searchParam);
         $logger.info($data.headerParam.size());
 
-        $data.resultList = $jdbc.queryList("bp/tcams/ci/ci11", "come_detail.select", $data.searchParam);
+        var tableId = $data.searchParam.table_id;
+        
+        var param = new Map();
+        param.comd_tabl_id = $data.searchParam.table_id;
+        
+        var chk = $jdbc.query("bp/tcams/ci/ci11", "CHK.2405.001", param);
+    
+        if(chk.chk_yn == "N") {
+            rows = $jdbc.queryList("bp/tcams/common/" + tableId, "S.2405.001", $data.searchParam);
+        } else {
+            rows = $jdbc.queryList("bp/tcams/ci/ci11", "come_detail.select", $data.searchParam);
+        }
+    
+        $data.resultList = rows;
+    
         for(var i = 0 ; i < $data.resultList.size() ; i++) {
             if(i == 0) {
                 row_str = "           SELECT ";
