@@ -1,0 +1,3349 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/hose/CASPHOSE_P17_6" data-source="tcamsDS">
+
+ <sql id="drop" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPHOSE_P17_6  
+  ]]>
+ </sql>
+
+ <sql id="error" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPHOSE_P17_6'    
+  ]]>
+ </sql>
+
+ <sql id="create" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE ESS.CASPHOSE_P17_6
+(
+    I_CORP_CODE  IN  CATBHOSI.HOSI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CATBHOSI.HOSI_PART_NO%TYPE  ,
+    I_EONO       IN  CATBHOSI.HOSI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CATBHOSI.HOSI_CUMT_NO%TYPE  ,
+    I_INIT_CMAN  IN  CATBHOSI.HOSI_INIT_CMAN%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_일반HOSE
+ * [HISTORY ]
+ *  - 2015.10.08 [K.U.K] : 신규작성(14-3차)
+ *  - 2017.08.09 [A.S.M] : 개정    (15  차)
+ *    [주요변경사항] 일반HOSE와 HOSE PAD는 별개로 처리 : 둘다 한꺼번에 처리하지 않음 (둘중 하나만 가능)
+ *                   ASSY인 경우, 일반HOSE와 HOSE PAD 조립을 동시에 처리가능
+ *  - 2018.06.19 [A.S.M] : ASSY만 처리시, 공정명 처리 이상현상 수정
+ *  - 2020.01.01 [A.S.M] : 개정    (17  차) - 개정시, 계산식분리 및 처리가능 HOSE종류 추가 및 재설계실시
+ *  - 2022.10.01 [A.S.M] : 개정    (17-2차) - 특이사항없음
+ *  - 2023.03.20 [A.S.M] : 기계경비추출기준 변경에 따른 수정 (CASPMCHH_Q01 -> CASPMCHH_Q02 변경)
+ *                         [참고] ASSY공정, PAD공정 처리시 기계경비추출 각각 존재 -> 로직 적용은 동일함.
+ *  - 2023.09.01 [A.S.M] : 개정    (17-4차) - 특이사항없음
+ *  - 2024.02.15 [A.S.M] : 개정    (17-6차) : 전력단가,부재료단가변경
+ *
+ * [COMMENT ]
+ *  - 일반HOSE 처리와 HOSE PAD처리 2가지 처리가 존재함.
+ *  - 코드값을 변환하는 부분이 있는데, 로직의 안정성을 위해 유지함.
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_CMPK      CATBCMPK%ROWTYPE;
+    rt_HOSI      CATBHOSI%ROWTYPE;
+    rt_HOSM      CATBHOSM%ROWTYPE;
+    rt_HOSP      CATBHOSP%ROWTYPE;
+    rt_HOSL      CATBHOSL%ROWTYPE;  --LNG단가
+    rt_HOSO      CATBHOSO%ROWTYPE;  --LOSS길이
+    rt_HOSU      CATBHOSU%ROWTYPE;
+    rt_HOSB      CATBHOSB%ROWTYPE;  --재단NET CT
+    rt_HOSW      CATBHOSW%ROWTYPE;  --세척NET CT
+    rt_HOSR      CATBHOSR%ROWTYPE;  --압출속도
+    rt_CORT      CITBCORT%ROWTYPE;
+    rt_MTCD      CITBMTCD%ROWTYPE;
+    rt_CAYR      CITBCAYR%ROWTYPE;
+    rt_CMAT      CRTBCMAT%ROWTYPE;
+    rt_CPRO      CRTBCPRO%ROWTYPE;
+    rt_SPMS      CRTBSPMS%ROWTYPE;
+    rt_CMMS      CRTBCMMS%ROWTYPE;
+    rt_MCIF      CITBMCIF%ROWTYPE ; --기계경비정보
+
+    --WORKING VARIABLE
+    v_COME_CODE            CRTBCMMS.CMMS_COME_CODE%TYPE;
+    v_APPL_CORP            CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_IN_TITLE             VARCHAR2(20) ;
+    trCo                   NUMBER := 2  ;       --원가TRUNC처리소수점단위
+    v_SORT_KEY             NUMBER := 0  ;       --SORT KEY
+    v_CMAT_PROC_YN         CHAR(01)     ;       --재료비처리여부
+    v_CPRO_PROC_YN         CHAR(01)     ;       --가공비처리여부
+    v_GUBN_CODE            CATBCMPK.CMPK_GUBN_CODE%TYPE;
+    v_CODE                 CATBCMPK.CMPK_CODE%TYPE     ;
+
+    v_SPEC_GRAV            NUMBER(7,4)   := 0.0; --비중
+    v_NET0_CYTM            NUMBER(20,6)  := 0.0; --NET CT
+    v_NET0_CVT             NUMBER(20,12) := 0.0; --직형재단처리를 위한 CVT계산값
+    v_1CHA_NET0_CYTM       NUMBER(20,12) := 0.0; --1차가류공수
+    v_2CHA_MATL_YN         CHAR(01)    ;         --2차가류 적용대상 재질여부
+    v_FKM_MATL_YN          CHAR(01)    ;         --불소재질 포함여부
+
+    v_IN00_MACD            VARCHAR(8)  ;         --내압출 재질종류
+    v_MID0_MACD            VARCHAR(8)  ;         --중간고무 재질종류
+    v_OUT0_MACD            VARCHAR(8)  ;         --외압출 재질종류
+
+    v_IN00_APL_SIZE        NUMBER(20,12) := 0.0; --해당재질적용 내경
+    v_OUT0_APL_SIZE        NUMBER(20,12) := 0.0; --해당재질적용 외경
+    v_OUT0_MAX_ODIA        NUMBER(20,12) := 0.0; --외경중 가장 큰값(외경:입력)
+
+    v_WGHT_PER_METER       NUMBER(20,12) := 0.0; --M당중량
+    --공정 처리를 위한 재질별 투입중량 SAVE
+    v_INPT_WEGT_SUM        NUMBER(10,2)  := 0.0; --투입중량합
+    v_IN00_CMAT_INPT_WEGT  NUMBER(20,12) := 0.0; --내고무   투입량
+    v_MID0_CMAT_INPT_WEGT  NUMBER(20,12) := 0.0; --중간고무 투입량
+    v_UJIK_CMAT_INPT_WEGT  NUMBER(20,12) := 0.0; --유직사   투입량
+    v_UJIK_CMAT_NET0_WEGT  NUMBER(20,12) := 0.0; --유직사  NET중량
+    v_THV0_CMAT_INPT_WEGT  NUMBER(20,12) := 0.0; --THV      투입량
+    v_OUT0_CMAT_INPT_WEGT  NUMBER(20,12) := 0.0; --외고무   투입량
+
+    --투입길이
+    v_IN00_TOT_LENG        NUMBER(20,12) := 0.0; --내고무   총투입길이
+    v_IN00_TOT_LENG1       NUMBER(20,12) := 0.0; --내고무   투입길이(LOSS길이 제외) - 직HOSE 1차 가류에서 사용
+    v_MID0_TOT_LENG        NUMBER(20,12) := 0.0; --중간고무 총투입길이
+    v_THV0_TOT_LENG        NUMBER(20,12) := 0.0; --THV      총투입길이
+    v_UJIK_TOT_LENG        NUMBER(20,12) := 0.0; --유직사   총투입길이
+    v_OUT0_TOT_LENG        NUMBER(20,12) := 0.0; --외직사   총투입길이
+    v_APPL_TOT_LENG        NUMBER(20,12) := 0.0; --적용     총투입길이
+
+    --재질별 내,외경 SIZE 저장용(중간,유직,외고무는 미발생가능)
+    -- 입력변경으로 아래 8개 항목 미사용
+    ------------------------------------------------------------
+    v_IN00_INR_SIZE        NUMBER(20,12) := 0.0; --내고무 내경
+    v_IN00_OUT_SIZE        NUMBER(20,12) := 0.0; --내고무 외경   (=내고무 내경+(내고무두께*2))
+    v_MID0_INR_SIZE        NUMBER(20,12) := 0.0; --중간고무 내경 (=내고무 외경)
+    v_MID0_OUT_SIZE        NUMBER(20,12) := 0.0; --중간고무 외경 (=중간고무 내경+(중간고무두께*2))
+    v_UJIK_INR_SIZE        NUMBER(20,12) := 0.0; --유직 내경     (=최종발생고무외경)
+    v_UJIK_OUT_SIZE        NUMBER(20,12) := 0.0; --유직 외경     (=유직내경+(유직두께*2))
+    v_OUT0_INR_SIZE        NUMBER(20,12) := 0.0; --외고무 내경   (=최종발생고무외경)
+    v_OUT0_OUT_SIZE        NUMBER(20,12) := 0.0; --외고무 외경   (=외고무 내경+(외고무두께*2))
+    ------------------------------------------------------------
+
+    --압출방법분류 : 가공비추출시 사용
+    v_HOSP_EXTR_GUBN1      VARCHAR(08)  := ''; --SINGLE
+    v_HOSP_EXTR_GUBN2      VARCHAR(08)  := ''; --DOUBLE
+    v_HOSP_EXTR_GUBN3      VARCHAR(08)  := ''; --KNIT
+    v_HOSP_EXTR_GUBN4      VARCHAR(08)  := ''; --OUT
+    v_HOSP_EXTR_GUBN5      VARCHAR(08)  := ''; --THV
+
+    v_WASH_CAVT            NUMBER       := 0.0; --WASHER HOSE 공정처리용 CVT
+    v_LOSS_LENG            NUMBER(20,12):= 0.0; --LOSS길이
+    v_HOSE_PAD_GM          NUMBER(20,12):= 0.0; --HOSE PAD M당중량
+
+    ------------------------------------------------------
+    --입력CURSOR
+    ------------------------------------------------------
+    CURSOR cs_HOSI IS
+        SELECT
+               HOSI_MATL_CORP
+              ,HOSI_MATL_STND
+              ,HOSI_MATL_CODE
+              ,HOSI_MATL_APDT
+              ,HOSI_MATL_GUBN
+
+              ,HOSI_MID0_CORP
+              ,HOSI_MID0_STND
+              ,HOSI_MID0_CODE
+              ,HOSI_MID0_APDT
+              ,HOSI_MID0_GUBN
+
+              ,HOSI_OUT0_CORP
+              ,HOSI_OUT0_STND
+              ,HOSI_OUT0_CODE
+              ,HOSI_OUT0_APDT
+              ,HOSI_OUT0_GUBN
+              --------------------------------------------
+              --재료정보 : 내고무
+              --------------------------------------------
+              ,M01.MATL_CLAS_CODE         MATL_CLAS_CODE1
+              ,M01.MATL_MTJO_CODE         MATL_MTJO_CODE1
+              ,M01.MATL_NAME              MATL_NAME1
+              ,NVL(M01.MATL_PRIC,0)       MATL_PRIC1
+              ,M01.MATL_UNIT              MATL_UNIT1
+              ,NVL(M01.MATL_SCRP_PRIC,0)  MATL_SCRP_PRIC1
+              ,CASE WHEN NVL(M01.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M01.MATL_SCRP_RATE
+               END                        MATL_SCRP_RATE1
+              ,NVL(M01.MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV1
+              ,NVL(M01.MATL_UNUS_PRIC,0)  MATL_UNUS_PRIC1
+              ,NVL(M01.MATL_THIK_SIZE,0)  MATL_THIK_SIZE1
+              ,NVL(M01.MATL_WIDT_SIZE,0)  MATL_WIDT_SIZE1
+              ,NVL(M01.MATL_LENG_SIZE,0)  MATL_LENG_SIZE1
+              ,M01.MATL_IMPT_CODE         MATL_IMPT_CODE1
+              ,NVL(M01.MATL_IMPT_PRIC,0)  MATL_IMPT_PRIC1
+              ,NVL(M01.MATL_TRIF_RATE,0)  MATL_TRIF_RATE1
+              ,NVL(M01.MATL_TRIF_COST,0)  MATL_TRIF_COST1
+              --------------------------------------------
+              --재료정보 : 중간고무
+              --------------------------------------------
+              ,M02.MATL_CLAS_CODE         MATL_CLAS_CODE2
+              ,M02.MATL_MTJO_CODE         MATL_MTJO_CODE2
+              ,M02.MATL_NAME              MATL_NAME2
+              ,NVL(M02.MATL_PRIC,0)       MATL_PRIC2
+              ,M02.MATL_UNIT              MATL_UNIT2
+              ,NVL(M02.MATL_SCRP_PRIC,0)  MATL_SCRP_PRIC2
+              ,CASE WHEN NVL(M02.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M02.MATL_SCRP_RATE
+               END                        MATL_SCRP_RATE2
+              ,NVL(M02.MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV2
+              ,NVL(M02.MATL_UNUS_PRIC,0)  MATL_UNUS_PRIC2
+              ,NVL(M02.MATL_THIK_SIZE,0)  MATL_THIK_SIZE2
+              ,NVL(M02.MATL_WIDT_SIZE,0)  MATL_WIDT_SIZE2
+              ,NVL(M02.MATL_LENG_SIZE,0)  MATL_LENG_SIZE2
+              ,M02.MATL_IMPT_CODE         MATL_IMPT_CODE2
+              ,NVL(M02.MATL_IMPT_PRIC,0)  MATL_IMPT_PRIC2
+              ,NVL(M02.MATL_TRIF_RATE,0)  MATL_TRIF_RATE2
+              ,NVL(M02.MATL_TRIF_COST,0)  MATL_TRIF_COST2
+              --------------------------------------------
+              --재료정보 : 외고무
+              --------------------------------------------
+              ,M03.MATL_CLAS_CODE         MATL_CLAS_CODE3
+              ,M03.MATL_MTJO_CODE         MATL_MTJO_CODE3
+              ,M03.MATL_NAME              MATL_NAME3
+              ,NVL(M03.MATL_PRIC,0)       MATL_PRIC3
+              ,M03.MATL_UNIT              MATL_UNIT3
+              ,NVL(M03.MATL_SCRP_PRIC,0)  MATL_SCRP_PRIC3
+              ,CASE WHEN NVL(M03.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M03.MATL_SCRP_RATE
+               END                        MATL_SCRP_RATE3
+              ,NVL(M03.MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV3
+              ,NVL(M03.MATL_UNUS_PRIC,0)  MATL_UNUS_PRIC3
+              ,NVL(M03.MATL_THIK_SIZE,0)  MATL_THIK_SIZE3
+              ,NVL(M03.MATL_WIDT_SIZE,0)  MATL_WIDT_SIZE3
+              ,NVL(M03.MATL_LENG_SIZE,0)  MATL_LENG_SIZE3
+              ,M03.MATL_IMPT_CODE         MATL_IMPT_CODE3
+              ,NVL(M03.MATL_IMPT_PRIC,0)  MATL_IMPT_PRIC3
+              ,NVL(M03.MATL_TRIF_RATE,0)  MATL_TRIF_RATE3
+              ,NVL(M03.MATL_TRIF_COST,0)  MATL_TRIF_COST3
+              --------------------------------------------
+              --내고무
+              ,NVL(HOSI_GRVT_NUMB,0)      HOSI_GRVT_NUMB
+              ,NVL(HOSI_THIK_SIZE,0)      HOSI_THIK_SIZE
+              --중간고무
+              ,NVL(HOSI_MID0_GRVT,0)      HOSI_MID0_GRVT
+              ,NVL(HOSI_MID0_THIK,0)      HOSI_MID0_THIK
+              ,NVL(HOSI_MID0_PRIC,0)      HOSI_MID0_PRIC  --중간고무 미사용(THV는 별도분리)
+              --외고무
+              ,NVL(HOSI_OUT0_GRVT,0)      HOSI_OUT0_GRVT
+              ,NVL(HOSI_OUT0_THIK,0)      HOSI_OUT0_THIK
+              --유직사
+              ,HOSI_UJIK_CODE
+              ,NVL(HOSI_UJIK_PRIC,0)      HOSI_UJIK_PRIC
+              ,NVL(HOSI_UJIK_THIK,0)      HOSI_UJIK_THIK
+              --THV
+              ,NVL(HOSI_THV0_GRVT,0)      HOSI_THV0_GRVT
+              ,NVL(HOSI_THV0_THIK,0)      HOSI_THV0_THIK
+              ,'KG'                       HOSI_THV0_UNIT
+              ,NVL(HOSI_THV0_PRIC,0)      HOSI_THV0_PRIC
+              --------------------------------------------
+              ,HOSI_HOSE_CODE                               --HOSE종류
+              ,HOSI_INJT_CODE                               --압출방법
+
+              ,NVL(HOSI_IN00_SIZE,0)      HOSI_IN00_SIZE    --압출내경 SIZE : 17차 미사용
+              ,NVL(HOSI_OUT0_SIZE,0)      HOSI_OUT0_SIZE    --압출외경 SIZE : 17차 미사용
+              ,HOSI_IN00_MACD                               --압출내경 재질종류
+              ,HOSI_OUT0_MACD                               --압출외경 재질종류
+              ,NVL(HOSI_NET0_SIZE,0)      HOSI_NET0_SIZE    --제품 NET 길이
+              ,NVL(HOSI_SPAR_SIZE,0)      HOSI_SPAR_SIZE    --제품 여유길이
+
+              ,HOSI_SHAP_CODE                               --제품형상
+              ,HOSI_WIDN_CODE                               --확축관코드
+              ,NVL(HOSI_NORI_PRIC,0)      HOSI_NORI_PRIC    --노리고무단가
+              ,HOSI_PROD_CODE                               --제품구분코드
+              ,NVL(HOSI_CURV_QTY0,0)      HOSI_CURV_QTY0    --HOSE 곡수
+              --15차 ADD
+              ,HOSI_WASH_CODE
+              ,HOSI_BARC_CODE
+              ,NVL(HOSI_COMP_CLAS,'P')    HOSI_COMP_CLAS    --계산구분(단품:P, ASSY:A)
+              --17차 ADD
+              ,NVL(HOSI_THV0_GRVT, 0)     HOSI_THV0_GRVT    --THV 비중
+              ,NVL(HOSI_THV0_THIK, 0)     HOSI_THV0_THIK    --THV 두께
+              ,NVL(HOSI_THV0_PRIC, 0)     HOSI_THV0_PRIC    --THV 단가
+              ,NVL(HOSI_UNUS_PRIC, 0)     HOSI_UNUS_PRIC    --산폐단가
+              ,HOSI_PREV_YN                                 --예비가류
+              ,HOSI_MARK_YN1                                --일반마킹
+              ,NVL(HOSI_MARK_CNT1, 0)     HOSI_MARK_CNT1    --일반마킹 적용횟수
+              ,HOSI_MARK_YN2                                --원주마킹
+              ,NVL(HOSI_MARK_CNT2, 0)     HOSI_MARK_CNT2    --원주마킹 적용횟수
+              ,HOSI_MARK_YN3                                --위치마킹
+              ,NVL(HOSI_MARK_CNT3, 0)     HOSI_MARK_CNT3    --위치마킹 적용횟수
+              ,HOSI_LEAK_CODE                               --LEAK TEST
+              --17차: 내,외경 재질별로 분리
+              ,NVL(HOSI_IN00_IDIA, 0)     HOSI_IN00_IDIA    --내경(내고무)
+              ,NVL(HOSI_IN00_ODIA, 0)     HOSI_IN00_ODIA    --외경(내고무)
+              ,NVL(HOSI_MID0_IDIA, 0)     HOSI_MID0_IDIA    --내경(중간고무)
+              ,NVL(HOSI_MID0_ODIA, 0)     HOSI_MID0_ODIA    --외경(중간고무)
+              ,NVL(HOSI_THV0_IDIA, 0)     HOSI_THV0_IDIA    --내경(THV)
+              ,NVL(HOSI_THV0_ODIA, 0)     HOSI_THV0_ODIA    --외경(THV)
+              ,NVL(HOSI_KNIT_IDIA, 0)     HOSI_KNIT_IDIA    --내경(유직사)
+              ,NVL(HOSI_KNIT_ODIA, 0)     HOSI_KNIT_ODIA    --외경(유직사)
+              ,NVL(HOSI_OUT0_IDIA, 0)     HOSI_OUT0_IDIA    --내경(외고무)
+              ,NVL(HOSI_OUT0_ODIA, 0)     HOSI_OUT0_ODIA    --외경(외고무)
+              ,HOSI_RADI_YN                                 --RADIATOR HOSE여부
+              --17차: 계산결과값
+              ,NVL(HOSI_IN00_MRGN, 0)     HOSI_IN00_MRGN    --재단여유(내고무)
+              ,NVL(HOSI_IN00_LOSS, 0)     HOSI_IN00_LOSS    --LOSS길이(내고무)
+              ,NVL(HOSI_MID0_MRGN, 0)     HOSI_MID0_MRGN    --재단여유(중간고무)
+              ,NVL(HOSI_MID0_LOSS, 0)     HOSI_MID0_LOSS    --LOSS길이(중간고무)
+              ,NVL(HOSI_OUT0_MRGN, 0)     HOSI_OUT0_MRGN    --재단여유(외고무)
+              ,NVL(HOSI_OUT0_LOSS, 0)     HOSI_OUT0_LOSS    --LOSS길이(외고무)
+              ,NVL(HOSI_KNIT_MRGN, 0)     HOSI_KNIT_MRGN    --재단여유(유직사)
+              ,NVL(HOSI_KNIT_LOSS, 0)     HOSI_KNIT_LOSS    --LOSS길이(유직사)
+              ,NVL(HOSI_THV0_MRGN, 0)     HOSI_THV0_MRGN    --재단여유(THV)
+              ,NVL(HOSI_THV0_LOSS, 0)     HOSI_THV0_LOSS    --LOSS길이(THV)
+              --표준정보
+              ,K01.CMPK_CODE_GRP2         CMPK_IN00_YN      --내고무 입력여부
+              ,CASE WHEN HOSI_INJT_CODE LIKE '%T%' THEN
+                         'N'
+                    ELSE K01.CMPK_CODE_GRP3
+               END                        CMPK_MID0_YN      --중간고무 입력여부(또는 THV도 CMPK_CODE_GRP3='Y'이나, 재료입력없으므로 'N')
+              ,K01.CMPK_CODE_GRP4         CMPK_UJIK_YN      --유직사 입력여부
+              ,K01.CMPK_CODE_GRP5         CMPK_OUT0_YN      --외고무 입력여부
+              ,K03.CMPK_CODE_GRP2         CMPK_SHAP_GRP2    --직,곡  구분그룹
+              ,(SELECT COUNT(*)
+                  FROM CATBHOSZ
+                 WHERE HOSZ_CORP_CODE = I_CORP_CODE
+                   AND HOSZ_PART_NO   = I_PART_NO
+                   AND HOSZ_EONO      = I_EONO
+                   AND HOSZ_CUMT_NO   = I_CUMT_NO
+               )                          HOSZ_SPNG_QTY0   --HOSE PAD입력수
+              ,K04.CMPK_CODE_NAME         CMPK_UJIK_NAME    -- 유직사종류명(재료명칭 처리용)
+
+          FROM CATBHOSI A
+
+            LEFT OUTER JOIN
+               CITBMATL M01 -- 내고무
+            ON     HOSI_MATL_CORP = MATL_CORP_CODE
+               AND HOSI_MATL_STND = MATL_STND_GUBN
+               AND HOSI_MATL_CODE = MATL_CODE
+               AND HOSI_MATL_APDT = MATL_APPL_DATE
+               AND HOSI_MATL_GUBN = MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M02 -- 중간고무
+            ON     HOSI_MID0_CORP = M02.MATL_CORP_CODE
+               AND HOSI_MID0_STND = M02.MATL_STND_GUBN
+               AND HOSI_MID0_CODE = M02.MATL_CODE
+               AND HOSI_MID0_APDT = M02.MATL_APPL_DATE
+               AND HOSI_MID0_GUBN = M02.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M03 -- 외고무
+            ON     HOSI_OUT0_CORP = M03.MATL_CORP_CODE
+               AND HOSI_OUT0_STND = M03.MATL_STND_GUBN
+               AND HOSI_OUT0_CODE = M03.MATL_CODE
+               AND HOSI_OUT0_APDT = M03.MATL_APPL_DATE
+               AND HOSI_OUT0_GUBN = M03.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CATBCMPK K01 -- 압출방법
+                 ON K01.CMPK_CORP_CODE = v_APPL_CORP
+                AND K01.CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                AND K01.CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                AND K01.CMPK_GUBN_CODE = 'HOSE01'
+                AND K01.CMPK_CODE      = HOSI_INJT_CODE
+                AND K01.CMPK_CODE_GRP1 = HOSI_HOSE_CODE
+                AND K01.CMPK_APPL_GUBN = 'Y'
+
+            LEFT OUTER JOIN
+              CATBCMPK K03 -- 제품형상
+                ON K03.CMPK_CORP_CODE = v_APPL_CORP
+               AND K03.CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND K03.CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND K03.CMPK_GUBN_CODE = 'HOSE03'
+               AND K03.CMPK_CODE      = HOSI_SHAP_CODE
+               AND K03.CMPK_CODE_GRP1 = HOSI_HOSE_CODE
+               AND K03.CMPK_APPL_GUBN = 'Y'
+
+            LEFT OUTER JOIN
+              CATBCMPK K04 -- 유직사종류
+                ON K04.CMPK_CORP_CODE = v_APPL_CORP
+               AND K04.CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND K04.CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND K04.CMPK_GUBN_CODE = 'HOSE02'
+               AND K04.CMPK_CODE      = HOSI_UJIK_CODE
+               AND K04.CMPK_CODE_GRP1 = HOSI_HOSE_CODE   --중복존재하므로 HOSE종류로 필터링 필요
+               AND K04.CMPK_APPL_GUBN = 'Y'
+
+         WHERE HOSI_CORP_CODE = I_CORP_CODE
+           AND HOSI_PART_NO   = I_PART_NO
+           AND HOSI_EONO      = I_EONO
+           AND HOSI_CUMT_NO   = I_CUMT_NO
+        ;
+
+    ------------------------------------------------------
+    -- 재료비 CURSOR
+    ------------------------------------------------------
+    CURSOR cs_SMAT IS
+        SELECT HOSM_MATL_SEQ0
+              ,HOSM_MATL_GUBN
+              ,HOSM_MATL_NAME
+              ,NVL(HOSM_MATL_PRIC,0)   HOSM_MATL_PRIC
+              ,HOSM_MATL_UNIT
+              ,NVL(HOSM_USE0_WEGT,0)   HOSM_USE0_WEGT
+              ,NVL(HOSM_USE0_COEF1,0)  HOSM_USE0_COEF1
+          FROM CATBHOSM
+         WHERE HOSM_CORP_CODE = v_APPL_CORP
+           AND HOSM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND HOSM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND HOSM_HOSE_CODE IN ('ALL',rt_HOSM.HOSM_HOSE_CODE)
+           AND HOSM_INJT_CODE IN ('ALL',rt_HOSM.HOSM_INJT_CODE)
+           AND HOSM_SHAP_CODE IN ('ALL',rt_HOSM.HOSM_SHAP_CODE)
+           AND HOSM_IN00_CODE IN ('ALL',v_IN00_MACD)   --rt_HOSM.HOSM_IN00_MACD)
+           AND HOSM_SPNG_YN   IN ('ALL',rt_HOSM.HOSM_SPNG_YN  )
+           AND HOSM_BARC_CODE IN ('ALL',rt_HOSM.HOSM_BARC_CODE)
+           AND HOSM_NET0_MIN0 <  rt_HOSM.HOSM_NET0_MIN0
+           AND HOSM_NET0_MAX0 >= rt_HOSM.HOSM_NET0_MIN0
+           AND HOSM_APPL_GUBN = 'Y'
+         ORDER BY HOSM_MATL_SEQ0
+        ;
+
+BEGIN
+  --DBMS_OUTPUT.ENABLE(100000);
+    DBMS_OUTPUT.DISABLE;
+
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPHOSE_P17_6';
+    O_LINE_NO   := 'ST-START';
+
+    v_COME_CODE := 'HOSE';
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_INIT_CMAN) IS NULL THEN v_IN_TITLE := '사번'    ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --MAIN
+    ---------------------------------------------------------------------------
+    --3.기준정보추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-30000';
+
+    --공통율정보 추출 (A->자동공법)
+    CRSPCORT_Q01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,'A',
+                 rt_SPMS.SPMS_BASE_DATE, --원가계산기준일
+                 rt_SPMS.SPMS_VEND_CODE, --업체_코드
+                 rt_SPMS.SPMS_VEND_APFR, --업체_적용일
+                 rt_MTCD.MTCD_INDS_CODE, --업종코드
+                 rt_CAYR.CAYR_VEHL_GUBN, --승상구분
+                 rt_CMMS.CMMS_STND_GUBN, --표준 구분
+                 rt_CMMS.CMMS_STND_DEGR, --개정차수
+                 rt_CMMS.CMMS_LOTQ_QTY0, --LOT량
+                 rt_CMMS.CMMS_PROD_CNT0, --총생산개수
+                 rt_CORT.CORT_PAY0_RATE, --임율
+                 rt_CORT.CORT_IDRT_RATE, --간접경비율
+                 rt_CORT.CORT_GME0_RATE, --일반관리비율
+                 rt_CORT.CORT_MATL_RATE, --재료관리비율
+                 rt_CORT.CORT_MAPT_RATE, --재료관리비율_부품
+                 rt_CORT.CORT_PROF_RATE, --이익율
+                 rt_CORT.CORT_ET00_RATE, --ET율
+                 rt_CORT.CORT_APPL_DATE, --적용일
+                 O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'IQ-001' THEN
+        O_MESG := O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPHOSE_P17_6';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ---------------------------------------------------------------------------
+    --4.기 생성 결과삭제
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-40000';
+
+    CRSPSUM0_D01(I_CORP_CODE,I_PART_NO,I_EONO     ,I_CUMT_NO,v_COME_CODE,
+                 O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+    IF  O_MESG_CODE != 'DE-001' THEN
+        O_MESG := '이미 생성된 결과자료 삭제시 오류가 발생하였습니다.';
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPHOSE_P17_6';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ---------------------------------------------------------------------------
+    -- 전처리 : 재질종류 SET
+    ---------------------------------------------------------------------------
+    -- 재질종류 : 재질명에 따라 재질코드를 매칭하도록 처리해 놓은 상태
+    ---------------------------------------------------------------------------
+    -- 2017.09.20 A.S.M REMARK
+    -- 재질코드를 자동으로 결정하기 위한 방법으로, 상기 로직을 사용(개정전)하였으나,
+    -- 재질단가의 분류값을 사용하는 방법이 가장 좋음.
+    -- 이 방법은, 단가정보를 EAI로 INTERFACE하는 과정에서 해당 분류를 처리하지 못하기 때문에 불가능했을 것으로 판단됨.
+    -- 그래도, 기존 분류를 유지하는 방향에서 INTERFACE로직을 구성했으면 가능했을 것임.
+    -- 신규재료의 경우, 누락되는 경우도 발생하기 때문에 기본적으로 상기 로직으로 1차 걸러서
+    -- 사용자에게 보여주고 재선택을 유도하는 방향이 더 낫지 않았을까 판단해 봄.
+    -- 현재 상태에서는 'ETC'의 경우 다른것을 선택할 방법이 없어 확장성이 떨어지는 상태임.
+    ---------------------------------------------------------------------------
+    BEGIN
+        SELECT CASE  WHEN M01.MATL_NAME LIKE 'ACM%'      THEN 'ACM'
+                     WHEN M01.MATL_NAME LIKE 'CR%'       THEN 'CR'
+                     WHEN M01.MATL_NAME LIKE 'EPDM%'     THEN 'EPDM'
+                     WHEN M01.MATL_NAME LIKE 'P-EPDM%'   THEN 'P-EPDM'
+                     WHEN M01.MATL_NAME LIKE 'NBR%'      THEN 'NBR'
+                     WHEN M01.MATL_NAME LIKE 'NR%'       THEN 'NR'
+                     WHEN M01.MATL_NAME LIKE 'FKM%'      THEN 'FKM'
+                     WHEN M01.MATL_NAME LIKE 'ECO%'      THEN 'ECO'
+                     WHEN M01.MATL_NAME LIKE 'SBR%'      THEN 'SBR'
+                     WHEN M01.MATL_NAME LIKE 'VQM(SI)%'  THEN 'SI'
+                     ELSE                                     'ETC'
+               END
+              ,CASE  WHEN M02.MATL_NAME LIKE 'ACM%'      THEN 'ACM'
+                     WHEN M02.MATL_NAME LIKE 'CR%'       THEN 'CR'
+                     WHEN M02.MATL_NAME LIKE 'EPDM%'     THEN 'EPDM'
+                     WHEN M02.MATL_NAME LIKE 'P-EPDM%'   THEN 'P-EPDM'
+                     WHEN M02.MATL_NAME LIKE 'NBR%'      THEN 'NBR'
+                     WHEN M02.MATL_NAME LIKE 'NR%'       THEN 'NR'
+                     WHEN M02.MATL_NAME LIKE 'FKM%'      THEN 'FKM'
+                     WHEN M02.MATL_NAME LIKE 'ECO%'      THEN 'ECO'
+                     WHEN M02.MATL_NAME LIKE 'SBR%'      THEN 'SBR'
+                     WHEN M02.MATL_NAME LIKE 'VQM(SI)%'  THEN 'SI'
+                     ELSE                                     'ETC'
+               END
+              ,CASE  WHEN M03.MATL_NAME LIKE 'ACM%'      THEN 'ACM'
+                     WHEN M03.MATL_NAME LIKE 'CR%'       THEN 'CR'
+                     WHEN M03.MATL_NAME LIKE 'EPDM%'     THEN 'EPDM'
+                     WHEN M03.MATL_NAME LIKE 'P-EPDM%'   THEN 'P-EPDM'
+                     WHEN M03.MATL_NAME LIKE 'NBR%'      THEN 'NBR'
+                     WHEN M03.MATL_NAME LIKE 'NR%'       THEN 'NR'
+                     WHEN M03.MATL_NAME LIKE 'FKM%'      THEN 'FKM'
+                     WHEN M03.MATL_NAME LIKE 'ECO%'      THEN 'ECO'
+                     WHEN M03.MATL_NAME LIKE 'SBR%'      THEN 'SBR'
+                     WHEN M03.MATL_NAME LIKE 'VQM(SI)%'  THEN 'SI'
+                     ELSE                                     'ETC'
+               END
+          INTO v_IN00_MACD
+              ,v_MID0_MACD
+              ,v_OUT0_MACD
+          FROM CATBHOSI A
+            LEFT OUTER JOIN
+               CITBMATL M01 -- 내고무
+            ON     HOSI_MATL_CORP = MATL_CORP_CODE
+               AND HOSI_MATL_STND = MATL_STND_GUBN
+               AND HOSI_MATL_CODE = MATL_CODE
+               AND HOSI_MATL_APDT = MATL_APPL_DATE
+               AND HOSI_MATL_GUBN = MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M02 -- 중간고무
+            ON     HOSI_MID0_CORP = M02.MATL_CORP_CODE
+               AND HOSI_MID0_STND = M02.MATL_STND_GUBN
+               AND HOSI_MID0_CODE = M02.MATL_CODE
+               AND HOSI_MID0_APDT = M02.MATL_APPL_DATE
+               AND HOSI_MID0_GUBN = M02.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M03 -- 외고무
+            ON     HOSI_OUT0_CORP = M03.MATL_CORP_CODE
+               AND HOSI_OUT0_STND = M03.MATL_STND_GUBN
+               AND HOSI_OUT0_CODE = M03.MATL_CODE
+               AND HOSI_OUT0_APDT = M03.MATL_APPL_DATE
+               AND HOSI_OUT0_GUBN = M03.MATL_GUBN
+         WHERE HOSI_CORP_CODE = I_CORP_CODE
+           AND HOSI_PART_NO   = I_PART_NO
+           AND HOSI_EONO      = I_EONO
+           AND HOSI_CUMT_NO   = I_CUMT_NO
+        ;
+
+        UPDATE CATBHOSI
+           SET HOSI_IN00_MACD = v_IN00_MACD
+              ,HOSI_MID0_MACD = v_MID0_MACD
+              ,HOSI_OUT0_MACD = v_OUT0_MACD
+         WHERE HOSI_CORP_CODE = I_CORP_CODE
+           AND HOSI_PART_NO   = I_PART_NO
+           AND HOSI_EONO      = I_EONO
+           AND HOSI_CUMT_NO   = I_CUMT_NO
+        ;
+
+        --2차 가류 적용대상여부
+        IF  v_IN00_MACD IN ('ACM','SI','FKM','ECO') OR
+            v_MID0_MACD IN ('ACM','SI','FKM','ECO') OR
+            v_OUT0_MACD IN ('ACM','SI','FKM','ECO') THEN
+            v_2CHA_MATL_YN := 'Y';
+        ELSE
+            v_2CHA_MATL_YN := 'N';
+        END IF;
+
+        --불소재질 함유여부
+        IF  v_IN00_MACD IN ('FKM') OR
+            v_MID0_MACD IN ('FKM') OR
+            v_OUT0_MACD IN ('FKM') THEN
+            v_FKM_MATL_YN := 'Y';
+        ELSE
+            v_FKM_MATL_YN := 'N';
+        END IF;
+
+    EXCEPTION
+        -- 미존재시에도 계속처리 : PAD계산, ASSY만 하는 경우 존재
+        WHEN NO_DATA_FOUND THEN NULL;
+    END;
+
+    ---------------------------------------------------------------------------
+    -- INPUT
+    ---------------------------------------------------------------------------
+    FOR HOSI_R IN cs_HOSI LOOP
+        O_LINE_NO  := 'ST-50000';
+
+        ---------------------------------------------------------------------------
+        --표준데이터 검증:콤보추가될 경우 추가필요함(입력값 오류체크용)
+        ---------------------------------------------------------------------------
+/****
+        FOR i IN 1..1 LOOP
+            CASE i WHEN 1 THEN v_GUBN_CODE := HOSI_R.HOSI_KIND_GUBN ; v_CODE := HOSI_R.HOSI_KIND_CODE;
+                   ELSE        v_GUBN_CODE := ''                    ; v_CODE := ''                   ;
+            END CASE;
+
+            IF  TRIM(v_GUBN_CODE) > ' ' OR TRIM(v_CODE) > ' ' THEN
+                BEGIN
+                    SELECT CMPK_CORP_CODE
+                      INTO rt_CMPK.CMPK_CORP_CODE
+                      FROM CATBCMPK
+                     WHERE CMPK_CORP_CODE = v_APPL_CORP
+                       AND CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                       AND CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                       AND CMPK_GUBN_CODE = v_GUBN_CODE
+                       AND CMPK_CODE      = v_CODE
+                       AND CMPK_APPL_GUBN = 'Y'
+                    ;
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN O_MESG := '저장표준값 오류(운영자에 연락요망).    구분=' || v_GUBN_CODE || ' 코드=' || v_CODE ;
+                                            RAISE UD_EX_ERROR;
+                END;
+            END IF;
+        END LOOP;
+****/
+        IF  HOSI_R.HOSI_INJT_CODE NOT LIKE '%T%' AND
+            HOSI_R.HOSI_PREV_YN = 'Y' THEN
+            O_MESG := '예비 가류 공정은  THV압출이 포함된 경우에만 선택 가능합니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        ---------------------------------------------------------------------------
+        -- LOOP밖에서 사용을 위해 입력값 SAVE
+        ---------------------------------------------------------------------------
+        rt_HOSI.HOSI_COMP_CLAS := HOSI_R.HOSI_COMP_CLAS;
+        rt_HOSI.HOSI_HOSE_CODE := HOSI_R.HOSI_HOSE_CODE;
+
+        ---------------------------------------------------------------------------
+        -- 15차 개정시 ASSY만 계산할 수 있도록 추가반영함.
+        -- 계산구분: ASSY선택시, ASSY공정만 처리함.(재료비처리 건너뜀)
+        ---------------------------------------------------------------------------
+        IF  HOSI_R.HOSI_COMP_CLAS = 'A' THEN
+            GOTO ASSY_PROC;
+        END IF;
+
+        IF  HOSI_R.HOSI_HOSE_CODE = 'PAD' THEN
+        --  DBMS_OUTPUT.PUT_LINE('PAD PROCESS BEFORE.....');
+            GOTO HPAD_PROC;
+        END IF;
+
+        ---------------------------------------------------------------------------
+        -- HOSE PAD외 : 주재료-부재료-가공비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-50100';
+
+        IF (HOSI_R.CMPK_IN00_YN = 'Y' AND ( HOSI_R.HOSI_MATL_CODE = '' OR HOSI_R.HOSI_MATL_CODE IS NULL )) THEN
+            O_MESG := '내고무(은)는 필수 입력입니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF (HOSI_R.CMPK_MID0_YN = 'Y' AND ( HOSI_R.HOSI_MID0_CODE = '' OR HOSI_R.HOSI_MID0_CODE IS NULL )) THEN
+            O_MESG := '중간고무(은)는 필수 입력입니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF (HOSI_R.CMPK_OUT0_YN = 'Y' AND ( HOSI_R.HOSI_OUT0_CODE = '' OR HOSI_R.HOSI_OUT0_CODE IS NULL )) THEN
+            O_MESG := '외고무(은)는 필수 입력입니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        ----------------------------------------------------------------------
+        -- 기본값 SET
+        ----------------------------------------------------------------------
+        O_LINE_NO := 'ST-50200';
+
+        -- 외경 중 가장 큰값SET (=최외경)
+        v_OUT0_MAX_ODIA := GREATEST(HOSI_R.HOSI_IN00_ODIA,HOSI_R.HOSI_MID0_ODIA,HOSI_R.HOSI_THV0_ODIA,HOSI_R.HOSI_OUT0_ODIA);
+
+        ---------------------------------------------------------------------------
+        --5.재료비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-55000';
+        v_SORT_KEY := 1;
+
+        --주재료처리 : 최대 4개 까지 발생가능하나, 종류는 5가지 종류가 있음
+        ---------------------------------------------------------------------------
+        -- 1. 내고무
+        -- 2. 중간고무
+        -- 3. THV
+        -- 4. 유직사
+        -- 5. 외고무
+        ---------------------------------------------------------------------------
+        -- [참고] 재료별 내-외경SIZE 계산방법 변경 (2020.04.01 나종훈CI의 요청)
+        -- (변경전) 제품내경을 기준으로 두께값을 이용하여 산출
+        -- (변경후) 각각 내-외경을 입력 (두께필요시에는 (외-내) / 2 로 역산출)
+        ---------------------------------------------------------------------------
+        WHILE v_SORT_KEY <= 5 LOOP --FALSE이면 EXIT됨
+            v_CMAT_PROC_YN := 'Y';
+
+            CASE
+                 ------------------------------------------------------------------
+                 -- 내고무 : 필수처리
+                 ------------------------------------------------------------------
+                 WHEN v_SORT_KEY = 1 THEN
+                      IF  TRIM(HOSI_R.HOSI_MATL_CODE) > ' ' THEN
+                          rt_CMAT.CMAT_MATL_CORP := HOSI_R.HOSI_MATL_CORP;
+                          rt_CMAT.CMAT_MATL_STND := HOSI_R.HOSI_MATL_STND;
+                          rt_CMAT.CMAT_MATL_CODE := HOSI_R.HOSI_MATL_CODE;
+                          rt_CMAT.CMAT_MATL_APDT := HOSI_R.HOSI_MATL_APDT;
+                          rt_CMAT.CMAT_MATL_GUBN := HOSI_R.HOSI_MATL_GUBN;
+                          rt_CMAT.CMAT_MATL_CLAS := HOSI_R.MATL_CLAS_CODE1;
+                          rt_CMAT.CMAT_MATL_MTJO := HOSI_R.MATL_MTJO_CODE1;
+                          rt_CMAT.CMAT_MATL_NAME := '내고무_' || HOSI_R.MATL_NAME1;
+                          rt_CMAT.CMAT_MATL_PRIC := HOSI_R.MATL_PRIC1;
+                          rt_CMAT.CMAT_MATL_UNIT := HOSI_R.MATL_UNIT1;
+                          rt_CMAT.CMAT_SCRP_PRIC := HOSI_R.MATL_SCRP_PRIC1;
+                          rt_CMAT.CMAT_SCRP_RATE := HOSI_R.MATL_SCRP_RATE1;
+                          rt_CMAT.CMAT_IMPT_CODE := HOSI_R.MATL_IMPT_CODE1;
+                          rt_CMAT.CMAT_IMPT_PRIC := HOSI_R.MATL_IMPT_PRIC1;
+                          rt_CMAT.CMAT_IMPT_APDT := '';
+                          rt_CMAT.CMAT_TRIF_RATE := HOSI_R.MATL_TRIF_RATE1;
+                          rt_CMAT.CMAT_UNUS_PRIC := HOSI_R.HOSI_UNUS_PRIC ;  --산폐비:입력값
+
+                       ELSE
+                          v_CMAT_PROC_YN := 'N';
+                          O_MESG := '내고무 재질은 필수 입력입니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+
+                      v_SPEC_GRAV     := HOSI_R.HOSI_GRVT_NUMB;
+                      /****
+                      v_IN00_INR_SIZE := HOSI_R.HOSI_IN00_SIZE;                            --내고무내경
+                      v_IN00_OUT_SIZE := v_IN00_INR_SIZE + (HOSI_R.HOSI_THIK_SIZE * 2.0);  --내고무외경
+                      v_IN00_APL_SIZE := v_IN00_INR_SIZE;  --내경
+                      v_OUT0_APL_SIZE := v_IN00_OUT_SIZE;  --외경
+                      ****/
+
+                      v_IN00_APL_SIZE := HOSI_R.HOSI_IN00_IDIA;
+                      v_OUT0_APL_SIZE := HOSI_R.HOSI_IN00_ODIA;
+
+                      IF  v_IN00_APL_SIZE >= v_OUT0_APL_SIZE THEN
+                          O_MESG := '내고무내경이 외경보다 큽니다. 입력값을 확인후 재계산하시기 바랍니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+
+                      -- 총투입길이 (=NET길이 + 재단여유 + LOSS길이)
+                      v_IN00_TOT_LENG := HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN + HOSI_R.HOSI_IN00_LOSS;
+                      v_IN00_TOT_LENG1:= HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN;  -- LOSS길이 제외길이 (1차가류에서 사용)
+                      v_APPL_TOT_LENG := v_IN00_TOT_LENG;
+
+                 ------------------------------------------------------------------
+                 -- 중간고무 : THV와 동시발생하지 않음 (중간 또는 THV발생 또는 미발생)
+                 ------------------------------------------------------------------
+                 WHEN v_SORT_KEY = 2 THEN
+                      IF  TRIM(HOSI_R.HOSI_MID0_CODE) > ' ' THEN
+                          rt_CMAT.CMAT_MATL_CORP := HOSI_R.HOSI_MID0_CORP;
+                          rt_CMAT.CMAT_MATL_STND := HOSI_R.HOSI_MID0_STND;
+                          rt_CMAT.CMAT_MATL_CODE := HOSI_R.HOSI_MID0_CODE;
+                          rt_CMAT.CMAT_MATL_APDT := HOSI_R.HOSI_MID0_APDT;
+                          rt_CMAT.CMAT_MATL_GUBN := HOSI_R.HOSI_MID0_GUBN;
+                          rt_CMAT.CMAT_MATL_CLAS := HOSI_R.MATL_CLAS_CODE2;
+                          rt_CMAT.CMAT_MATL_MTJO := HOSI_R.MATL_MTJO_CODE2;
+                          rt_CMAT.CMAT_MATL_NAME := '중간고무_' || HOSI_R.MATL_NAME2;
+                          rt_CMAT.CMAT_MATL_PRIC := HOSI_R.MATL_PRIC2;
+                          rt_CMAT.CMAT_MATL_UNIT := HOSI_R.MATL_UNIT2;
+                          rt_CMAT.CMAT_SCRP_PRIC := HOSI_R.MATL_SCRP_PRIC2;
+                          rt_CMAT.CMAT_SCRP_RATE := HOSI_R.MATL_SCRP_RATE2;
+                          rt_CMAT.CMAT_IMPT_CODE := HOSI_R.MATL_IMPT_CODE2;
+                          rt_CMAT.CMAT_IMPT_PRIC := HOSI_R.MATL_IMPT_PRIC2;
+                          rt_CMAT.CMAT_IMPT_APDT := '';
+                          rt_CMAT.CMAT_TRIF_RATE := HOSI_R.MATL_TRIF_RATE2;
+                          rt_CMAT.CMAT_UNUS_PRIC := HOSI_R.HOSI_UNUS_PRIC ;  --산폐비:입력값
+
+                          v_SPEC_GRAV     := HOSI_R.HOSI_MID0_GRVT;
+                          /****
+                          v_MID0_INR_SIZE := v_IN00_OUT_SIZE;                                 --중간고무내경(=내고무 외경)
+                          v_MID0_OUT_SIZE := v_MID0_INR_SIZE + (HOSI_R.HOSI_MID0_THIK * 2.0); --중간고무외경(=중간고무 내경+(중간고무두께*2))
+                          v_IN00_APL_SIZE := v_MID0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_MID0_OUT_SIZE;
+                          ****/
+                          v_IN00_APL_SIZE := HOSI_R.HOSI_MID0_IDIA;
+                          v_OUT0_APL_SIZE := HOSI_R.HOSI_MID0_ODIA;
+
+                          IF  v_IN00_APL_SIZE >= v_OUT0_APL_SIZE THEN
+                              O_MESG := '중간고무내경이 외경보다 큽니다. 입력값을 확인후 재계산하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          -- 총투입길이 (=NET길이 + 재단여유 + LOSS길이)
+                          v_MID0_TOT_LENG := HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_MID0_MRGN + HOSI_R.HOSI_MID0_LOSS;
+                          v_APPL_TOT_LENG := v_MID0_TOT_LENG;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+
+                          /****
+                          --중간고무 미발생에도 값SET 해 놓는다. (다음 재질에서 값 사용)
+                          v_MID0_INR_SIZE := v_IN00_OUT_SIZE;                                 --중간고무내경(=내고무 외경)
+                          v_MID0_OUT_SIZE := v_MID0_INR_SIZE;                                 --중간고무외경(=중간고무 내경+(중간고무두께*2))
+                          v_IN00_APL_SIZE := v_MID0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_MID0_OUT_SIZE;
+                          ****/
+                      END IF;
+
+                 ------------------------------------------------------------------
+                 -- THV : 두번째에 중간고무 또는 THV를 처리를 위해 3번째 처리
+                 ------------------------------------------------------------------
+                 WHEN v_SORT_KEY = 3 THEN
+                      IF  HOSI_R.HOSI_INJT_CODE LIKE '%T%' THEN
+                          rt_CMAT.CMAT_MATL_CORP := NULL;
+                          rt_CMAT.CMAT_MATL_STND := NULL;
+                          rt_CMAT.CMAT_MATL_CODE := NULL;
+                          rt_CMAT.CMAT_MATL_APDT := NULL;
+                          rt_CMAT.CMAT_MATL_GUBN := NULL;
+                          rt_CMAT.CMAT_MATL_CLAS := NULL;
+                          rt_CMAT.CMAT_MATL_MTJO := NULL;
+                          rt_CMAT.CMAT_MATL_NAME := 'THV';
+                          rt_CMAT.CMAT_MATL_PRIC := HOSI_R.HOSI_THV0_PRIC;  --입력단가 사용
+                          rt_CMAT.CMAT_MATL_UNIT := 'KG';
+                          rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+                          rt_CMAT.CMAT_SCRP_RATE := 0.0;
+                          rt_CMAT.CMAT_IMPT_CODE := '';
+                          rt_CMAT.CMAT_IMPT_PRIC := 0.0;
+                          rt_CMAT.CMAT_IMPT_APDT := '';
+                          rt_CMAT.CMAT_TRIF_RATE := 0.0;
+                          rt_CMAT.CMAT_UNUS_PRIC := 0.0;  --THV:산폐비적용제외
+
+                          IF  HOSI_R.HOSI_THV0_PRIC <= 0 OR
+                              HOSI_R.HOSI_THV0_GRVT <= 0 THEN
+                              O_MESG := 'THV재질의 단가,비중을 입력후 계산하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          /****
+                          -- 중간고무/THV 둥 중 하나만 발생가능하므로, 중간고무에 저장함
+                          v_SPEC_GRAV     := HOSI_R.HOSI_THV0_GRVT;
+                          v_MID0_INR_SIZE := v_IN00_OUT_SIZE;                                 --중간고무내경(=내고무 외경)
+                          v_MID0_OUT_SIZE := v_MID0_INR_SIZE + (HOSI_R.HOSI_THV0_THIK * 2.0); --중간고무외경(=중간고무 내경+(THV두께*2))
+                          v_IN00_APL_SIZE := v_MID0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_MID0_OUT_SIZE;
+                          ****/
+                          v_IN00_APL_SIZE := HOSI_R.HOSI_THV0_IDIA;
+                          v_OUT0_APL_SIZE := HOSI_R.HOSI_THV0_ODIA;
+
+                          IF  v_IN00_APL_SIZE >= v_OUT0_APL_SIZE THEN
+                              O_MESG := '중간고무내경이 외경보다 큽니다. 입력값을 확인후 재계산하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          -- 총투입길이 (=NET길이 + 재단여유 + LOSS길이)
+                          v_THV0_TOT_LENG := HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_THV0_MRGN + HOSI_R.HOSI_THV0_LOSS;
+                          v_APPL_TOT_LENG := v_THV0_TOT_LENG;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+
+                          /****
+                          --중간고무 미발생에도 값SET 해 놓는다. (다음 재질에서 값 사용)
+                          v_MID0_INR_SIZE := v_IN00_OUT_SIZE;                                 --중간고무내경(=내고무 외경)
+                          v_MID0_OUT_SIZE := v_MID0_INR_SIZE;                                 --중간고무외경(=중간고무 내경+(THV두께*2))
+                          v_IN00_APL_SIZE := v_MID0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_MID0_OUT_SIZE;
+                          ****/
+                      END IF;
+
+                 ------------------------------------------------------------------
+                 -- 유직사
+                 ------------------------------------------------------------------
+                 WHEN v_SORT_KEY = 4 THEN
+                      IF  HOSI_R.HOSI_UJIK_CODE IS NOT NULL AND
+                          NVL(HOSI_R.HOSI_UJIK_CODE,' ') > ' ' AND
+                          HOSI_R.HOSI_UJIK_CODE <> 'N' THEN
+                          rt_CMAT.CMAT_MATL_CORP := NULL;
+                          rt_CMAT.CMAT_MATL_STND := NULL;
+                          rt_CMAT.CMAT_MATL_CODE := NULL;
+                          rt_CMAT.CMAT_MATL_APDT := NULL;
+                          rt_CMAT.CMAT_MATL_GUBN := NULL;
+                          rt_CMAT.CMAT_MATL_CLAS := NULL;
+                          rt_CMAT.CMAT_MATL_MTJO := NULL;
+                          rt_CMAT.CMAT_MATL_NAME := '유직사_' || HOSI_R.CMPK_UJIK_NAME;
+                          rt_CMAT.CMAT_MATL_PRIC := HOSI_R.HOSI_UJIK_PRIC;  --입력단가 사용
+                          rt_CMAT.CMAT_MATL_UNIT := 'KG';
+                          rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+                          rt_CMAT.CMAT_SCRP_RATE := 0.0;
+                          rt_CMAT.CMAT_IMPT_CODE := '';
+                          rt_CMAT.CMAT_IMPT_PRIC := 0.0;
+                          rt_CMAT.CMAT_IMPT_APDT := '';
+                          rt_CMAT.CMAT_TRIF_RATE := 0.0;
+                          rt_CMAT.CMAT_UNUS_PRIC := 0.0;  --유직사:산폐비적용제외
+
+                          IF  HOSI_R.HOSI_UJIK_PRIC <= 0 THEN
+                              O_MESG := '유직사 단가를 입력후 계산하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          v_SPEC_GRAV     := 0.0;
+                          /****
+                          v_UJIK_INR_SIZE := v_MID0_OUT_SIZE;                                 --(=최종발생고무외경)      [참고]중간고무 미발생해도 중간=내 로SET해 놓았으로 문제없음
+                          v_UJIK_OUT_SIZE := v_UJIK_INR_SIZE + (HOSI_R.HOSI_UJIK_THIK * 2.0); --(=유직내경+(유직두께*2))
+                          v_IN00_APL_SIZE := v_UJIK_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_UJIK_OUT_SIZE;
+                          ****/
+                          v_IN00_APL_SIZE := HOSI_R.HOSI_KNIT_IDIA;
+                          v_OUT0_APL_SIZE := HOSI_R.HOSI_KNIT_ODIA;
+
+                        --IF  v_IN00_APL_SIZE >= v_OUT0_APL_SIZE THEN
+                        --    O_MESG := '유직사내경이 외경보다 큽니다. 입력값을 확인후 재계산하시기 바랍니다.';
+                        --    RAISE UD_EX_ERROR;
+                        --END IF;
+
+                          -- 총투입길이 (=NET길이 + 재단여유 + LOSS길이)
+                          v_UJIK_TOT_LENG := HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_KNIT_MRGN + HOSI_R.HOSI_KNIT_LOSS;
+                          v_APPL_TOT_LENG := v_UJIK_TOT_LENG;
+
+                          ---------------------------------------------------------------------------
+                          -- 유직사 중량추출
+                          ---------------------------------------------------------------------------
+                          BEGIN
+                              SELECT NVL(HOSU_UJIK_WGHT, 0)
+                                INTO rt_HOSU.HOSU_UJIK_WGHT
+                                FROM CATBHOSU
+                               WHERE HOSU_CORP_CODE = v_APPL_CORP
+                                 AND HOSU_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                                 AND HOSU_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                                 AND HOSU_UJIK_CODE = HOSI_R.HOSI_UJIK_CODE
+                                 AND NVL(HOSU_IN00_MIN0,0) <  HOSI_R.HOSI_IN00_IDIA -- 내고무내경(초과)
+                                 AND NVL(HOSU_IN00_MAX0,0) >= HOSI_R.HOSI_IN00_IDIA -- 내고무내경(이하)
+                                 AND HOSU_APPL_GUBN = 'Y'
+                              ;
+                          EXCEPTION
+                              WHEN NO_DATA_FOUND THEN O_MESG := '유직사 중량정보가 존재하지 않습니다.';
+                                   RAISE UD_EX_ERROR;
+                          END;
+                          ---------------------------------------------------------------------------
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                          rt_HOSU.HOSU_UJIK_WGHT := 0.0;  --유직사중량
+
+                          /****
+                          --유직사 미발생에도 값SET 해 놓는다. (다음 재질에서 값 사용)
+                          v_UJIK_INR_SIZE := v_MID0_OUT_SIZE;                                 --(=최종발생고무외경)
+                          v_UJIK_OUT_SIZE := v_UJIK_INR_SIZE;                                 --(=유직내경+(유직두께*2))
+                          v_IN00_APL_SIZE := v_UJIK_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_UJIK_OUT_SIZE;
+                          ****/
+                      END IF;
+
+                 ------------------------------------------------------------------
+                 -- 외고무
+                 ------------------------------------------------------------------
+                 WHEN v_SORT_KEY = 5 THEN
+                      IF  TRIM(HOSI_R.HOSI_OUT0_CODE) > ' ' THEN
+                          rt_CMAT.CMAT_MATL_CORP := HOSI_R.HOSI_OUT0_CORP;
+                          rt_CMAT.CMAT_MATL_STND := HOSI_R.HOSI_OUT0_STND;
+                          rt_CMAT.CMAT_MATL_CODE := HOSI_R.HOSI_OUT0_CODE;
+                          rt_CMAT.CMAT_MATL_APDT := HOSI_R.HOSI_OUT0_APDT;
+                          rt_CMAT.CMAT_MATL_GUBN := HOSI_R.HOSI_OUT0_GUBN;
+                          rt_CMAT.CMAT_MATL_CLAS := HOSI_R.MATL_CLAS_CODE3;
+                          rt_CMAT.CMAT_MATL_MTJO := HOSI_R.MATL_MTJO_CODE3;
+                          rt_CMAT.CMAT_MATL_NAME := '외고무_' || HOSI_R.MATL_NAME3;
+                          rt_CMAT.CMAT_MATL_PRIC := HOSI_R.MATL_PRIC3;
+                          rt_CMAT.CMAT_MATL_UNIT := HOSI_R.MATL_UNIT3;
+                          rt_CMAT.CMAT_SCRP_PRIC := HOSI_R.MATL_SCRP_PRIC3;
+                          rt_CMAT.CMAT_SCRP_RATE := HOSI_R.MATL_SCRP_RATE3;
+                          rt_CMAT.CMAT_IMPT_CODE := HOSI_R.MATL_IMPT_CODE3;
+                          rt_CMAT.CMAT_IMPT_PRIC := HOSI_R.MATL_IMPT_PRIC3;
+                          rt_CMAT.CMAT_IMPT_APDT := '';
+                          rt_CMAT.CMAT_TRIF_RATE := HOSI_R.MATL_TRIF_RATE3;
+                          rt_CMAT.CMAT_UNUS_PRIC := HOSI_R.HOSI_UNUS_PRIC ;  --산폐비:입력값
+
+                          v_SPEC_GRAV     := HOSI_R.HOSI_OUT0_GRVT;
+                          /****
+                          v_OUT0_INR_SIZE := v_UJIK_OUT_SIZE;                                 --(=최종발생고무외경)
+                          v_OUT0_OUT_SIZE := v_OUT0_INR_SIZE + (HOSI_R.HOSI_OUT0_THIK * 2.0); --(=외고무 내경+(외고무두께*2))
+                          v_IN00_APL_SIZE := v_OUT0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_OUT0_OUT_SIZE;
+                          ****/
+                          v_IN00_APL_SIZE := HOSI_R.HOSI_OUT0_IDIA;
+                          v_OUT0_APL_SIZE := HOSI_R.HOSI_OUT0_ODIA;
+
+                          IF  v_IN00_APL_SIZE >= v_OUT0_APL_SIZE THEN
+                              O_MESG := '외고무내경이 외경보다 큽니다. 입력값을 확인후 재계산하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          -- 총투입길이 (=NET길이 + 재단여유 + LOSS길이)
+                          v_OUT0_TOT_LENG := HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_OUT0_MRGN + HOSI_R.HOSI_OUT0_LOSS;
+                          v_APPL_TOT_LENG := v_OUT0_TOT_LENG;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+
+                          /****
+                          --외고무 미발생에도 값SET 해 놓는다 : 불필요하나 일관성을 위해 유지함
+                          v_OUT0_INR_SIZE := v_UJIK_OUT_SIZE;                                 --(=최종발생고무외경)
+                          v_OUT0_OUT_SIZE := v_OUT0_INR_SIZE;                                 --(=외고무 내경+(외고무두께*2))
+                          v_IN00_APL_SIZE := v_OUT0_INR_SIZE;
+                          v_OUT0_APL_SIZE := v_OUT0_OUT_SIZE;
+                          ****/
+                      END IF;
+
+                 ELSE v_SORT_KEY := 9;
+            END CASE;
+
+
+            O_LINE_NO := 'ST-56000';
+
+            IF  v_CMAT_PROC_YN = 'Y' THEN
+                ------------------------------------------------------------------
+                -- m당 중량   = (PI/4)*(외경^2-내경^2)*비중
+                -- 유직사중량 = 유직사정보테이블에서 추출한값 (상단에서 추출)
+                -- 투입량     = (부품NET길이 + 재단여유길이 + LOSS길이) * m당 중량
+                ------------------------------------------------------------------
+                IF  v_SORT_KEY = 4 THEN
+                    v_WGHT_PER_METER := rt_HOSU.HOSU_UJIK_WGHT;
+                ELSE
+                    v_WGHT_PER_METER := ((ACOS(-1.0) / 4.0)
+                                      * ( POWER(v_OUT0_APL_SIZE,2) - POWER(v_IN00_APL_SIZE,2) )
+                                      * v_SPEC_GRAV);
+                END IF;
+
+                rt_CMAT.CMAT_INPT_WEGT := TRUNC((v_WGHT_PER_METER * v_APPL_TOT_LENG      ) / 1000.0, 2);  --gram (총투입길이로 계산)
+                rt_CMAT.CMAT_NET0_WEGT := TRUNC((v_WGHT_PER_METER * HOSI_R.HOSI_NET0_SIZE) / 1000.0, 2);  --gram (NET길이로 계산)
+             -- rt_CMAT.CMAT_USE0_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+
+                O_LINE_NO := 'ST-56200';
+                -- SCRAP미발생, 중량은 산폐비 처리용
+                rt_CMAT.CMAT_SCRP_PRIC := 0;
+                rt_CMAT.CMAT_SCRP_RATE := 0;
+                rt_CMAT.CMAT_SCRP_COST := 0;
+                rt_CMAT.CMAT_SCRP_CONS := 0;
+                rt_CMAT.CMAT_SCRP_WEGT := TRUNC(rt_CMAT.CMAT_INPT_WEGT - rt_CMAT.CMAT_NET0_WEGT, 2);
+                rt_CMAT.CMAT_UNUS_COST := TRUNC(((rt_CMAT.CMAT_SCRP_WEGT * rt_CMAT.CMAT_UNUS_PRIC / 1000)),trCo);
+
+                --재료비
+                rt_CMAT.CMAT_MATL_COST := (rt_CMAT.CMAT_INPT_WEGT * 0.001) * rt_CMAT.CMAT_MATL_PRIC;
+                rt_CMAT.CMAT_MATL_CONS := (rt_CMAT.CMAT_INPT_WEGT * 0.001); --계산상수(단가미반영)
+                rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_UNUS_COST;
+
+                rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+                rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+                INSERT INTO CRTBCMAT
+                      (CMAT_CORP_CODE
+                      ,CMAT_PART_NO
+                      ,CMAT_EONO
+                      ,CMAT_CUMT_NO
+                      ,CMAT_COME_CODE
+                      ,CMAT_CUMT_GUBN
+                      ,CMAT_MATL_SEQ0
+                      ,CMAT_SORT_KEY0
+                      ,CMAT_INDS_CODE
+                      ,CMAT_MATL_CORP
+                      ,CMAT_MATL_STND
+                      ,CMAT_MATL_CODE
+                      ,CMAT_MATL_APDT
+                      ,CMAT_MATL_GUBN
+                      ,CMAT_MATL_CLAS
+                      ,CMAT_MATL_MTJO
+                      ,CMAT_MATL_LKGB
+                      ,CMAT_MATL_NAME
+                      ,CMAT_MATL_UNIT
+                      ,CMAT_MATL_PRIC
+                      ,CMAT_SCRP_PRIC
+                      ,CMAT_SCRP_RATE
+                      ,CMAT_UNUS_PRIC
+                      ,CMAT_IMPT_CODE
+                      ,CMAT_IMPT_PRIC
+                      ,CMAT_IMPT_APDT
+                      ,CMAT_TRIF_RATE
+                      ,CMAT_INPT_WEGT
+                      ,CMAT_NET0_WEGT
+                      ,CMAT_USE0_WEGT
+                      ,CMAT_APPL_WEGT
+                      ,CMAT_SCRP_WEGT
+                      ,CMAT_LOSS_RATE
+                      ,CMAT_PDAB_RATE
+                      ,CMAT_MRGN_RATE
+                      ,CMAT_MATL_RATE
+                      ,CMAT_ADD0_COST
+                      ,CMAT_UNUS_COST
+                      ,CMAT_SCRP_COST
+                      ,CMAT_MATL_COST
+                      ,CMAT_MATL_MACT
+                      ,CMAT_MATL_CONS
+                      ,CMAT_SCRP_CONS
+                      ,CMAT_APPL_GUBN
+                      ,CMAT_ADD0_GUBN
+                      ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                      ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CMAT.CMAT_MATL_CORP
+                      ,rt_CMAT.CMAT_MATL_STND
+                      ,rt_CMAT.CMAT_MATL_CODE
+                      ,rt_CMAT.CMAT_MATL_APDT
+                      ,rt_CMAT.CMAT_MATL_GUBN
+                      ,rt_CMAT.CMAT_MATL_CLAS
+                      ,rt_CMAT.CMAT_MATL_MTJO
+                      ,CASE WHEN TRIM(rt_CMAT.CMAT_IMPT_CODE) > ' ' THEN 'K' ELSE 'L' END
+                      ,rt_CMAT.CMAT_MATL_NAME
+                      ,rt_CMAT.CMAT_MATL_UNIT
+                      ,rt_CMAT.CMAT_MATL_PRIC
+                      ,rt_CMAT.CMAT_SCRP_PRIC
+                      ,rt_CMAT.CMAT_SCRP_RATE
+                      ,rt_CMAT.CMAT_UNUS_PRIC
+                      ,rt_CMAT.CMAT_IMPT_CODE
+                      ,rt_CMAT.CMAT_IMPT_PRIC
+                      ,NULL
+                      ,rt_CMAT.CMAT_TRIF_RATE
+                      ,rt_CMAT.CMAT_INPT_WEGT
+                      ,rt_CMAT.CMAT_NET0_WEGT
+                      ,rt_CMAT.CMAT_USE0_WEGT
+                      ,rt_CMAT.CMAT_APPL_WEGT
+                      ,rt_CMAT.CMAT_SCRP_WEGT
+                      ,rt_CMAT.CMAT_LOSS_RATE
+                      ,rt_CMAT.CMAT_PDAB_RATE
+                      ,0
+                      ,rt_CORT.CORT_MATL_RATE
+                      ,0
+                      ,rt_CMAT.CMAT_UNUS_COST
+                      ,rt_CMAT.CMAT_SCRP_COST
+                      ,rt_CMAT.CMAT_MATL_COST
+                      ,rt_CMAT.CMAT_MATL_MACT
+                      ,rt_CMAT.CMAT_MATL_CONS
+                      ,rt_CMAT.CMAT_SCRP_CONS
+                      ,'Y'
+                      ,'S'
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                      ;
+
+                -- 부재료 및 공정(ROLLING 등)처리를 위해 투입중량 SAVE
+                v_INPT_WEGT_SUM := v_INPT_WEGT_SUM + rt_CMAT.CMAT_INPT_WEGT;
+
+                CASE WHEN v_SORT_KEY = 1 THEN v_IN00_CMAT_INPT_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+                     WHEN v_SORT_KEY = 2 THEN v_MID0_CMAT_INPT_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+                     WHEN v_SORT_KEY = 3 THEN v_THV0_CMAT_INPT_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+                     WHEN v_SORT_KEY = 4 THEN v_UJIK_CMAT_INPT_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+                                              v_UJIK_CMAT_NET0_WEGT := rt_CMAT.CMAT_NET0_WEGT;
+                     WHEN v_SORT_KEY = 5 THEN v_OUT0_CMAT_INPT_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+                     ELSE NULL;
+                END CASE;
+            END IF;
+
+            v_SORT_KEY := v_SORT_KEY + 1;
+
+        END LOOP;     --주재료LOOP END
+
+        ---------------------------------------------------------------------------
+        --부재료비
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-53000';
+
+        --CURSOR조건값 SET
+        rt_HOSM.HOSM_HOSE_CODE := HOSI_R.HOSI_HOSE_CODE;
+        rt_HOSM.HOSM_INJT_CODE := HOSI_R.HOSI_INJT_CODE;
+        rt_HOSM.HOSM_SHAP_CODE := HOSI_R.HOSI_SHAP_CODE;
+        rt_HOSM.HOSM_IN00_CODE := HOSI_R.HOSI_IN00_MACD;
+        rt_HOSM.HOSM_SPNG_YN   := CASE WHEN HOSI_R.HOSZ_SPNG_QTY0 > 0 THEN 'Y' ELSE 'N' END;
+        rt_HOSM.HOSM_BARC_CODE := HOSI_R.HOSI_BARC_CODE;
+        rt_HOSM.HOSM_NET0_MIN0 := HOSI_R.HOSI_NET0_SIZE;
+
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_HOSE_CODE=' || rt_HOSM.HOSM_HOSE_CODE);
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_INJT_CODE=' || rt_HOSM.HOSM_INJT_CODE);
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_SHAP_CODE=' || rt_HOSM.HOSM_SHAP_CODE);
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_IN00_CODE=' || rt_HOSM.HOSM_IN00_CODE);
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_SPNG_YN  =' || rt_HOSM.HOSM_SPNG_YN  );
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_BARC_CODE=' || rt_HOSM.HOSM_BARC_CODE);
+      --DBMS_OUTPUT.PUT_LINE('rt_HOSM.HOSM_NET0_MIN0=' || rt_HOSM.HOSM_NET0_MIN0);
+
+        -- WASHER HOSE CVT산출 (직HOSE에서만 필요. 재료비,가공비에서 모두 사용하므로 산출해 놓음)
+        IF  HOSI_R.HOSI_HOSE_CODE = 'WASHER' THEN
+            IF  HOSI_R.HOSI_SHAP_CODE = 'STRA' THEN
+                v_WASH_CAVT := TRUNC(4100 / HOSI_R.HOSI_NET0_SIZE,0);
+
+                IF  v_WASH_CAVT <= 0 THEN
+                    O_MESG := 'WASHER 직HOSE의 NET길이를 확인하시기 바랍니다.(최대 4100mm가능)';
+                    RAISE UD_EX_ERROR;
+                END IF;
+            END IF;
+        END IF;
+
+        FOR SMAT_R IN cs_SMAT LOOP
+            O_LINE_NO := 'ST' || SMAT_R.HOSM_MATL_GUBN;
+
+         -- DBMS_OUTPUT.PUT_LINE('SMAT_R.HOSM_MATL_SEQ0=' || SMAT_R.HOSM_MATL_SEQ0);
+
+            v_CMAT_PROC_YN := 'Y';
+            rt_CMAT.CMAT_INPT_WEGT := 0.0;
+            rt_CMAT.CMAT_NET0_WEGT := 0.0;
+            rt_CMAT.CMAT_USE0_WEGT := 0.0;
+            rt_CMAT.CMAT_APPL_WEGT := 0.0;
+            rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+            rt_CMAT.CMAT_LOSS_RATE := 0.0;
+            rt_CMAT.CMAT_PDAB_RATE := 0.0;
+            rt_CMAT.CMAT_SCRP_RATE := 0.0;
+            rt_CMAT.CMAT_MATL_PRIC := SMAT_R.HOSM_MATL_PRIC;
+            rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_COST := 0.0;
+            rt_CMAT.CMAT_SCRP_COST := 0.0;
+            rt_CMAT.CMAT_MATL_COST := 0.0;
+            rt_CMAT.CMAT_MATL_MACT := 0.0;
+            rt_CMAT.CMAT_ADD0_COST := 0.0;
+            rt_CMAT.CMAT_MATL_NAME := SMAT_R.HOSM_MATL_NAME;
+            rt_CMAT.CMAT_MATL_UNIT := SMAT_R.HOSM_MATL_UNIT;
+            rt_CMAT.CMAT_MATL_CONS := 0.0;
+            rt_CMAT.CMAT_SCRP_CONS := 0.0;
+
+            rt_CMAT.CMAT_MATL_CORP := '';
+            rt_CMAT.CMAT_MATL_STND := '';
+            rt_CMAT.CMAT_MATL_CODE := '';
+            rt_CMAT.CMAT_MATL_APDT := '';
+            rt_CMAT.CMAT_MATL_GUBN := '';
+            rt_CMAT.CMAT_MATL_CLAS := '';
+            rt_CMAT.CMAT_MATL_MTJO := '';
+
+            rt_CMAT.CMAT_MATL_LKGB := 'L';
+
+            -- LNG 가스비 : 별도 단가정보 추출
+            IF  SMAT_R.HOSM_MATL_GUBN IN ('LNG','RE_LNG') THEN
+                SELECT NVL(HOSL_LNG0_PRIC,0)
+                      ,HOSL_MATL_UNIT
+                  INTO rt_HOSL.HOSL_LNG0_PRIC
+                      ,rt_HOSL.HOSL_MATL_UNIT
+                  FROM CATBHOSL
+                 WHERE HOSL_CORP_CODE = v_APPL_CORP
+                   AND HOSL_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                   AND HOSL_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                   AND HOSL_HOSE_CODE IN ('ALL',HOSI_R.HOSI_HOSE_CODE)
+                   AND HOSL_SHAP_GRP2 IN ('ALL',HOSI_R.CMPK_SHAP_GRP2)
+                   --17차:입력값 변경으로 대입조건도 변경함 (외경:입력값의 최대값 적용-엑셀과 맞춤)
+                   AND HOSL_IN00_MIN0 <  HOSI_R.HOSI_IN00_IDIA  --HOSI_R.HOSI_IN00_SIZE
+                   AND HOSL_IN00_MAX0 >= HOSI_R.HOSI_IN00_IDIA  --HOSI_R.HOSI_IN00_SIZE
+                   AND HOSL_OUT0_MIN0 <  v_OUT0_MAX_ODIA        --HOSI_R.HOSI_OUT0_SIZE
+                   AND HOSL_OUT0_MAX0 >= v_OUT0_MAX_ODIA        --HOSI_R.HOSI_OUT0_SIZE
+                   AND HOSL_TOTL_MIN0 <  v_APPL_TOT_LENG
+                   AND HOSL_TOTL_MAX0 >= v_APPL_TOT_LENG
+                   AND HOSL_APPL_GUBN = 'Y'
+                ;
+            END IF;
+
+            CASE
+                --------------------------------------------
+                -- 일반HOSE
+                --------------------------------------------
+                -- 세척제
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'WASH'    THEN
+                      rt_CMAT.CMAT_NET0_WEGT := SMAT_R.HOSM_USE0_WEGT;  --사용량=g
+
+                 -- 방착제(WA-400) : 이중,THV외 (내고무외경+외고무외경 값이 세척할 면적임)
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'WA-400'  THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC(((ACOS(-1.0) * v_OUT0_MAX_ODIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT,trCo);
+
+                 -- 방착제(WA-2500) : 이중,THV (외고무외경 값이 세척할 면적임)
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'WA-2500' THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC(((ACOS(-1.0) * v_OUT0_MAX_ODIA * v_APPL_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT,trCo);
+
+                 -- 이형제(WA-1380) : ACM외 재질 (성형)
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'WA-1380' THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_IN00_IDIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT,trCo);
+
+                 -- 이형제(L-45) : ACM외 재질 (성형)
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'L-45'    THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_IN00_IDIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT,trCo);
+
+                 -- 톨루엔 : 유직사중량 2.5배 적용
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'TOLUENE' THEN
+                      rt_CMAT.CMAT_MATL_PRIC := SMAT_R.HOSM_MATL_PRIC;
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC((v_UJIK_CMAT_INPT_WEGT * SMAT_R.HOSM_USE0_COEF1),trCo);
+
+                 -- 순간접착제(아론알파) : SPONGE PAD장착시
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'INSTAADH' THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC((SMAT_R.HOSM_USE0_WEGT * HOSI_R.HOSZ_SPNG_QTY0),trCo);
+
+                 -- 수지접착제(THV수지)
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'RESINADH' THEN
+                      rt_CMAT.CMAT_NET0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_THV0_IDIA * v_THV0_TOT_LENG)  / 10000.0) * SMAT_R.HOSM_USE0_COEF1,trCo);
+
+                 -- BAR CODE : 15차 ADD
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'BARCODE'  THEN
+                      rt_CMAT.CMAT_USE0_WEGT := SMAT_R.HOSM_USE0_WEGT;
+
+                 -- LNG GAS
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'LNG' THEN
+                      rt_CMAT.CMAT_MATL_UNIT := rt_HOSL.HOSL_MATL_UNIT;
+                      rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_HOSL.HOSL_LNG0_PRIC,trCo);
+
+                      -- 개당단가와 m당 단가가 존재함
+                      IF  UPPER(rt_HOSL.HOSL_MATL_UNIT) = 'EA' THEN
+                          rt_CMAT.CMAT_USE0_WEGT := 1.0;
+                      ELSE
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(v_IN00_TOT_LENG / 1000, 5);
+                      END IF;
+
+                --------------------------------------------
+                -- WASHER HOSE
+                --------------------------------------------
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'WA_SUB1' THEN
+                      rt_CMAT.CMAT_USE0_WEGT := SMAT_R.HOSM_USE0_WEGT;
+                      IF  HOSI_R.HOSI_SHAP_CODE = 'STRA' THEN
+                          rt_CMAT.CMAT_APPL_WEGT := v_WASH_CAVT;
+                      END IF;
+
+                --------------------------------------------
+                -- DIFF HOSE
+                --------------------------------------------
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'DI_WASH' THEN
+                      rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.HOSM_USE0_WEGT / 1000, 5);   --단위-단가 맞춤(/1000)
+
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'DI_RELE' THEN
+                      rt_CMAT.CMAT_USE0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_IN00_IDIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT / 1000, 5);
+
+                --------------------------------------------
+                -- RETURN HOSE
+                --------------------------------------------
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'RE_WA4' THEN  --외면부
+                      rt_CMAT.CMAT_USE0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_IN00_ODIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT / 1000, 5);
+
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'RE_L45' THEN  --내면부
+                      rt_CMAT.CMAT_USE0_WEGT := TRUNC(((ACOS(-1.0) * HOSI_R.HOSI_IN00_IDIA * v_IN00_TOT_LENG) / 10000.0) * SMAT_R.HOSM_USE0_WEGT / 1000, 5);
+
+                 WHEN SMAT_R.HOSM_MATL_GUBN = 'RE_LNG' THEN
+                      rt_CMAT.CMAT_MATL_UNIT := rt_HOSL.HOSL_MATL_UNIT;
+                      rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_HOSL.HOSL_LNG0_PRIC,trCo);
+                      rt_CMAT.CMAT_USE0_WEGT := TRUNC(v_IN00_TOT_LENG / 1000, 5);
+
+                 ELSE
+                      v_CMAT_PROC_YN := 'N';
+            END CASE;
+
+            rt_CMAT.CMAT_USE0_WEGT := TRUNC(rt_CMAT.CMAT_USE0_WEGT, 5);
+            rt_CMAT.CMAT_NET0_WEGT := TRUNC(rt_CMAT.CMAT_NET0_WEGT, 2);
+
+            CASE WHEN rt_CMAT.CMAT_USE0_WEGT > 0 THEN
+                      rt_CMAT.CMAT_MATL_COST := (rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT
+                                               / CASE WHEN rt_CMAT.CMAT_APPL_WEGT > 0 THEN rt_CMAT.CMAT_APPL_WEGT ELSE 1.0 END);
+
+                 WHEN rt_CMAT.CMAT_NET0_WEGT > 0 THEN
+                      rt_CMAT.CMAT_MATL_COST := (rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_NET0_WEGT * 0.001
+                                               / CASE WHEN rt_CMAT.CMAT_APPL_WEGT > 0 THEN rt_CMAT.CMAT_APPL_WEGT ELSE 1.0 END);
+
+                 ELSE
+                      rt_CMAT.CMAT_MATL_COST := 0.0;
+            END CASE;
+
+            rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+            --재료비처리
+            IF  v_CMAT_PROC_YN = 'Y' THEN
+                O_LINE_NO := 'ST-' || (59000 + SMAT_R.HOSM_MATL_SEQ0);
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+                rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+                INSERT INTO CRTBCMAT
+                      (CMAT_CORP_CODE
+                      ,CMAT_PART_NO
+                      ,CMAT_EONO
+                      ,CMAT_CUMT_NO
+                      ,CMAT_COME_CODE
+                      ,CMAT_CUMT_GUBN
+                      ,CMAT_MATL_SEQ0
+                      ,CMAT_SORT_KEY0
+                      ,CMAT_INDS_CODE
+                      ,CMAT_MATL_CORP
+                      ,CMAT_MATL_STND
+                      ,CMAT_MATL_CODE
+                      ,CMAT_MATL_APDT
+                      ,CMAT_MATL_GUBN
+                      ,CMAT_MATL_CLAS
+                      ,CMAT_MATL_MTJO
+                      ,CMAT_MATL_LKGB
+                      ,CMAT_MATL_NAME
+                      ,CMAT_MATL_UNIT
+                      ,CMAT_MATL_PRIC
+                      ,CMAT_SCRP_PRIC
+                      ,CMAT_SCRP_RATE
+                      ,CMAT_UNUS_PRIC
+                      ,CMAT_IMPT_CODE
+                      ,CMAT_IMPT_PRIC
+                      ,CMAT_IMPT_APDT
+                      ,CMAT_TRIF_RATE
+                      ,CMAT_INPT_WEGT
+                      ,CMAT_NET0_WEGT
+                      ,CMAT_USE0_WEGT
+                      ,CMAT_APPL_WEGT
+                      ,CMAT_SCRP_WEGT
+                      ,CMAT_LOSS_RATE
+                      ,CMAT_PDAB_RATE
+                      ,CMAT_MRGN_RATE
+                      ,CMAT_MATL_RATE
+                      ,CMAT_ADD0_COST
+                      ,CMAT_UNUS_COST
+                      ,CMAT_SCRP_COST
+                      ,CMAT_MATL_COST
+                      ,CMAT_MATL_MACT
+                      ,CMAT_MATL_CONS
+                      ,CMAT_SCRP_CONS
+                      ,CMAT_APPL_GUBN
+                      ,CMAT_ADD0_GUBN
+                      ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                      ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CMAT.CMAT_MATL_CORP
+                      ,rt_CMAT.CMAT_MATL_STND
+                      ,rt_CMAT.CMAT_MATL_CODE
+                      ,rt_CMAT.CMAT_MATL_APDT
+                      ,rt_CMAT.CMAT_MATL_GUBN
+                      ,rt_CMAT.CMAT_MATL_CLAS
+                      ,rt_CMAT.CMAT_MATL_MTJO
+                      ,rt_CMAT.CMAT_MATL_LKGB
+                      ,rt_CMAT.CMAT_MATL_NAME
+                      ,rt_CMAT.CMAT_MATL_UNIT
+                      ,rt_CMAT.CMAT_MATL_PRIC
+                      ,rt_CMAT.CMAT_SCRP_PRIC
+                      ,rt_CMAT.CMAT_SCRP_RATE
+                      ,rt_CMAT.CMAT_UNUS_PRIC
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,rt_CMAT.CMAT_INPT_WEGT
+                      ,rt_CMAT.CMAT_NET0_WEGT
+                      ,rt_CMAT.CMAT_USE0_WEGT
+                      ,rt_CMAT.CMAT_APPL_WEGT
+                      ,rt_CMAT.CMAT_SCRP_WEGT
+                      ,rt_CMAT.CMAT_LOSS_RATE
+                      ,rt_CMAT.CMAT_PDAB_RATE
+                      ,rt_CMAT.CMAT_MRGN_RATE
+                      ,rt_CORT.CORT_MATL_RATE
+                      ,0
+                      ,rt_CMAT.CMAT_UNUS_COST
+                      ,rt_CMAT.CMAT_SCRP_COST
+                      ,rt_CMAT.CMAT_MATL_COST
+                      ,rt_CMAT.CMAT_MATL_MACT
+                      ,rt_CMAT.CMAT_MATL_CONS
+                      ,rt_CMAT.CMAT_SCRP_CONS
+                      ,'Y'
+                      ,'S'
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                ;
+            END IF;
+        END LOOP;     --부재료LOOP END
+
+        ---------------------------------------------------------------------------
+        --6.가공비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-60000';
+        v_1CHA_NET0_CYTM := 0;  --1차 가류공수 (2차 가류시 사용)
+
+        ---------------------------------------------------------------------------
+        --압출방법 조합에 따라 여러 가공이 동시에 처리 가능하여 조건값을 SET해 놓는다.
+        --패키지 분류값으로 처리하기 곤란하여 로직으로 풀어 내었음. (조회조건에 대입)
+        ---------------------------------------------------------------------------
+        IF  HOSI_R.HOSI_INJT_CODE LIKE '%S%' THEN v_HOSP_EXTR_GUBN1 := 'SINGLE'; ELSE v_HOSP_EXTR_GUBN1 := ''; END IF;
+        IF  HOSI_R.HOSI_INJT_CODE LIKE '%D%' THEN v_HOSP_EXTR_GUBN2 := 'DOUBLE'; ELSE v_HOSP_EXTR_GUBN2 := ''; END IF;
+        IF  HOSI_R.HOSI_INJT_CODE LIKE '%K%' THEN v_HOSP_EXTR_GUBN3 := 'KNIT'  ; ELSE v_HOSP_EXTR_GUBN3 := ''; END IF;
+        IF  HOSI_R.HOSI_INJT_CODE LIKE '%O%' THEN v_HOSP_EXTR_GUBN4 := 'OUT'   ; ELSE v_HOSP_EXTR_GUBN4 := ''; END IF;
+        IF  HOSI_R.HOSI_INJT_CODE LIKE '%T%' THEN v_HOSP_EXTR_GUBN5 := 'THV'   ; ELSE v_HOSP_EXTR_GUBN5 := ''; END IF;
+
+        --HOSE PAD당 중량=HOSE용 PAD 압출속도 추출시 사용
+        IF  v_IN00_TOT_LENG = 0.0 THEN
+            v_HOSE_PAD_GM := 0.0;
+        ELSE
+            v_HOSE_PAD_GM := (v_IN00_CMAT_INPT_WEGT / v_IN00_TOT_LENG);
+        END IF;
+
+        O_LINE_NO := 'ST-58000';
+
+        ---------------------------------------------------------------------------
+        -- 조립공정 외 공정 먼저 처리
+        ---------------------------------------------------------------------------
+        -- [참고] 내압출/외압출의 경우, THV압출을 동시 처리시 THV공정만 처리함. (로직으로 걸러냄)
+        -- 17차 : 압출 장비처리를 위해, 기계경비를 추가하였으며,
+        --        의미를 명확화하기 위해 추가 장비항목를 추가함.
+        ---------------------------------------------------------------------------
+        FOR CPRO_R IN
+           (
+            SELECT HOSP_PROC_SEQ0
+                  ,HOSP_PROC_GUBN
+                  ,HOSP_PROC_NAME
+                  ,NVL(HOSP_NET0_CYTM  ,0)  HOSP_NET0_CYTM
+                  ,NVL(HOSP_NET0_COEF1 ,0)  HOSP_NET0_COEF1
+                  ,NVL(HOSP_NET0_COEF2 ,0)  HOSP_NET0_COEF2
+                  ,NVL(HOSP_CAVT       ,0)  HOSP_CAVT
+                  ,NVL(HOSP_PREP_HOUR  ,0)  HOSP_PREP_HOUR
+                  ,NVL(HOSP_PRSN_CNT0  ,0)  HOSP_PRSN_CNT0
+                  ,HOSP_MCHH_CODE
+                  ,HOSP_MCH2_CODE
+                  ,HOSP_MCH3_CODE
+                  ,HOSP_MADD_CODE
+              FROM CATBHOSP
+             WHERE HOSP_CORP_CODE = v_APPL_CORP
+               AND HOSP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND HOSP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND HOSP_HOSE_CODE IN ('ALL',HOSI_R.HOSI_HOSE_CODE)
+               AND HOSP_INJT_GUBN IN ('ALL',v_HOSP_EXTR_GUBN1
+                                           ,v_HOSP_EXTR_GUBN2
+                                           ,v_HOSP_EXTR_GUBN3
+                                           ,v_HOSP_EXTR_GUBN4
+                                           ,v_HOSP_EXTR_GUBN5)
+               AND HOSP_UJIK_CODE IN ('ALL',HOSI_R.HOSI_UJIK_CODE)
+               AND HOSP_SHAP_CODE IN ('ALL',HOSI_R.HOSI_SHAP_CODE)
+               AND HOSP_SHAP_GRP2 IN ('ALL',HOSI_R.CMPK_SHAP_GRP2)
+               --2차가류 재료중 2차가류 대상 존재시 대표 재질에 해당하는 재료로 가공비 읽어옴
+               AND HOSP_IN00_CODE IN ('ALL',(CASE WHEN HOSP_PROC_GUBN = 'VULCAN2' AND v_2CHA_MATL_YN = 'Y' THEN 'ACM' ELSE HOSI_R.HOSI_IN00_MACD END) )
+               AND HOSP_PROD_CODE IN ('ALL',HOSI_R.HOSI_PROD_CODE)
+               AND HOSP_WASH_CODE IN ('ALL',HOSI_R.HOSI_WASH_CODE)
+               AND HOSP_IN00_MIN0 <  HOSI_R.HOSI_IN00_IDIA  --HOSI_R.HOSI_IN00_SIZE
+               AND HOSP_IN00_MAX0 >= HOSI_R.HOSI_IN00_IDIA  --HOSI_R.HOSI_IN00_SIZE
+               AND HOSP_OUT0_MIN0 <  HOSI_R.HOSI_IN00_ODIA  --HOSI_R.HOSI_OUT0_SIZE
+               AND HOSP_OUT0_MAX0 >= HOSI_R.HOSI_IN00_ODIA  --HOSI_R.HOSI_OUT0_SIZE
+               --(참고) 입형/가류/탈형, 재단(곡)은 재단여유길이(내고무) 포함한 길이로 적용함
+               AND (   (
+                            HOSP_PROC_GUBN = 'SHAPVULC'
+                        AND HOSP_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN  --HOSI_SPAR_SIZE
+                        AND HOSP_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN  --HOSI_SPAR_SIZE
+                       )
+                    OR (
+                            HOSP_PROC_GUBN <> 'SHAPVULC'
+                        AND HOSP_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE
+                        AND HOSP_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE
+                       )
+                   )
+               AND HOSP_MGM0_MIN0 <  CASE WHEN v_HOSE_PAD_GM = 0.0 THEN 0.01 ELSE v_HOSE_PAD_GM END --0인 경우 미추출되는 것 방지 위함
+               AND HOSP_MGM0_MAX0 >= CASE WHEN v_HOSE_PAD_GM = 0.0 THEN 0.01 ELSE v_HOSE_PAD_GM END --0인 경우 미추출되는 것 방지 위함
+               AND HOSP_APPL_GUBN = 'Y'
+               AND HOSP_PROC_GUBN NOT LIKE 'AS_%'   --ASSY공정은 별도 처리
+             ORDER BY HOSP_PROC_SEQ0
+           )
+
+        LOOP
+            v_CPRO_PROC_YN := 'Y';  --처리여부SET
+            O_LINE_NO := 'ST-' || (58000 + CPRO_R.HOSP_PROC_SEQ0);
+
+         -- DBMS_OUTPUT.PUT_LINE('CPRO_R.HOSP_PROC_SEQ0=' || CPRO_R.HOSP_PROC_SEQ0);
+
+            rt_CPRO.CPRO_PROC_NAME := CPRO_R.HOSP_PROC_NAME;
+            rt_CPRO.CPRO_CAVT      := CPRO_R.HOSP_CAVT    ;
+            rt_CPRO.CPRO_PREP_HOUR := CPRO_R.HOSP_PREP_HOUR;
+            rt_CPRO.CPRO_PRSN_CNT0 := CPRO_R.HOSP_PRSN_CNT0;
+            v_NET0_CYTM            := CPRO_R.HOSP_NET0_CYTM;
+            rt_CPRO.CPRO_AEXM_RATE := 0.0;
+
+            rt_CPRO.CPRO_MCHH_APDT := '';
+            rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCHH_CODE;
+            -------------------------------------------------------
+            -- 내압출 공정은 내고무외경 값에 따라 장비를 결정함.
+            -- 공정데이터를 분리하여 자동으로 추출되도록 구현해도 되나
+            -- 구간값이 장비는 21미만, 준비시간은 20 이하로 일부가 상이하여 혼동의 방지를 위해 로직으로 분리하였음.
+            -------------------------------------------------------
+            IF  CPRO_R.HOSP_PROC_GUBN IN ('IEXT') THEN
+                CASE WHEN HOSI_R.HOSI_IN00_ODIA <  21 THEN rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCHH_CODE;
+                     WHEN HOSI_R.HOSI_IN00_ODIA <= 45 THEN rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCH2_CODE;
+                     ELSE                                  rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCH3_CODE;
+                END CASE;
+            END IF;
+            -------------------------------------------------------
+            rt_CPRO.CPRO_MADD_APDT := '';
+            rt_CPRO.CPRO_MADD_CODE := '';
+
+            IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            O_LINE_NO := 'ST-58300';
+
+            CASE
+                 ---------------------------------------------
+                 -- ROLLG : RUBBER기준 처리  (공통)
+                 ---------------------------------------------
+                 WHEN CPRO_R.HOSP_PROC_GUBN = 'ROLLG' THEN
+                      v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_INPT_WEGT_SUM - v_UJIK_CMAT_INPT_WEGT - v_THV0_CMAT_INPT_WEGT) / CPRO_R.HOSP_NET0_COEF2;
+
+                 ------------------------------------------------------------
+                 -- [일반HOSE]
+                 ------------------------------------------------------------
+                 WHEN HOSI_R.HOSI_HOSE_CODE = 'GENL' THEN
+                      -------------------------------------------------------
+                      -- 압출 : 압출내경에 따른 압출속도에 의해 NET CT결정
+                      -------------------------------------------------------
+                      --내압출,외압출,이중압출,THV압출,편조는 압출속도  별도 관리
+                      --(주의) 압출종류에 따라 처리기준이 되는 압출내경/외경의 값이 상이함
+                      -------------------------------------------------------
+                      IF  CPRO_R.HOSP_PROC_GUBN IN ('IEXT','OEXT','DEXT','TEXT','KNIT') THEN
+                          BEGIN
+                              SELECT NVL(HOSR_EXTR_CYTM,0) + NVL(HOSR_EXTR_COEF1,0)
+                                INTO rt_HOSR.HOSR_EXTR_CYTM
+                                FROM CATBHOSR
+                               WHERE HOSR_CORP_CODE = v_APPL_CORP
+                                 AND HOSR_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                                 AND HOSR_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                                 AND HOSR_HOSE_CODE = HOSI_R.HOSI_HOSE_CODE
+                                 AND HOSR_PROC_GUBN = CPRO_R.HOSP_PROC_GUBN
+                                 AND HOSR_IN00_CODE IN ('ALL',HOSI_R.HOSI_IN00_MACD)
+                                 AND HOSR_UJIK_CODE IN ('ALL',HOSI_R.HOSI_UJIK_CODE)
+                                 -------------------------------------------------------
+                                 -- 17차 : 입력변경으로 기준값 변경
+                               --AND HOSR_IN00_MIN0 <  DECODE(CPRO_R.HOSP_PROC_GUBN,'OEXT',(HOSI_R.HOSI_OUT0_SIZE -  NVL(HOSI_R.HOSI_OUT0_THIK,0) * 2), HOSI_R.HOSI_IN00_SIZE) -- 외압출:외압출 내경으로 사용
+                               --AND HOSR_IN00_MAX0 >= DECODE(CPRO_R.HOSP_PROC_GUBN,'OEXT',(HOSI_R.HOSI_OUT0_SIZE -  NVL(HOSI_R.HOSI_OUT0_THIK,0) * 2), HOSI_R.HOSI_IN00_SIZE) -- 외압출:외압출 내경으로 사용
+                               --AND HOSR_OUT0_MIN0 <  DECODE(CPRO_R.HOSP_PROC_GUBN,'KNIT',(v_IN00_OUT_SIZE       +  NVL(HOSI_R.HOSI_MID0_THIK,0) * 2), HOSI_R.HOSI_OUT0_SIZE) -- 편조  :내고무 외경으로 사용 중간고무 존재 시 중간고무 두께 추가
+                               --AND HOSR_OUT0_MAX0 >= DECODE(CPRO_R.HOSP_PROC_GUBN,'KNIT',(v_IN00_OUT_SIZE       +  NVL(HOSI_R.HOSI_MID0_THIK,0) * 2), HOSI_R.HOSI_OUT0_SIZE) -- 편조  :내고무 외경으로 사용 중간고무 존재 시 중간고무 두께 추가
+                                 -------------------------------------------------------
+                                 -- 내경 : 외압출:외고무 내경으로 사용(나머지:내고무 내경)
+                                 -------------------------------------------------------
+                                 AND HOSR_IN00_MIN0 <  CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'OEXT' THEN HOSI_R.HOSI_OUT0_IDIA ELSE HOSI_R.HOSI_IN00_IDIA END
+                                 AND HOSR_IN00_MAX0 >= CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'OEXT' THEN HOSI_R.HOSI_OUT0_IDIA ELSE HOSI_R.HOSI_IN00_IDIA END
+                                 -------------------------------------------------------
+                                 -- 외경 : 편조(중간고무 존재시 중간고무외경) 나머지 내고무 외경
+                                 -------------------------------------------------------
+                                 AND HOSR_OUT0_MIN0 <  CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'KNIT' THEN (CASE WHEN HOSI_R.HOSI_MID0_ODIA > 0 THEN HOSI_R.HOSI_MID0_ODIA ELSE HOSI_R.HOSI_IN00_ODIA END) ELSE HOSI_R.HOSI_IN00_ODIA END
+                                 AND HOSR_OUT0_MAX0 >= CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'KNIT' THEN (CASE WHEN HOSI_R.HOSI_MID0_ODIA > 0 THEN HOSI_R.HOSI_MID0_ODIA ELSE HOSI_R.HOSI_IN00_ODIA END) ELSE HOSI_R.HOSI_IN00_ODIA END
+                                 AND HOSR_APPL_GUBN = 'Y'
+                              ;
+
+                          EXCEPTION
+                              WHEN NO_DATA_FOUND THEN O_MESG := '압출속도정보가 존재하지 않습니다.' ;
+                                   RAISE UD_EX_ERROR;
+                          END;
+                      END IF;
+                      -------------------------------------------------------
+
+                      O_LINE_NO := 'ST-58310';
+
+                      CASE
+                           ---------------------------------------------
+                           -- 내압출 : 길이(m)당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('IEXT') THEN
+                                O_LINE_NO := 'ST-58311';
+                                v_NET0_CYTM := rt_HOSR.HOSR_EXTR_CYTM * (v_IN00_TOT_LENG / 1000.0);
+
+                                -- 내압출 적용하지 않는 경우 : 이중압출 or THV 존재하는 경우(THV는 THV압출로 대체함)
+                                IF  v_HOSP_EXTR_GUBN2 = 'DOUBLE' OR HOSI_R.HOSI_INJT_CODE LIKE '%T%' THEN
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 이중압출 : 길이(m)당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('DEXT') THEN
+                                O_LINE_NO := 'ST-58312';
+                                v_NET0_CYTM := rt_HOSR.HOSR_EXTR_CYTM * (v_IN00_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- THV압출 : 길이(m)당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('TEXT') THEN
+                                O_LINE_NO := 'ST-58313';
+                                v_NET0_CYTM := rt_HOSR.HOSR_EXTR_CYTM * (v_IN00_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 유직사편조 : 길이(m)당 : 편조전 압출외경으로 나누어서 처리함 (압출외경=중간고무존재시 중간고무외경, 아니면 내고무 외경)
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('KNIT') THEN
+                                O_LINE_NO := 'ST-58314';
+                                v_NET0_CYTM := (rt_HOSR.HOSR_EXTR_CYTM / CASE WHEN HOSI_R.HOSI_MID0_ODIA > 0 THEN HOSI_R.HOSI_MID0_ODIA ELSE HOSI_R.HOSI_IN00_ODIA END)
+                                             * (v_UJIK_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 외압출 : 길이(m)당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('OEXT') THEN
+                                O_LINE_NO := 'ST-58315';
+                                -- THV경우 THV압출로 대체함
+                                IF  HOSI_R.HOSI_INJT_CODE LIKE '%T%' THEN
+                                    v_CPRO_PROC_YN := 'N';
+                                ELSE
+                                    v_NET0_CYTM := rt_HOSR.HOSR_EXTR_CYTM * (v_IN00_TOT_LENG / 1000.0);
+                                END IF;
+
+                           ---------------------------------------------
+                           -- THV압출후 예열 : ea
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('TEXTHEAT') THEN
+                                O_LINE_NO := 'ST-58316';
+
+                           ---------------------------------------------
+                           -- 예비가류 : THV만 해당 (추출시 걸러짐)
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('PREGARUY') THEN
+                                O_LINE_NO := 'ST-58317';
+
+                                -- 1차가류값의 80% 적용
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * CPRO_R.HOSP_NET0_COEF1;
+
+                           ---------------------------------------------
+                           -- 1차가류 : 직HOSE기준 m당으로 표준에 명시되어 있으나, 곡HOSE와 동일하게 EA당으로 적용함
+                           --    17차 : 요청에 의해(나종훈CI) 길이당 적용함.
+                           -- 2차 가류 적용재질의 경우, 1.33배 추가 적용 (표준 8P) - 단, 예비가류시 미적용  (LOSS길이 제외한 길이로 계산함)
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('VULCAN1') THEN
+                                O_LINE_NO := 'ST-58318';
+
+                                IF  v_2CHA_MATL_YN = 'Y' AND
+                                    HOSI_R.HOSI_PREV_YN <> 'Y' THEN
+                                    v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * (v_IN00_TOT_LENG1 / 1000) * CPRO_R.HOSP_NET0_COEF1;
+                                ELSE
+                                    v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * (v_IN00_TOT_LENG1 / 1000);
+                                END IF;
+
+                                v_1CHA_NET0_CYTM := TRUNC(v_NET0_CYTM ,2); --1차가류 NET C/T 저장 (직HOSE) : 2차 가류시 사용
+
+                           ---------------------------------------------
+                           -- 입형_가류_탈형 : 곡HOSE만 해당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN = 'SHAPVULC' THEN
+                                O_LINE_NO := 'ST-58319';
+
+                                --  불소, THV : 1.5배적용
+                                IF  v_FKM_MATL_YN = 'Y' OR
+                                    HOSI_R.HOSI_INJT_CODE LIKE '%T%'THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * CPRO_R.HOSP_NET0_COEF1;
+                                END IF;
+
+                                --  내열고무 : 1.33배 적용 (내열고무 여부는 직HOSE 체크내역을 기준으로 함)
+                                --  17차 : 나종훈CI의 요청에 따라 P-EPDM만 1.33배 적용으로 변경함
+                              --IF  v_IN00_MACD IN ('ACM','SI','FKM','ECO') OR
+                              --    v_MID0_MACD IN ('ACM','SI','FKM','ECO') OR
+                              --    v_OUT0_MACD IN ('ACM','SI','FKM','ECO') THEN
+                              --    v_NET0_CYTM := v_NET0_CYTM * CPRO_R.HOSP_NET0_COEF2;
+                              --END IF;
+
+                                IF  v_IN00_MACD IN ('P-EPDM') OR
+                                    v_MID0_MACD IN ('P-EPDM') OR
+                                    v_OUT0_MACD IN ('P-EPDM') THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * CPRO_R.HOSP_NET0_COEF2;
+                                END IF;
+
+                                --  일반곡HOSE 추가가류 CT적용 (단, 불소고무 포함시 불인정)
+                                IF  HOSI_R.HOSI_SHAP_CODE =  'CURV' AND
+                                    v_FKM_MATL_YN <> 'Y'  THEN
+                                    CASE WHEN HOSI_R.HOSI_NET0_SIZE > 800 THEN
+                                              v_NET0_CYTM := v_NET0_CYTM + (CASE WHEN (HOSI_R.HOSI_CURV_QTY0 - 6) * 2 > 0 THEN (HOSI_R.HOSI_CURV_QTY0 - 6) * 2 ELSE 0 END);
+
+                                         WHEN HOSI_R.HOSI_NET0_SIZE > 600 THEN
+                                              v_NET0_CYTM := v_NET0_CYTM + (CASE WHEN (HOSI_R.HOSI_CURV_QTY0 - 5) * 2 > 0 THEN (HOSI_R.HOSI_CURV_QTY0 - 5) * 2 ELSE 0 END);
+                                         
+                                         ELSE NULL;
+
+                                    END CASE;
+                                END IF;
+
+                                v_1CHA_NET0_CYTM := TRUNC(v_NET0_CYTM ,2); --1차가류 NET CT 저장 (곡HOSE) : 2차 가류시 사용
+
+                           ---------------------------------------------
+                           -- 2차 가류 : 직HOSE 3.5이하는 표준값적용 / 이외=1차가류의 20% 적용
+                           --     미실시조건: 단일압출 / 예비가류 적용시
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('VULCAN2') THEN
+                                O_LINE_NO := 'ST-5831A';
+
+                                IF  HOSI_R.HOSI_PREV_YN   <> 'Y' AND
+                                    HOSI_R.HOSI_INJT_CODE <> 'S' THEN
+
+                                    IF  HOSI_R.CMPK_SHAP_GRP2  = 'GRP2_STR' AND
+                                        HOSI_R.HOSI_IN00_IDIA <= 3.5 THEN
+                                        v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM;
+                                    ELSE
+                                        v_NET0_CYTM := TRUNC(v_1CHA_NET0_CYTM * CPRO_R.HOSP_NET0_COEF1, 2);
+                                    END IF;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           --재단
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN = 'CUT' THEN
+                                BEGIN
+                                    SELECT NVL(HOSB_NET0_CYTM,0)
+                                          ,NVL(HOSB_INIT_CUTT,0)
+                                          ,NVL(HOSB_STRI_CNT0,0)
+                                          ,NVL(HOSB_CUTT_TIME,0)
+                                          ,NVL(HOSB_INIT_LENG,0)
+                                      INTO rt_HOSB.HOSB_NET0_CYTM
+                                          ,rt_HOSB.HOSB_INIT_CUTT  --초기절단
+                                          ,rt_HOSB.HOSB_STRI_CNT0  --가닥수
+                                          ,rt_HOSB.HOSB_CUTT_TIME  --1회재단
+                                          ,rt_HOSB.HOSB_INIT_LENG  --직HOSE길이
+                                      FROM CATBHOSB
+                                     WHERE HOSB_CORP_CODE = v_APPL_CORP
+                                       AND HOSB_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                                       AND HOSB_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                                       AND HOSB_SHAP_GRP2 IN ('ALL',HOSI_R.CMPK_SHAP_GRP2)
+                                       AND HOSB_OUT0_MIN0 <  v_OUT0_MAX_ODIA   --최외경값
+                                       AND HOSB_OUT0_MAX0 >= v_OUT0_MAX_ODIA
+                                       AND (   (
+                                                    HOSB_SHAP_GRP2 = 'GRP2_STR'
+                                                AND HOSB_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE
+                                                AND HOSB_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE
+                                               )
+                                            OR (
+                                                    HOSB_SHAP_GRP2 = 'GRP2_CUR'
+                                                AND HOSB_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN  --NET + 내고무재단여유
+                                                AND HOSB_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN  --NET + 내고무재단여유
+                                               )
+                                           )
+                                       AND HOSB_APPL_GUBN = 'Y'
+                                    ;
+                                EXCEPTION
+                                    WHEN NO_DATA_FOUND THEN O_MESG := '재단 NET CT자료가 존재하지 않습니다.' ;
+                                                            RAISE UD_EX_ERROR;
+                                END;
+
+                                --------------------------------------------
+                                -- 곡형:추출값 적용
+                                -- 직형 = [ (초기절단시간 / NET길이별CVT) + 1회 재단시간 ] / 외경별 동시재단 가닥수
+                                --         NET길이별CVT=직HOSE길이 / NET길이 (정수)
+                                --------------------------------------------
+                                IF  HOSI_R.CMPK_SHAP_GRP2 = 'GRP2_STR' THEN
+                                    IF  rt_HOSB.HOSB_STRI_CNT0 = 0 THEN
+                                        O_MESG := '가닥수가 존재하지 않습니다.';
+                                        RAISE UD_EX_ERROR;
+                                    END IF;
+
+                                    v_NET0_CVT := TRUNC(rt_HOSB.HOSB_INIT_LENG / HOSI_R.HOSI_NET0_SIZE);
+
+                                    IF  v_NET0_CVT = 0 THEN
+                                        O_MESG := 'NET길이가 초기길이를 초과했습니다.';
+                                        RAISE UD_EX_ERROR;
+                                    END IF;
+
+                                    v_NET0_CYTM := ((rt_HOSB.HOSB_INIT_CUTT / v_NET0_CVT) + rt_HOSB.HOSB_CUTT_TIME) / rt_HOSB.HOSB_STRI_CNT0;
+                                ELSE
+                                    v_NET0_CYTM := rt_HOSB.HOSB_NET0_CYTM;
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 세척 : 직HOSE = 곡HOSE / 1.5 , (참고) 추출된 NET CT는 곡HOSE값임
+                           --        단, 압출+편조는 세척제외
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('WASH') THEN
+                                IF  HOSI_R.HOSI_INJT_CODE NOT IN ('SK','DK') THEN
+                                    BEGIN
+                                        SELECT NVL(HOSW_NET0_CYTM , 0)
+                                              ,NVL(HOSW_NET0_COEF1, 0)
+                                          INTO rt_HOSW.HOSW_NET0_CYTM
+                                              ,rt_HOSW.HOSW_NET0_COEF1
+                                          FROM CATBHOSW
+                                         WHERE HOSW_CORP_CODE = v_APPL_CORP
+                                           AND HOSW_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                                           AND HOSW_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                                           AND HOSW_WASH_CODE IN ('ALL',HOSI_R.HOSI_WASH_CODE)
+                                           AND HOSW_OUT0_MIN0 <  v_OUT0_MAX_ODIA   --최외경값
+                                           AND HOSW_OUT0_MAX0 >= v_OUT0_MAX_ODIA
+                                           AND HOSW_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE
+                                           AND HOSW_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE
+                                           AND HOSW_APPL_GUBN = 'Y'
+                                        ;
+                                    EXCEPTION
+                                        WHEN NO_DATA_FOUND THEN O_MESG := '세척 NET CT자료가 존재하지 않습니다.' ;
+                                                                RAISE UD_EX_ERROR;
+                                    END;
+
+                                    IF  HOSI_R.CMPK_SHAP_GRP2 = 'GRP2_STR' THEN
+                                        v_NET0_CYTM := (rt_HOSW.HOSW_NET0_CYTM / rt_HOSW.HOSW_NET0_COEF1);
+                                    ELSE
+                                        v_NET0_CYTM := rt_HOSW.HOSW_NET0_CYTM;
+                                    END IF;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 일반MARKING
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('NMARK') THEN
+                                IF  HOSI_R.HOSI_MARK_CNT1 > 0 THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * HOSI_R.HOSI_MARK_CNT1;
+
+                                    -- RADIATOR HOSE 는 추가시간 적용(계수2)
+                                    IF  HOSI_R.HOSI_RADI_YN = 'Y' THEN
+                                        IF  HOSI_R.HOSI_NET0_SIZE <= 500 THEN
+                                            v_NET0_CYTM := v_NET0_CYTM + CPRO_R.HOSP_NET0_COEF1;
+                                        ELSE
+                                            v_NET0_CYTM := v_NET0_CYTM + CPRO_R.HOSP_NET0_COEF2;
+                                        END IF;
+                                    END IF;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 원주MARKING
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('WMARK') THEN
+                                IF  HOSI_R.HOSI_MARK_CNT2 > 0 THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * HOSI_R.HOSI_MARK_CNT2;
+
+                                    -- RADIATOR HOSE 는 추가시간 적용(계수2)
+                                    IF  HOSI_R.HOSI_RADI_YN = 'Y' THEN
+                                        IF  HOSI_R.HOSI_NET0_SIZE <= 500 THEN
+                                            v_NET0_CYTM := v_NET0_CYTM + CPRO_R.HOSP_NET0_COEF1;
+                                        ELSE
+                                            v_NET0_CYTM := v_NET0_CYTM + CPRO_R.HOSP_NET0_COEF2;
+                                        END IF;
+                                    END IF;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 검사,포장 : ea
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('AFT_PAC') THEN
+                                NULL;
+
+                           ---------------------------------------------
+                           -- LEAK TEST
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('AFT_LEAK') THEN
+                                CASE WHEN HOSI_R.HOSI_LEAK_CODE  ='2' THEN v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM;
+                                     WHEN HOSI_R.HOSI_LEAK_CODE  ='3' THEN v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1;
+                                     WHEN HOSI_R.HOSI_LEAK_CODE  ='4' THEN v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF2;
+                                     ELSE
+                                          v_CPRO_PROC_YN := 'N';
+                                END CASE;
+
+                           ELSE
+                                v_CPRO_PROC_YN := 'N';
+                      END CASE;
+
+                 ------------------------------------------------------------
+                 -- [WASHER HOSE]
+                 ------------------------------------------------------------
+                 WHEN HOSI_R.HOSI_HOSE_CODE = 'WASHER' THEN
+                      O_LINE_NO := 'ST-58320';
+
+                      CASE
+                           ---------------------------------------------
+                           -- 내압출 : 길이(m)당
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('IEXT') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_IN00_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 가재단 , 입형/가류/탈형, 정재단, 세척, 검사
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('1CUT','SHAPVULC','2CUT','WASH','AFT_PAC') THEN
+                                -- 직 HOSE : CVT반영
+                                IF  HOSI_R.HOSI_SHAP_CODE = 'STRA' THEN
+                                    v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM / v_WASH_CAVT;
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 일반MARKING
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('NMARK') THEN
+                                IF  HOSI_R.HOSI_MARK_CNT1 > 0 THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * HOSI_R.HOSI_MARK_CNT1;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 원주MARKING
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('WMARK') THEN
+                                IF  HOSI_R.HOSI_MARK_CNT2 > 0 THEN
+                                    v_NET0_CYTM := v_NET0_CYTM * HOSI_R.HOSI_MARK_CNT2;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+                           ELSE
+                                v_CPRO_PROC_YN := 'N';
+                      END CASE;
+
+                 ------------------------------------------------------------
+                 -- [DIFF HOSE]
+                 ------------------------------------------------------------
+                 WHEN HOSI_R.HOSI_HOSE_CODE = 'DIFF' THEN
+                      O_LINE_NO := 'ST-58330';
+
+                      CASE
+                           ---------------------------------------------
+                           -- 내면압출 : 길이(m)당->내고무
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('IEXT') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_IN00_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 편조 : 길이(m)당->유직사
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('KNIT') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_UJIK_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 외면압출 : 길이(m)당->외고무
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('OEXT') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_OUT0_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 가재단 , 가재단, 1차가류(곡),1차가류(직)
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('1CUT','VULCAN1') THEN
+                                NULL;
+
+                           ---------------------------------------------
+                           -- 세척 : 일반HOSE와 동일
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('WASH') THEN
+                                IF  HOSI_R.HOSI_INJT_CODE NOT IN ('SK','DK') THEN
+                                    BEGIN
+                                        SELECT NVL(HOSW_NET0_CYTM , 0)
+                                              ,NVL(HOSW_NET0_COEF1, 0)
+                                          INTO rt_HOSW.HOSW_NET0_CYTM
+                                              ,rt_HOSW.HOSW_NET0_COEF1
+                                          FROM CATBHOSW
+                                         WHERE HOSW_CORP_CODE = v_APPL_CORP
+                                           AND HOSW_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                                           AND HOSW_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                                           AND HOSW_WASH_CODE IN ('ALL',HOSI_R.HOSI_WASH_CODE)
+                                           AND HOSW_OUT0_MIN0 <  v_OUT0_MAX_ODIA   --최외경값
+                                           AND HOSW_OUT0_MAX0 >= v_OUT0_MAX_ODIA
+                                           AND HOSW_NET0_MIN0 <  HOSI_R.HOSI_NET0_SIZE
+                                           AND HOSW_NET0_MAX0 >= HOSI_R.HOSI_NET0_SIZE
+                                           AND HOSW_APPL_GUBN = 'Y'
+                                        ;
+                                    EXCEPTION
+                                        WHEN NO_DATA_FOUND THEN O_MESG := '세척 NET CT자료가 존재하지 않습니다.' ;
+                                                                RAISE UD_EX_ERROR;
+                                    END;
+
+                                    IF  HOSI_R.CMPK_SHAP_GRP2 = 'GRP2_STR' THEN
+                                        v_NET0_CYTM := (rt_HOSW.HOSW_NET0_CYTM / rt_HOSW.HOSW_NET0_COEF1);
+                                    ELSE
+                                        v_NET0_CYTM := rt_HOSW.HOSW_NET0_CYTM;
+                                    END IF;
+                                ELSE
+                                    v_CPRO_PROC_YN := 'N';
+                                END IF;
+
+                           ---------------------------------------------
+                           -- 2차가류 : NET길이+내고무재단여유반영
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('VULCAN2') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * ( (HOSI_R.HOSI_NET0_SIZE + HOSI_R.HOSI_IN00_MRGN) / 1000.0);
+
+                           ELSE
+                                v_CPRO_PROC_YN := 'N';
+                      END CASE;
+
+                 ------------------------------------------------------------
+                 -- [RETURN HOSE]
+                 ------------------------------------------------------------
+                 WHEN HOSI_R.HOSI_HOSE_CODE = 'GENL' THEN
+                      O_LINE_NO := 'ST-58340';
+
+                      CASE
+                           ---------------------------------------------
+                           -- 내압출,입형,1차가류/탈형, 2차가류 : 길이(m)당->내고무
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('IEXT','SHAPVULC','VULCAN1','VULCAN2') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_IN00_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 편조 : 길이(m)당->유직사
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('KNIT') THEN
+                                v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * (v_UJIK_TOT_LENG / 1000.0);
+
+                           ---------------------------------------------
+                           -- 재단/융착,막힘검사,최종검사/포장
+                           ---------------------------------------------
+                           WHEN CPRO_R.HOSP_PROC_GUBN IN ('CUT1','AFT_CHK','AFT_PAC') THEN
+                                NULL;
+                           ELSE
+                                v_CPRO_PROC_YN := 'N';
+                      END CASE;
+                 ------------------------------------------------------------
+                 ELSE
+                      v_CPRO_PROC_YN := 'N';
+            END CASE;
+
+            O_LINE_NO := 'ST-58400';
+
+            IF  v_CPRO_PROC_YN = 'Y' THEN
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                --기계경비추출
+                IF  TRIM(rt_CPRO.CPRO_MCHH_CODE) > ' ' THEN
+                    --2023.03.20
+                    /****
+                    CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        O_MESG := O_MESG
+                               || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MCHH_CODE
+                               || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    ****/
+                    -----------------------------------------
+                    CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    -----------------------------------------
+                    IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                        O_MESG := '기계경비정보가 존재하지 않습니다.';
+                        RAISE UD_EX_ERROR;
+                    END IF;
+                ELSE
+                    rt_MCIF.MCIF_MCHH_NAME := '';
+                    rt_MCIF.MCIF_DRCT_COST := 0;
+                END IF;
+
+                rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                --추가기계장비가 있는경우
+                --17차 : 추가장비 항목추가로 해당 항목의 값 사용
+              --IF  TRIM(CPRO_R.HOSP_MCH2_CODE) > ' ' THEN
+                IF  TRIM(CPRO_R.HOSP_MADD_CODE) > ' ' THEN
+                    O_LINE_NO := 'ST-58200';
+                    rt_CPRO.CPRO_MADD_CODE := CPRO_R.HOSP_MADD_CODE;
+
+                    --2023.03.20
+                    /****
+                    CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MADD_CODE  --CPRO_R.HOSP_MCH2_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        O_MESG := O_MESG
+                               || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MADD_CODE
+                               || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    ****/
+                    -----------------------------------------
+                    CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MADD_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MADD_APDT  --추가장비 일자변경함(2023.03)
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    -----------------------------------------
+                    IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                        O_MESG := '기계경비정보가 존재하지 않습니다.'
+                               || '기계코드=' || rt_CPRO.CPRO_MADD_CODE;
+                        RAISE UD_EX_ERROR;
+                    END IF;
+                ELSE
+                    rt_MCIF.MCIF_MCHH_NAME := '';
+                    rt_MCIF.MCIF_DRCT_COST := 0;
+                END IF;
+
+                rt_CPRO.CPRO_MCHH_NAME := rt_CPRO.CPRO_MCHH_NAME || CASE WHEN rt_MCIF.MCIF_MCHH_NAME > ' ' THEN '+' || rt_MCIF.MCIF_MCHH_NAME ELSE '' END;
+                rt_CPRO.CPRO_MCHH_COST := rt_CPRO.CPRO_MCHH_COST + TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                --저장/계산은 소수단위 절사후 처리
+                rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                --가공비계산
+                CRSPCPRO_C01(I_CORP_CODE
+                            ,rt_CMMS.CMMS_LOTQ_QTY0,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                            ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,rt_CPRO.CPRO_AEXM_RATE,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                            ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                            ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                IF  O_MESG_CODE != 'IQ-001' THEN
+                    O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                    RAISE UD_EX_ERROR;
+                ELSE
+                    O_PRGM_ID   := 'CASPHOSE_P17_6';
+                    O_MESG_CODE := 'SA-002';
+                END IF;
+
+                INSERT INTO CRTBCPRO
+                      (CPRO_CORP_CODE
+                      ,CPRO_PART_NO
+                      ,CPRO_EONO
+                      ,CPRO_CUMT_NO
+                      ,CPRO_COME_CODE
+                      ,CPRO_CUMT_GUBN
+                      ,CPRO_SEQ0
+                      ,CPRO_SORT_KEY0
+                      ,CPRO_INDS_CODE
+                      ,CPRO_PROC_NAME
+                      ,CPRO_MCHH_NAME
+                      ,CPRO_VEND_CODE
+                      ,CPRO_VEND_DATE
+                      ,CPRO_CORT_DATE
+                      ,CPRO_LOTQ
+                      ,CPRO_CAVT
+                      ,CPRO_PREP_HOUR
+                      ,CPRO_PRSN_CNT0
+                      ,CPRO_NET0_CYTM
+                      ,CPRO_MCHH_COST
+                      ,CPRO_PAY0_RATE
+                      ,CPRO_IDRT_RATE
+                      ,CPRO_GME0_RATE
+                      ,CPRO_PROF_RATE
+                      ,CPRO_ET00_RATE
+                      ,CPRO_AEXM_RATE
+                      ,CPRO_RUN0_COST
+                      ,CPRO_PROD_CONT
+                      ,CPRO_IBR0_COST
+                      ,CPRO_EXPM_COST
+                      ,CPRO_PROC_COST
+                      ,CPRO_GME0_COST
+                      ,CPRO_PROF_COST
+                      ,CPRO_APPL_GUBN
+                      ,CPRO_ADD0_GUBN
+                      ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                      ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                      ,CPRO_MCHH_CNT0
+                      ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                      ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CPRO.CPRO_PROC_NAME
+                      ,rt_CPRO.CPRO_MCHH_NAME
+                      ,rt_SPMS.SPMS_VEND_CODE
+                      ,rt_SPMS.SPMS_VEND_APFR
+                      ,rt_SPMS.SPMS_BASE_DATE
+                      ,rt_CMMS.CMMS_LOTQ_QTY0
+                      ,rt_CPRO.CPRO_CAVT
+                      ,rt_CPRO.CPRO_PREP_HOUR
+                      ,rt_CPRO.CPRO_PRSN_CNT0
+                      ,rt_CPRO.CPRO_NET0_CYTM
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CORT.CORT_PAY0_RATE
+                      ,rt_CORT.CORT_IDRT_RATE
+                      ,rt_CORT.CORT_GME0_RATE
+                      ,rt_CORT.CORT_PROF_RATE
+                      ,rt_CORT.CORT_ET00_RATE
+                      ,rt_CPRO.CPRO_AEXM_RATE
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CMMS.CMMS_PROD_CNT0
+                      ,rt_CPRO.CPRO_IBR0_COST
+                      ,rt_CPRO.CPRO_EXPM_COST
+                      ,rt_CPRO.CPRO_PROC_COST
+                      ,rt_CPRO.CPRO_GME0_COST
+                      ,rt_CPRO.CPRO_PROF_COST
+                      ,'Y'
+                      ,'S'
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                    ;
+            END IF;
+
+        END LOOP;  --CPRO LOOP END
+
+
+
+<<ASSY_PROC>>
+        ---------------------------------------------------------------------------
+        -- ASSY공정
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-59000';
+
+        FOR CPRO_R IN
+           (
+            SELECT HOSP_PROC_SEQ0
+                  ,HOSP_PROC_NAME
+                  ,HOSA_PROC_CODE
+                  ,NVL(HOSA_APLY_CONT,0)  HOSA_APLY_CONT   --적용횟수
+                  ,HOSA_APLY_CODE                          --적용코드(명칭 또는 추가입력코드)
+                  ,NVL(HOSA_APLY_VAL1,0)  HOSA_APLY_VAL1   --적용값1
+                  ,NVL(HOSA_APLY_VAL2,0)  HOSA_APLY_VAL2   --적용값2
+                  ,NVL(HOSA_NET0_SIZE,0)  HOSA_NET0_SIZE   --PAD 길이
+                  ,HOSA_ASSY_POSI                          --조립위치코드
+                  ,NVL(HOSP_NET0_CYTM ,0) HOSP_NET0_CYTM
+                  ,NVL(HOSP_NET0_COEF1,0) HOSP_NET0_COEF1
+                  ,NVL(HOSP_NET0_COEF2,0) HOSP_NET0_COEF2
+                  ,NVL(HOSP_CAVT      ,0) HOSP_CAVT
+                  ,NVL(HOSP_PREP_HOUR ,0) HOSP_PREP_HOUR
+                  ,NVL(HOSP_PRSN_CNT0 ,0) HOSP_PRSN_CNT0
+                  ,HOSP_MCHH_CODE
+                  ----------------------------------------
+                  -- SPONGE PAD
+                  ----------------------------------------
+                  ,NVL(HOSS_NET0_CYTM  ,0)  HOSS_NET0_CYTM
+                  ,NVL(HOSS_SPNG_PRSN  ,0)  HOSS_SPNG_PRSN
+                  ----------------------------------------
+                  ,COUNT(*) OVER (PARTITION BY HOSA_PROC_CODE)                            HOSA_PROC_TOTL --공정별 건수
+                  ,ROW_NUMBER() OVER(PARTITION BY HOSA_PROC_CODE ORDER BY HOSA_PROC_SEQ0) HOSA_PROC_SEQ0 --공정별 SEQ
+              FROM CATBHOSA
+
+              LEFT OUTER JOIN
+                   CATBHOSP
+                ON HOSP_CORP_CODE = v_APPL_CORP
+               AND HOSP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND HOSP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND HOSP_PROC_GUBN = HOSA_PROC_CODE
+               AND HOSP_HOSE_CODE IN ('ALL',CASE WHEN HOSI_R.HOSI_COMP_CLAS = 'A' THEN 'GENL' ELSE HOSI_R.HOSI_HOSE_CODE END)  --HOSI_COMP_CLAS = 'A':ASSY처리
+               AND HOSP_SHAP_GRP2 IN ('ALL',HOSI_R.CMPK_SHAP_GRP2)  --제품형상분류2 (직,곡)
+               AND HOSP_NET0_MIN0 <  CASE WHEN HOSI_R.HOSI_COMP_CLAS = 'A' THEN 0.01 ELSE HOSI_R.HOSI_NET0_SIZE END --2018.06.19 (ASSY만 처리시 NET SIZE 입력하지 않으므로 최소값 처리함)
+               AND HOSP_NET0_MAX0 >= CASE WHEN HOSI_R.HOSI_COMP_CLAS = 'A' THEN 0.01 ELSE HOSI_R.HOSI_NET0_SIZE END --2018.06.19 (ASSY만 처리시 NET SIZE 입력하지 않으므로 최소값 처리함)
+               AND HOSP_APPL_GUBN =  'Y'
+
+              LEFT OUTER JOIN
+                   CATBHOSS  -- SPONGE PAD NET CT
+                ON HOSS_CORP_CODE = v_APPL_CORP
+               AND HOSS_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND HOSS_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND HOSS_POSI_CODE = HOSA_ASSY_POSI                 --조립위치
+               AND NVL(HOSS_SIZE_MIN0,0) <  NVL(HOSA_NET0_SIZE,0)  --초과
+               AND NVL(HOSS_SIZE_MAX0,0) >= NVL(HOSA_NET0_SIZE,0)  --이하
+               AND HOSS_APPL_GUBN = 'Y'
+
+             WHERE HOSA_CORP_CODE = I_CORP_CODE
+               AND HOSA_PART_NO   = I_PART_NO
+               AND HOSA_EONO      = I_EONO
+               AND HOSA_CUMT_NO   = I_CUMT_NO
+               ---------------------------------------------------------------------
+               -- 15차 개정시 ASSY만 처리하도록 기능을 추가하여, 다시 한번 걸러냄
+               -- 17차 : ASSY공정만 HOSA에 저장되도록 변경함에 따라 별도 제약불필요
+               ---------------------------------------------------------------------
+             --AND (   (HOSI_R.HOSI_COMP_CLAS <> 'A')
+             --     OR (HOSI_R.HOSI_COMP_CLAS = 'A' AND
+             --         HOSA_PROC_CODE IN ('CLIP1','CLIP2','CLIP3','CLIPMOVE','PVCHOSE',
+             --                            'WIRGFIX','TAPEG','3WAYVLV','CHKVLV','BONDG','ETCASSY','PADASSY')
+             --        )
+             --    )
+               ---------------------------------------------------------------------
+             ORDER BY HOSP_PROC_SEQ0
+                     ,HOSA_PROC_SEQ0
+           )
+        LOOP
+            v_CPRO_PROC_YN := 'Y';
+            O_LINE_NO      := 'ST-' || (59000 + CPRO_R.HOSP_PROC_SEQ0);
+
+            /****
+            ---------------------------------------------------
+            -- 17-1차 개정시, ASSY만 계산할 수 있도록 함.
+            -- CLIP조립의 경우 외경을 입력해야 하는데, 입력없이 CLIP조립을 외경별로 선택하도록 함.
+            -- 이에 따라, 외경에 맞는 CLIP조립을 선택했는지 체크하는 로직을 삽입함 (ASSY는 체크하지 않음)
+            ---------------------------------------------------
+            IF  HOSI_R.HOSI_COMP_CLAS <> 'A' THEN
+                IF (CPRO_R.HOSA_PROC_CODE = 'CLIP1' AND (HOSI_R.HOSI_OUT0_SIZE < 0.01 OR HOSI_R.HOSI_OUT0_SIZE > 14.0) ) OR
+                   (CPRO_R.HOSA_PROC_CODE = 'CLIP2' AND (HOSI_R.HOSI_OUT0_SIZE < 14.0 OR HOSI_R.HOSI_OUT0_SIZE > 24.0) ) OR
+                   (CPRO_R.HOSA_PROC_CODE = 'CLIP3' AND (HOSI_R.HOSI_OUT0_SIZE <=24                                  ) ) THEN
+                    O_MESG := '제품외경에 맞는 CLIP조립공정을 선택하시기 바랍니다.' || CHR(10)
+                           || '제품외경 입력값=' || HOSI_R.HOSI_OUT0_SIZE;
+                    RAISE UD_EX_ERROR;
+                END IF;
+            END IF;
+            ---------------------------------------------------
+            ****/
+
+            rt_CPRO.CPRO_PROC_NAME := CASE WHEN CPRO_R.HOSA_PROC_TOTL <= 1 THEN
+                                                CPRO_R.HOSP_PROC_NAME
+                                           ELSE CPRO_R.HOSP_PROC_NAME || ' #' || CPRO_R.HOSA_PROC_SEQ0
+                                      END;
+            rt_CPRO.CPRO_CAVT      := CPRO_R.HOSP_CAVT    ;
+            rt_CPRO.CPRO_PREP_HOUR := CPRO_R.HOSP_PREP_HOUR;
+            rt_CPRO.CPRO_PRSN_CNT0 := CPRO_R.HOSP_PRSN_CNT0;
+            v_NET0_CYTM            := CPRO_R.HOSP_NET0_CYTM;
+            rt_CPRO.CPRO_AEXM_RATE := 0.0;
+            rt_CPRO.CPRO_MCHH_APDT := '';
+            rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCHH_CODE;
+            rt_CPRO.CPRO_MADD_APDT := '';
+            rt_CPRO.CPRO_MADD_CODE := '';
+
+            CASE
+                 ---------------------------------------
+                 -- 순수 ASSY 공정
+                 ---------------------------------------
+                 --CLIP조립~순간접착제 BOND'G : 수량반영
+                 WHEN CPRO_R.HOSA_PROC_CODE IN ('AS_CLIP1','AS_CLIP2','AS_CLIP3','AS_CLIPM','AS_PVCH',
+                                                'AS_WIRG' ,'AS_TAPE' ,'AS_3WAY' ,'AS_CHKV' ,'AS_BOND',
+                                                'AS_LAB1' ,'AS_LAB2' ) THEN
+
+                      IF  CPRO_R.HOSA_APLY_CONT > 0 THEN
+                          v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * CPRO_R.HOSA_APLY_CONT;
+                      ELSE
+                          v_CPRO_PROC_YN := 'N';
+                      END IF;
+
+                 ---------------------------------------
+                 -- 순수 ASSY 공정 : WASHER, DIFF HOSE 전용 ASSY공정 : 변경에 대비하여 분리해 놓음
+                 ---------------------------------------
+                 --CLIP조립,정재단, SENSOR조립, 통전검사
+                 WHEN CPRO_R.HOSA_PROC_CODE IN ('AS_CLIPA','AS_CUTT','AS_SENS','AS_ELEC') THEN
+
+                      IF  CPRO_R.HOSA_APLY_CONT > 0 THEN
+                          v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * CPRO_R.HOSA_APLY_CONT;
+                      ELSE
+                          v_CPRO_PROC_YN := 'N';
+                      END IF;
+
+                 ---------------------------------------------
+                 -- 추가 조립 : 입력공정명 사용
+                 ---------------------------------------------
+                 WHEN CPRO_R.HOSA_PROC_CODE IN ('AS_ETC') THEN
+
+                      IF  CPRO_R.HOSA_APLY_CONT <= 0 OR
+                          CPRO_R.HOSA_APLY_VAL1 <= 0 THEN
+                          O_MESG := '추가조립 공정의 NET C/T와 갯수/횟수를 확인하시기 바랍니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+
+                      rt_CPRO.CPRO_PROC_NAME := CPRO_R.HOSA_APLY_CODE;
+
+                      IF  CPRO_R.HOSA_APLY_CONT > 0 THEN
+                          rt_CPRO.CPRO_CAVT      := 1;
+                          rt_CPRO.CPRO_PRSN_CNT0 := 1;
+                          v_NET0_CYTM := CPRO_R.HOSA_APLY_VAL1 * CPRO_R.HOSA_APLY_CONT;
+                      ELSE
+                          v_CPRO_PROC_YN := 'N';
+                      END IF;
+
+                 ---------------------------------------------
+                 -- SPONGE PAD ASSY
+                 ---------------------------------------------
+                 WHEN CPRO_R.HOSA_PROC_CODE IN ('AS_SPON') THEN
+                      IF  CPRO_R.HOSA_NET0_SIZE <= 0 OR
+                          CPRO_R.HOSA_APLY_CONT <= 0 OR
+                          NVL(CPRO_R.HOSA_ASSY_POSI,'') = '' THEN
+                          O_MESG := 'SPONGE PAD ASSY는 PAD길이,조립위치,갯수를 입력후 계산하시기 바랍니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+
+                      IF  CPRO_R.HOSS_NET0_CYTM <= 0 AND
+                          CPRO_R.HOSS_SPNG_PRSN <= 0 THEN
+                          O_MESG := 'SPONGE PAD ASSY의 PAD길이별 NET C/T, 인원정보를 추출할 수 없습니다.' || CHR(10)
+                                 || '운영자에 문의하시기 바랍니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+
+                      v_NET0_CYTM            := CPRO_R.HOSS_NET0_CYTM * CPRO_R.HOSA_APLY_CONT;
+                      rt_CPRO.CPRO_PRSN_CNT0 := CPRO_R.HOSS_SPNG_PRSN;
+
+                 ELSE
+                      v_CPRO_PROC_YN := 'N';
+
+           END CASE;
+
+           IF v_CPRO_PROC_YN = 'Y' THEN
+                O_LINE_NO  := 'ST-59900';
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                    O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.' || CHR(10)
+                           || '공정코드=' || CPRO_R.HOSA_PROC_CODE;
+                    RAISE UD_EX_ERROR;
+                END IF;
+
+                --기계경비추출
+                IF  TRIM(rt_CPRO.CPRO_MCHH_CODE) > ' ' THEN
+                    --2023.03.20
+                    /****
+                    CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        O_MESG := O_MESG
+                               || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MCHH_CODE
+                               || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    ****/
+                    -----------------------------------------
+                    CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    -----------------------------------------
+
+                    IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                        O_MESG := '기계경비정보가 존재하지 않습니다.';
+                        RAISE UD_EX_ERROR;
+                    END IF;
+                ELSE
+                    rt_MCIF.MCIF_MCHH_NAME := '';
+                    rt_MCIF.MCIF_DRCT_COST := 0;
+                END IF;
+
+                rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                --저장/계산은 소수단위 절사후 처리
+                rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                --가공비계산
+                CRSPCPRO_C01(I_CORP_CODE
+                            ,rt_CMMS.CMMS_LOTQ_QTY0 ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                            ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,rt_CPRO.CPRO_AEXM_RATE,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                            ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                            ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                IF  O_MESG_CODE != 'IQ-001' THEN
+                    O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                    RAISE UD_EX_ERROR;
+                ELSE
+                    O_PRGM_ID   := 'CASPHOSE_P17_6';
+                    O_MESG_CODE := 'SA-002';
+                END IF;
+
+                INSERT INTO CRTBCPRO
+                      (CPRO_CORP_CODE
+                      ,CPRO_PART_NO
+                      ,CPRO_EONO
+                      ,CPRO_CUMT_NO
+                      ,CPRO_COME_CODE
+                      ,CPRO_CUMT_GUBN
+                      ,CPRO_SEQ0
+                      ,CPRO_SORT_KEY0
+                      ,CPRO_INDS_CODE
+                      ,CPRO_PROC_NAME
+                      ,CPRO_MCHH_NAME
+                      ,CPRO_VEND_CODE
+                      ,CPRO_VEND_DATE
+                      ,CPRO_CORT_DATE
+                      ,CPRO_LOTQ
+                      ,CPRO_CAVT
+                      ,CPRO_PREP_HOUR
+                      ,CPRO_PRSN_CNT0
+                      ,CPRO_NET0_CYTM
+                      ,CPRO_MCHH_COST
+                      ,CPRO_PAY0_RATE
+                      ,CPRO_IDRT_RATE
+                      ,CPRO_GME0_RATE
+                      ,CPRO_PROF_RATE
+                      ,CPRO_ET00_RATE
+                      ,CPRO_AEXM_RATE
+                      ,CPRO_RUN0_COST
+                      ,CPRO_PROD_CONT
+                      ,CPRO_IBR0_COST
+                      ,CPRO_EXPM_COST
+                      ,CPRO_PROC_COST
+                      ,CPRO_GME0_COST
+                      ,CPRO_PROF_COST
+                      ,CPRO_APPL_GUBN
+                      ,CPRO_ADD0_GUBN
+                      ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                      ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                      ,CPRO_MCHH_CNT0
+                      ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                      ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CPRO.CPRO_PROC_NAME
+                      ,rt_CPRO.CPRO_MCHH_NAME
+                      ,rt_SPMS.SPMS_VEND_CODE
+                      ,rt_SPMS.SPMS_VEND_APFR
+                      ,rt_SPMS.SPMS_BASE_DATE
+                      ,rt_CMMS.CMMS_LOTQ_QTY0
+                      ,rt_CPRO.CPRO_CAVT
+                      ,rt_CPRO.CPRO_PREP_HOUR
+                      ,rt_CPRO.CPRO_PRSN_CNT0
+                      ,rt_CPRO.CPRO_NET0_CYTM
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CORT.CORT_PAY0_RATE
+                      ,rt_CORT.CORT_IDRT_RATE
+                      ,rt_CORT.CORT_GME0_RATE
+                      ,rt_CORT.CORT_PROF_RATE
+                      ,rt_CORT.CORT_ET00_RATE
+                      ,rt_CPRO.CPRO_AEXM_RATE
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CMMS.CMMS_PROD_CNT0
+                      ,rt_CPRO.CPRO_IBR0_COST
+                      ,rt_CPRO.CPRO_EXPM_COST
+                      ,rt_CPRO.CPRO_PROC_COST
+                      ,rt_CPRO.CPRO_GME0_COST
+                      ,rt_CPRO.CPRO_PROF_COST
+                      ,'Y'
+                      ,'S'
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                    ;
+
+           END IF;
+        END LOOP;
+
+    END LOOP; --INPUT LOOP
+
+
+
+<<HPAD_PROC>>
+    ---------------------------------------------------------------------------
+    -- HOSE PAD 처리 : 별개의 구성품이므로 일반HOSE와 분리하여 처리함
+    ---------------------------------------------------------------------------
+    IF  rt_HOSI.HOSI_HOSE_CODE = 'PAD' AND
+        rt_HOSI.HOSI_COMP_CLAS <> 'A' THEN
+        O_LINE_NO  := 'ST-60000';
+
+     -- DBMS_OUTPUT.PUT_LINE('HOSE PAD START---------------');
+
+        v_INPT_WEGT_SUM := 0;  --RM중량 CLEAR
+
+        FOR PAD_R IN
+           (
+            SELECT NVL(HOSI_UNUS_PRIC, 0)     HOSI_UNUS_PRIC    --산폐단가
+                  ,HOSZ_MATL_STND             HOSI_MATL_STND
+                  ,HOSZ_MATL_CODE             HOSI_MATL_CODE
+                  ,HOSZ_MATL_APDT             HOSI_MATL_APDT
+                  ,M01.MATL_GUBN              HOSI_MATL_IMSI
+                  ,M01.MATL_NAME              HOSI_MATL_NAME
+                  ,NVL(M01.MATL_PRIC,0)       HOSI_MATL_PRIC
+                  ,M01.MATL_UNIT              HOSI_MATL_UNIT
+                  ,M01.MATL_GUBN              HOSI_MATL_GUBN
+                  ,NVL(M01.MATL_SCRP_PRIC,0)  HOSI_SCRP_PRIC
+                  ,NVL(M01.MATL_SCRP_RATE,0)  HOSI_SCRP_RATE
+                  ,M01.MATL_IMPT_CODE         HOSI_IMPT_CODE
+                  ,NVL(M01.MATL_IMPT_PRIC,0)  HOSI_IMPT_COST
+                  ,NVL(M01.MATL_TRIF_RATE,0)  HOSI_TRIF_RATE
+                --,NVL(M01.MATL_UNUS_PRIC,0)  HOSI_UNUS_PRIC
+                  ,NVL(HOSZ_GRVT_NUMB,0)      HOSI_GRVT_NUMB
+                  ,NVL(HOSZ_IN00_SIZE,0)      HOSI_IN00_SIZE
+                  ,NVL(HOSZ_OUT0_SIZE,0)      HOSI_OUT0_SIZE
+                  ,((NVL(HOSZ_OUT0_SIZE,0) - NVL(HOSZ_IN00_SIZE,0)) / 2)  HOSI_THIK_SIZE  --두께=(외경-내경) / 2
+                  ,NVL(HOSZ_NET0_SIZE,0)      HOSI_NET0_SIZE
+                  ,NVL(HOSZ_SPAR_SIZE,0)      HOSI_SPAR_SIZE
+                  ,HOSZ_SHAP_CODE             HOSI_SHAP_CODE
+                  ,HOSZ_ASSY_POSI
+                  ,(SELECT COUNT(*)
+                     FROM CATBHOSZ
+                    WHERE HOSZ_CORP_CODE = I_CORP_CODE
+                      AND HOSZ_PART_NO   = I_PART_NO
+                      AND HOSZ_EONO      = I_EONO
+                      AND HOSZ_CUMT_NO   = I_CUMT_NO
+                   )                          HOSZ_TOTL_CNT             -- 등록건수
+                  ,ROW_NUMBER() OVER (ORDER BY HOSZ_MATL_SEQ0) HOSZ_SEQ -- 처리순번
+              FROM CATBHOSI
+                  ,CATBHOSZ
+              LEFT OUTER JOIN
+                   CITBMATL M01
+              ON   HOSZ_MATL_CORP = MATL_CORP_CODE
+               AND HOSZ_MATL_STND = MATL_STND_GUBN
+               AND HOSZ_MATL_CODE = MATL_CODE
+               AND HOSZ_MATL_APDT = MATL_APPL_DATE
+               AND HOSZ_MATL_GUBN = MATL_GUBN
+             WHERE HOSI_CORP_CODE = I_CORP_CODE
+               AND HOSI_PART_NO   = I_PART_NO
+               AND HOSI_EONO      = I_EONO
+               AND HOSI_CUMT_NO   = I_CUMT_NO
+               AND HOSI_CORP_CODE = HOSZ_CORP_CODE
+               AND HOSI_PART_NO   = HOSZ_PART_NO
+               AND HOSI_EONO      = HOSZ_EONO
+               AND HOSI_CUMT_NO   = HOSZ_CUMT_NO
+             ORDER BY HOSZ_MATL_SEQ0
+           )
+
+        LOOP
+            ---------------------------------------------------------------------------
+            -- INPUT CHECK : 15차 ADD (개정과 무관)
+            ---------------------------------------------------------------------------
+            O_LINE_NO := 'ST-60100';
+
+          --DBMS_OUTPUT.PUT_LINE ('HOSZ_SEQ=' || PAD_R.HOSZ_SEQ);
+
+
+            IF  PAD_R.HOSI_OUT0_SIZE <= PAD_R.HOSI_IN00_SIZE THEN
+                O_MESG := 'HOSE PAD 내,외경 SIZE를 확인하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            -- DIVIDE ZERO 방지
+            IF  PAD_R.HOSI_NET0_SIZE > 2400 THEN
+                O_MESG := 'NET 길이는 최대 2400mm까지 가능합니다.' || CHR(10)
+                       || '입력값=' || PAD_R.HOSI_NET0_SIZE;
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            ---------------------------------------------------------------------------
+            -- LOSS길이계산 (시압출LOSS, 재료교환LOSS)
+            ---------------------------------------------------------------------------
+            O_LINE_NO := 'ST-60300';
+
+            SELECT SUM(HOSO_LOSS_LENG * 1000.0)  --mm단위 맞추기위해 *1000처리
+                  ,MAX(HOSO_LOSS_RATE)
+              INTO rt_HOSO.HOSO_LOSS_LENG
+                  ,rt_HOSO.HOSO_LOSS_RATE
+              FROM CATBHOSO
+             WHERE HOSO_CORP_CODE = v_APPL_CORP
+               AND HOSO_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+               AND HOSO_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+               AND HOSO_HOSE_CODE = 'PAD'
+               AND HOSO_APPL_GUBN = 'Y'
+            ;
+
+            -- PAD = NET길이에 율 반영
+            v_LOSS_LENG := (PAD_R.HOSI_NET0_SIZE * (rt_HOSO.HOSO_LOSS_RATE * 0.01));
+
+             ---------------------------------------------------------------------------
+            -- 총투입길이 = 부품NET길이 + 재단여유길이 + LOSS길이
+            -- 여유길이   = 별도계산
+            ---------------------------------------------------------------------------
+            O_LINE_NO := 'ST-60400';
+
+            -- 여유길이 = (2400-CVT*NET길이)/CVT , CVT = TRUNC(2400/NET길이,0)
+            PAD_R.HOSI_SPAR_SIZE := TRUNC((2400 - TRUNC(2400 / PAD_R.HOSI_NET0_SIZE,0) * PAD_R.HOSI_NET0_SIZE) / TRUNC(2400 / PAD_R.HOSI_NET0_SIZE,0),2);
+            v_APPL_TOT_LENG := (PAD_R.HOSI_NET0_SIZE + PAD_R.HOSI_SPAR_SIZE + v_LOSS_LENG);
+
+            ---------------------------------------------------------------------------
+            -- PAD_주재료비처리
+            ---------------------------------------------------------------------------
+            O_LINE_NO := 'ST-61000';
+
+            rt_CMAT.CMAT_MATL_CORP := v_APPL_CORP;
+            rt_CMAT.CMAT_MATL_STND := PAD_R.HOSI_MATL_STND;
+            rt_CMAT.CMAT_MATL_CODE := PAD_R.HOSI_MATL_CODE;
+            rt_CMAT.CMAT_MATL_APDT := PAD_R.HOSI_MATL_APDT;
+            rt_CMAT.CMAT_MATL_GUBN := PAD_R.HOSI_MATL_GUBN;
+            rt_CMAT.CMAT_MATL_NAME := 'PAD' || CASE WHEN PAD_R.HOSZ_TOTL_CNT > 1 THEN ' #' || PAD_R.HOSZ_SEQ ELSE NULL END;
+            rt_CMAT.CMAT_MATL_PRIC := PAD_R.HOSI_MATL_PRIC;
+            rt_CMAT.CMAT_MATL_UNIT := PAD_R.HOSI_MATL_UNIT;
+            rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+            rt_CMAT.CMAT_SCRP_RATE := 0.0;
+            rt_CMAT.CMAT_SCRP_COST := 0.0;
+            rt_CMAT.CMAT_UNUS_PRIC := PAD_R.HOSI_UNUS_PRIC;
+            rt_CMAT.CMAT_IMPT_CODE := PAD_R.HOSI_IMPT_CODE;
+            rt_CMAT.CMAT_IMPT_PRIC := PAD_R.HOSI_IMPT_COST;
+
+            -- PAD비중은 ITEM구분에 의해 결정
+            BEGIN
+                SELECT HOSV_PAD0_GRVT
+                  INTO v_SPEC_GRAV
+                  FROM CATBHOSV
+                 WHERE HOSV_CORP_CODE = v_APPL_CORP
+                   AND HOSV_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                   AND HOSV_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                   AND HOSV_ITEM_CODE IN ('ALL', PAD_R.HOSI_SHAP_CODE)
+                   AND NVL(HOSV_THIK_MIN0,0) <  PAD_R.HOSI_THIK_SIZE  --두께=(PAD_R.HOSZ_OUT0_SIZE - PAD_R.HOSZ_IN00_SIZE) / 2   --초과
+                   AND NVL(HOSV_THIK_MAX0,0) >= PAD_R.HOSI_THIK_SIZE  --두께=(PAD_R.HOSZ_OUT0_SIZE - PAD_R.HOSZ_IN00_SIZE) / 2   --이하
+                   AND HOSV_APPL_GUBN = 'Y'
+                ;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN O_MESG := 'PAD비중 정보를 추출할 수 없습니다. (운영자에 문의요망)';
+                                        RAISE UD_EX_ERROR;
+            END;
+
+         -- DBMS_OUTPUT.PUT_LINE('PAD_R.HOSI_THIK_SIZE=' || PAD_R.HOSI_THIK_SIZE);
+         -- DBMS_OUTPUT.PUT_LINE('v_SPEC_GRAV=' || v_SPEC_GRAV);
+
+
+
+            v_IN00_INR_SIZE := PAD_R.HOSI_IN00_SIZE;  --내고무내경
+            v_IN00_OUT_SIZE := PAD_R.HOSI_OUT0_SIZE;  --내고무외경
+            v_IN00_APL_SIZE := v_IN00_INR_SIZE;       --내경(=내고무내경)
+            v_OUT0_APL_SIZE := v_IN00_OUT_SIZE;       --외경(=내고무외경)
+
+            -- M당 중량
+            v_WGHT_PER_METER := ((ACOS(-1.0) / 4.0) * ( POWER(v_OUT0_APL_SIZE,2) - POWER(v_IN00_APL_SIZE,2) ) * v_SPEC_GRAV);
+
+            rt_CMAT.CMAT_INPT_WEGT := TRUNC((v_WGHT_PER_METER * v_APPL_TOT_LENG     ) / 1000.0, 2);
+            rt_CMAT.CMAT_NET0_WEGT := TRUNC((v_WGHT_PER_METER * PAD_R.HOSI_NET0_SIZE) / 1000.0, 2);
+
+            --산폐비
+            rt_CMAT.CMAT_SCRP_WEGT := TRUNC(rt_CMAT.CMAT_INPT_WEGT - rt_CMAT.CMAT_NET0_WEGT, 2);
+            rt_CMAT.CMAT_UNUS_COST := TRUNC(((rt_CMAT.CMAT_SCRP_WEGT * rt_CMAT.CMAT_UNUS_PRIC / 1000)),trCo);
+
+            --재료비
+            rt_CMAT.CMAT_MATL_COST := (rt_CMAT.CMAT_INPT_WEGT * 0.001) * rt_CMAT.CMAT_MATL_PRIC;
+            rt_CMAT.CMAT_MATL_CONS := (rt_CMAT.CMAT_INPT_WEGT * 0.001); --계산상수(단가미반영)
+            rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+            rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_UNUS_COST;
+
+            --재관비 = (재료비 + SCRAP비 - 산폐비) * 관리비율
+            rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE / 100.0);
+            rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+            -- 재료코드가 선택되지 않은 경우
+            IF  NVL(rt_CMAT.CMAT_MATL_CODE,' ') = ' ' THEN
+                rt_CMAT.CMAT_MATL_CORP := NULL;
+                rt_CMAT.CMAT_MATL_STND := NULL;
+                rt_CMAT.CMAT_MATL_CODE := NULL;
+                rt_CMAT.CMAT_MATL_APDT := NULL;
+                rt_CMAT.CMAT_MATL_GUBN := NULL;
+            END IF;
+
+            -- 가공비처리를 위해 총길이,총투입중량 SAVE
+            -------------------------------------------
+            v_IN00_TOT_LENG        := v_APPL_TOT_LENG;
+            v_IN00_CMAT_INPT_WEGT  := rt_CMAT.CMAT_INPT_WEGT;    --SAVE:ROLLING공정에서 사용
+            v_INPT_WEGT_SUM        := v_INPT_WEGT_SUM + rt_CMAT.CMAT_INPT_WEGT;
+            -------------------------------------------
+            v_SORT_KEY := v_SORT_KEY + 1;
+
+            INSERT INTO CRTBCMAT
+                  (CMAT_CORP_CODE
+                  ,CMAT_PART_NO
+                  ,CMAT_EONO
+                  ,CMAT_CUMT_NO
+                  ,CMAT_COME_CODE
+                  ,CMAT_CUMT_GUBN
+                  ,CMAT_MATL_SEQ0
+                  ,CMAT_SORT_KEY0
+                  ,CMAT_INDS_CODE
+                  ,CMAT_MATL_CORP
+                  ,CMAT_MATL_STND
+                  ,CMAT_MATL_CODE
+                  ,CMAT_MATL_APDT
+                  ,CMAT_MATL_GUBN
+                  ,CMAT_MATL_CLAS
+                  ,CMAT_MATL_MTJO
+                  ,CMAT_MATL_LKGB
+                  ,CMAT_MATL_NAME
+                  ,CMAT_MATL_UNIT
+                  ,CMAT_MATL_PRIC
+                  ,CMAT_SCRP_PRIC
+                  ,CMAT_SCRP_RATE
+                  ,CMAT_UNUS_PRIC
+                  ,CMAT_IMPT_CODE
+                  ,CMAT_IMPT_PRIC
+                  ,CMAT_IMPT_APDT
+                  ,CMAT_TRIF_RATE
+                  ,CMAT_INPT_WEGT
+                  ,CMAT_NET0_WEGT
+                  ,CMAT_USE0_WEGT
+                  ,CMAT_APPL_WEGT
+                  ,CMAT_SCRP_WEGT
+                  ,CMAT_LOSS_RATE
+                  ,CMAT_PDAB_RATE
+                  ,CMAT_MRGN_RATE
+                  ,CMAT_MATL_RATE
+                  ,CMAT_ADD0_COST
+                  ,CMAT_UNUS_COST
+                  ,CMAT_SCRP_COST
+                  ,CMAT_MATL_COST
+                  ,CMAT_MATL_MACT
+                  ,CMAT_MATL_CONS
+                  ,CMAT_SCRP_CONS
+                  ,CMAT_APPL_GUBN
+                  ,CMAT_ADD0_GUBN
+                  ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                  ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                  )
+           VALUES (I_CORP_CODE
+                  ,I_PART_NO
+                  ,I_EONO
+                  ,I_CUMT_NO
+                  ,v_COME_CODE
+                  ,'S'
+                  ,v_SORT_KEY
+                  ,v_SORT_KEY
+                  ,rt_MTCD.MTCD_INDS_CODE
+                  ,rt_CMAT.CMAT_MATL_CORP
+                  ,rt_CMAT.CMAT_MATL_STND
+                  ,rt_CMAT.CMAT_MATL_CODE
+                  ,rt_CMAT.CMAT_MATL_APDT
+                  ,rt_CMAT.CMAT_MATL_GUBN
+                  ,rt_CMAT.CMAT_MATL_CLAS
+                  ,rt_CMAT.CMAT_MATL_MTJO
+                  ,CASE WHEN TRIM(rt_CMAT.CMAT_IMPT_CODE) > ' ' THEN 'K' ELSE 'L' END
+                  ,rt_CMAT.CMAT_MATL_NAME
+                  ,rt_CMAT.CMAT_MATL_UNIT
+                  ,rt_CMAT.CMAT_MATL_PRIC
+                  ,rt_CMAT.CMAT_SCRP_PRIC
+                  ,rt_CMAT.CMAT_SCRP_RATE
+                  ,rt_CMAT.CMAT_UNUS_PRIC
+                  ,rt_CMAT.CMAT_IMPT_CODE
+                  ,rt_CMAT.CMAT_IMPT_PRIC
+                  ,NULL
+                  ,rt_CMAT.CMAT_TRIF_RATE
+                  ,rt_CMAT.CMAT_INPT_WEGT
+                  ,rt_CMAT.CMAT_NET0_WEGT
+                  ,rt_CMAT.CMAT_USE0_WEGT
+                  ,rt_CMAT.CMAT_APPL_WEGT
+                  ,rt_CMAT.CMAT_SCRP_WEGT
+                  ,rt_CMAT.CMAT_LOSS_RATE
+                  ,rt_CMAT.CMAT_PDAB_RATE
+                  ,0
+                  ,rt_CORT.CORT_MATL_RATE
+                  ,0
+                  ,rt_CMAT.CMAT_UNUS_COST
+                  ,rt_CMAT.CMAT_SCRP_COST
+                  ,rt_CMAT.CMAT_MATL_COST
+                  ,rt_CMAT.CMAT_MATL_MACT
+                  ,rt_CMAT.CMAT_MATL_CONS
+                  ,rt_CMAT.CMAT_SCRP_CONS
+                  ,'Y'
+                  ,'S'
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  )
+                  ;
+
+            ---------------------------------------------------------------------------
+            -- PAD_가공비처리 - 입력수 만큼 반복처리 (ROLLING 1회, 압출,재단은 반복실시)
+            ---------------------------------------------------------------------------
+            O_LINE_NO := 'ST-62000';
+
+            FOR CPRO_R IN
+               (
+                SELECT HOSP_PROC_SEQ0
+                      ,HOSP_PROC_GUBN
+                      ,HOSP_PROC_NAME
+                      ,NVL(HOSP_NET0_CYTM  ,0)  HOSP_NET0_CYTM
+                      ,NVL(HOSP_NET0_COEF1 ,0)  HOSP_NET0_COEF1
+                      ,NVL(HOSP_NET0_COEF2 ,0)  HOSP_NET0_COEF2
+                      ,NVL(HOSP_CAVT       ,0)  HOSP_CAVT
+                      ,NVL(HOSP_PREP_HOUR  ,0)  HOSP_PREP_HOUR
+                      ,NVL(HOSP_PRSN_CNT0  ,0)  HOSP_PRSN_CNT0
+                      ,HOSP_MCHH_CODE
+                  FROM CATBHOSP
+                 WHERE HOSP_CORP_CODE = v_APPL_CORP
+                   AND HOSP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                   AND HOSP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                   AND HOSP_HOSE_CODE = 'PAD'
+                   AND HOSP_INJT_GUBN IN ('ALL')
+                   AND HOSP_UJIK_CODE IN ('ALL')
+                   AND HOSP_SHAP_CODE IN ('ALL',PAD_R.HOSI_SHAP_CODE)
+                   AND HOSP_SHAP_GRP2 IN ('ALL')
+                   AND HOSP_IN00_CODE IN ('ALL')
+                   AND HOSP_PROD_CODE IN ('ALL')
+                   AND HOSP_IN00_MIN0 <  PAD_R.HOSI_IN00_SIZE
+                   AND HOSP_IN00_MAX0 >= PAD_R.HOSI_IN00_SIZE
+                   AND HOSP_OUT0_MIN0 <  PAD_R.HOSI_OUT0_SIZE
+                   AND HOSP_OUT0_MAX0 >= PAD_R.HOSI_OUT0_SIZE
+                   AND HOSP_NET0_MIN0 <  PAD_R.HOSI_NET0_SIZE
+                   AND HOSP_NET0_MAX0 >= PAD_R.HOSI_NET0_SIZE
+                   AND HOSP_MGM0_MIN0 <  v_IN00_TOT_LENG
+                   AND HOSP_MGM0_MAX0 >= v_IN00_TOT_LENG
+                   AND HOSP_APPL_GUBN =  'Y'
+                 ORDER BY HOSP_PROC_SEQ0
+               )
+
+            LOOP
+                v_CPRO_PROC_YN := 'Y';
+                O_LINE_NO      := 'ST-' || (62000 + CPRO_R.HOSP_PROC_SEQ0);
+
+                IF  CPRO_R.HOSP_PROC_GUBN = 'ROLLG' THEN
+                    rt_CPRO.CPRO_PROC_NAME := CPRO_R.HOSP_PROC_NAME;
+                ELSE
+                    rt_CPRO.CPRO_PROC_NAME := CPRO_R.HOSP_PROC_NAME || CASE WHEN PAD_R.HOSZ_TOTL_CNT > 1 THEN ' #' || PAD_R.HOSZ_SEQ ELSE NULL END;
+                END IF;
+
+                rt_CPRO.CPRO_CAVT      := CPRO_R.HOSP_CAVT    ;
+                rt_CPRO.CPRO_PREP_HOUR := CPRO_R.HOSP_PREP_HOUR;
+                rt_CPRO.CPRO_PRSN_CNT0 := CPRO_R.HOSP_PRSN_CNT0;
+                v_NET0_CYTM            := CPRO_R.HOSP_NET0_CYTM;
+                rt_CPRO.CPRO_AEXM_RATE := 0.0;
+                rt_CPRO.CPRO_MCHH_APDT := '';
+                rt_CPRO.CPRO_MCHH_CODE := CPRO_R.HOSP_MCHH_CODE;
+                rt_CPRO.CPRO_MADD_APDT := '';
+                rt_CPRO.CPRO_MADD_CODE := '';
+
+
+                CASE
+                     -- ROLL'G : 1회만 처리함
+                     ------------------------------------------------------------
+                     -- [주의] 처음에 처리하게 되면 투입중량이 하나만 반영되어 있는 상태임->모두 합산된 중량으로 계산되어야하므로
+                     --        마지막에 처리하되, 공정순서는 처음에 나타나야 함.
+                     ------------------------------------------------------------
+                     WHEN CPRO_R.HOSP_PROC_GUBN IN ('ROLLG') AND
+                          PAD_R.HOSZ_SEQ = PAD_R.HOSZ_TOTL_CNT THEN
+
+                       -- DBMS_OUTPUT.PUT_LINE('v_INPT_WEGT_SUM:' || v_INPT_WEGT_SUM);
+
+                          -- NET CT=12 * 투입중량 /1000
+                          v_NET0_CYTM := CPRO_R.HOSP_NET0_COEF1 * v_INPT_WEGT_SUM / CPRO_R.HOSP_NET0_COEF2;
+
+                     -- 압출 : 길이(m)당
+                     WHEN CPRO_R.HOSP_PROC_GUBN IN ('EXT') THEN
+                          v_NET0_CYTM := CPRO_R.HOSP_NET0_CYTM * (v_IN00_TOT_LENG * 0.001);
+
+                     -- 재단 : ea당
+                     WHEN CPRO_R.HOSP_PROC_GUBN IN ('CUT') THEN
+                          NULL;
+
+                     ELSE
+                          v_CPRO_PROC_YN := 'N';
+                END CASE;
+
+                IF  v_CPRO_PROC_YN = 'Y' THEN
+                    v_SORT_KEY := v_SORT_KEY + 1;
+
+                    IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                         O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.';
+                         RAISE UD_EX_ERROR;
+                    END IF;
+
+                    --기계경비추출
+                    IF  TRIM(rt_CPRO.CPRO_MCHH_CODE) > ' ' THEN
+                        --2023.03.20
+                        /****
+                        CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                    ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                    ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+                        IF  O_MESG_CODE != 'IQ-001' THEN
+                            O_MESG := O_MESG
+                                   || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MCHH_CODE
+                                   || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                            RAISE UD_EX_ERROR;
+                        ELSE
+                            O_PRGM_ID   := 'CASPHOSE_P17_6';
+                            O_MESG_CODE := 'SA-002';
+                        END IF;
+                        ****/
+                        -----------------------------------------
+                        CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                    ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                    ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                        IF  O_MESG_CODE != 'IQ-001' THEN
+                            RAISE UD_EX_ERROR;
+                        ELSE
+                            O_PRGM_ID   := 'CASPHOSE_P17_6';
+                            O_MESG_CODE := 'SA-002';
+                        END IF;
+                        -----------------------------------------
+                        IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                            O_MESG := '기계경비정보가 존재하지 않습니다.';
+                            RAISE UD_EX_ERROR;
+                        END IF;
+                    ELSE
+                        rt_MCIF.MCIF_MCHH_NAME := '';
+                        rt_MCIF.MCIF_DRCT_COST := 0;
+                    END IF;
+
+                    rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                    rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                    --저장/계산은 소수단위 절사후 처리
+                    rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                    rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);
+                    rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                    rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                    rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                    --가공비계산
+                    CRSPCPRO_C01(I_CORP_CODE
+                                ,rt_CMMS.CMMS_LOTQ_QTY0 ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                                ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,rt_CPRO.CPRO_AEXM_RATE,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                                ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPHOSE_P17_6';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+
+                    O_LINE_NO := 'ST-69000';
+
+                    INSERT INTO CRTBCPRO
+                          (CPRO_CORP_CODE
+                          ,CPRO_PART_NO
+                          ,CPRO_EONO
+                          ,CPRO_CUMT_NO
+                          ,CPRO_COME_CODE
+                          ,CPRO_CUMT_GUBN
+                          ,CPRO_SEQ0
+                          ,CPRO_SORT_KEY0
+                          ,CPRO_INDS_CODE
+                          ,CPRO_PROC_NAME
+                          ,CPRO_MCHH_NAME
+                          ,CPRO_VEND_CODE
+                          ,CPRO_VEND_DATE
+                          ,CPRO_CORT_DATE
+                          ,CPRO_LOTQ
+                          ,CPRO_CAVT
+                          ,CPRO_PREP_HOUR
+                          ,CPRO_PRSN_CNT0
+                          ,CPRO_NET0_CYTM
+                          ,CPRO_MCHH_COST
+                          ,CPRO_PAY0_RATE
+                          ,CPRO_IDRT_RATE
+                          ,CPRO_GME0_RATE
+                          ,CPRO_PROF_RATE
+                          ,CPRO_ET00_RATE
+                          ,CPRO_AEXM_RATE
+                          ,CPRO_RUN0_COST
+                          ,CPRO_PROD_CONT
+                          ,CPRO_IBR0_COST
+                          ,CPRO_EXPM_COST
+                          ,CPRO_PROC_COST
+                          ,CPRO_GME0_COST
+                          ,CPRO_PROF_COST
+                          ,CPRO_APPL_GUBN
+                          ,CPRO_ADD0_GUBN
+                          ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                          ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                          ,CPRO_MCHH_CNT0
+                          ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                          ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                          )
+                   VALUES (I_CORP_CODE
+                          ,I_PART_NO
+                          ,I_EONO
+                          ,I_CUMT_NO
+                          ,v_COME_CODE
+                          ,'S'
+                          ,CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'ROLLG' THEN 0 ELSE v_SORT_KEY END
+                          ,CASE WHEN CPRO_R.HOSP_PROC_GUBN = 'ROLLG' THEN 0 ELSE v_SORT_KEY END
+                          ,rt_MTCD.MTCD_INDS_CODE
+                          ,rt_CPRO.CPRO_PROC_NAME
+                          ,rt_CPRO.CPRO_MCHH_NAME
+                          ,rt_SPMS.SPMS_VEND_CODE
+                          ,rt_SPMS.SPMS_VEND_APFR
+                          ,rt_CORT.CORT_APPL_DATE --rt_SPMS.SPMS_BASE_DATE  2022.10 실제적용일로 변경저장
+                          ,rt_CMMS.CMMS_LOTQ_QTY0
+                          ,rt_CPRO.CPRO_CAVT
+                          ,rt_CPRO.CPRO_PREP_HOUR
+                          ,rt_CPRO.CPRO_PRSN_CNT0
+                          ,rt_CPRO.CPRO_NET0_CYTM
+                          ,rt_CPRO.CPRO_MCHH_COST
+                          ,rt_CORT.CORT_PAY0_RATE
+                          ,rt_CORT.CORT_IDRT_RATE
+                          ,rt_CORT.CORT_GME0_RATE
+                          ,rt_CORT.CORT_PROF_RATE
+                          ,rt_CORT.CORT_ET00_RATE
+                          ,rt_CPRO.CPRO_AEXM_RATE
+                          ,rt_CPRO.CPRO_MCHH_COST
+                          ,rt_CMMS.CMMS_PROD_CNT0
+                          ,rt_CPRO.CPRO_IBR0_COST
+                          ,rt_CPRO.CPRO_EXPM_COST
+                          ,rt_CPRO.CPRO_PROC_COST
+                          ,rt_CPRO.CPRO_GME0_COST
+                          ,rt_CPRO.CPRO_PROF_COST
+                          ,'Y'
+                          ,'S'
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                          ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                          ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                          ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                          )
+                        ;
+
+                END IF;
+            END LOOP;
+
+        END LOOP;
+
+    END IF;
+
+    ---------------------------------------------------------------------------
+    --7.계산 후처리
+    ---------------------------------------------------------------------------
+    --표준공통율생성
+    O_LINE_NO := 'ST-71000';
+    CRSPCAPL_I01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,rt_CORT.CORT_PAY0_RATE
+                ,rt_CORT.CORT_IDRT_RATE
+                ,rt_CORT.CORT_GME0_RATE
+                ,rt_CORT.CORT_MATL_RATE
+                ,rt_CORT.CORT_PROF_RATE
+                ,rt_CORT.CORT_ET00_RATE
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '표준적용율 생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPHOSE_P17_6';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --실사인경우 재계산처리
+    O_LINE_NO := 'ST-72000';
+    CRSPREAL_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,'A',v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '실사 재계산 오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPHOSE_P17_6';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --집계
+    O_LINE_NO := 'ST-73000';
+    CRSPSPCR_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '집계생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPHOSE_P17_6';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -- 계산시 SUB PART 전체 SORT순번 CLEAR처리
+    UPDATE CRTBCMAT
+       SET CMAT_SORT_SUB0 = NULL
+     WHERE CMAT_CORP_CODE = I_CORP_CODE
+       AND CMAT_PART_NO   = I_PART_NO
+       AND CMAT_EONO      = I_EONO
+       AND CMAT_CUMT_NO   = I_CUMT_NO
+    ;
+
+    UPDATE CRTBCPRO
+       SET CPRO_SORT_SUB0 = NULL
+     WHERE CPRO_CORP_CODE = I_CORP_CODE
+       AND CPRO_PART_NO   = I_PART_NO
+       AND CPRO_EONO      = I_EONO
+       AND CPRO_CUMT_NO   = I_CUMT_NO
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
