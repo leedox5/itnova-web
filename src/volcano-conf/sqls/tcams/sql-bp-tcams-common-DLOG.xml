@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/common/DLOG" data-source="tcamsDS">
+ <sql id="select" comment="조회">
+  <![CDATA[
+  ]]>
+ </sql>
+ 
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CXTBDLOG
+(
+    ID
+   ,TABLE_ID
+   ,CONTS
+   ,CRT_DATE
+   ,CRT_USER
+) VALUES (
+    SEQ_DLOG.NEXTVAL
+   ,#table_id#
+   ,#conts#
+   ,TO_CHAR(SYSDATE,'YYYYMMDDHH24MISS')
+   ,#crt_user#
+)
+  ]]>
+ </sql> 
+</sql-descriptor> 
