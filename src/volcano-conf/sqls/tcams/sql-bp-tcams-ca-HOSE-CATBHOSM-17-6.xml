@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSM/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSM_CORP_CODE
+ ,HOSM_STND_GUBN
+ ,HOSM_STND_DEGR
+ ,HOSM_MATL_SEQ0
+ ,HOSM_MATL_GUBN
+ ,HOSM_HOSE_CODE
+ ,HOSM_INJT_CODE
+ ,HOSM_SHAP_CODE
+ ,HOSM_IN00_CODE
+ ,HOSM_SPNG_YN
+ ,HOSM_BARC_CODE
+ ,HOSM_NET0_MIN0
+ ,HOSM_NET0_MAX0
+ ,HOSM_MATL_NAME
+ ,HOSM_MATL_PRIC
+ ,HOSM_MATL_UNIT
+ ,HOSM_USE0_WEGT
+ ,HOSM_USE0_COEF1
+ ,HOSM_APPL_GUBN
+ ,HOSM_REMK
+ ,HOSM_UPDT_CMAN
+ ,HOSM_UPDT_DATE
+ ,HOSM_INIT_CMAN
+ ,HOSM_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'WASH' ,'GENL' ,'S' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'사용량=g/ea,외측편조있으면 세척 제외' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'WASH' ,'GENL' ,'D' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'사용량=g/ea ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'WASH' ,'GENL' ,'SKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'사용량=g/ea ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'WASH' ,'GENL' ,'DKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'사용량=g/ea ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'WASH' ,'GENL' ,'STO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'사용량=g/ea ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'WA-400' ,'GENL' ,'S' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-400)' ,'1550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2,이중,THV외' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'WA-400' ,'GENL' ,'SKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-400)' ,'1550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'WA-400' ,'GENL' ,'SK' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-400)' ,'1550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'WA-2500' ,'GENL' ,'D' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-2500)' ,'3510' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2,이중,THV' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'WA-2500' ,'GENL' ,'DKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-2500)' ,'3510' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'WA-2500' ,'GENL' ,'DK' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-2500)' ,'3510' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'WA-2500' ,'GENL' ,'STO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-2500)' ,'3510' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'SI' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2,ACM외' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'FKM' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'ECO' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'NBR' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'EPDM' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'SBR' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'CR' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'NR' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'WA-1380' ,'GENL' ,'ALL' ,'ALL' ,'ETC' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(WA-1380)' ,'3550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'L-45' ,'GENL' ,'ALL' ,'ALL' ,'ACM' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(L-45)' ,'5970' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2,ACM' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'23' ,'TOLUENE' ,'GENL' ,'SKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'톨루엔' ,'746' ,'KG' ,'0' ,'2.5' ,'Y' ,'유직사존재시처리' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'24' ,'TOLUENE' ,'GENL' ,'DKO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'톨루엔' ,'746' ,'KG' ,'0' ,'2.5' ,'Y' ,'    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'25' ,'TOLUENE' ,'GENL' ,'SK' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'톨루엔' ,'746' ,'KG' ,'0' ,'2.5' ,'Y' ,'    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'26' ,'TOLUENE' ,'GENL' ,'DK' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'톨루엔' ,'746' ,'KG' ,'0' ,'2.5' ,'Y' ,'    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'27' ,'INSTAADH' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'ALL' ,'0' ,'99999999' ,'순간접착제(아론알파)' ,'55000' ,'KG' ,'0.2' ,'0' ,'Y' ,'사용량=g/ea,SPONGE PAD장착시' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'28' ,'RESINADH' ,'GENL' ,'STO' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'수지접착제(THV수지)' ,'72500' ,'KG' ,'0.5' ,'0.5' ,'Y' ,'사용량=g/dm2,THV' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'29' ,'BARCODE' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'0' ,'99999999' ,'BAR CODE' ,'100' ,'EA' ,'1' ,'0' ,'N' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'30' ,'BARCODE' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y_R' ,'0' ,'99999999' ,'BAR CODE' ,'100' ,'EA' ,'1' ,'0' ,'Y' ,'미적용:RADIATOR HOSE별도 구분하지 않음' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'31' ,'BARCODE' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y_W' ,'0' ,'99999999' ,'BAR CODE' ,'80' ,'EA' ,'1' ,'0' ,'Y' ,'미적용:WATER HOSE용은 미적용' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'32' ,'LNG' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LNG GAS' ,'0' ,NULL ,'0' ,'0' ,'Y' ,'단가:별도처리,LNG가스비정보 참조' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'33' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'STRA' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'WASHER HOSE 부재료비' ,'31.2' ,'CVT' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'34' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV1' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'300' ,'WASHER HOSE 부재료비' ,'12.6' ,'EA' ,'1' ,'0' ,'Y' ,'끝단곡HOSE' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'35' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV1' ,'ALL' ,'ALL' ,'ALL' ,'300' ,'1000' ,'WASHER HOSE 부재료비' ,'20.4' ,'EA' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'36' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV1' ,'ALL' ,'ALL' ,'ALL' ,'1000' ,'2000' ,'WASHER HOSE 부재료비' ,'31.2' ,'EA' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'37' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV1' ,'ALL' ,'ALL' ,'ALL' ,'2000' ,'99999999' ,'WASHER HOSE 부재료비' ,'43.5' ,'EA' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'38' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV2' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'100' ,'WASHER HOSE 부재료비' ,'24.2' ,'EA' ,'1' ,'0' ,'Y' ,'일반곡HOSE' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'39' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV2' ,'ALL' ,'ALL' ,'ALL' ,'100' ,'150' ,'WASHER HOSE 부재료비' ,'24.3' ,'EA' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'40' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV2' ,'ALL' ,'ALL' ,'ALL' ,'150' ,'99999999' ,'WASHER HOSE 부재료비' ,'24.4' ,'EA' ,'1' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'41' ,'WA_SUB1' ,'WASHER' ,'ALL' ,'CURV3' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'WASHER HOSE 부재료비' ,'18.6' ,'EA' ,'1' ,'0' ,'Y' ,'특수곡' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'42' ,'DI_WASH' ,'DIFF' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'세척제' ,'733' ,'KG' ,'4.5' ,'0' ,'Y' ,'단가:일반HOSE기준' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'43' ,'DI_RELE' ,'DIFF' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제' ,'4250' ,'KG' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'44' ,'RE_WA4' ,'RETURN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'방착제(WA-400)' ,'1550' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2    ' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'45' ,'RE_L45' ,'RETURN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'이형제(L-45)' ,'5970' ,'KG' ,'0.5' ,'0' ,'Y' ,'사용량=g/dm2' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'46' ,'RE_LNG' ,'RETURN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LNG GAS' ,'0' ,NULL ,'0' ,'0' ,'Y' ,'단가:별도처리,LNG가스비정보 참조' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSM_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSM_UPDT_DATE > B.HOSM_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSM B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSM (
+  HOSM_CORP_CODE
+ ,HOSM_STND_GUBN
+ ,HOSM_STND_DEGR
+ ,HOSM_MATL_SEQ0
+ ,HOSM_MATL_GUBN
+ ,HOSM_HOSE_CODE
+ ,HOSM_INJT_CODE
+ ,HOSM_SHAP_CODE
+ ,HOSM_IN00_CODE
+ ,HOSM_SPNG_YN
+ ,HOSM_BARC_CODE
+ ,HOSM_NET0_MIN0
+ ,HOSM_NET0_MAX0
+ ,HOSM_MATL_NAME
+ ,HOSM_MATL_PRIC
+ ,HOSM_MATL_UNIT
+ ,HOSM_USE0_WEGT
+ ,HOSM_USE0_COEF1
+ ,HOSM_APPL_GUBN
+ ,HOSM_REMK
+ ,HOSM_UPDT_CMAN
+ ,HOSM_UPDT_DATE
+ ,HOSM_INIT_CMAN
+ ,HOSM_INIT_DATE
+) VALUES (
+  #hosm_corp_code#
+ ,#hosm_stnd_gubn#
+ ,#hosm_stnd_degr#
+ ,#hosm_matl_seq0#
+ ,#hosm_matl_gubn#
+ ,#hosm_hose_code#
+ ,#hosm_injt_code#
+ ,#hosm_shap_code#
+ ,#hosm_in00_code#
+ ,#hosm_spng_yn#
+ ,#hosm_barc_code#
+ ,#hosm_net0_min0#
+ ,#hosm_net0_max0#
+ ,#hosm_matl_name#
+ ,#hosm_matl_pric#
+ ,#hosm_matl_unit#
+ ,#hosm_use0_wegt#
+ ,#hosm_use0_coef1#
+ ,#hosm_appl_gubn#
+ ,#hosm_remk#
+ ,#hosm_updt_cman#
+ ,#hosm_updt_date#
+ ,#hosm_init_cman#
+ ,#hosm_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSM
+HOSM_CORP_CODE = #hosm_corp_code#   SET HOSM_STND_GUBN = #hosm_stnd_gubn#
+      ,HOSM_STND_DEGR = #hosm_stnd_degr#
+      ,HOSM_MATL_SEQ0 = #hosm_matl_seq0#
+      ,HOSM_MATL_GUBN = #hosm_matl_gubn#
+      ,HOSM_HOSE_CODE = #hosm_hose_code#
+      ,HOSM_INJT_CODE = #hosm_injt_code#
+      ,HOSM_SHAP_CODE = #hosm_shap_code#
+      ,HOSM_IN00_CODE = #hosm_in00_code#
+      ,HOSM_SPNG_YN = #hosm_spng_yn#
+      ,HOSM_BARC_CODE = #hosm_barc_code#
+      ,HOSM_NET0_MIN0 = #hosm_net0_min0#
+      ,HOSM_NET0_MAX0 = #hosm_net0_max0#
+      ,HOSM_MATL_NAME = #hosm_matl_name#
+      ,HOSM_MATL_PRIC = #hosm_matl_pric#
+      ,HOSM_MATL_UNIT = #hosm_matl_unit#
+      ,HOSM_USE0_WEGT = #hosm_use0_wegt#
+      ,HOSM_USE0_COEF1 = #hosm_use0_coef1#
+      ,HOSM_APPL_GUBN = #hosm_appl_gubn#
+      ,HOSM_REMK = #hosm_remk#
+      ,HOSM_UPDT_CMAN = #hosm_updt_cman#
+      ,HOSM_UPDT_DATE = #hosm_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 
