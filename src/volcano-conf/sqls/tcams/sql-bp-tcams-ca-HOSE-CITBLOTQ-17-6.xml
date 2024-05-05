@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CITBLOTQ/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  LOTQ_CORP_CODE
+ ,LOTQ_STND_GUBN
+ ,LOTQ_VEHL_GUBN
+ ,LOTQ_INDS_CODE
+ ,LOTQ_COME_CODE
+ ,LOTQ_APPL_DATE
+ ,LOTQ_SEQ0
+ ,LOTQ_PROD_MIN0
+ ,LOTQ_PROD_MAX0
+ ,LOTQ_PROD_NAME
+ ,LOTQ_LOTQ_NAME
+ ,LOTQ_DETL_NAME1
+ ,LOTQ_DETL_NAME2
+ ,LOTQ_QTY0
+ ,LOTQ_UPDT_DATE
+ ,LOTQ_UPDT_CMAN
+ ,LOTQ_INIT_DATE
+ ,LOTQ_INIT_CMAN
+) AS (
+           SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20150101' ,'1177' ,'0' ,'9999999999' ,'∼9999999999' ,'일반HOSE' ,'ALL' ,'ALL' ,'2000' ,'20160101' ,'SYSTEM' ,'20160101' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3001' ,'0' ,'200' ,'∼200' ,'일반HOSE' ,'ALL' ,'ALL' ,'200' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3002' ,'200' ,'300' ,'∼300' ,'일반HOSE' ,'ALL' ,'ALL' ,'400' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3003' ,'300' ,'400' ,'∼400' ,'일반HOSE' ,'ALL' ,'ALL' ,'600' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3004' ,'400' ,'500' ,'∼500' ,'일반HOSE' ,'ALL' ,'ALL' ,'800' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3005' ,'500' ,'10000' ,'∼10,000' ,'일반HOSE' ,'ALL' ,'ALL' ,'1000' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3006' ,'10000' ,'15000' ,'∼15,000' ,'일반HOSE' ,'ALL' ,'ALL' ,'1200' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3007' ,'15000' ,'20000' ,'∼20,000' ,'일반HOSE' ,'ALL' ,'ALL' ,'1700' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3008' ,'20000' ,'9999999999' ,'2만 초과' ,'일반HOSE' ,'ALL' ,'ALL' ,'2000' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.LOTQ_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.LOTQ_UPDT_DATE > B.LOTQ_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBLOTQ B                                          
+      ON    B.LOTQ_CORP_CODE = A.LOTQ_CORP_CODE
+        AND B.LOTQ_STND_GUBN = A.LOTQ_STND_GUBN
+        AND B.LOTQ_VEHL_GUBN = A.LOTQ_VEHL_GUBN
+        AND B.LOTQ_INDS_CODE = A.LOTQ_INDS_CODE
+        AND B.LOTQ_COME_CODE = A.LOTQ_COME_CODE
+        AND B.LOTQ_APPL_DATE = A.LOTQ_APPL_DATE
+        AND B.LOTQ_SEQ0 = A.LOTQ_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CITBLOTQ (
+  LOTQ_CORP_CODE
+ ,LOTQ_STND_GUBN
+ ,LOTQ_VEHL_GUBN
+ ,LOTQ_INDS_CODE
+ ,LOTQ_COME_CODE
+ ,LOTQ_APPL_DATE
+ ,LOTQ_SEQ0
+ ,LOTQ_PROD_MIN0
+ ,LOTQ_PROD_MAX0
+ ,LOTQ_PROD_NAME
+ ,LOTQ_LOTQ_NAME
+ ,LOTQ_DETL_NAME1
+ ,LOTQ_DETL_NAME2
+ ,LOTQ_QTY0
+ ,LOTQ_UPDT_DATE
+ ,LOTQ_UPDT_CMAN
+ ,LOTQ_INIT_DATE
+ ,LOTQ_INIT_CMAN
+) VALUES (
+  #lotq_corp_code#
+ ,#lotq_stnd_gubn#
+ ,#lotq_vehl_gubn#
+ ,#lotq_inds_code#
+ ,#lotq_come_code#
+ ,#lotq_appl_date#
+ ,#lotq_seq0#
+ ,#lotq_prod_min0#
+ ,#lotq_prod_max0#
+ ,#lotq_prod_name#
+ ,#lotq_lotq_name#
+ ,#lotq_detl_name1#
+ ,#lotq_detl_name2#
+ ,#lotq_qty0#
+ ,#lotq_updt_date#
+ ,#lotq_updt_cman#
+ ,#lotq_init_date#
+ ,#lotq_init_cman#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CITBLOTQ
+   SET LOTQ_PROD_MIN0 = #lotq_prod_min0#
+      ,LOTQ_PROD_MAX0 = #lotq_prod_max0#
+      ,LOTQ_PROD_NAME = #lotq_prod_name#
+      ,LOTQ_LOTQ_NAME = #lotq_lotq_name#
+      ,LOTQ_DETL_NAME1 = #lotq_detl_name1#
+      ,LOTQ_DETL_NAME2 = #lotq_detl_name2#
+      ,LOTQ_QTY0 = #lotq_qty0#
+      ,LOTQ_UPDT_DATE = #lotq_updt_date#
+      ,LOTQ_UPDT_CMAN = #lotq_updt_cman#
+ WHERE LOTQ_CORP_CODE = #lotq_corp_code#
+   AND LOTQ_STND_GUBN = #lotq_stnd_gubn#
+   AND LOTQ_VEHL_GUBN = #lotq_vehl_gubn#
+   AND LOTQ_INDS_CODE = #lotq_inds_code#
+   AND LOTQ_COME_CODE = #lotq_come_code#
+   AND LOTQ_APPL_DATE = #lotq_appl_date#
+   AND LOTQ_SEQ0 = #lotq_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
