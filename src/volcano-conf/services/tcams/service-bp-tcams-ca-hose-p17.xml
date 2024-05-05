@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/ca/hose/p17">
+
+	<service id="get.HOSIInfoCount" label="일반 HOSE 입력데이터  Count">
+		<select descriptor="bp/tcams/ca/hose/p17" sql-id="get.HOSEInfo.count"
+			parameter-name="param" result-class="map" result-name="ca_count" />
+	</service>
+	
+	<service id="get.HOSIInfo" label="일반 HOSE 입력데이터   조회">
+		<select descriptor="bp/tcams/ca/hose/p17" sql-id="get.HOSEInfo.select"
+			parameter-name="param" result-class="map" result-name="ca_info" />
+	</service>
+	
+	<service id="get.HOSAInfoSelect" label="일반 HOSE 조립 입력데이터   조회">
+		<select descriptor="bp/tcams/ca/hose/p17" sql-id="get.HOSAInfo.select"
+			parameter-name="param" result-class="list" result-name="resultList" />
+	</service>
+	
+	<service id="get.HOSZInfoSelect" label=" hose pad 입력데이터   조회">
+		<select descriptor="bp/tcams/ca/hose/p17" sql-id="get.HOSZInfo.select"
+			parameter-name="param" result-class="list" result-name="resultList" />
+	</service>
+	
+ <service id="get.HoseCalc" label="HOSE 계산 프로시저 호출">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    importClass(Packages.emro.util.CalendarUtil);
+
+    var result = new Map();
+    var map = new Map();
+    var chk = new Map();
+    
+    try {
+        $logger.info($data.param);
+        
+        if(StringUtil.isEmpty($data.param.cmms_corp_code)) {
+        	throw new Exception("Please check CMMS Param...");
+        }
+        map = $jdbc.query("bp/tcams/ca/common", "S.DEGR", $data.param);
+        $data.param.proc_name_a = map.proc_name_a;
+	    result = $jdbc.call("bp/tcams/ca/hose/p17", "get.HoseCalc", $data.param);
+	    
+	    chk = $jdbc.query("bp/tcams/ca/common", "2308.0001", null);
+	    result.AUTH = chk.auth_yn;
+	    if(chk.auth_yn == "Y") {
+            result.STAT = "▶ 호출된 프로시저 : " + result.PRGM_ID + " [" + CalendarUtil.formatNow("HH:mm:ss") + "]";	    
+	    }
+    } catch(e) {
+    	result.PRGM_ID = "get.HoseCalc";
+    	result.LINE_NO = "0000";
+    	result.MESG_CODE = "SA-002";
+    	result.MESG = e.message;
+    }
+    
+    $data.calc_Result = result;
+   ]]>
+  </script>	
+ </service>
+	
+	<service id="save.HOSIInfo" label="HOSI _ HOSZ _ HOSA 입력데이터 삭제 / 저장">
+		<script>
+		<![CDATA[
+			$data.result = new Map();
+			try {			
+				$data.result = new Map();
+				
+				$jdbc.update("bp/tcams/ca/hose/p17", "HOSIInfo.insert", $data.param);
+				
+				
+				// DELETE
+				var result = $jdbc.update("bp/tcams/ca/hose/p17", "HOSAInfo.delete", $data.param);
+				
+				// INSERT
+				for (var i=0; $data.gridParam2.size() > i ; i++) {
+					var result = $jdbc.update("bp/tcams/ca/hose/p17", "HOSAInfo.insert", $data.gridParam2[i]);
+					//System.out.println("#####################################################################");
+					//System.out.println("##::::insert 실행함##");
+					//System.out.println("#####################################################################");
+				}
+				
+				// DELETE
+				var result = $jdbc.update("bp/tcams/ca/hose/p17", "HOSZInfo.delete", $data.param);
+				
+				// INSERT
+				for (var i=0; $data.gridParam1.size() > i ; i++) {
+					var result = $jdbc.update("bp/tcams/ca/hose/p17", "HOSZInfo.insert", $data.gridParam1[i]);
+					//System.out.println("#####################################################################");
+					//System.out.println("##::::insert 실행함##");
+					//System.out.println("#####################################################################");
+				}
+				
+				$data.result.MESG_CODE = "SA-001";
+				$data.result.MESG = "저장 되었습니다.";
+				
+			} catch (e) {	
+				System.out.println(e);
+				$data.result.MESG_CODE = "SA-002";
+				$data.result.MESG = "저장 실패하였습니다.관리자에게 연락하십시오";	
+				$jdbc.update("bp/tcams/ca/common", "rollback", null);
+			}
+		]]>
+		</script>
+	</service>
+	
+	<service id="get.CalcRes" label="HOSE  계산 프로시저 호출">
+		<script>
+		<![CDATA[
+		    $data.param.degr = $data.param.degr.replace("-", "_");
+			var result = $jdbc.call("bp/tcams/ca/hose/p17", "get.CalcRes", $data.param);
+			$data.calc_Result = result;
+		]]>
+		</script>	
+	</service>
+	
+	
+		
+	
+	
+</service-descriptor>

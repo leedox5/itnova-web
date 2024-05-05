@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/hose/p17" data-source="tcamsDS">
+
+	
+	<sql id="get.HOSEInfo.count" comment="일반 HOSE 입력데이터  Count">
+        
+        <![CDATA[
+    		SELECT COUNT(*) HOSI_COUNT
+      		FROM CATBHOSI
+     		WHERE HOSI_CORP_CODE = TO_CHAR(#corp_code#)
+       		AND HOSI_PART_NO   = #part_no#
+       		AND HOSI_EONO      = TO_CHAR(#eono#)
+       		AND HOSI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+        
+	</sql>
+	
+	<sql id="get.HOSEInfo.select" comment="일반 HOSE 기본조회">
+        <![CDATA[
+   		 SELECT 
+   		 		A.HOSI_CORP_CODE
+				, A.HOSI_PART_NO
+				, A.HOSI_EONO
+				, A.HOSI_CUMT_NO
+				, A.HOSI_MATL_CORP
+				, A.HOSI_MATL_STND
+				, A.HOSI_MATL_CODE
+				, A.HOSI_MATL_APDT
+				, A.HOSI_MATL_GUBN
+				, A.HOSI_GRVT_NUMB
+				, A.HOSI_THIK_SIZE
+				, A.HOSI_HOSE_CODE
+				, A.HOSI_INJT_CODE
+				, A.HOSI_MID0_CORP
+				, A.HOSI_MID0_STND
+				, A.HOSI_MID0_CODE
+				, A.HOSI_MID0_APDT
+				, A.HOSI_MID0_GUBN
+				, A.HOSI_MID0_GRVT
+				, A.HOSI_MID0_THIK
+				, A.HOSI_MID0_PRIC
+				, A.HOSI_UJIK_CODE
+				, A.HOSI_UJIK_PRIC
+				, A.HOSI_UJIK_THIK
+				, A.HOSI_OUT0_CORP
+				, A.HOSI_OUT0_STND
+				, A.HOSI_OUT0_CODE
+				, A.HOSI_OUT0_APDT
+				, A.HOSI_OUT0_GUBN
+				, A.HOSI_OUT0_GRVT
+				, A.HOSI_OUT0_THIK
+				, A.HOSI_IN00_SIZE
+				, A.HOSI_IN00_MACD
+				, A.HOSI_MID0_MACD
+				, A.HOSI_OUT0_SIZE
+				, A.HOSI_OUT0_MACD
+				, A.HOSI_NET0_SIZE
+				, A.HOSI_SPAR_SIZE
+				, A.HOSI_SHAP_CODE
+				, A.HOSI_WIDN_CODE
+				, A.HOSI_NORI_PRIC
+				, A.HOSI_PROD_CODE
+				, A.HOSI_CURV_QTY0
+				, A.HOSI_UPDT_CMAN
+				, A.HOSI_UPDT_DATE
+				, A.HOSI_INIT_CMAN
+				, A.HOSI_INIT_DATE
+				, A.HOSI_WASH_CODE
+				, A.HOSI_BARC_CODE
+				, A.HOSI_COMP_CLAS
+				, A.HOSI_THV0_GRVT
+				, A.HOSI_THV0_THIK
+				, A.HOSI_THV0_PRIC
+				, A.HOSI_UNUS_PRIC
+				, A.HOSI_PREV_YN
+				, A.HOSI_MARK_YN1
+				, A.HOSI_MARK_CNT1
+				, A.HOSI_MARK_YN2
+				, A.HOSI_MARK_CNT2
+				, A.HOSI_MARK_YN3
+				, A.HOSI_MARK_CNT3
+				, A.HOSI_LEAK_CODE
+				, A.HOSI_IN00_IDIA
+				, A.HOSI_IN00_ODIA
+				, A.HOSI_MID0_IDIA
+				, A.HOSI_MID0_ODIA
+				, A.HOSI_THV0_IDIA
+				, A.HOSI_THV0_ODIA
+				, A.HOSI_KNIT_IDIA
+				, A.HOSI_KNIT_ODIA
+				, A.HOSI_OUT0_IDIA
+				, A.HOSI_OUT0_ODIA
+				, A.HOSI_IN00_MRGN
+				, A.HOSI_IN00_LOSS
+				, A.HOSI_MID0_MRGN
+				, A.HOSI_MID0_LOSS
+				, A.HOSI_THV0_MRGN
+				, A.HOSI_THV0_LOSS
+				, A.HOSI_KNIT_MRGN
+				, A.HOSI_KNIT_LOSS
+				, A.HOSI_OUT0_MRGN
+				, A.HOSI_OUT0_LOSS
+				, A.HOSI_RADI_YN
+          		,B.MATL_NAME          HOSI_MATL_NAME    -- 내고무 재질명
+          		,B.MATL_PRIC          HOSI_MATL_PRIC    -- 내고무 재질단가
+          		,B.MATL_UNIT          HOSI_MATL_UNIT    -- 내고무 재질단위
+          		
+          		,C.MATL_NAME          HOSI_MID0_NAME    -- 중간고무 재질명
+          		,NVL(C.MATL_PRIC, A.HOSI_MID0_PRIC)      HOSI_MID0_PRIC    -- 중간고무 재질단가
+          		,C.MATL_UNIT          HOSI_MID0_UNIT    -- 중간고무 재질단위
+          		    
+          		,D.MATL_NAME          HOSI_OUT0_NAME    -- 외고무 재질명
+          		,D.MATL_PRIC          HOSI_OUT0_PRIC    -- 외고무 재질단가
+          		,D.MATL_UNIT          HOSI_OUT0_UNIT    -- 외고무 재질단위
+      		FROM CATBHOSI A
+          	LEFT OUTER JOIN
+           	CITBMATL B --내고무 재질정보
+          	ON    B.MATL_CORP_CODE  = TRIM(A.HOSI_MATL_CORP)
+            AND B.MATL_STND_GUBN  = A.HOSI_MATL_STND
+            AND B.MATL_CODE       = A.HOSI_MATL_CODE
+            AND B.MATL_APPL_DATE  = A.HOSI_MATL_APDT
+            AND B.MATL_GUBN	      = A.HOSI_MATL_GUBN
+          	LEFT OUTER JOIN
+           	CITBMATL C -- 중간고무 재질정보
+          	ON    C.MATL_CORP_CODE  = TRIM(A.HOSI_MID0_CORP)
+            AND C.MATL_STND_GUBN  = A.HOSI_MID0_STND
+            AND C.MATL_CODE       = A.HOSI_MID0_CODE
+            AND C.MATL_APPL_DATE  = A.HOSI_MID0_APDT
+            AND C.MATL_GUBN	      = A.HOSI_MID0_GUBN
+          	LEFT OUTER JOIN
+           	CITBMATL D -- 외고무 재질정보
+          	ON    D.MATL_CORP_CODE  = TRIM(A.HOSI_OUT0_CORP)
+            AND D.MATL_STND_GUBN  = A.HOSI_OUT0_STND
+            AND D.MATL_CODE       = A.HOSI_OUT0_CODE
+            AND D.MATL_APPL_DATE  = A.HOSI_OUT0_APDT
+            AND D.MATL_GUBN	      = A.HOSI_OUT0_GUBN
+     WHERE A.HOSI_CORP_CODE  = TO_CHAR(#corp_code#)
+       AND A.HOSI_PART_NO    = #part_no#
+       AND A.HOSI_EONO       = TO_CHAR(#eono#)
+       AND A.HOSI_CUMT_NO    = TO_NUMBER(#cumt_no#)
+
+        ]]>
+	</sql>
+	
+	<sql id="get.HOSAInfo.select" comment="일반 HOSE 가공비 입력 기본조회">
+        <![CDATA[
+	    SELECT 
+    		HOSA_CORP_CODE
+			, HOSA_PART_NO
+			, HOSA_EONO
+			, HOSA_CUMT_NO
+			, HOSA_PROC_CODE
+			, HOSA_PROC_SEQ0
+			, HOSA_APLY_CONT
+			, HOSA_APLY_CODE
+			, HOSA_APLY_VAL1
+			, HOSA_APLY_VAL2
+			, HOSA_UPDT_CMAN
+			, HOSA_UPDT_DATE
+			, HOSA_INIT_CMAN
+			, HOSA_INIT_DATE
+			, HOSA_NET0_SIZE
+			, HOSA_ASSY_POSI
+      FROM CATBHOSA A
+     WHERE A.HOSA_CORP_CODE  = TO_CHAR(#corp_code#)
+       AND A.HOSA_PART_NO    = #part_no#
+       AND A.HOSA_EONO       = TO_CHAR(#eono#)
+       AND A.HOSA_CUMT_NO    = TO_NUMBER(#cumt_no#)
+     ORDER BY TO_NUMBER(HOSA_PROC_SEQ0)
+
+        ]]>
+	</sql>
+	
+	<sql id="get.HOSZInfo.select" comment="일반 HOSE PAD 입력 기본조회">
+        <![CDATA[
+    SELECT A.HOSZ_CORP_CODE
+          ,A.HOSZ_PART_NO
+          ,A.HOSZ_EONO
+          ,A.HOSZ_CUMT_NO
+          ,A.HOSZ_MATL_SEQ0
+          ,A.HOSZ_MATL_CORP
+          ,A.HOSZ_MATL_STND
+          ,A.HOSZ_MATL_CODE
+          ,A.HOSZ_MATL_APDT
+          ,A.HOSZ_MATL_GUBN
+          ,A.HOSZ_GRVT_NUMB
+          ,A.HOSZ_THIK_SIZE
+          ,A.HOSZ_IN00_SIZE
+          ,A.HOSZ_OUT0_SIZE
+          ,A.HOSZ_NET0_SIZE
+          ,A.HOSZ_SPAR_SIZE
+          ,A.HOSZ_SHAP_CODE
+          ,A.HOSZ_ASSY_POSI
+          ,B.MATL_NAME          HOSZ_MATL_NAME
+          ,B.MATL_PRIC          HOSZ_MATL_PRIC
+          ,B.MATL_UNIT          HOSZ_MATL_UNIT
+      FROM CATBHOSZ A
+          LEFT OUTER JOIN
+           CITBMATL B --내고무 재질정보
+          ON    B.MATL_CORP_CODE  = TRIM(A.HOSZ_MATL_CORP)
+            AND B.MATL_STND_GUBN  = A.HOSZ_MATL_STND
+            AND B.MATL_CODE       = A.HOSZ_MATL_CODE
+            AND B.MATL_APPL_DATE  = A.HOSZ_MATL_APDT
+            AND B.MATL_GUBN	      = A.HOSZ_MATL_GUBN
+     WHERE A.HOSZ_CORP_CODE  = TO_CHAR(#corp_code#)
+       AND A.HOSZ_PART_NO    = #part_no#
+       AND A.HOSZ_EONO       = TO_CHAR(#eono#)
+       AND A.HOSZ_CUMT_NO    = TO_NUMBER(#cumt_no#)
+     ORDER BY HOSZ_MATL_SEQ0
+        ]]>
+	</sql>	
+	
+	
+	
+	
+	
+	<sql id="HOSIInfo.insert" comment="일반 HOSE 입력데이터 저장">
+        <![CDATA[
+        BEGIN
+          DELETE
+            FROM CATBHOSI
+           WHERE HOSI_CORP_CODE  = TO_CHAR(#corp_code#)
+             AND HOSI_PART_NO    = #part_no#
+             AND HOSI_EONO       = TO_CHAR(#eono#)
+             AND HOSI_CUMT_NO    = TO_NUMBER(#cumt_no#);
+
+          INSERT INTO CATBHOSI
+                     (
+                       HOSI_CORP_CODE
+						, HOSI_PART_NO
+						, HOSI_EONO
+						, HOSI_CUMT_NO
+						, HOSI_MATL_CORP
+						, HOSI_MATL_STND
+						, HOSI_MATL_CODE
+						, HOSI_MATL_APDT
+						, HOSI_MATL_GUBN
+						, HOSI_GRVT_NUMB
+						, HOSI_THIK_SIZE
+						, HOSI_HOSE_CODE
+						, HOSI_INJT_CODE
+						, HOSI_MID0_CORP
+						, HOSI_MID0_STND
+						, HOSI_MID0_CODE
+						, HOSI_MID0_APDT
+						, HOSI_MID0_GUBN
+						, HOSI_MID0_GRVT
+						, HOSI_MID0_THIK
+						, HOSI_MID0_PRIC
+						, HOSI_UJIK_CODE
+						, HOSI_UJIK_PRIC
+						, HOSI_UJIK_THIK
+						, HOSI_OUT0_CORP
+						, HOSI_OUT0_STND
+						, HOSI_OUT0_CODE
+						, HOSI_OUT0_APDT
+						, HOSI_OUT0_GUBN
+						, HOSI_OUT0_GRVT
+						, HOSI_OUT0_THIK
+						, HOSI_IN00_SIZE
+						, HOSI_IN00_MACD
+						, HOSI_MID0_MACD
+						, HOSI_OUT0_SIZE
+						, HOSI_OUT0_MACD
+						, HOSI_NET0_SIZE
+						, HOSI_SPAR_SIZE
+						, HOSI_SHAP_CODE
+						, HOSI_WIDN_CODE
+						, HOSI_NORI_PRIC
+						, HOSI_PROD_CODE
+						, HOSI_CURV_QTY0
+						, HOSI_UPDT_CMAN
+						, HOSI_UPDT_DATE
+						, HOSI_INIT_CMAN
+						, HOSI_INIT_DATE
+						, HOSI_WASH_CODE
+						, HOSI_BARC_CODE
+						, HOSI_COMP_CLAS
+						, HOSI_THV0_GRVT
+						, HOSI_THV0_THIK
+						, HOSI_THV0_PRIC
+						, HOSI_UNUS_PRIC
+						, HOSI_PREV_YN
+						, HOSI_MARK_YN1
+						, HOSI_MARK_CNT1
+						, HOSI_MARK_YN2
+						, HOSI_MARK_CNT2
+						, HOSI_MARK_YN3
+						, HOSI_MARK_CNT3
+						, HOSI_LEAK_CODE
+						, HOSI_IN00_IDIA
+						, HOSI_IN00_ODIA
+						, HOSI_MID0_IDIA
+						, HOSI_MID0_ODIA
+						, HOSI_THV0_IDIA
+						, HOSI_THV0_ODIA
+						, HOSI_KNIT_IDIA
+						, HOSI_KNIT_ODIA
+						, HOSI_OUT0_IDIA
+						, HOSI_OUT0_ODIA
+						, HOSI_IN00_MRGN
+						, HOSI_IN00_LOSS
+						, HOSI_MID0_MRGN
+						, HOSI_MID0_LOSS
+						, HOSI_THV0_MRGN
+						, HOSI_THV0_LOSS
+						, HOSI_KNIT_MRGN
+						, HOSI_KNIT_LOSS
+						, HOSI_OUT0_MRGN
+						, HOSI_OUT0_LOSS
+						, HOSI_RADI_YN
+                     )
+              VALUES (
+	                      #corp_code#
+	                     ,#part_no#
+	                     ,#eono#
+	                     ,TO_NUMBER(#cumt_no#)
+	                     ,#hosi_matl_corp#
+						,#hosi_matl_stnd#
+						,#hosi_matl_code#
+						,#hosi_matl_apdt#
+						,#hosi_matl_gubn#
+						,#hosi_grvt_numb#
+						,#hosi_thik_size#
+						,#hosi_hose_code#
+						,#hosi_injt_code#
+						,#hosi_mid0_corp#
+						,#hosi_mid0_stnd#
+						,#hosi_mid0_code#
+						,#hosi_mid0_apdt#
+						,#hosi_mid0_gubn#
+						,#hosi_mid0_grvt#
+						,#hosi_mid0_thik#
+						,#hosi_mid0_pric#
+						,#hosi_ujik_code#
+						,#hosi_ujik_pric#
+						,#hosi_ujik_thik#
+						,#hosi_out0_corp#
+						,#hosi_out0_stnd#
+						,#hosi_out0_code#
+						,#hosi_out0_apdt#
+						,#hosi_out0_gubn#
+						,#hosi_out0_grvt#
+						,#hosi_out0_thik#
+						,#hosi_in00_size#
+						,#hosi_in00_macd#
+						,#hosi_mid0_macd#
+						,#hosi_out0_size#
+						,#hosi_out0_macd#
+						,#hosi_net0_size#
+						,#hosi_spar_size#
+						,#hosi_shap_code#
+						,#hosi_widn_code#
+						,#hosi_nori_pric#
+						,#hosi_prod_code#
+						,#hosi_curv_qty0#
+						,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+                     	,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+						,#hosi_wash_code#
+						,#hosi_barc_code#
+						,#hosi_comp_clas#
+						,#hosi_thv0_grvt#
+						,#hosi_thv0_thik#
+						,#hosi_thv0_pric#
+						,#hosi_unus_pric#
+						,#hosi_prev_yn#
+						,#hosi_mark_yn1#
+						,#hosi_mark_cnt1#
+						,#hosi_mark_yn2#
+						,#hosi_mark_cnt2#
+						,#hosi_mark_yn3#
+						,#hosi_mark_cnt3#
+						,#hosi_leak_code#
+						,#hosi_in00_idia#
+						,#hosi_in00_odia#
+						,#hosi_mid0_idia#
+						,#hosi_mid0_odia#
+						,#hosi_thv0_idia#
+						,#hosi_thv0_odia#
+						,#hosi_knit_idia#
+						,#hosi_knit_odia#
+						,#hosi_out0_idia#
+						,#hosi_out0_odia#
+						,#hosi_in00_mrgn#
+						,#hosi_in00_loss#
+						,#hosi_mid0_mrgn#
+						,#hosi_mid0_loss#
+						,#hosi_thv0_mrgn#
+						,#hosi_thv0_loss#
+						,#hosi_knit_mrgn#
+						,#hosi_knit_loss#
+						,#hosi_out0_mrgn#
+						,#hosi_out0_loss#
+						,#hosi_radi_yn#
+
+                    );
+        	END;
+        ]]>
+	</sql>
+	
+	
+	
+	<sql id="HOSAInfo.insert" comment="일반 HOSE 가공비 데이터 저장">
+        <![CDATA[
+        BEGIN
+        
+        -- 일반 HOSE 가공비 INPUT TABLE 처리
+
+          INSERT INTO CATBHOSA
+                     (
+                     	HOSA_CORP_CODE
+						, HOSA_PART_NO
+						, HOSA_EONO
+						, HOSA_CUMT_NO
+						, HOSA_PROC_CODE
+						, HOSA_PROC_SEQ0
+						, HOSA_APLY_CONT
+						, HOSA_APLY_CODE
+						, HOSA_APLY_VAL1
+						, HOSA_APLY_VAL2
+						, HOSA_UPDT_CMAN
+						, HOSA_UPDT_DATE
+						, HOSA_INIT_CMAN
+						, HOSA_INIT_DATE
+						, HOSA_NET0_SIZE
+						, HOSA_ASSY_POSI
+                     ) 
+              VALUES (
+                     	#hosa_corp_code#
+						,#hosa_part_no#
+						,#hosa_eono#
+						,#hosa_cumt_no#
+						,#hosa_proc_code#
+						,#hosa_proc_seq0#
+						,#hosa_aply_cont#
+						,#hosa_aply_code#
+						,#hosa_aply_val1#
+						,#hosa_aply_val2#
+						,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+                     	,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+						,#hosa_net0_size#
+						,#hosa_assy_posi#
+
+                    );             
+        END;
+
+        ]]>
+	</sql>
+	
+	<sql id="HOSZInfo.insert" comment="일반 HOSE PAD 데이터 저장">
+        <![CDATA[
+        BEGIN
+        
+        -- 일반 HOSE PAD INPUT TABLE 처리
+
+          INSERT INTO CATBHOSZ
+                     (
+                     	HOSZ_CORP_CODE
+						, HOSZ_PART_NO
+						, HOSZ_EONO
+						, HOSZ_CUMT_NO
+						, HOSZ_MATL_SEQ0
+						, HOSZ_MATL_CORP
+						, HOSZ_MATL_STND
+						, HOSZ_MATL_CODE
+						, HOSZ_MATL_APDT
+						, HOSZ_MATL_GUBN
+						, HOSZ_GRVT_NUMB
+						, HOSZ_THIK_SIZE
+						, HOSZ_IN00_SIZE
+						, HOSZ_OUT0_SIZE
+						, HOSZ_NET0_SIZE
+						, HOSZ_SPAR_SIZE
+						, HOSZ_SHAP_CODE
+						, HOSZ_ASSY_POSI
+						, HOSZ_UPDT_CMAN
+						, HOSZ_UPDT_DATE
+						, HOSZ_INIT_CMAN
+						, HOSZ_INIT_DATE
+
+                     ) 
+              VALUES (
+                      	#hosz_corp_code#
+						,#hosz_part_no#
+						,#hosz_eono#
+						,#hosz_cumt_no#
+						,#hosz_matl_seq0#
+						,#hosz_matl_corp#
+						,#hosz_matl_stnd#
+						,#hosz_matl_code#
+						,#hosz_matl_apdt#
+						,#hosz_matl_gubn#
+						,#hosz_grvt_numb#
+						,#hosz_thik_size#
+						,#hosz_in00_size#
+						,#hosz_out0_size#
+						,#hosz_net0_size#
+						,#hosz_spar_size#
+						,#hosz_shap_code#
+						,#hosz_assy_posi#
+						,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+                     	,#reg_id#
+                     	,TO_CHAR(SYSDATE,'YYYYMMDD')
+                    );             
+        END;
+
+        ]]>
+	</sql>	
+	
+	<sql id="HOSAInfo.delete" comment="HOSE 조립  데이터 삭제">
+        <![CDATA[
+           	DELETE
+        	  FROM CATBHOSA
+        	 WHERE HOSA_CORP_CODE = #corp_code#
+		       AND HOSA_PART_NO   = #part_no#
+		       AND HOSA_EONO      = #eono#
+		       AND HOSA_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+	</sql>
+	
+	<sql id="HOSZInfo.delete" comment="패드 호스   데이터 삭제">
+        <![CDATA[
+           	DELETE
+        	  FROM CATBHOSZ
+        	 WHERE HOSZ_CORP_CODE = #corp_code#
+		       AND HOSZ_PART_NO   = #part_no#
+		       AND HOSZ_EONO      = #eono#
+		       AND HOSZ_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        ]]>
+	</sql>
+	
+ <sql id="get.HoseCalc" comment="PRESS LINE UP 정보 조회(프로시저) "	callable="true"> 
+  <![CDATA[ 
+ CALL @proc_name_a@(
+  #corp_code:char:in#
+ ,#part_no:varchar:in#
+ ,#eono:varchar:in#
+ ,#cumt_no:varchar:in#
+ ,#stnd_gubn:char:in#
+ ,#stnd_degr:varchar:in#
+ 
+ ,#hose_code:varchar:in#
+ ,#injt_code:varchar:in#
+ ,#shap_code:varchar:in#
+ ,#ujik_code:varchar:in#
+ 
+ ,#lotq_qty0:varchar:in#
+ ,#net0_size:varchar:in#
+ ,#in00_size:varchar:in#
+ ,#out0_size:varchar:in#
+ 
+ ,#in00_mrgn:numeric:out#
+ ,#in00_loss:numeric:out#
+ 
+ ,#mid0_mrgn:numeric:out#
+ ,#mid0_loss:numeric:out#
+ 
+ ,#thv0_mrgn:numeric:out#
+ ,#thv0_loss:numeric:out#
+ 
+ ,#knit_mrgn:numeric:out#
+ ,#knit_loss:numeric:out#
+ 
+ ,#out0_mrgn:numeric:out#
+ ,#out0_loss:numeric:out#
+ 
+ ,#MESG_CODE:varchar:out#
+ ,#MESG:varchar:out#
+ ,#SQL0_CODE:varchar:out#
+ ,#PRGM_ID:varchar:out#
+ ,#LINE_NO:varchar:out#
+) 
+  ]]>
+ </sql>
+	
+	<sql id="get.CalcRes" comment="HOSE 계산 (프로시저) " callable="true"> 
+         <![CDATA[ 
+         	CALL CASPHOSE_P@degr@ (
+                                #corp_code:char:in#
+                               ,#part_no:varchar:in#
+                               ,#eono:varchar:in#
+                               ,#cumt_no:numeric:in#
+                               ,#reg_id:varchar:in#
+                              
+                               ,#MESG_CODE:varchar:out#
+                               ,#MESG:varchar:out#
+                               ,#SQL0_CODE:varchar:out#
+                               ,#PRGM_ID:varchar:out#
+                               ,#LINE_NO:varchar:out#
+                              )
+            
+         ]]>
+	</sql>
+	
+	
+	
+	
+</sql-descriptor> 
