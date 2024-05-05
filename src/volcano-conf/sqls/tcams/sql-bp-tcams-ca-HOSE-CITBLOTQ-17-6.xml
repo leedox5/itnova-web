@@ -34,8 +34,8 @@ WITH T1 (
  UNION ALL SELECT 'K1' ,'H' ,'P' ,'RB' ,'HOSE' ,'20200101' ,'3008' ,'20000' ,'9999999999' ,'2만 초과' ,'일반HOSE' ,'ALL' ,'ALL' ,'2000' ,'20200501' ,'SYSTEM' ,'20200501' ,'SYSTEM'  FROM DUAL
 )
 SELECT CASE                                                   
-        WHEN B.XXXX_CORP_CODE IS NULL THEN 'I'             
-        WHEN A.XXXX_UPDT_DATE > B.XXXX_UPDT_DATE THEN 'U'  
+        WHEN B.LOTQ_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.LOTQ_UPDT_DATE > B.LOTQ_UPDT_DATE THEN 'U'  
        END MG_MODE                                         
       ,A.*                                                 
   FROM T1 A                                                
