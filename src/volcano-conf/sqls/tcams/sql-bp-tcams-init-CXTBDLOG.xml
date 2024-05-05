@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CXTBDLOG" data-source="tcamsDS">
+
+ <sql id="drop" comment="삭제">
+  <![CDATA[
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE TABLE CXTBDLOG (
+    ID       NUMBER  
+   ,TABLE_ID VARCHAR(500)
+   ,CONTS    VARCHAR(3000)
+   ,CRT_DATE VARCHAR(14)
+   ,CRT_USER VARCHAR(10)
+   ,CONSTRAINT CXTBDLOG_PK PRIMARY KEY (ID)
+)
+  ]]>
+ </sql>
+
+ <sql id="comments" comment="코멘트">
+  <![CDATA[
+BEGIN  
+END; 
+  ]]>
+ </sql>
+
+</sql-descriptor> 

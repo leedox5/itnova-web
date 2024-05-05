@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/SEQ_DLOG" data-source="tcamsDS">
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE SEQUENCE SEQ_DLOG START WITH 1 INCREMENT BY 1
+  ]]>
+ </sql>
+
+</sql-descriptor> 
