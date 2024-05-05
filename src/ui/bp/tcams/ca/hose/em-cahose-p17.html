@@ -1,0 +1,201 @@
+<sc-link rel="import" href="es-cahose-p17-01.html"></sc-link>
+<sc-link rel="import" href="../common/es-cacm-02.html"></sc-link>
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 일반 HOSE 17차
+        ** @Description     :
+        ** @Author          : JHJ 
+        ** @Create Date     : 2020.04.06
+        ** @History         : 2020.04.06 최초작성
+        ******************************************************************************************
+    -->
+
+
+<dom-module id="em-cahose-p17">
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+	<template>
+		<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 계산 진행상태 유무 조회 -->
+        <sc-service-provider id="getPassStatRPC" descriptor="bp/tcams/ca/common" service-id="get.pass_stat" on-response="resultHandler" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{headerParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{passCnt}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+		<sc-pages id="pages" selected="0" class="fit">
+			<es-cahose-p17-01 id="main" on-show-detail="onShowResult" search-param="{{searchParam}}"></es-cahose-p17-01>
+			<template>
+				<es-cacm-02 id="result" on-close="onSearchMain" search-param="{{searchParam}}"></es-cacm-02>
+			</template>
+		</sc-pages>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is : 'em-cahose-p17',
+
+			properties: {
+				 headerParam   : {type  : Object, value : function(){return {}; }}
+		        ,paramInfo     : {type  : Object, value : function(){return {}; }}
+		        ,searchParam   : {type  : Object, value : function(){return {}; }}
+		        ,passCnt       : {type  : Object, value : function(){return {}; }}
+		        ,checkCnt      : {type  : Object ,value : function(){return  0; }}
+		    },
+
+            /******************************
+             * 초기화 설정
+             ******************************/
+             initialized: function() {
+            	var me= this;
+
+            	// Sub Part에서 넘어오는 Key 정보 get
+            	if (!UT.isEmpty(this.params)) {
+					paramInfo = {
+						 cmms_corp_code : this.params.cmms_corp_code
+						,cmms_part_no   : this.params.cmms_part_no
+						,cmms_eono      : this.params.cmms_eono
+						,cmms_cumt_no   : this.params.cmms_cumt_no
+						,cmms_cumt_gubn : this.params.cmms_cumt_gubn
+						,cmms_meth_gubn : this.params.cmms_meth_gubn
+						,cmms_meth_name : this.params.cmms_meth_name
+						,cmms_come_code : this.params.cmms_come_code
+						,cmms_stnd_degr : this.params.cmms_stnd_degr
+						,cmms_degr_desc : this.params.cmms_degr_desc
+						,cmms_stnd_man1 : this.params.cmms_stnd_man1
+						,cmms_degr_cont : this.params.cmms_degr_cont
+						,cmms_stnd_gubn : this.params.cmms_stnd_gubn
+						,cmms_base_date : this.params.cmms_base_date
+						,cmms_inds_code : this.params.cmms_inds_code
+						,cmms_init_cman : this.params.cmms_init_cman
+						,cmms_cars_code : this.params.cmms_cars_code
+						,cmms_vend_code : this.params.cmms_vend_code
+						,cmms_usg0      : this.params.cmms_usg0
+						,cmms_seq0      : this.params.cmms_seq0
+						,cmms_vehl_gubn : this.params.cmms_vehl_gubn
+						,cmms_cost_gubn : this.params.cmms_cost_gubn
+						,cmms_pass_stat : this.params.cmms_pass_stat
+						,cmms_part_name : this.params.cmms_part_name
+						,cmms_cumt_gubn : this.params.cmms_cumt_gubn
+					};
+
+					headerParam = {
+	       				 corp_code :  paramInfo['cmms_corp_code']
+	       				,part_no   :  paramInfo['cmms_part_no'  ]
+	       				,eono      :  paramInfo['cmms_eono'     ]
+	       				,degr      :  paramInfo['cmms_stnd_degr']
+	       				,mach_gubn :  paramInfo['cmms_mach_gubn']
+	       				,vehl_gubn :  paramInfo['cmms_vehl_gubn']
+	       				,stnd_gubn :  paramInfo['cmms_stnd_gubn']
+	       				,come_code :  paramInfo['cmms_come_code']
+	       				,cumt_gubn :  paramInfo['cmms_cumt_gubn']
+	       				,cost_gubn :  paramInfo['cmms_cost_gubn']
+	       				,mold_seq0 :  paramInfo['cmms_mold_seq0']
+	       				,cumt_no   :  paramInfo['cmms_cumt_no'  ]
+	       				,base_date :  paramInfo['cmms_base_date']
+	       				,degr_desc :  paramInfo['cmms_degr_desc']
+	       				,stnd_man1 :  paramInfo['cmms_stnd_man1']
+	       				,meth_gubn :  paramInfo['cmms_meth_gubn']
+	       				,meth_name :  paramInfo['cmms_meth_name']
+	       				,inds_code :  paramInfo['cmms_inds_code']
+	       				,pass_stat :  paramInfo['cmms_pass_stat']
+	                   	}
+					me.set("paramInfo"  , paramInfo);
+	            	me.set("headerParam", headerParam);
+				}
+
+                if (   !UT.isEmpty(paramInfo.cmms_corp_code)
+                    && !UT.isEmpty(paramInfo['cmms_part_no'  ])
+                    && !UT.isEmpty(paramInfo['cmms_eono'     ])
+                    && !UT.isEmpty(paramInfo['cmms_stnd_degr'])
+                    && !UT.isEmpty(paramInfo['cmms_stnd_gubn'])
+                    && !UT.isEmpty(paramInfo['cmms_come_code'])
+                    && !UT.isEmpty(paramInfo['cmms_cumt_no'  ])
+                    && !UT.isEmpty(paramInfo['cmms_base_date'])
+                    && !UT.isEmpty(paramInfo['cmms_vehl_gubn'])
+                    && !UT.isEmpty(paramInfo['cmms_inds_code'])
+                    && !UT.isEmpty(paramInfo['cmms_cumt_gubn'])
+                    && !UT.isEmpty(paramInfo['cmms_meth_gubn'])
+                    && !UT.isEmpty(paramInfo['cmms_pass_stat'])
+                    && !UT.isEmpty(paramInfo['cmms_cost_gubn'])
+                    ) {
+                	me.$.getPassStatRPC.service();
+                } else {
+                	UT.alert("접속이 끊겼습니다. 재접속하시기 바랍니다.");
+    	            var me = this, winId;
+                	winId = UT.getMenuId(me.domHost);
+                	SCMdiManager.removeWindow(winId);
+                }
+             },
+
+
+          // 공법계산 결과화면 호출
+             onShowResult: function(e, data) {
+                 var me = this;
+                 me.$.pages.selectItem(me.$.result);
+                 me.$.result.load(me.get("searchParam"));
+             },
+
+             // 상세화면에서 닫기버튼 이벤트 처리
+             onSearchMain: function(e) {
+             	var me = this;
+             	this.$.pages.selectItem(this.$.main);
+                 // list화면에 조회하는 함수
+                 me.$.main.load(me.get("searchParam"));
+             },
+
+          	// 계산 진행상태 결과 후처리 로직
+             resultHandler : function(e, res) {
+             	var me = this, winId,
+             	data = res.response,
+             	target = e.currentTarget.id;
+
+             	// 계산 진행상태 결과 체크 및 SET
+             	me.set('passCnt', data.result);
+    				if(me.get("passCnt.flag") == "Y"){
+    					me.set("paramInfo.pass_cnt"      , me.get("passCnt.pass_cnt"));
+    					me.set("paramInfo.cmms_pass_stat", me.get("passCnt.pass_stat"));
+
+    					// 금형공법 사용 시 주석 해제
+    					/* me.set("paramInfo.new0_stat", me.get("passCnt.new0_stat"));
+    					me.set("paramInfo.rpay_code", me.get("passCnt.rpay_code"));
+    					me.set("paramInfo.mold_stat", me.get("passCnt.mold_stat")); */
+    					
+    					me.set("searchParam", commonAS.mergeObj(me.get("paramInfo"), me.get("headerParam")));
+    					me.$.main.load(me.get("searchParam"));
+    				} else {
+    	   				if (me.checkCnt == 0) {
+    	   					me.$.getPassStatRPC.service();
+    	   	   			} else {
+ 						UT.alert("접속이 끊겼습니다. 재접속하시기 바랍니다.");
+ 	                	winId = UT.getMenuId(me.domHost);
+ 	                	SCMdiManager.removeWindow(winId);
+    	   	   	   		}
+    					me.set("checkCnt", 1);
+    				}
+             }
+
+		});
+	</script>
+</dom-module>

@@ -1,0 +1,1042 @@
+
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+
+
+<dom-module id="es-cahose-p17-03">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 일반 HOSE 17차 
+        ** @Description     :
+        ** @Author          : JHJ 
+        ** @Create Date     : 2020.04.06
+        ** @History         : 2020.04.06 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+    	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+	    <!-- 공법 입력 COUNT 조회 -->
+        <sc-service-provider id="getHOSAInfoList" descriptor="bp/tcams/ca/hose/p17" service-id="get.HOSAInfoSelect">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{assyList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+    	<!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+        <sc-label text="[ 가공비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+
+		<div id="cproDiv">
+			<div id="div_divc" validation-group="divData" hidden="[[!assyViewFlag]]">
+		    <sc-toolbar >
+		        <sc-label text=""></sc-label>
+		    </sc-toolbar>
+
+	    	<div class="page">
+	    		
+	    		<table class="come-form" style="border-bottom: 1px solid #1e5784">
+					<col style="width:170px"/>
+					<col style="width:170px"/>
+					<col style="width:170px"/>					
+					<col style="width:170px"/>
+					<col/>
+					<tr>
+						<th>
+							<sc-label text="예비가류" hidden="[[!prevViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_prev_gubn" display-field="label" value-field="data" input-clear="false" hidden="[[!prevViewFlag]]"
+											   items="{{default_gubn_list}}" value="{{inputParam.hosi_prev_yn}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<th>
+							<sc-label text="세척구분" hidden="[[!washViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_wash_gubn" display-field="label" value-field="data" input-clear="false" hidden="[[!washViewFlag]]"
+											   items="{{wash_gubn_list}}" value="{{inputParam.hosi_wash_code}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<td></td>
+					</tr>
+				</table>
+			</div>
+	    </div>
+	    
+	    <div id="div_etcm" hidden="[[!assyViewFlag2]]">
+		    <sc-toolbar >
+		        <sc-label text="조립1"></sc-label>		        
+		    </sc-toolbar>
+			<div class="page" style="height:250px;">
+		        <sc-grid id="datagrid2" data-provider="{{assyList}}" class="flex" use-state="false" use-selection="true" style="height:100%;" sortable="false"
+				         show-number-line="false" use-dummy="true" editable="true" on-item-edit-end="onItemEditEnd" hidden="[[!assyViewFlag2]]"
+				         show-selection-header="true">
+					<cc-grid-toolbar>						
+						<sc-button text="추가" id="addGrid2Btn" on-click="onAddRow2"     auth-s></sc-button>
+						<sc-button text="삭제" id="delGrid2Btn" on-click="onDeleteList2" auth-s></sc-button>
+					</cc-grid-toolbar>
+					<sc-grid-columns>
+						<sc-combobox-column data-field="hosa_proc_code"  header-text="공정명"   		width="230"  text-align="left"  required="true"  editable="true" items="{{procCodes}}" items-function="dpFunc_proc_gubn" text-readonly="true"></sc-combobox-column>
+						<sc-data-column		data-field="hosa_aply_code" header-text="추가조립 공정명"		width="200"	text-align="left" 	required="true"	editable="true"	max-length="40" input-cover="true" item-editable-function="isItemEditable" validate-none-editable="false"></sc-data-column>
+						<sc-data-column		data-field="hosa_net0_size" header-text="PAD길이(mm)"		width="100"	text-align="center"	required="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,10}([.]\d{0,2})?)?$/" data-type="text" format-type="number" input-cover="true" item-editable-function="isItemEditable" validate-none-editable="false"></sc-data-column>
+						<sc-combobox-column data-field="hosa_assy_posi"  header-text="조립위치"   		width="200"  text-align="left"  required="true"  editable="true" items="{{assyCodes}}" text-readonly="true" item-editable-function="isItemEditable" validate-none-editable="false"></sc-combobox-column>
+						
+						<sc-data-column		data-field="hosa_aply_val1" header-text="NET C/T"		width="70"	text-align="right"	required="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,7}([.]\d{0,2})?)?$/" data-type="text" format-type="number" input-cover="true" item-editable-function="isItemEditable" validate-none-editable="false"></sc-data-column>
+						<sc-data-column		data-field="hosa_aply_cont" header-text="갯수/횟수"		width="70"	text-align="right"	required="true" editable="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,10}([.]\d{0,2})?)?$/" data-type="text" format-type="number" input-cover="true"></sc-data-column>
+						
+					</sc-grid-columns>
+					<sc-grid-fields>
+			    		<sc-grid-field data-field="hosa_corp_code" data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosa_part_no"   data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosa_eono"      data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosa_cumt_no"   data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosa_proc_seq0"      data-type="text"></sc-grid-field>
+			    	</sc-grid-fields>
+				</sc-grid>
+			</div>
+	    </div>
+	    
+	    <div id="div_divc2" hidden="[[!assyViewFlag3]]">
+		    <sc-toolbar >
+		        <sc-label text="조립2" ></sc-label>
+		    </sc-toolbar>
+
+	    	<div class="page">
+	    		
+	    		<table class="come-form" style="border-bottom: 1px solid #1e5784">
+					<col style="width:170px"/>
+					<col style="width:170px"/>
+					<col style="width:170px"/>					
+					<col style="width:170px"/>
+					<col/>
+					<tr hidden="[[!radiViewFlag]]">
+						<th>
+							<sc-label text="RADIATOR HOSE"></sc-label>
+						</th>
+						<td>
+							<sc-checkbox-field id="chk_radi_yn" input-value="{{inputParam.hosi_radi_yn}}" checked-value="Y" un-checked-value="N"></sc-checkbox-field>
+
+						</td>
+						<th>
+						</th>
+						<td>
+						</td>
+						<td></td>
+					</tr>
+					<tr hidden="[[!mark1ViewFlag]]">
+						<th>
+							<sc-label text="일반 MARK'G"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_mark1_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeMark1Gubn"
+											   items="{{default_gubn_list}}" value="{{inputParam.hosi_mark_yn1}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<th>
+							<sc-label text="횟수" hidden="[[!markCnt1ViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_mark_cnt1" name="횟수" class="align-right" value="{{inputParam.hosi_mark_cnt1}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9.]/" hidden="[[!markCnt1ViewFlag]]" editVal></sc-text-field>
+						</td>
+						<td></td>
+					</tr>
+					<tr hidden="[[!mark2ViewFlag]]">
+						<th>
+							<sc-label text="원주 MARK'G"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_mark2_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeMark2Gubn"
+											   items="{{default_gubn_list}}" value="{{inputParam.hosi_mark_yn2}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<th>
+							<sc-label text="횟수" hidden="[[!markCnt2ViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_mark_cnt2" name="횟수" class="align-right" value="{{inputParam.hosi_mark_cnt2}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9.]/" hidden="[[!markCnt2ViewFlag]]" editVal></sc-text-field>
+						</td>
+						<td></td>
+					</tr>
+					<tr hidden="[[!mark3ViewFlag]]">
+						<th>
+							<sc-label text="위치 MARK'G"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_mark3_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeMark3Gubn"
+											   items="{{default_gubn_list}}" value="{{inputParam.hosi_mark_yn3}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<th>
+							<sc-label text="횟수" hidden="[[!markCnt3ViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_mark_cnt3" name="횟수" class="align-right" value="{{inputParam.hosi_mark_cnt3}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9.]/" hidden="[[!markCnt3ViewFlag]]" editVal></sc-text-field>
+						</td>
+						<td></td>
+					</tr>
+					<tr hidden="[[!leakViewFlag]]">
+						<th>
+							<sc-label text="LEAK TEST"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_leak_gubn" display-field="label" value-field="data" input-clear="false"
+											   items="{{leak_gubn_list}}" value="{{inputParam.hosi_leak_code}}" placeholder="선택">
+							</sc-combobox-field>
+						</td>
+						<th>
+							
+						</th>
+						<td>
+						</td>
+						<td></td>
+					</tr>
+					
+				</table>
+			</div>
+	    </div>
+		</div>
+	    
+	    
+	   </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+    <script>
+        Polymer({
+            is: "es-cahose-p17-03",
+
+            properties: {
+            	// 표준정보 ComboList 데이터
+             	standInfoList  : { type : Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam     : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam      : {type: Object , value: function() { return {}; } },
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam    : {type: Object , value: function() { return {}; } , notify : true},
+		    	//초기 진입 구분값
+		    	initFlag       : {type: Boolean, value: true },
+				
+				default_gubn_list : {type: Array  , value : function() { return commonAS.defaultYn();} },
+				wash_gubn_list : {type: Array  , value : function() { return [];} },
+				assyList : {type: Array  , value : function() { return [];} },
+				procCodes : {type: Array  , value : function() { return [];} },
+				assyCodes : {type: Array  , value : function() { return [];} },
+				leak_gubn_list : {type: Array  , value : function() { return [];} },
+				saveGridList2  : {type: Array  , value : function() { return [];} },
+		    	validList : {type: Array  , value : function() { return [ ];} },
+
+		    	
+		    	assyViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+
+	            assyViewFlag2: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            assyViewFlag3: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            
+	            
+	            markCnt1ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            markCnt2ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            markCnt3ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            radiViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            mark1ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            mark2ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            mark3ViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            leakViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            prevViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            washViewFlag: {
+	            	type: Boolean,
+	                value: false
+	            },
+	            
+			},
+
+			/**
+             * 초기화 완료 후 호출 함수
+             **/
+            initialized: function() {
+                var me = this;
+            },
+			/**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+                me.set('initFlag'    , true);
+                me.initParam = {};
+
+             	// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+                
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+
+                } else {
+                    me.set("assyList", []);
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+                
+                me.comboInit();
+
+                me.set('initFlag'    , false);
+
+                if (obj.inputParam.iCount != "0") {
+    				me.displaySetting();
+                }
+                console.log("############ init End ################################");
+
+            },
+            /**
+             * 콤보박스 초기화
+             **/
+    	    comboInit : function() {
+    	    	var me = this;
+    	    	// 콤보 변경 후 기존 값 처리
+    	    	
+    	    	
+    	    	me.set("wash_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE13"));
+    	    	me.set("assyCodes", commonAS.makeComoboList(me.get("standInfoList"),"HOSE09"));
+    	    	me.set("leak_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE08"));
+    	    	
+    		    if (me.get('initParam.iCount') != "0" && me.get('initFlag')) { // 기존 데이터가 존재하는 경우
+        		    
+    			} else { // 기존 데이터가 존재하지 않는 경우
+    				me.assyViewFlag = true;
+    				me.prevViewFlag = true; 
+    				me.washViewFlag = true;
+    				me.assyViewFlag2 = true;
+					me.assyViewFlag3 = true;
+
+    				me.radiViewFlag = true;
+    				me.mark1ViewFlag = true;
+    				me.mark2ViewFlag = true;
+    				me.leakViewFlag = true;
+    				me.$.sb_prev_gubn.selectedIndex = 0;
+    				me.$.sb_wash_gubn.selectedIndex = 0;
+    				me.$.sb_mark1_gubn.selectedIndex = 0;
+    				me.$.sb_mark2_gubn.selectedIndex = 0;
+    				me.$.sb_mark3_gubn.selectedIndex = 0; 
+    				me.$.sb_leak_gubn.selectedIndex = 0;
+    			}
+
+    	    },
+
+    	    displaySetting : function() {
+    			var me = this;
+    			if(me.get("inputParam.hosi_comp_clas") == "P") {
+    	    		me.assyViewFlag = true;
+    	    		me.prevViewFlag = true;
+    	    		me.washViewFlag = true;
+    	    		me.assyViewFlag2 = true;
+					me.assyViewFlag3 = true;
+    	    		if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+        	    		me.assyViewFlag3 = false;
+            	    }else {
+            	    	me.assyViewFlag = true;
+            	    	me.prevViewFlag = true;
+        	    		me.washViewFlag = true;
+        	    		me.assyViewFlag2 = true;
+        	    		me.assyViewFlag3 = true;
+        	    		if(me.get("inputParam.hosi_hose_code") == "GENL") {
+        	    			me.assyViewFlag = true;
+        	    			me.prevViewFlag = true;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = true;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = true;
+        				}else if(me.get("inputParam.hosi_hose_code") == "WASHER") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+        				}else if(me.get("inputParam.hosi_hose_code") == "DIFF") {
+        					me.assyViewFlag = true;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = true;
+        					me.leakViewFlag = false;
+        				}else if(me.get("inputParam.hosi_hose_code") == "RETURN") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+        					me.assyViewFlag3 = false;
+            				
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = false;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+            			}
+        				
+        				me.set("procCodes", []);
+
+        	    		me.dpFunc_proc_gubn();
+    				}
+
+        			if(me.$.sb_mark1_gubn.value == "Y") {
+    					me.markCnt1ViewFlag = true;
+    				}else {
+    					me.markCnt1ViewFlag = false;
+    				}
+
+        			if(me.$.sb_mark2_gubn.value == "Y") {
+    					me.markCnt2ViewFlag = true;
+    				}else {
+    					me.markCnt2ViewFlag = false;
+    				}
+        			if(me.$.sb_mark3_gubn.value == "Y") {
+    					me.markCnt3ViewFlag = true;
+    				}else {
+    					me.markCnt3ViewFlag = false;
+    				}
+
+
+    				if(me.assyViewFlag2) {
+    					me.$.getHOSAInfoList.service();
+    				}
+    				
+        	    }else {
+        	    	me.assyViewFlag = false;
+        	    	me.assyViewFlag2 = true;
+        	    	me.assyViewFlag3 = false;
+        	    	if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+            	    	me.assyViewFlag3 = false;
+        	    		
+            	    }
+            	    
+        	    	if(me.assyViewFlag2) {
+    					me.$.getHOSAInfoList.service();
+    				}
+				}
+
+				
+
+    			
+    	    },
+
+    	    /**             
+ 	         * 계산구분 선택박스 이벤트
+ 	         **/
+    	    changeComp : function (){
+
+    	    	var me = this; 
+
+    	    	if(me.get("inputParam.hosi_comp_clas") == "P") {
+    	    		if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+        	    		me.assyViewFlag3 = false;
+            	    }else {
+            	    	me.assyViewFlag = true;
+    	    			me.prevViewFlag = true;
+        	    		me.washViewFlag = true;
+        	    		me.assyViewFlag2 = true;
+            	    	me.assyViewFlag3 = true;
+
+        	    		me.$.sb_prev_gubn.selectedIndex = 0;
+        	    		me.$.sb_wash_gubn.selectedIndex = 0;
+        	    		
+        	    		if(me.get("inputParam.hosi_hose_code") == "GENL") {
+        	    			me.assyViewFlag = true;
+        	    			me.prevViewFlag = true;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = true;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = true;
+        					
+        					me.$.sb_mark1_gubn.selectedIndex = 0;
+            				me.$.sb_mark2_gubn.selectedIndex = 0;
+            				me.$.sb_leak_gubn.selectedIndex = 0;
+        				}else if(me.get("inputParam.hosi_hose_code") == "WASHER") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+
+        					me.$.sb_mark1_gubn.selectedIndex = 0;
+            				me.$.sb_mark2_gubn.selectedIndex = 0;
+        				}else if(me.get("inputParam.hosi_hose_code") == "DIFF") {
+        					me.assyViewFlag = true;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = true;
+        					me.leakViewFlag = false;
+
+        					me.$.sb_mark2_gubn.selectedIndex = 0;
+            				me.$.sb_mark3_gubn.selectedIndex = 0;
+            				
+        				}else if(me.get("inputParam.hosi_hose_code") == "RETURN") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+            	    		
+        					me.assyViewFlag3 = false;
+
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = false;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+                	    	me.assyViewFlag3 = false;
+        					
+            			}
+            	    }
+    	    		
+        			
+        	    }else {
+        	    	
+					me.assyViewFlag = false;
+        	    	me.assyViewFlag2 = true;
+        	    	me.assyViewFlag3 = false;
+
+        	    	if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+        	    		me.assyViewFlag3 = false;
+            	    }
+				}
+			},
+
+    	    /**             
+ 	         * HOSE 이벤트 선택박스 이벤트
+ 	         **/
+			changeHose : function (){
+
+    	    	var me = this; 
+
+    	    	if(me.get("inputParam.hosi_comp_clas") == "P") {
+    	    		if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+        	    		me.assyViewFlag3 = false;
+            	    }else {
+            	    	me.assyViewFlag = true;
+    	    			me.prevViewFlag = true;
+        	    		me.washViewFlag = true;
+        	    		me.assyViewFlag2 = true;
+        	    		me.assyViewFlag3 = true;
+        	    		me.$.sb_prev_gubn.selectedIndex = 0;
+        	    		me.$.sb_wash_gubn.selectedIndex = 0;
+        	    		
+        	    		if(me.get("inputParam.hosi_hose_code") == "GENL") {
+        	    			me.assyViewFlag = true;
+        	    			me.prevViewFlag = true;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = true;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = true;
+        					
+        					me.$.sb_mark1_gubn.selectedIndex = 0;
+            				me.$.sb_mark2_gubn.selectedIndex = 0;
+            				me.$.sb_leak_gubn.selectedIndex = 0;
+        				}else if(me.get("inputParam.hosi_hose_code") == "WASHER") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = true;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+
+        					me.$.sb_mark1_gubn.selectedIndex = 0;
+            				me.$.sb_mark2_gubn.selectedIndex = 0;
+        				}else if(me.get("inputParam.hosi_hose_code") == "DIFF") {
+        					me.assyViewFlag = true;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = true;
+        					me.radiViewFlag = false;
+        					
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = true;
+        					me.mark3ViewFlag = true;
+        					me.leakViewFlag = false;
+
+        					me.$.sb_mark2_gubn.selectedIndex = 0;
+            				me.$.sb_mark3_gubn.selectedIndex = 0;
+            				
+        				}else if(me.get("inputParam.hosi_hose_code") == "RETURN") {
+        					me.assyViewFlag = false;
+        	    			me.prevViewFlag = false;
+            	    		me.washViewFlag = false;
+
+        					me.assyViewFlag3 = false;
+        					me.radiViewFlag = false;
+        					me.mark1ViewFlag = false;
+        					me.mark2ViewFlag = false;
+        					me.mark3ViewFlag = false;
+        					me.leakViewFlag = false;
+            			}
+
+        				
+        	    	 	var provider = me.$.datagrid2.getDataProvider();
+        	    	 	provider.removeAll();
+        	    	 	
+        	    		provider.setItemAtBatch(true, function(nodeIndex, data) {
+        	    			return {"hosa_proc_code" : ""};
+    					});
+        	    		
+        				me.set("procCodes", []);
+    					
+        	    		me.dpFunc_proc_gubn();
+    				}
+    	    	}else {
+    	    		me.assyViewFlag = false;
+        	    	me.assyViewFlag2 = true;
+        	    	me.assyViewFlag3 = false;
+        	    	var provider = me.$.datagrid2.getDataProvider();
+    	    	 	provider.removeAll();
+    	    	 	
+    	    		provider.setItemAtBatch(true, function(nodeIndex, data) {
+    	    			return {"hosa_proc_code" : ""};
+					});
+    	    		
+    				me.set("procCodes", []);
+					
+    	    		me.dpFunc_proc_gubn();
+    	    		
+        	    	if(me.get("inputParam.hosi_hose_code") == "PAD") {
+        	    		me.assyViewFlag = false;
+        	    		me.assyViewFlag2 = false;
+        	    		me.assyViewFlag3 = false;
+            	    }
+        	    }
+    	    	
+
+				
+				
+				
+			},
+
+			onChangeMark1Gubn : function() {
+				var me = this;
+
+				if(!me.initFlag) {
+					if(me.$.sb_mark1_gubn.value == "Y") {
+						me.markCnt1ViewFlag = true;
+					}else {
+						me.markCnt1ViewFlag = false;
+					}
+				}
+			},
+
+			onChangeMark2Gubn : function() {
+				var me = this;
+
+				if(!me.initFlag) {
+					if(me.$.sb_mark2_gubn.value == "Y") {
+						me.markCnt2ViewFlag = true;
+					}else {
+						me.markCnt2ViewFlag = false;
+					}
+				}
+			},
+
+			onChangeMark3Gubn : function() {
+				var me = this;
+
+				if(!me.initFlag) {
+					if(me.$.sb_mark3_gubn.value == "Y") {
+						me.markCnt3ViewFlag = true;
+					}else {
+						me.markCnt3ViewFlag = false;
+					}
+				}
+			},
+
+			
+			
+			onAddRow2: function(e) {
+	            var me = this;
+
+	            var targetId = e.target.id;
+
+	            if(targetId == "addGrid2Btn") {
+	            	 var provider = me.$.datagrid2.getDataProvider();
+	                 
+	                 // 그리드 신규행 추가
+	                 var row = {};
+
+	                 var seq = parseInt(provider.getItemSize())+1;
+
+	             	var item = {
+             			hosa_corp_code : me.searchParam.corp_code
+	             	   ,hosa_part_no   : me.searchParam.part_no
+	             	   ,hosa_eono      : me.searchParam.eono
+	             	   ,hosa_cumt_no   : me.searchParam.cumt_no
+	             	   ,hosa_proc_seq0 : seq
+	             	};
+	             	
+	             	provider.addItem(item);     
+	             	
+	            }
+	                      
+	        },            
+
+	        /**             
+	         * GRID 삭제버튼 클릭
+	         **/
+	         onDeleteList2 : function(e) {
+	        	var me = this;
+	        	var targetId = e.target.id;
+	        	var provider = null;
+	        	
+	        	if(targetId == "delGrid2Btn") {
+	        		provider = me.$.datagrid2.getDataProvider();
+	                               		
+	        	}
+	        	
+	        	var allItems = provider.getItems();
+				
+				if (provider.selectionCheckedItems().length == 0) {
+					UT.alert("선택된 항목이 없습니다.");
+					return;
+				}
+
+	        	UT.confirm(me.translate("선택 항목을 삭제하시겠습니까?"),function() {
+	        		provider.removeItems(true);
+	       		});
+
+	        },
+
+	        isItemEditable : function (data, item) {
+				var me = this;
+
+				// 추가 조립 공정명
+				if(item.dataField == "hosa_aply_code") {					
+					if(data.hosa_proc_code == "AS_ETC") {
+						return true;
+					}else {
+						return false;
+					}
+
+				}
+
+				// NET C/T
+				if(item.dataField == "hosa_aply_val1") {
+					if(data.hosa_proc_code == "AS_ETC") {
+						return true;
+					}else {
+						return false;
+					}
+				}
+
+				//PAD길이(mm)
+				if(item.dataField == "hosa_net0_size") {
+					if(data.hosa_proc_code == "AS_SPON") {
+						return true;
+					}else {
+						return false;
+					}
+				}
+
+				// 조립위치
+				if(item.dataField == "hosa_assy_posi") {
+					if(data.hosa_proc_code == "AS_SPON") {
+						return true;
+					}else {
+						return false;
+					}
+				}
+
+				return false;
+				
+	        },
+
+	        onItemEditEnd : function(event) {
+            	var me = this, e = event.detail,
+        	    data = e.data,
+        	    item = e.item,
+        	    provider = e.provider,
+        	    oldValue = e.oldValue,
+        	    newValue = e.newValue,
+        	    grid     = e.grid;
+
+
+        	    if(item.dataField == "hosa_proc_code") {
+
+            	    if(data.hosa_proc_code != "AS_ETC") {
+        	    		provider.setCellValue(item.rowIndex, "hosa_aply_val1", "");
+        	    		provider.setCellValue(item.rowIndex, "hosa_aply_code", "");
+        	    		
+					}
+            	    if(data.hosa_proc_code != "AS_SPON") {
+            	    	provider.setCellValue(item.rowIndex, "hosa_net0_size", "");
+        	    		provider.setCellValue(item.rowIndex, "hosa_assy_posi", "");
+            	    }
+				}
+			},
+	        
+	    	dpFunc_proc_gubn : function () {
+
+				var me = this; 
+    	    	var hoseCode = me.get("inputParam.hosi_hose_code");
+
+				me.set("procCodes", []);
+				for(var i = 0; i < me.get("standInfoList").length; i++) {
+    				if(me.get("standInfoList")[i].cmpk_gubn_code == "HOSE07") {
+    					if(me.get("standInfoList")[i].cmpk_code_grp1 == hoseCode || me.get("standInfoList")[i].cmpk_code_grp1 == "ALL") {
+
+//     						var tempObj = new Object(); 
+//     						tempObj.label = me.get("standInfoList")[i].label;
+//     						tempObj.data = me.get("standInfoList")[i].data;
+
+    						me.procCodes.push(me.get("standInfoList")[i]);
+    					}
+    				}
+    			}
+
+    			return me.procCodes;
+	    	},
+ 			/**             
+ 	         * 숫자 소수점 2자리로 고정
+ 	         **/			
+ 	        substr2num: function(e) {
+ 	            var me = this;
+ 	            eval("me.$." + e.target.id).setAttribute("value", commonAS.substr2num(e.target.value));
+ 	        },
+
+
+ 	       /**
+	         * 재료비 입력 내역 추출
+	         **/
+		    getInputData : function() {
+		    	var me = this;
+				// 콤포넌트에 바인딩되지 않은 값은 별도 SET(숨겨진 콤포넌트 or 변수로만 가지고 있던 값....)
+				
+		    	// 구분코드 SET
+				me.gubnCodeSet();
+
+				me.cleanUnvisibleData();
+
+				// Validation Check
+				if (!me.validCheck()) {
+	                return false;
+				}
+
+				if(me.assyViewFlag2) {
+					var provider = me.$.datagrid2.getDataProvider();
+
+	               	var isValid = me.$.datagrid2.validate();
+
+					if(!isValid) {
+	               		UT.alert("입력항목을 입력하여 주세요.");
+	                	return false;
+					}else {
+						me.set("saveGridList2", UT.copy(provider.getItems()));
+					}
+				}
+												
+				return true;
+		    },
+		    
+		    /**
+	         * 필수 값 체크
+	         **/
+		    validCheck : function() {
+		    	var me = this;
+
+				// 각 공법별 상이하게 구현(예시)
+				// sc-text-field 필수 체크
+				
+				var tempObj = new Object(); 
+				me.set("validList", []);
+
+				if(me.markCnt1ViewFlag) {
+					tempObj = new Object(); 
+					tempObj.data = "ti_mark_cnt1";
+					me.validList.push(tempObj);
+				}
+				
+				if(me.markCnt2ViewFlag) {
+					tempObj = new Object(); 
+					tempObj.data = "ti_mark_cnt2";
+					me.validList.push(tempObj);
+				}
+				
+				if(me.markCnt3ViewFlag) {
+					tempObj = new Object(); 
+					tempObj.data = "ti_mark_cnt3";
+					me.validList.push(tempObj);
+				}
+				
+				if (!commonAS.validCheck(me.validList)) {
+	                return false;
+				}
+
+				return true;
+
+		    },
+		    
+		    /**
+	         * 구분 코드 SET
+	         **/
+		    gubnCodeSet : function() {
+		    	var me = this;
+
+		    },
+		    
+		    cleanUnvisibleData : function() {
+		    	var me = this;
+
+				if(!me.assyViewFlag) {
+					me.set("inputParam.hosi_prev_yn", "");
+					me.set("inputParam.hosi_wash_code", "");
+                    //[2022.07.27] 위사항만 적용함
+					/*
+					me.set("inputParam.hosi_radi_yn", "");
+					me.set("inputParam.hosi_mark_yn1", "");
+					me.set("inputParam.hosi_mark_cnt1", "");
+					me.set("inputParam.hosi_mark_yn2", "");
+					me.set("inputParam.hosi_mark_cnt2", "");
+					me.set("inputParam.hosi_mark_yn3", "");
+					me.set("inputParam.hosi_mark_cnt3", "");
+					me.set("inputParam.hosi_leak_code", "");
+					*/
+				}
+
+				if(me.assyViewFlag) {
+					if(!me.prevViewFlag) {
+						me.set("inputParam.hosi_prev_yn", "");
+					}
+
+					if(!me.washViewFlag) {
+						me.set("inputParam.hosi_wash_code", "");
+					}
+				}
+				
+				if(!me.assyViewFlag2) {
+					var provider = me.$.datagrid2.getDataProvider();
+					provider.removeAll();
+				}
+
+				if(!me.assyViewFlag3) {
+					me.set("inputParam.hosi_radi_yn", "");
+					me.set("inputParam.hosi_mark_yn1", "");
+					me.set("inputParam.hosi_mark_cnt1", "");
+					me.set("inputParam.hosi_mark_yn2", "");
+					me.set("inputParam.hosi_mark_cnt2", "");
+					me.set("inputParam.hosi_mark_yn3", "");
+					me.set("inputParam.hosi_mark_cnt3", "");
+					me.set("inputParam.hosi_leak_code", "");
+				}
+				
+				if(!me.markCnt1ViewFlag) {
+					me.set("inputParam.hosi_mark_cnt1", "");
+				}
+				if(!me.markCnt2ViewFlag) {
+					me.set("inputParam.hosi_mark_cnt2", "");
+				}
+				if(!me.markCnt3ViewFlag) {
+					me.set("inputParam.hosi_mark_cnt3", "");
+				}
+
+				if(!me.radiViewFlag) {
+					me.set("inputParam.hosi_radi_yn", "");
+				}
+				if(!me.mark1ViewFlag) {
+					me.set("inputParam.hosi_mark_yn1", "");
+					me.set("inputParam.hosi_mark_cnt1", "");
+				}
+				if(!me.mark2ViewFlag) {
+					me.set("inputParam.hosi_mark_yn2", "");
+					me.set("inputParam.hosi_mark_cnt2", "");
+				}
+				if(!me.mark3ViewFlag) {
+					me.set("inputParam.hosi_mark_yn3", "");
+					me.set("inputParam.hosi_mark_cnt3", "");
+				}
+				if(!me.leakViewFlag) {
+					me.set("inputParam.hosi_leak_code", "");
+				}
+				
+				
+				
+		    },
+		    
+		});
+    </script>
+
+</dom-module>

@@ -1,0 +1,602 @@
+<sc-link rel="import" href="es-cahose-p17-02.html"></sc-link>
+<sc-link rel="import" href="es-cahose-p17-03.html"></sc-link>
+<sc-link rel="import" href="../common/es-cacm-01.html"></sc-link>
+
+<dom-module id="es-cahose-p17-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 일반 HOSE 17차 
+        ** @Description     :
+        ** @Author          : JHJ 
+        ** @Create Date     : 2020.04.06
+        ** @History         : 2020.04.06 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 코드 조회 -->
+        <sc-service-provider id="getStndInfoRPC" descriptor="bp/tcams/ca/common" service-id="get.stndInfo" on-response="resultStndInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="combo_info" target="{{standInfoList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 COUNT 조회 -->
+        <sc-service-provider id="getInfoCountRPC" descriptor="bp/tcams/ca/hose/p17" service-id="get.HOSIInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 조회 -->
+        <sc-service-provider id="getInfoRPC" descriptor="bp/tcams/ca/hose/p17" service-id="get.HOSIInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info" target="{{result}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 입력factor 저장 -->
+        <sc-service-provider id="saveInfoRPC" descriptor="bp/tcams/ca/hose/p17" service-id="save.HOSIInfo" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+				<sc-service-input name="gridParam1" value="{{saveGridParam1}}"></sc-service-input>
+				<sc-service-input name="gridParam2" value="{{saveGridParam2}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+ 		<sc-service-provider id="getHoseCalc" descriptor=bp/tcams/ca/hose/p17 service-id="get.HoseCalc" on-response="resultHoseCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{hoseCalcResult}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 공법 계산 & 결과 조회 -->
+        <sc-service-provider id="getCalcResRPC" descriptor=bp/tcams/ca/common service-id="CALL.PROC" on-response="calcComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+    	<cc-page-title-bar hidden="true"></cc-page-title-bar>
+   		<div class="vbox flex" style="min-height:3%;">
+   		   			<es-cacm-01 class="flex" id="topMain" search-param="{{searchParam}}" on-copy="copyInputData"
+   			            on-prod-change="calcCavt" on-get-info="getInfo" on-init-data="initData"
+   			            on-get-item-type="" on-get-bolt-data="" on-set-sttb-lotq="" on-rpay-change=""
+                        on-calculate="calculation" on-result-calc="toParentResult"
+   			            on-change-lot="changeLot" on-calc-cavt="calcCavt"></es-cacm-01>
+   		</div>
+   		<div class="vbox flex-8">
+    		<div class="hbox flex">
+		        <es-cahose-p17-02 id="matlMain" class="flex-5" on-clear-ton0="clearTon0" on-clear-pres="clearPres" 
+		        	search-param="{{searchParam}}" input-param="{{inputParam}}" on-change-comp="changeComp" on-change-hose="changeHose" on-show-stat="showStat"></es-cahose-p17-02>
+		        <sc-splitter split-type="vertical"></sc-splitter>
+		        
+				<es-cahose-p17-03 id="cproMain" class="flex-5" 
+					search-param="{{searchParam}}" input-param="{{inputParam}}" ></es-cahose-p17-03>
+   			</div>
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "es-cahose-p17-01",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object , value: function() { return {}; } ,notify : true},
+                // 조회 결과
+                resultMap     : {type: Object , value: function() { return {}; } },
+				// 표준 패키지 정보 조회
+				standInfoList : {type : Array , value : function() { return [];}},
+				// 조회 결과용
+		    	result        : {type: Object , value: function() { return {}; } },
+				// Input 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } },
+				// save 대상 정보
+		    	saveParam     : {type: Object , value: function() { return {}; } },
+				// 계산번호 저장용
+		    	orgCumtNo     : { type : String , value : function() { return '';} },
+		    	hoseCalcResult : {type: Object , value: function() { return {}; } },
+		    	saveGridParam1  : {type : Array , value : function() { return [];}},
+		    	saveGridParam2  : {type : Array , value : function() { return [];}},
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj);
+				me.set('orgCumtNo', UT.copy(obj.cmms_cumt_no));
+
+
+                // 상태체크
+                me.checkPassStat();
+
+				// 공통 타이틀 명 SET
+                me.set('searchParam.title', "일반 HOSE");
+
+                // 공통 영역(TOP FRAME) 조회조건 전달
+                me.$.topMain.load(me.get("searchParam"));
+
+                // 표준 정보 조회
+                me.$.getStndInfoRPC.service();
+
+            },
+
+            /**
+             * 표준 패키지 정보 조회 후처리 로직
+             **/
+            resultStndInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	///////////////////
+            	// 개별 공법 조회 기능 추가 후 마지막 response 처리에서 getInfoCountRPC 호출
+            	///////////////////
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+
+            },
+            
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultCountInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+            	me.$.matlMain.initFlag = true;
+                me.$.cproMain.initFlag = true;
+                
+            	me.set("inputParam", {});
+            	
+            	if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+				if(me.get("result.hosi_count") == 0 || me.get("result.hosi_count") == '0'){
+					
+					me.set('inputParam.iCount', "0");
+						
+					var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam") };
+					
+					// 값 초기화 후 정보 전달
+					me.set('inputParam.iCount', me.get("result.hosi_count"));
+					
+	            	me.$.matlMain.load(obj);
+	            	me.$.cproMain.load(obj);
+
+				} else {
+
+					me.$.getInfoRPC.service();
+					
+				}
+
+            },
+			
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 공법 Input Factor 정보
+            	me.set('inputParam', me.result);
+            	me.set('inputParam.iCount', "1");
+
+            	
+            	console.log("### resultInfo ...... shapCode -->"+ me.result.hosi_shap_code);
+            	console.log("### resultInfo ...... shapCode -->"+ me.get("inputParam.hosi_shap_code"));
+            	
+            	var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam")};
+				
+            	me.$.matlMain.load(obj);
+            	me.$.cproMain.load(obj);
+            },
+
+            /**
+             * LOT량 변화 이벤트 처리
+             **/
+            changeLot: function(e, data) {
+                var me = this;
+
+                //me.$.matlMain.setCodeList(res.response);
+				//me.$.cproMain.setCodeList(res.response);
+            },
+
+            /**
+             * 가로,세로,높이 변경에 따른 적용CVT 계산처리
+             **/
+            calcCavt: function(e, data) {
+            	var me = this;
+            	
+            },
+            
+            /**
+             * 최대두께 변경에 따른 형체력 Clear
+             **/
+             clearPres: function(e, data) {
+            	var me = this;
+            },
+
+            /**
+             * 초기화 버튼 이벤트
+             **/
+            initData: function(e, data) {
+                var me = this;
+
+                me.$.matlMain.initFlag = true;
+                me.$.cproMain.initFlag = true;
+				// 입력 값 초기화
+                me.set("inputParam", {});
+                me.set("searchParam.cumt_no"  , "-1");
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 조회 버튼 이벤트
+             **/
+            getInfo: function() {
+                var me = this;
+
+                me.$.matlMain.initFlag = true;
+                me.$.cproMain.initFlag = true;
+                if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 결과조회 버튼 이벤트
+             **/
+            toParentResult: function() {
+            	var me = this;
+
+            	me.fire("show-detail");
+            },
+
+            /**
+             * 계산 버튼 이벤트
+             **/
+            calculation: function() {
+            	var me = this;
+
+            	console.log("################### 계산버튼 이벤트 #############################"); 
+            	me.$.matlMain.initFlag = true;
+                me.$.cproMain.initFlag = true;
+            	if (!me.$.matlMain.getInputData()) {
+            		me.$.matlMain.initFlag = false;
+                    return false;
+				}
+
+            	
+            	if (!me.$.cproMain.getInputData()) {
+            		me.$.cproMain.initFlag = false;
+                    return false;
+				}
+
+                me.set("saveGridParam1", []);
+				me.set("saveGridParam1", me.$.matlMain.saveGridList1);
+
+				me.set("saveGridParam2", []);
+				me.set("saveGridParam2", me.$.cproMain.saveGridList2);
+
+				if(me.get("inputParam.hosi_hose_code") == "PAD"){
+
+					// 공법 factor 저장 호출
+					me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+					
+	                 me.$.saveInfoRPC.service();	
+				}else {
+					if(me.get("inputParam.hosi_comp_clas") == "P") {
+						if(me.get("inputParam.hosi_hose_code") != "PAD"){
+							me.$.getHoseCalc.service();
+						}
+						
+					}else{
+						// 공법 factor 저장 호출
+						me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+						
+		                 me.$.saveInfoRPC.service();
+					}
+					
+				}
+				
+                
+
+
+            },
+            
+            resultHoseCalc : function() {
+    			var me = this;
+
+                
+            	if (me.get("hoseCalcResult.MESG_CODE") == 'SA-001') {
+    				//총투입길이 = NET길이 + 재단여유 + LOSS길이를 DIAPLAY
+    				me.set("inputParam.hosi_in00_mrgn", me.hoseCalcResult.in00_mrgn);
+    				me.set("inputParam.hosi_in00_loss", me.hoseCalcResult.in00_loss);
+    				me.set("inputParam.hosi_in00_wegt", me.hoseCalcResult.in00_wegt);
+    				var in00Mrgn = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.in00_mrgn))) {
+    					in00Mrgn = parseFloat(me.hoseCalcResult.in00_mrgn);
+    				}
+    				var in00Loss = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.in00_loss))) {
+    					in00Loss = parseFloat(me.hoseCalcResult.in00_loss);
+    				}
+    				
+    				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + in00Mrgn + in00Loss;
+    				me.set("inputParam.hosi_in00_leng", totLeng);
+    				
+    				me.set("inputParam.hosi_out0_mrgn", me.hoseCalcResult.out0_mrgn);
+    				me.set("inputParam.hosi_out0_loss", me.hoseCalcResult.out0_loss);
+    				me.set("inputParam.hosi_out0_wegt", me.hoseCalcResult.out0_wegt);
+    				var out0Mrgn = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.out0_mrgn))) {
+    					out0Mrgn = parseFloat(me.hoseCalcResult.out0_mrgn);
+    				}
+    				var out0Loss = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.out0_loss))) {
+    					out0Loss = parseFloat(me.hoseCalcResult.out0_loss);
+    				}
+    				
+    				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + out0Mrgn + out0Loss;
+    				me.set("inputParam.hosi_out0_leng", totLeng);
+    				
+    				me.set("inputParam.hosi_knit_mrgn", me.hoseCalcResult.knit_mrgn);
+    				me.set("inputParam.hosi_knit_loss", me.hoseCalcResult.knit_loss);
+    				me.set("inputParam.hosi_knit_wegt", me.hoseCalcResult.knit_wegt);
+
+    				var knitMrgn = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.knit_mrgn))) {
+    					knitMrgn = parseFloat(me.hoseCalcResult.knit_mrgn);
+    				}
+    				
+    				var knitLoss = 0;
+    				if(!isNaN(parseFloat(me.hoseCalcResult.knit_loss))) {
+    					knitLoss = parseFloat(me.hoseCalcResult.knit_loss);
+    				}
+    				
+    				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + knitMrgn + knitLoss;
+    				me.set("inputParam.hosi_knit_leng", totLeng);
+    				
+    				if(me.get("inputParam.hosi_injt_code") == "STO") {
+    					me.set("inputParam.hosi_thv0_mrgn", me.hoseCalcResult.thv0_mrgn);
+    					me.set("inputParam.hosi_thv0_loss", me.hoseCalcResult.thv0_loss);
+    					me.set("inputParam.hosi_thv0_wegt", me.hoseCalcResult.thv0_wegt);
+    					var thv0Mrgn = 0;
+    					if(!isNaN(parseFloat(me.hoseCalcResult.thv0_mrgn))) {
+    						thv0Mrgn = parseFloat(me.hoseCalcResult.thv0_mrgn);
+    					}
+    					
+    					var thv0Loss = 0;
+    					if(!isNaN(parseFloat(me.hoseCalcResult.thv0_loss))) {
+    						thv0Loss = parseFloat(me.hoseCalcResult.thv0_loss);
+    					}
+    					
+    					var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + thv0Mrgn + thv0Loss;
+    					me.set("inputParam.hosi_thv0_leng", totLeng);
+    				}else {
+    					me.set("inputParam.hosi_mid0_mrgn", me.hoseCalcResult.mid0_mrgn);
+    					me.set("inputParam.hosi_mid0_loss", me.hoseCalcResult.mid0_loss);
+    					me.set("inputParam.hosi_mid0_wegt", me.hoseCalcResult.mid0_wegt);
+    					var mid0Mrgn = 0;
+    					if(!isNaN(parseFloat(me.hoseCalcResult.mid0_mrgn))) {
+    						mid0Mrgn = parseFloat(me.hoseCalcResult.mid0_mrgn);
+    					}
+    					
+    					var mid0Loss = 0;
+    					if(!isNaN(parseFloat(me.hoseCalcResult.mid0_loss))) {
+    						mid0Loss = parseFloat(me.hoseCalcResult.mid0_loss);
+    					}
+    					
+    					var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + mid0Mrgn + mid0Loss;
+						me.set("inputParam.hosi_mid0_leng", totLeng);
+						
+    				}
+    				
+                	me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+
+                    // 공법 factor 저장 호출
+                 	me.$.saveInfoRPC.service();
+                } else {
+                	me.$.matlMain.initFlag = false;
+                    me.$.cproMain.initFlag = false;
+                	//commonAS.comeAlert(me.get("hoseCalcResult.MESG"));
+                	me.$.topMain.showMsg(me.hoseCalcResult, me.standInfoList);
+                }
+			},
+			
+            /**
+             * 입력 factor 저장 후 계산 호출
+             **/
+            goCalc: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	if(me.get("result.MESG_CODE") == 'SA-001'){
+					// 계산 procedure 호출
+					me.$.getCalcResRPC.service();
+				} else {
+					me.$.matlMain.initFlag = false;
+                    me.$.cproMain.initFlag = false;
+                    
+					UT.alert(me.get("result.MESG"));
+					return;
+				}
+            },
+
+            /**
+             * 계산 처리 후 로직
+             **/
+            calcComplete: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	console.log(data);
+
+            	me.$.topMain.showStat(data.calc_Result);
+            	
+                if (me.get("result.MESG_CODE") == 'SA-001') {
+
+                	UT.alert(me.get("result.MESG"));
+                	me.toParentResult();
+                	me.$.getInfoRPC.service();
+
+                	// 공법 계산시 END ITEM MASTER/CHAIN/공법선택 화면 재조회
+                	me.moduleCall();
+                	
+                } else {
+                	me.$.matlMain.initFlag = false;
+                    me.$.cproMain.initFlag = false;
+                	commonAS.comeAlert(me.get("result"));
+                }
+            },
+
+            /**
+         	 * 모듈간 통신 END ITEM MASTER/CHAIN/공법선택 마스터 화면 재조회
+         	 */
+         	moduleCall: function() {
+                var me = this;
+                
+				// END ITEM MASTER
+				if ( me.searchParam['cmms_cost_gubn'] == 'R1'
+					  || me.searchParam['cmms_cost_gubn'] == 'R2'
+					  || me.searchParam['cmms_cost_gubn'] == 'R3') {
+					var target1 = document.querySelector("sc-pages").children.PCA00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00020;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 개발
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RD') {
+					var target1 = document.querySelector("sc-pages").children.PCB00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00030;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 임시
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RC') {
+					var target1 = document.querySelector("sc-pages").children.PCK00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00010;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				}
+				
+				// 공법선택
+// 				var target3 = document.querySelector("sc-pages").children.PCF00020;
+// 				if (UT.isNotEmpty(target3)) {
+
+// 					if (UT.isNotEmpty(target3.module.$.autoCome)) {
+// 						target3.module.$.autoCome.getSelectedList();
+// 					} else if (UT.isNotEmpty(target3.module.$.moldCome)) {
+// 						target3.module.$.moldCome.getSelectedList();
+// 					}
+// 				}
+				
+            },    
+            /**
+             * 상태 체크
+             **/
+ 			checkPassStat : function () {
+ 				var me = this;	
+
+ 				if (me.get("searchParam.pass_cnt") != "0") {
+ 					me.$.matlMain.$.matlDiv.setAttribute("disabled", true);
+ 					me.$.cproMain.$.cproDiv.setAttribute("disabled", true);
+ 				} else {
+ 					me.$.matlMain.$.matlDiv.removeAttribute("disabled");
+ 					me.$.cproMain.$.cproDiv.removeAttribute("disabled");
+ 				}
+ 			},
+
+			changeComp : function() {
+				var me = this;
+
+				me.$.cproMain.changeComp(); 
+			},
+			changeHose : function() {
+				var me = this;
+
+				me.$.cproMain.changeHose(); 
+			},
+
+			showStat: function(e, param) {
+				this.$.topMain.showStat(param);
+		    },
+			
+        });
+	</script>
+</dom-module>

@@ -1,0 +1,1986 @@
+
+<sc-link rel="import" href="es-cahose-p17-02-01.html"></sc-link>
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+
+<dom-module id="es-cahose-p17-02">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 일반 HOSE 17차 
+        ** @Description     :
+        ** @Author          : JHJ 
+        ** @Create Date     : 2020.04.06
+        ** @History         : 2020.04.06 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+        <!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+	    <sc-service-provider id="getHoseCalc" descriptor=bp/tcams/ca/hose/p17 service-id="get.HoseCalc" on-response="resultHoseCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{hoseCalcResult}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <sc-service-provider id="getHOSZInfoList" descriptor="bp/tcams/ca/hose/p17" service-id="get.HOSZInfoSelect">
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="resultList" target="{{hosePadList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+    	<!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+	    <sc-label text="[ 재료비 정보 ]" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+	    
+	    <div id="matlDiv">
+	    	<div id="div_divc" validation-group="divData">
+		    <sc-toolbar >
+		        <sc-label text=""></sc-label>
+		    </sc-toolbar>
+
+	    	<div class="page">
+	    		<form name="divData">
+	    		<table class="come-form" style="border-bottom: 1px solid #1e5784">
+					<col style="width:120px"/>
+					<col style="width:170px"/>
+					<col style="width:120px"/>					
+					<col style="width:170px"/>
+					<col style="width:120px"/>
+					<col style="width:170px"/>
+					<col/>
+					<tr>
+						<th>
+							<sc-label text="HOSE 종류" hidden="[[!hoseViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_hose_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeHoseGubn"
+											   items="{{hose_gubn_list}}" value="{{inputParam.hosi_hose_code}}" placeholder="선택" hidden="[[!hoseViewFlag]]">
+							</sc-combobox-field>	                    
+						</td>
+						<th>
+						</th>
+						<td>
+						</td>
+						<th>
+							<sc-label text="계산구분"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_comp_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeCompGubn"
+											   items="{{comp_gubn_list}}" value="{{inputParam.hosi_comp_clas}}" placeholder="선택">
+							</sc-combobox-field>	                    
+						</td>
+						
+						<td></td>
+					</tr>
+					<tr hidden="[[!shapViewFlag]]">
+						<th>
+							<sc-label text="형상 "></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_shap_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeShapCode"
+											   items="{{shap_gubn_list}}" value="{{inputParam.hosi_shap_code}}" placeholder="선택">
+							</sc-combobox-field>	                    
+						</td>
+						<th>
+							<sc-label text="HOSE 곡수" hidden="[[!curvViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_curv_qty0" name="HOSE 곡수" class="align-right" value="{{inputParam.hosi_curv_qty0}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9]/" hidden="[[!curvViewFlag]]" editVal></sc-text-field>
+						</td>
+						<th>
+						</th>
+						<td>
+						</td>
+						
+						<td></td>
+					</tr>
+					
+				</table>
+			
+		        </form>
+		     </div>
+	    </div>
+	    
+	    <div id="div_divc" validation-group="divData" hidden="[[!matlViewFlag]]">
+		    <sc-toolbar >
+		        <sc-label text="제품 및 재질"></sc-label>
+		        <a><img src="../../../../assets/img/bull_calculation.gif" id="img_calc" on-click="hoseCal" style="padding-left:5px" /></a>
+		    </sc-toolbar>
+
+	    	<div class="page">
+	    		<form name="divData">
+	    		<table class="come-form" style="border-bottom: 1px solid #1e5784">
+					<col style="width:170px"/>
+					<col style="width:220px"/>
+					<col style="width:170px"/>					
+					<col style="width:170px"/>
+					<col/>
+					<tr>
+						<th>
+							<sc-label text="압출방법" hidden="[[!injtViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_injt_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeInjtGubn"
+											   items="{{injt_gubn_list}}" value="{{inputParam.hosi_injt_code}}" placeholder="선택" hidden="[[!injtViewFlag]]">
+							</sc-combobox-field>	                    
+						</td>
+						<th>
+							<sc-label text="산폐단가"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_unus_pric" name="산폐단가" class="align-right" value="{{inputParam.hosi_unus_pric}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9]/" calcVal></sc-text-field>
+						</td>
+						<td></td>
+					</tr>
+					<tr>
+						<th>
+							<sc-label text="NET길이(mm)" hidden="[[!netViewFlag]]"></sc-label>
+						</th>
+						<td>
+							<sc-text-field id="ti_net0_size" name="NET길이(mm)" class="align-right" value="{{inputParam.hosi_net0_size}}" maxlength="10" on-blur="substr2num" style="width : 160px; "
+								format-type="number" mask-re="/[0-9.]/" editVal hidden="[[!netViewFlag]]"></sc-text-field>
+						</td>
+						<th>
+						</th>
+						<td>
+						</td>
+						<td></td>
+					</tr>
+					
+				</table>
+			
+		        </form>
+		     </div>
+	    </div>
+	  
+	    <div id="div_prop" validation-group="propData" hidden="[[!matlViewFlag2]]" style="padding-top:10px;">
+		  
+		    
+		    <div class="page" >
+		    	<table class="tb-form" style="padding-top:10px; padding-bottom:3px; border:0px;">
+					<colgroup>
+		                <col style="width:110px"> <!-- 재질명1 -->
+		                <col style="width:130px"> <!-- 재질명2 -->
+		                <col style="width:90px"> <!-- 단가(원) -->
+		                <col style="width:60px">  <!-- 비중 -->
+		                <col style="width:80px">  <!-- 내경 -->
+		                <col style="width:80px">  <!-- 외경 -->
+		                <col style="width:90px">  <!-- 재단여유 -->
+		                <col style="width:90px"> <!-- loss길이 -->
+		                <col style="width:90px"> <!-- 총투입길이 -->
+		            </colgroup>
+		            
+		            <tr style="text-align-last:center; color:white;">
+		            	<td style="background-color:#3a9edd;" class="align-center" colspan="2">
+		            		<sc-label text="재질명"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="단가(원)"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="비중"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="내경(mm)"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="외경(mm)"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="재단여유(mm)"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="LOSS길이(mm)"></sc-label>
+		            	</td>
+		            	<td style="background-color:#3a9edd;" class="align-center">
+		            		<sc-label text="총투입길이(mm)"></sc-label>
+		            	</td>
+		            </tr>
+		            <tr hidden="[[!inViewFlag]]"> <!-- 내고무 -->
+		            	<!-- 재질명1 -->
+		            	<td style="text-align-last:center;" class="align-center">
+		            		<sc-label text="내고무"></sc-label>
+							<a><img src="../../../../assets/img/bull_choice.gif" on-click="onSearchMatl" id="matl1" style="padding-left:15px"/></a>
+ 		            	</td>
+ 		            	<!-- 재질명2 -->
+		            	<td style="text-align-last:left;" class="align-left">
+		            		<sc-label text="" id="in_matl_name"></sc-label>
+		            		<sc-text-field id="ti_matl_corp" value="{{inputParam.hosi_matl_corp}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_matl_stnd" value="{{inputParam.hosi_matl_stnd}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_matl_gubn" value="{{inputParam.hosi_matl_gubn}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_matl_code" value="{{inputParam.hosi_matl_code}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_matl_adpt" value="{{inputParam.hosi_matl_apdt}}" hidden="true" style="width:0;"></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 단가 -->
+		            	<td>
+		            		<sc-text-field id="ti_matl_pric" name="내고무 단가" value="{{inputParam.hosi_matl_pric}}" maxlength="10" style="text-align-last:right;width:60px;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+							<sc-label text="/"></sc-label>
+							<sc-label text="{{inputParam.hosi_matl_unit}}"></sc-label>
+ 		            	</td>
+ 		            	<!-- 비중 -->
+		            	<td >
+		            		<sc-text-field id="ti_grvt_numb" name="내고무 비중" value="{{inputParam.hosi_grvt_numb}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 내경 -->
+		            	<td>
+		            		<sc-text-field id="ti_in00_idia" name="내고무 내경" value="{{inputParam.hosi_in00_idia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeIdia" editVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 외경 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_in00_odia" name="내고무 외경" value="{{inputParam.hosi_in00_odia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 재단여유 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_in00_mrgn" value="{{inputParam.hosi_in00_mrgn}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- loss길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_in00_loss" value="{{inputParam.hosi_in00_loss}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 총투입길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_in00_leng" value="{{inputParam.hosi_in00_leng}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+		            </tr>
+		            <tr hidden="[[!thvViewFlag]]"> <!-- thv -->
+		            	<!-- 재질명1 -->
+		            	<td style="text-align-last:center;" class="align-center">
+		            		<sc-label text="THV"></sc-label>		            		
+ 		            	</td>
+ 		            	<!-- 재질명2 -->
+		            	<td style="text-align-last:left;" class="align-left">
+		            		
+ 		            	</td>
+ 		            	<!-- 단가 -->
+		            	<td>
+		            		<sc-text-field id="ti_thv0_pric" name="단가" value="{{inputParam.hosi_thv0_pric}}" maxlength="10" style="text-align-last:right;width:60px;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+							<sc-label text="/"></sc-label>
+							<sc-label text="KG"></sc-label>
+ 		            	</td>
+ 		            	<!-- 비중 -->
+		            	<td >
+		            		<sc-text-field id="ti_thv0_grvt" name="비중" value="{{inputParam.hosi_thv0_grvt}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 내경 -->
+		            	<td>
+		            		<sc-text-field id="ti_thv0_idia" name="내경" value="{{inputParam.hosi_thv0_idia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 외경 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_thv0_odia" name="외경" value="{{inputParam.hosi_thv0_odia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 재단여유 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_thv0_mrgn" value="{{inputParam.hosi_thv0_mrgn}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- loss길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_thv0_loss" value="{{inputParam.hosi_thv0_loss}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 총투입길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_thv0_leng" value="{{inputParam.hosi_thv0_leng}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+		            </tr>
+		            <tr hidden="[[!midViewFlag]]"> <!-- 중간고무 -->
+		            	<!-- 재질명1 -->
+		            	<td style="text-align-last:center;" class="align-center">
+		            		<sc-label text="중간고무" id="mid_name"></sc-label>
+		            		<a><img src="../../../../assets/img/bull_choice.gif" on-click="onSearchMatl" id="matl2" style="padding-left:15px"/></a>
+		            		
+ 		            	</td>
+ 		            	<!-- 재질명2 -->
+		            	<td style="text-align-last:left;" class="align-left">
+		            		<sc-label text="" id="mid_matl_name"></sc-label>
+		            		<sc-text-field id="ti_mid0_corp" value="{{inputParam.hosi_mid0_corp}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_mid0_stnd" value="{{inputParam.hosi_mid0_stnd}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_mid0_gubn" value="{{inputParam.hosi_mid0_gubn}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_mid0_code" value="{{inputParam.hosi_mid0_code}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_mid0_adpt" value="{{inputParam.hosi_mid0_apdt}}" hidden="true" style="width:0;"></sc-text-field>	        
+							
+ 		            	</td>
+ 		            	<!-- 단가 -->
+		            	<td>
+		            		<sc-text-field id="ti_mid0_pric" name="단가" value="{{inputParam.hosi_mid0_pric}}" maxlength="10" style="text-align-last:right;width:60px;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+							<sc-label text="/"></sc-label>
+							<sc-label text="{{inputParam.hosi_mid0_unit}}"></sc-label>
+ 		            	</td>
+ 		            	<!-- 비중 -->
+		            	<td >
+		            		<sc-text-field id="ti_mid0_grvt" name="비중" value="{{inputParam.hosi_mid0_grvt}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 내경 -->
+		            	<td>
+		            		<sc-text-field id="ti_mid0_idia" name="내경" value="{{inputParam.hosi_mid0_idia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 외경 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_mid0_odia" name="외경" value="{{inputParam.hosi_mid0_odia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 재단여유 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_mid0_mrgn" value="{{inputParam.hosi_mid0_mrgn}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- loss길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_mid0_loss" value="{{inputParam.hosi_mid0_loss}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 총투입길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_mid0_leng" value="{{inputParam.hosi_mid0_leng}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+		            </tr>
+		            <tr hidden="[[!ujikViewFlag]]"> <!-- 유직사 -->
+		            	<!-- 재질명1 -->
+		            	<td style="text-align-last:center;" class="align-center">
+		            		<sc-label text="유직사"></sc-label>
+ 		            	</td>
+ 		            	<!-- 재질명2 -->
+		            	<td style="text-align-last:left;" class="align-left">
+		            		<sc-combobox-field id="sb_ujik_gubn" display-field="label" value-field="data" input-clear="false" on-change="onChangeInjtGubn" style="width:100px;"
+											   items="{{ujik_gubn_list}}" value="{{inputParam.hosi_ujik_code}}" placeholder="선택">
+							</sc-combobox-field>
+							<a><img src="../../../../assets/img/bull_reference.gif" id="img_hose01" on-click="PopupHandler" style="padding-left:5px;"/></a>		        
+							
+ 		            	</td>
+ 		            	<!-- 단가 -->
+		            	<td>
+		            		<sc-text-field id="ti_ujik_pric" name="유직사 단가" value="{{inputParam.hosi_ujik_pric}}" maxlength="10" style="text-align-last:right;width:60px;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+							<sc-label text="/"></sc-label>
+							<sc-label text="KG"></sc-label>
+ 		            	</td>
+ 		            	<!-- 비중 -->
+		            	<td >
+		            		
+ 		            	</td>
+	            		<!-- 내경 -->
+		            	<td>
+		            		<sc-text-field id="ti_knit_idia" name="유직사 내경" value="{{inputParam.hosi_knit_idia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" editVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 외경 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_knit_odia" name="유직사 외경" value="{{inputParam.hosi_knit_odia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 재단여유 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_knit_mrgn" value="{{inputParam.hosi_knit_mrgn}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- loss길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_knit_loss" value="{{inputParam.hosi_knit_loss}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 총투입길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_knit_leng" value="{{inputParam.hosi_knit_leng}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+		            </tr>
+		            
+		            <tr hidden="[[!outViewFlag]]"> <!-- 외고무 -->
+		            	<!-- 재질명1 -->
+		            	<td style="text-align-last:center;" class="align-center">
+		            		<sc-label text="외고무"></sc-label>
+		            		<a><img src="../../../../assets/img/bull_choice.gif" on-click="onSearchMatl" id="matl3" style="padding-left:15px"/></a>
+		            		
+ 		            	</td>
+ 		            	<!-- 재질명2 -->
+		            	<td style="text-align-last:left;" class="align-left">
+		            		<sc-label text="" id="out_matl_name"></sc-label>
+		            		<sc-text-field id="ti_out0_corp" value="{{inputParam.hosi_out0_corp}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_out0_stnd" value="{{inputParam.hosi_out0_stnd}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_out0_gubn" value="{{inputParam.hosi_out0_gubn}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_out0_code" value="{{inputParam.hosi_out0_code}}" hidden="true" style="width:0;"></sc-text-field>
+		    				<sc-text-field id="ti_out0_adpt" value="{{inputParam.hosi_out0_apdt}}" hidden="true" style="width:0;"></sc-text-field>	        
+							
+ 		            	</td>
+ 		            	<!-- 단가 -->
+		            	<td>
+		            		<sc-text-field id="ti_out0_pric" name="외고무 단가" value="{{inputParam.hosi_out0_pric}}" maxlength="10" style="text-align-last:right;width:60px;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+							<sc-label text="/"></sc-label>
+							<sc-label text="{{inputParam.hosi_out0_unit}}"></sc-label>
+ 		            	</td>
+ 		            	<!-- 비중 -->
+		            	<td >
+		            		<sc-text-field id="ti_out0_grvt" name="외고무 비중" value="{{inputParam.hosi_out0_grvt}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 내경 -->
+		            	<td>
+		            		<sc-text-field id="ti_out0_idia" name="외고무 내경" value="{{inputParam.hosi_out0_idia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 외경 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_out0_odia" name="외고무 외경" value="{{inputParam.hosi_out0_odia}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+ 		            	</td>
+	            		<!-- 재단여유 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_out0_mrgn" value="{{inputParam.hosi_out0_mrgn}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- loss길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_out0_loss" value="{{inputParam.hosi_out0_loss}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+ 		            	<!-- 총투입길이 -->
+ 		            	<td>
+		            		<sc-text-field id="ti_out0_leng" value="{{inputParam.hosi_out0_leng}}" maxlength="10" style="text-align-last:right;" class="align-right"
+		                				   format-type="number" mask-re="/[0-9.]/" on-blur="substr2num" disabled="true" calcVal></sc-text-field>
+ 		            	</td>
+		            </tr>
+		            
+	        	</table>
+	       	</div>
+	    </div>
+	    <div id="div_divc" validation-group="divData" hidden="[[!subViewFlag]]">
+		    <sc-toolbar >
+		        <sc-label text="부재료"></sc-label>
+		    </sc-toolbar>
+
+	    	<div class="page">
+	    		<form name="divData">
+	    		<table class="come-form" style="padding-top:5px; border-bottom: 1px solid #1e5784">
+					<col style="width:170px"/>
+					<col style="width:220px"/>
+					<col style="width:170px"/>					
+					<col style="width:170px"/>
+					<col/>
+					<tr>
+						<th>
+							<sc-label text="BAR CODE"></sc-label>
+						</th>
+						<td>
+							<sc-combobox-field id="sb_barc_gubn" display-field="label" value-field="data" input-clear="false"
+											   items="{{barc_code_list}}" value="{{inputParam.hosi_barc_code}}" placeholder="선택">
+							</sc-combobox-field>	                    
+						</td>
+						<th>
+
+						</th>
+						<td>
+
+						</td>
+						<td></td>
+					</tr>
+
+				</table>
+			
+		        </form>
+		     </div>
+	    </div>
+	    
+	    <div id="div_etcm" >
+		    <sc-toolbar >
+		    </sc-toolbar>
+			<div class="page" style="height:250px;" >
+		        <sc-grid id="datagrid" data-provider="{{hosePadList}}" class="flex" use-state="false" use-selection="true" style="height:100%;" sortable="false"
+				         show-number-line="false" use-dummy="true" editable="true" on-item-click="onItemClick" hidden="[[!padViewFlag]]"
+				         show-selection-header="true">
+					<cc-grid-toolbar>						
+						<sc-button text="추가" id="addGrid1Btn" on-click="onAddRow"     auth-s></sc-button>
+						<sc-button text="삭제" id="delGrid1Btn" on-click="onDeleteList" auth-s></sc-button>
+					</cc-grid-toolbar>
+					<sc-grid-columns>						
+						<sc-data-column		data-field="hosz_matl_code" header-text="재질코드"		width="100"	text-align="left" editable="false" ></sc-data-column>
+						<sc-data-column     data-field="img_proc_code"  header-text=""             width="20" text-align="center" item-style-function="onItemStyleFn"></sc-data-column>
+						<sc-data-column		data-field="hosz_matl_name" header-text="재질명"		width="130"	text-align="left"	editable="false" ></sc-data-column>
+						<sc-data-column		data-field="hosz_matl_pric" header-text="재질단가"		width="60"	text-align="right"	editable="false" ></sc-data-column>
+						<sc-data-column		data-field="hosz_matl_unit" header-text="단위"		width="50"	text-align="center"	editable="false" ></sc-data-column>
+						<sc-data-column		data-field="hosz_grvt_numb" header-text="비중"		width="50"	text-align="center"	editable="false" ></sc-data-column>
+						<sc-data-column		data-field="hosz_matl_apdt" header-text="적용일"		width="70"	text-align="center"	editable="false" ></sc-data-column>
+						
+						<sc-group-column	header-text="NET SIZE(mm)"	column-name="dataColumns1"	width="240">
+		   	               	<sc-data-column     data-field="hosz_in00_size"  header-text="내경" width="80" text-align="right" editable="true" required="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,10}([.]\d{0,2})?)?$/" data-type="text" format-type="number"></sc-data-column>
+		   	               	<sc-data-column     data-field="hosz_out0_size"  header-text="외경" width="80" text-align="right" editable="true" required="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,10}([.]\d{0,2})?)?$/" data-type="text" format-type="number" ></sc-data-column>
+		   	               	<sc-data-column     data-field="hosz_net0_size"  header-text="길이" width="80" text-align="right" editable="true" required="true" editor-maskre="/[0-9.]/" hangul-restrict="true" editor-regex="/^(\d{1,10}([.]\d{0,2})?)?$/" data-type="text" format-type="number" ></sc-data-column>
+						</sc-group-column>
+						<sc-combobox-column data-field="hosz_shap_code"  header-text="ITEM 구분"  width="150"  text-align="center"   editable="true" items="{{shapCodes}}" display-field="label" value-field="data" text-readonly="true" ></sc-combobox-column>						
+					</sc-grid-columns>
+					<sc-grid-fields>
+			    		<sc-grid-field data-field="hosz_corp_code" data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_part_no"   data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_eono"      data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_cumt_no"   data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_matl_seq0"      data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_matl_corp"      data-type="text"></sc-grid-field>
+			    		<sc-grid-field data-field="hosz_matl_stnd"      data-type="text"></sc-grid-field>
+			    	</sc-grid-fields>
+			    		
+				</sc-grid>
+			</div>
+	    </div>
+	    </div>
+		
+	    
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+    <script>
+    Polymer({
+        is: "es-cahose-p17-02",
+
+        properties: {
+        	// 표준정보 ComboList 데이터
+         	standInfoList : {type: Array  , value : function() { return [];} },
+			// 재료비 및 가공비 I 테이블 정보
+	    	inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+			// 재료비 및 가공비 I 테이블 정보
+	    	initParam     : {type: Object , value: function() { return {}; } },
+			// 재료비 및 가공비 I 테이블 정보
+	    	searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+	    	// 초기 진입 구분값
+	    	initFlag      : {type: Boolean, value: true },
+			validList : {type: Array  , value : function() { return [] } },
+			hose_gubn_list : {type: Array  , value : function() { return [] } },
+			comp_gubn_list : {type: Array  , value : function() { return [ {label:"단품", data:"P"}, {label:"ASS'Y", data:"A"}] } },
+			shap_gubn_list : {type: Array  , value : function() { return [] } },
+			injt_gubn_list  : {type: Array  , value : function() { return [] } },
+			ujik_gubn_list  : {type: Array  , value : function() { return [] } },
+			barc_code_list  : {type: Array  , value : function() { return [] } },
+			hosePadList : {type: Array  , value : function() { return [] } },
+			shapCodes : {type: Array  , value : function() { return [] } },
+			targetId : {type: String  , value : function() { return ""} },
+			hoseCalcResult : {type: Object , value: function() { return {}; } },
+			saveGridList1 : {type: Array  , value : function() { return [] } },
+			
+			shapViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            matlViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            matlViewFlag2: {
+            	type: Boolean,
+                value: false
+            },
+            hoseViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            subViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            curvViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            inViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            ujikViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            midViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            thvViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            
+            outViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            padViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            injtViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            netViewFlag: {
+            	type: Boolean,
+                value: false
+            },
+            
+            
+            
+            
+            
+            
+        },    	
+        /**
+         * 초기화 완료 후 호출 함수
+         **/
+        initialized: function() {
+            var me = this;
+            
+        },
+
+        /**
+         * 부모에서 호출
+         **/
+        load: function(obj) {
+            var me = this;
+            
+            me.set('initFlag'    , true);
+            me.initParam = {};
+
+            // 부모로 부터 전달된 파라미터 SET
+            me.set('searchParam'  , obj.searchParam);
+            me.set('standInfoList', obj.standInfoList);
+            
+            // 조회된 값이 존재하는 경우만 별도 저장
+            if (obj.inputParam.iCount != "0") {
+            	me.set('initParam'    , UT.copy(obj.inputParam));
+            	me.set('inputParam'   , UT.copy(obj.inputParam));
+            	
+            } else {
+            	me.set('inputParam'      , obj.inputParam);
+            	me.set('initParam.iCount', obj.inputParam.iCount);
+
+            	me.set("hosePadList", []);
+            	
+            	me.$.in_matl_name.text = "";
+    	    	me.$.mid_matl_name.text = "";
+    	    	me.$.out_matl_name.text = "";
+    	    	
+            }
+
+            me.comboInit();
+            
+            me.set('initFlag'    , false);
+
+            if (obj.inputParam.iCount != "0") {
+				me.displaySetting();
+            }
+        },
+        /**
+         * 콤보박스 초기화
+         **/
+	    comboInit : function() {
+	    	var me = this;
+
+	    	me.set("hose_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE00"));
+	    	me.set("ujik_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE02", me.$.sb_hose_gubn.value));
+	    	me.set("barc_code_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE14"));
+	    	me.set("shapCodes", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", "PAD"));
+			
+			// 콤보 변경 후 기존 값 처리
+		    if (me.get('initParam.iCount') != "0" && me.get('initFlag')) { // 기존 데이터가 존재하는 경우
+		    	me.set("inputParam", UT.copy(me.get("initParam")));
+
+			} else { // 기존 데이터가 존재하지 않는 경우
+				me.$.sb_hose_gubn.selectedIndex = 0;
+				me.$.sb_comp_gubn.selectedIndex = 0; 
+
+				me.set("injt_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE01", me.$.sb_hose_gubn.value));
+		    	me.set("shap_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", me.$.sb_hose_gubn.value));
+
+				me.$.sb_shap_gubn.selectedIndex = 0;
+				me.$.sb_injt_gubn.selectedIndex = 0; 
+				me.$.sb_ujik_gubn.selectedIndex = 0;
+				me.$.sb_barc_gubn.selectedIndex = 0;
+				
+				me.set("inputParam.hosi_unus_pric", 90); 
+				me.hoseViewFlag = true;
+				me.shapViewFlag = true;
+				me.matlViewFlag = true;
+				me.matlViewFlag2 = true;
+				me.subViewFlag = true;
+				me.injtViewFlag = true;
+				me.netViewFlag = true;
+				me.padViewFlag = false;
+				me.matlSetting();
+			}
+
+	    },
+
+	    displaySetting : function() {
+			var me = this;
+
+			console.log("######################### displaySetting ##########################");
+			console.log("### inputParam --->"+ JSON.stringify(me.get("inputParam"))); 
+			
+			console.log("### me.$.sb_hose_gubn.value --->"+ me.$.sb_hose_gubn.value);
+			console.log("### barc_code_list --->"+ JSON.stringify(me.get("barc_code_list"))); 
+			
+	    	if(me.$.sb_comp_gubn.value == "P") {
+				me.hoseViewFlag = true;
+				me.shapViewFlag = true;
+				me.matlViewFlag = true;
+				me.matlViewFlag2 = true;
+				if(me.$.sb_hose_gubn.value == "GENL") {
+					me.subViewFlag = true;
+    			}else {
+        			if(me.$.sb_hose_gubn.value == "PAD") {
+        				me.padViewFlag = true;
+            		}else {
+            			me.padViewFlag = false;
+        				me.subViewFlag = false;
+                	}
+        			
+        		}
+
+				if(me.$.sb_hose_gubn.value == "GENL") {
+					me.subViewFlag = true;
+					me.shapViewFlag = true;
+					me.matlViewFlag = true;
+					me.matlViewFlag2 = true;
+					me.injtViewFlag = true;
+					me.netViewFlag = true;
+					me.padViewFlag = false;
+				}else if(me.$.sb_hose_gubn.value == "PAD"){
+					me.subViewFlag = false;
+					me.shapViewFlag = false;
+					me.matlViewFlag = false;
+					me.injtViewFlag = false;
+					me.netViewFlag = false;
+					me.matlViewFlag2 = false;
+					me.padViewFlag = true;
+	    		}else {
+	    			me.subViewFlag = false;
+					me.shapViewFlag = true;
+	    			me.matlViewFlag = true;
+	    			me.injtViewFlag = true;
+	    			me.netViewFlag = true;
+					me.matlViewFlag2 = true;
+					me.padViewFlag = false;
+	        	}
+	        	
+		    	me.$.in_matl_name.text = me.get("inputParam.hosi_matl_name");
+		    	me.$.mid_matl_name.text = me.get("inputParam.hosi_mid0_name");
+		    	me.$.out_matl_name.text = me.get("inputParam.hosi_out0_name");
+		    	
+		    	me.set("injt_gubn_list", []);
+	    		me.set("shap_gubn_list", []);
+	    		me.set("ujik_gubn_list", []);
+//	     		me.set("barc_code_list", []);
+	    		me.set("injt_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE01", me.$.sb_hose_gubn.value));
+		    	me.set("shap_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", me.$.sb_hose_gubn.value));
+		    	me.set("ujik_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE02", me.$.sb_hose_gubn.value));
+//	 	    	me.set("barc_code_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE14", me.$.sb_hose_gubn.value));
+		    	
+		    	if(me.injtViewFlag) {
+		    		me.set("inputParam.hosi_injt_code", UT.copy(me.get("initParam.hosi_injt_code")));
+			    }
+
+		    	if(me.shapViewFlag) {			    	
+		    		me.set("inputParam.hosi_shap_code", UT.copy(me.get("initParam.hosi_shap_code")));
+			    }
+		    	
+		    	
+			    
+	        	me.onChangeShapCode();
+	    		me.matlSetting("init");
+
+	    		if(me.ujikViewFlag) {			    	
+	    	    	me.set("inputParam.hosi_ujik_code", UT.copy(me.get("initParam.hosi_ujik_code")));
+			    }
+	    		if(me.matlViewFlag2) {
+	    			me.hoseCal();
+	        	}
+	        	
+            }else {
+            	
+        		me.hoseViewFlag = true;
+                me.shapViewFlag = false;
+                me.matlViewFlag = false;
+                me.matlViewFlag2 = false;
+                me.subViewFlag = false;
+                me.padViewFlag = false;
+
+                me.set("injt_gubn_list", []);
+	    		me.set("shap_gubn_list", []);
+	    		me.set("ujik_gubn_list", []);
+//	     		me.set("barc_code_list", []);
+	    		me.set("injt_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE01", me.$.sb_hose_gubn.value));
+		    	me.set("shap_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", me.$.sb_hose_gubn.value));
+		    	me.set("ujik_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE02", me.$.sb_hose_gubn.value));
+//	 	    	me.set("barc_code_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE14", me.$.sb_hose_gubn.value));
+
+//         		if(me.$.sb_hose_gubn.value == "PAD"){
+//         			me.subViewFlag = false;
+//         			me.shapViewFlag = false;
+//         			me.matlViewFlag = false;
+//         			me.injtViewFlag = false;
+//         			me.netViewFlag = false;
+//         			me.matlViewFlag2 = false;
+//         			me.padViewFlag = true;
+//             	}
+            	
+			}
+			
+	    	
+
+    		if(me.padViewFlag) {
+				me.$.getHOSZInfoList.service();
+        	}
+        	
+		},
+		/**             
+         * 숫자 소수점 2자리로 고정
+         **/			
+        substr2num: function(e) {
+            var me = this;
+            eval("me.$." + e.target.id).setAttribute("value", commonAS.substr2num(e.target.value));
+        },
+
+        /**
+         * HOSE 종류 선택박스 이벤트
+         **/
+        onChangeHoseGubn : function () {
+        	var me = this;
+
+        	if(!me.initFlag) {
+
+        		if(me.$.sb_comp_gubn.value == "P") {
+        			me.set("injt_gubn_list", []);
+            		me.set("shap_gubn_list", []);
+            		me.set("ujik_gubn_list", []);
+            		me.set("injt_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE01", me.$.sb_hose_gubn.value));
+    		    	me.set("shap_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", me.$.sb_hose_gubn.value));
+    		    	me.set("ujik_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE02", me.$.sb_hose_gubn.value));
+
+    				me.$.sb_shap_gubn.selectedIndex = 0;
+    				me.$.sb_injt_gubn.selectedIndex = 0; 
+    				me.$.sb_ujik_gubn.selectedIndex = 0;
+    				me.$.sb_barc_gubn.selectedIndex = 0; 
+    				
+    				if(me.$.sb_hose_gubn.value == "GENL") {
+    					me.subViewFlag = true;
+    					me.shapViewFlag = true;
+    					me.matlViewFlag = true;
+        				me.matlViewFlag2 = true;
+        				me.injtViewFlag = true;
+        				me.netViewFlag = true;
+        				me.padViewFlag = false;
+        				me.set("inputParam.hosi_unus_pric", 90);
+        			}else if(me.$.sb_hose_gubn.value == "PAD"){
+        				me.subViewFlag = false;
+        				me.shapViewFlag = false;
+        				me.matlViewFlag = false;
+        				me.injtViewFlag = false;
+        				me.netViewFlag = false;
+        				me.matlViewFlag2 = false;
+        				me.padViewFlag = true;
+            		}else {
+            			me.subViewFlag = false;
+    					me.shapViewFlag = true;
+            			me.matlViewFlag = true;
+            			me.injtViewFlag = true;
+            			me.netViewFlag = true;
+        				me.matlViewFlag2 = true;
+        				me.padViewFlag = false;
+        				me.set("inputParam.hosi_unus_pric", 90);
+                	}
+            		
+    				me.onChangeShapCode();
+        		}else {
+        			me.hoseViewFlag = true;
+                	me.shapViewFlag = false;
+                	me.matlViewFlag = false;
+                	me.matlViewFlag2 = false;
+                	me.subViewFlag = false;
+                	me.padViewFlag = false;
+                	
+//         			if(me.$.sb_hose_gubn.value == "PAD"){
+//         				me.subViewFlag = false;
+//         				me.shapViewFlag = false;
+//         				me.matlViewFlag = false;
+//         				me.injtViewFlag = false;
+//         				me.netViewFlag = false;
+//         				me.matlViewFlag2 = false;
+//         				me.padViewFlag = true;
+//             		}
+            	}
+        		
+
+				me.fire("change-hose");
+			}
+		},
+        /**
+         * 계산구분 선택박스 이벤트
+         **/
+        onChangeCompGubn : function () {
+        	var me = this;
+
+        	if(!me.initFlag) {
+        		if(me.$.sb_comp_gubn.value == "P") {
+        			me.set("injt_gubn_list", []);
+            		me.set("shap_gubn_list", []);
+            		me.set("ujik_gubn_list", []);
+            		me.set("injt_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE01", me.$.sb_hose_gubn.value));
+    		    	me.set("shap_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE03", me.$.sb_hose_gubn.value));
+    		    	me.set("ujik_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"HOSE02", me.$.sb_hose_gubn.value));
+
+    				me.$.sb_shap_gubn.selectedIndex = 0;
+    				me.$.sb_injt_gubn.selectedIndex = 0; 
+    				me.$.sb_ujik_gubn.selectedIndex = 0;
+    				me.$.sb_barc_gubn.selectedIndex = 0; 
+    				
+    				me.hoseViewFlag = true;
+    				me.shapViewFlag = true;
+    				me.matlViewFlag = true;
+    				me.injtViewFlag = true;
+    				me.netViewFlag = true;
+    				me.matlViewFlag2 = true;
+    				if(me.$.sb_hose_gubn.value == "GENL") {
+    					me.subViewFlag = true;
+    					me.shapViewFlag = true;
+    					me.matlViewFlag = true;
+        				me.matlViewFlag2 = true;
+        				me.injtViewFlag = true;
+        				me.netViewFlag = true;
+        				me.padViewFlag = false;
+        				me.set("inputParam.hosi_unus_pric", 90);
+        			}else if(me.$.sb_hose_gubn.value == "PAD"){
+        				me.subViewFlag = false;
+        				me.shapViewFlag = false;
+        				me.matlViewFlag = false;
+        				me.injtViewFlag = false;
+        				me.netViewFlag = false;
+        				me.matlViewFlag2 = false;
+        				me.padViewFlag = true;
+            		}else {
+            			me.subViewFlag = false;
+    					me.shapViewFlag = true;
+            			me.matlViewFlag = true;
+            			me.injtViewFlag = true;
+            			me.netViewFlag = true;
+        				me.matlViewFlag2 = true;
+        				me.padViewFlag = false;
+        				me.set("inputParam.hosi_unus_pric", 90);
+                	}
+            		
+//     				me.onChangeShapCode();
+    				
+//     				me.onChangeHoseGubn();
+                }else {
+                	me.hoseViewFlag = true;
+                	me.shapViewFlag = false;
+                	me.matlViewFlag = false;
+                	me.matlViewFlag2 = false;
+                	me.subViewFlag = false;
+                	me.padViewFlag = false;
+    			}
+
+    			me.fire("change-comp");
+			}
+        	
+		},
+
+		/**
+         * 형상 선택박스 이벤트
+         **/
+		onChangeShapCode : function () {
+			var me = this;
+
+        	if(!me.initFlag) {
+
+        		if(me.$.sb_hose_gubn.value == "GENL") {
+					if(me.$.sb_shap_gubn.value == "CURV" || me.$.sb_shap_gubn.value == "ONE" || me.$.sb_shap_gubn.value == "TWO") {
+						me.curvViewFlag = true;
+					}else {
+						me.curvViewFlag = false;
+					}
+				}else {
+					me.curvViewFlag = false;
+				}
+			}
+		},
+
+		/**
+         * 압출방법 선택박스 이벤트
+         **/
+		onChangeInjtGubn : function () {
+			var me = this;
+
+        	if(!me.initFlag) {
+
+        		me.matlSetting("event");
+			}
+		},
+
+		/**
+         * 내고무 - 내경 입력값 이벤트
+         **/
+		onChangeIdia : function() {
+			var me = this;
+
+        	if(!me.initFlag) {
+            	
+        		if(me.$.sb_hose_gubn.value == "RETURN") {
+            		var idia = parseInt(me.get("inputParam.hosi_in00_idia"));
+
+					if(idia != 3 && idia != 4) {
+						UT.alert("ACTUATOR/RETURN HOSE 인경우 내경값은 3 혹은 4만 입력 가능합니다.");
+						return false;
+					}
+					
+					if(idia == 3) {
+						me.set("inputParam.hosi_in00_odia", 7);
+					}else if(idia == 4) {
+						me.set("inputParam.hosi_in00_odia", 8.5);
+					}
+				}
+			}
+		},
+		
+		/**
+         * 제품 재질 계산 로직
+         **/
+		hoseCal : function () {
+			var me = this;
+
+        	if(!me.initFlag) {
+
+				me.set("searchParam.hose_code", me.get("inputParam.hosi_hose_code"));
+				me.set("searchParam.injt_code", me.get("inputParam.hosi_injt_code"));
+				me.set("searchParam.shap_code", me.get("inputParam.hosi_shap_code"));
+				me.set("searchParam.stnd_degr", me.get("searchParam.degr"));
+				
+				if(UT.isEmpty(me.get("inputParam.hosi_net0_size"))) {
+					UT.alert("NET 길이를 입력하여 주세요");
+					return false;
+				}else {
+					me.set("searchParam.net0_size", me.get("inputParam.hosi_net0_size"));
+				}
+				
+				if(me.ujikViewFlag) {
+					me.set("searchParam.ujik_code", me.get("inputParam.hosi_ujik_code"));
+				}else {
+					me.set("searchParam.ujik_code", "");
+				}
+				me.set("searchParam.widn_code", "");
+
+				if(UT.isEmpty(me.get("searchParam.lotq_qty0"))) {
+					UT.alert("LOT량을 입력하여 주세요");
+					return false;
+				}
+				if(me.inViewFlag) {
+					me.set("searchParam.in00_grav", me.get("inputParam.hosi_grvt_numb"));
+					me.set("searchParam.in00_size", me.get("inputParam.hosi_in00_idia"));
+				}else {
+					me.set("searchParam.in00_grav", "");
+					me.set("searchParam.in00_size", "");
+				}
+
+				if(me.midViewFlag) {
+					me.set("searchParam.mid0_grav", me.get("inputParam.hosi_mid0_grvt"));
+				}else {
+					me.set("searchParam.mid0_grav", "");
+				}
+				
+				if(me.outViewFlag) {
+					me.set("searchParam.out0_grav", me.get("inputParam.hosi_out0_grvt"));
+					me.set("searchParam.out0_size", me.get("inputParam.hosi_out0_odia"));
+				}else {
+					me.set("searchParam.out0_grav", "");
+					me.set("searchParam.out0_size", "");
+				}
+				
+				me.$.getHoseCalc.service(); 
+			}
+		},
+
+		resultHoseCalc: function(e, res) {
+			var me = this;
+            var data = res.response;
+
+            console.log(data);
+
+            me.fire("show-stat", data.calc_Result);
+			
+			if (me.get("hoseCalcResult.MESG_CODE") == 'SA-001') {
+
+				//총투입길이 = NET길이 + 재단여유 + LOSS길이를 DIAPLAY
+				me.set("inputParam.hosi_in00_mrgn", me.hoseCalcResult.in00_mrgn);
+				me.set("inputParam.hosi_in00_loss", me.hoseCalcResult.in00_loss);
+				me.set("inputParam.hosi_in00_wegt", me.hoseCalcResult.in00_wegt);
+
+				var in00Mrgn = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.in00_mrgn))) {
+					in00Mrgn = parseFloat(me.hoseCalcResult.in00_mrgn);
+				}
+				var in00Loss = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.in00_loss))) {
+					in00Loss = parseFloat(me.hoseCalcResult.in00_loss);
+				}
+				
+				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + in00Mrgn + in00Loss;
+				me.set("inputParam.hosi_in00_leng", totLeng);
+				
+				
+				me.set("inputParam.hosi_out0_mrgn", me.hoseCalcResult.out0_mrgn);
+				me.set("inputParam.hosi_out0_loss", me.hoseCalcResult.out0_loss);
+				me.set("inputParam.hosi_out0_wegt", me.hoseCalcResult.out0_wegt);
+
+				var out0Mrgn = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.out0_mrgn))) {
+					out0Mrgn = parseFloat(me.hoseCalcResult.out0_mrgn); 
+				}
+				
+				var out0Loss = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.out0_loss))) { 
+					out0Loss = parseFloat(me.hoseCalcResult.out0_loss);
+				}
+				
+				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + out0Mrgn + out0Loss;
+				
+				me.set("inputParam.hosi_out0_leng", totLeng);
+				
+				me.set("inputParam.hosi_knit_mrgn", me.hoseCalcResult.knit_mrgn);
+				me.set("inputParam.hosi_knit_loss", me.hoseCalcResult.knit_loss);
+				me.set("inputParam.hosi_knit_wegt", me.hoseCalcResult.knit_wegt);
+
+				var knitMrgn = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.knit_mrgn))) {
+					knitMrgn = parseFloat(me.hoseCalcResult.knit_mrgn);
+				}
+				
+				var knitLoss = 0;
+				if(!isNaN(parseFloat(me.hoseCalcResult.knit_loss))) {
+					knitLoss = parseFloat(me.hoseCalcResult.knit_loss);
+				}
+				
+				var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + knitMrgn + knitLoss;
+				me.set("inputParam.hosi_knit_leng", totLeng);
+				
+				if(me.$.sb_injt_gubn.value == "STO") {
+					me.set("inputParam.hosi_thv0_mrgn", me.hoseCalcResult.thv0_mrgn);
+					me.set("inputParam.hosi_thv0_loss", me.hoseCalcResult.thv0_loss);
+					me.set("inputParam.hosi_thv0_wegt", me.hoseCalcResult.thv0_wegt);
+
+					var thv0Mrgn = 0;
+					if(!isNaN(parseFloat(me.hoseCalcResult.thv0_mrgn))) {
+						thv0Mrgn = parseFloat(me.hoseCalcResult.thv0_mrgn);
+					}
+					
+					var thv0Loss = 0;
+					if(!isNaN(parseFloat(me.hoseCalcResult.thv0_loss))) {
+						thv0Loss = parseFloat(me.hoseCalcResult.thv0_loss);
+					}
+					
+					var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + thv0Mrgn + thv0Loss;
+					me.set("inputParam.hosi_thv0_leng", totLeng);
+				}else {
+					me.set("inputParam.hosi_mid0_mrgn", me.hoseCalcResult.mid0_mrgn);
+					me.set("inputParam.hosi_mid0_loss", me.hoseCalcResult.mid0_loss);
+					me.set("inputParam.hosi_mid0_wegt", me.hoseCalcResult.mid0_wegt);
+
+					var mid0Mrgn = 0;
+					if(!isNaN(parseFloat(me.hoseCalcResult.mid0_mrgn))) {
+						mid0Mrgn = parseFloat(me.hoseCalcResult.mid0_mrgn);
+					}
+					
+					var mid0Loss = 0;
+					if(!isNaN(parseFloat(me.hoseCalcResult.mid0_loss))) {
+						mid0Loss = parseFloat(me.hoseCalcResult.mid0_loss);
+					}
+					
+					var totLeng = parseFloat(me.get("inputParam.hosi_net0_size")) + mid0Mrgn + mid0Loss;
+					me.set("inputParam.hosi_mid0_leng", totLeng);
+				}
+				
+				
+            } else {
+            	commonAS.comeAlert(me.get("hoseCalcResult"));
+            }
+            
+		},
+
+		matlSetting : function(type) {
+			var me = this;
+
+			var injtCode = me.$.sb_injt_gubn.value; 
+
+			console.log("###### injtCode --->" + injtCode);
+			var codeGrp1 = ""; 
+			var codeGrp2 = "";
+			var codeGrp3 = "";
+			var codeGrp4 = "";
+			var codeGrp5 = "";
+			for(var i = 0; i < me.get("standInfoList").length; i++) {
+				if(me.get("standInfoList")[i].cmpk_gubn_code == "HOSE01") {
+					if(me.get("standInfoList")[i].data == injtCode) {
+						codeGrp1 = me.get("standInfoList")[i].cmpk_code_grp1;
+						codeGrp2 = me.get("standInfoList")[i].cmpk_code_grp2;
+						codeGrp3 = me.get("standInfoList")[i].cmpk_code_grp3;
+						codeGrp4 = me.get("standInfoList")[i].cmpk_code_grp4;
+						codeGrp5 = me.get("standInfoList")[i].cmpk_code_grp5;
+						break;
+					}
+				}
+			}
+
+			if(codeGrp2 == "Y") {
+				me.inViewFlag = true;
+			}else {
+				me.inViewFlag = false;
+			}
+
+			if(codeGrp3 == "Y") {
+				if(injtCode == "STO" ) {
+					me.thvViewFlag = true;
+					me.midViewFlag = false;
+					
+					if(me.get("inputParam.iCount") == "0" || ( me.get("inputParam.iCount") != "0" && UT.isEmpty(me.get("inputParam.hosi_thv0_pric"))) ) {
+						me.set("inputParam.hosi_thv0_pric", 68500);
+					}else {
+						me.set("inputParam.hosi_thv0_pric", UT.copy(me.get("inputParam.hosi_thv0_pric")));
+					}
+
+					if (me.get("inputParam.iCount") == "0") {
+						me.set("inputParam.hosi_prev_yn", "Y");
+		            }else {
+			            if(type == "init") {
+			            	me.set("inputParam.hosi_prev_yn", me.get("initParam.hosi_prev_yn"));
+				        }else {
+				        	me.set("inputParam.hosi_prev_yn", "Y");
+					    }
+		            	
+			        }
+		            
+					
+				}else {
+					me.thvViewFlag = false;
+					me.midViewFlag = true;	
+				}
+				
+			}else {
+				me.thvViewFlag = false;
+				me.midViewFlag = false;
+			}
+
+			if(codeGrp4 == "Y") {
+				me.ujikViewFlag = true;
+			}else {
+				me.ujikViewFlag = false;
+			}
+
+			if(codeGrp5 == "Y") {
+				me.outViewFlag = true;
+			}else {
+				me.outViewFlag = false;
+			}
+
+			
+			if(injtCode == "STO" ) {
+				if (me.get("inputParam.iCount") == "0") {
+					me.set("inputParam.hosi_prev_yn", "Y");
+				}else {
+					if(type == "init") {
+			           	me.set("inputParam.hosi_prev_yn", me.get("initParam.hosi_prev_yn"));
+					}else {
+				       	me.set("inputParam.hosi_prev_yn", "Y");
+					}
+		            	
+				}
+			}else {
+				if (me.get("inputParam.iCount") == "0") {
+					me.set("inputParam.hosi_prev_yn", "N");
+				}else {
+					if(type == "init") {
+			           	me.set("inputParam.hosi_prev_yn", me.get("initParam.hosi_prev_yn"));
+					}else {
+				       	me.set("inputParam.hosi_prev_yn", "N");
+					}
+		            	
+				}
+			}
+			
+			
+		},
+
+		onItemStyleFn : function(data, item) {
+			var me = this, styleObj = {};
+			 // /assets/images/datagrid/minus.gif
+			 
+			if(item.dataField == "img_proc_code") {
+				styleObj.iconUrl      = "ui/assets/img/bull_choice.gif";
+			}
+			styleObj.iconLocation = "right";
+			styleObj.iconPadding  = "5";
+			styleObj.align        = "center";
+			
+			return styleObj;
+		},
+		/**
+		 * 도움말 팝업 함수  
+		 */
+		PopupHandler : function(e){
+			var me = this;
+         	var targetId = e.target.id;
+
+         	if(targetId == "img_hose01") {
+         		me.PopupTerm = UT.popup("es-cahose-p17-02-01", me, 480, 80, {
+				}, {title: me.translate("일반 HOSE 유직사 참고 설명")});
+			}
+			
+ 			me.PopupTerm.show();
+ 			me.PopupTerm.getWindowContent().load({singleSelect : true, defaultParam : targetId, searchParam : me.get("searchParam")});
+		},
+
+
+		/**
+         * 재료코드_재료단가
+         **/
+        onSearchMatl : function(e){
+        	var me = this;
+			var target = e.target.id;
+
+			me.set("targetId", target);
+			
+				me.PopupMatl = UT.popup("es-cacm-03", me, 1400, 550, {
+					"getMatlInfo" : function(popup, e) {
+
+						var selected = e.detail;
+						// 선택 완료 후 callback
+			    			me.onPopupSelectedItems("es-cacm-03", selected);
+							popup.close();
+					}
+	            }, {title: me.translate("재료단가 정보")});
+			
+			me.PopupMatl.show();
+			me.PopupMatl.getWindowContent().load({singleSelect : true, defaultParam : me.searchParam});
+        },
+
+        /**
+         * 재료코드_재료단가
+         **/
+        onSearchMatl2 : function(data){
+        	var me = this;
+						
+			me.PopupMatl = UT.popup("es-cacm-03", me, 1400, 550, {
+				"getMatlInfo" : function(popup, e) {
+
+					var selected = e.detail;
+					// 선택 완료 후 callback
+					
+					var provider = me.$.datagrid.getDataProvider();
+    				console.log("#### selected --->"+ JSON.stringify(selected) );
+    				provider.setItemAt(me.rowIndex, {
+    						hosz_matl_corp 	: selected.comd_corp_code
+    	             	   ,hosz_matl_stnd  : selected.comd_stnd_gubn
+    	             	   ,hosz_matl_name  : selected.comd_matl_name
+    	             	   ,hosz_matl_code  : selected.comd_matl_code
+    	             	   ,hosz_matl_apdt 	: selected.comd_appl_date
+    	             	   ,hosz_matl_gubn 	: selected.comd_matl_gubn
+    	             	   ,hosz_matl_pric 	: selected.comd_matl_pric
+    	             	   ,hosz_matl_unit 	: selected.comd_matl_unit
+    	             	   ,hosz_grvt_numb 	: selected.comd_spec_grav
+ 					});
+ 					
+
+					popup.close();
+				}
+			}, {title: me.translate("재료단가 정보")});
+			
+			me.PopupMatl.show();
+			me.PopupMatl.getWindowContent().load({singleSelect : true, defaultParam : me.searchParam});
+        },
+        
+        /**
+         * 팝업에서 선택된 아이템 재료코드에 반환
+         **/
+        onPopupSelectedItems : function(sPopupID, matlParam) {
+        	var me = this;
+
+        	// =============================================
+			// 재질정보
+           	// =============================================
+           	
+            if (sPopupID == "es-cacm-03") {
+            	
+                if(me.get("targetId") == "matl1") {
+                	me.set("inputParam.hosi_matl_corp", matlParam.comd_corp_code);
+                	me.set("inputParam.hosi_matl_stnd", matlParam.comd_stnd_gubn);
+                	me.set("inputParam.hosi_matl_gubn", matlParam.comd_matl_gubn);
+                	me.set("inputParam.hosi_matl_code", matlParam.comd_matl_code);
+                	me.set("inputParam.hosi_matl_apdt", matlParam.comd_appl_date);                	
+                	me.set("inputParam.hosi_matl_pric", matlParam.comd_matl_pric);
+                	me.set("inputParam.hosi_matl_unit", matlParam.comd_matl_unit);
+                	me.set("inputParam.hosi_grvt_numb", matlParam.comd_spec_grav);
+                	
+                	me.$.in_matl_name.text = matlParam.comd_matl_name;
+				}else if(me.get("targetId") == "matl2") {
+					me.set("inputParam.hosi_mid0_corp", matlParam.comd_corp_code);
+                	me.set("inputParam.hosi_mid0_stnd", matlParam.comd_stnd_gubn);
+                	me.set("inputParam.hosi_mid0_gubn", matlParam.comd_matl_gubn);
+                	me.set("inputParam.hosi_mid0_code", matlParam.comd_matl_code);
+                	me.set("inputParam.hosi_mid0_apdt", matlParam.comd_appl_date);                	
+                	me.set("inputParam.hosi_mid0_pric", matlParam.comd_matl_pric);
+                	me.set("inputParam.hosi_mid0_unit", matlParam.comd_matl_unit);
+                	me.set("inputParam.hosi_mid0_grvt", matlParam.comd_spec_grav);
+                	
+                	me.$.mid_matl_name.text = matlParam.comd_matl_name;
+				}else if(me.get("targetId") == "matl3") {
+					me.set("inputParam.hosi_out0_corp", matlParam.comd_corp_code);
+                	me.set("inputParam.hosi_out0_stnd", matlParam.comd_stnd_gubn);
+                	me.set("inputParam.hosi_out0_gubn", matlParam.comd_matl_gubn);
+                	me.set("inputParam.hosi_out0_code", matlParam.comd_matl_code);
+                	me.set("inputParam.hosi_out0_apdt", matlParam.comd_appl_date);                	
+                	me.set("inputParam.hosi_out0_pric", matlParam.comd_matl_pric);
+                	me.set("inputParam.hosi_out0_unit", matlParam.comd_matl_unit);
+                	me.set("inputParam.hosi_out0_grvt", matlParam.comd_spec_grav);
+                	
+                	me.$.out_matl_name.text = matlParam.comd_matl_name;
+				}
+
+            	if(matlParam.comd_matl_name.indexOf("ACM") != -1) {
+					me.set("inputParam.hosi_wash_code", "Y_AC");
+               	}
+            }
+        },
+
+        onAddRow: function(e) {
+            var me = this;
+
+            var targetId = e.target.id;
+
+            if(targetId == "addGrid1Btn") {
+            	 var provider = me.$.datagrid.getDataProvider();
+                 
+                 // 그리드 신규행 추가
+                 var row = {};
+
+                 var seq = parseInt(provider.getItemSize())+1;
+
+                console.log("########## seq --->"+ seq); 
+                
+             	var item = {
+			    	hosz_corp_code : me.searchParam.corp_code
+             	   ,hosz_part_no   : me.searchParam.part_no
+             	   ,hosz_eono      : me.searchParam.eono
+             	   ,hosz_cumt_no   : me.searchParam.cumt_no
+             	   ,hosz_matl_seq0 : seq
+             	   ,hosz_shap_code : "SPON_G"
+             	};
+             	
+             	provider.addItem(item);     
+             	
+            }
+                      
+        },            
+
+        /**             
+         * GRID 삭제버튼 클릭
+         **/
+         onDeleteList : function(e) {
+        	var me = this;
+        	var targetId = e.target.id;
+        	var provider = null;
+        	
+        	if(targetId == "delGrid1Btn") {
+        		provider = me.$.datagrid.getDataProvider();
+                               		
+        	}
+        	
+        	var allItems = provider.getItems();
+			
+			if (provider.selectionCheckedItems().length == 0) {
+				UT.alert("선택된 항목이 없습니다.");
+				return;
+			}
+
+        	UT.confirm(me.translate("선택 항목을 삭제하시겠습니까?"),function() {
+        		provider.removeItems(true);
+       		});
+
+        },
+
+        /**
+		 * 그리드 클릭 이벤트
+		 */
+        onItemClick : function(event) {
+        	var me = this, e = event.detail,
+        	    data = e.data,
+        	    item = e.item,
+        	    provider = e.provider;
+
+			me.rowIndex = item.rowIndex;
+
+            var allItems = provider.getItems();
+
+        	if(item.dataField == "img_proc_code") {
+        		// 현재 rowIndex
+				me.rowIndex = item.rowIndex;
+				
+        		me.onSearchMatl2(data);
+        	}
+        },
+        
+        
+		/**
+         * 재료비 입력 내역 추출
+         **/
+	    getInputData : function() {
+	    	var me = this;
+			// 콤포넌트에 바인딩되지 않은 값은 별도 SET(숨겨진 콤포넌트 or 변수로만 가지고 있던 값....)
+			
+	    	// 구분코드 SET
+			me.gubnCodeSet();
+
+			me.cleanUnvisibleData();
+
+			me.set("searchParam.hose_code", me.get("inputParam.hosi_hose_code"));
+			me.set("searchParam.injt_code", me.get("inputParam.hosi_injt_code"));
+			me.set("searchParam.shap_code", me.get("inputParam.hosi_shap_code"));
+			me.set("searchParam.stnd_degr", me.get("searchParam.degr"));
+
+			if(me.matlViewFlag && me.matlViewFlag2 && !me.padViewFlag && me.get("inputParam.hosi_comp_clas") == "P") {
+				if(UT.isEmpty(me.get("inputParam.hosi_net0_size"))) {
+					UT.alert("NET 길이를 입력하여 주세요");
+					return false;
+				}else {
+					me.set("searchParam.net0_size", me.get("inputParam.hosi_net0_size"));
+				}
+				
+				if(me.ujikViewFlag) {
+					me.set("searchParam.ujik_code", me.get("inputParam.hosi_ujik_code"));
+				}else {
+					me.set("searchParam.ujik_code", "");
+				}
+				me.set("searchParam.widn_code", "");
+
+				if(UT.isEmpty(me.get("searchParam.lotq_qty0"))) {
+					UT.alert("LOT량을 입력하여 주세요");
+					return false;
+				}
+				if(me.inViewFlag) {
+					me.set("searchParam.in00_grav", me.get("inputParam.hosi_grvt_numb"));
+					me.set("searchParam.in00_size", me.get("inputParam.hosi_in00_idia"));
+				}else {
+					me.set("searchParam.in00_grav", "");
+					me.set("searchParam.in00_size", "");
+				}
+
+				if(me.midViewFlag) {
+					me.set("searchParam.mid0_grav", me.get("inputParam.hosi_mid0_grvt"));
+				}else {
+					me.set("searchParam.mid0_grav", "");
+				}
+				
+				if(me.outViewFlag) {
+					me.set("searchParam.out0_grav", me.get("inputParam.hosi_out0_grvt"));
+					me.set("searchParam.out0_size", me.get("inputParam.hosi_out0_odia"));
+				}else {
+					me.set("searchParam.out0_grav", "");
+					me.set("searchParam.out0_size", "");
+				}
+			}
+
+			if(me.padViewFlag) {
+				var provider = me.$.datagrid.getDataProvider();
+
+               	var isValid = me.$.datagrid.validate();
+
+				if(!isValid) {
+               		UT.alert("입력항목을 입력하여 주세요.");
+                	return false;
+				}else {
+					me.set("saveGridList1", UT.copy(provider.getItems()));
+				}
+			}
+			
+			// Validation Check
+			if (!me.validCheck()) {
+                return false;
+			}			
+			return true;
+	    },
+	    
+	    /**
+         * 필수 값 체크
+         **/
+	    validCheck : function() {
+	    	var me = this;
+
+			// 각 공법별 상이하게 구현(예시)
+			// sc-text-field 필수 체크
+						
+			var tempObj = new Object(); 
+
+			me.set("validList", []);
+			
+			if(me.matlViewFlag) {
+				if(me.netViewFlag) {
+					tempObj.data = "ti_net0_size";
+					me.validList.push(tempObj);
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(me.inViewFlag) {
+					if(UT.isEmpty(me.get("inputParam.hosi_matl_code"))) { 
+						UT.alert("내고무 재질을 선택하여 주세요.");
+						return false;
+					}
+					tempObj = new Object();
+					tempObj.data = "ti_matl_pric";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_grvt_numb";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_in00_idia";
+					me.validList.push(tempObj);
+					
+					tempObj = new Object();
+					tempObj.data = "ti_in00_odia";
+					me.validList.push(tempObj);
+
+					if(me.$.sb_hose_gubn.value == "RETURN") {
+						if(parseInt(me.get("inputParam.hosi_in00_idia")) != 3 &&  parseInt(me.get("inputParam.hosi_in00_idia")) != 4) {
+							UT.alert("ACTUATOR/RETURN HOSE 인경우 내경값은 3 혹은 4만 입력 가능합니다.");
+							return false;
+						}
+					}
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(me.ujikViewFlag) {
+					console.log("### value -->"+ me.$.sb_ujik_gubn.value); 
+
+					if(me.$.sb_ujik_gubn.value != "N") {
+						tempObj = new Object();
+						tempObj.data = "ti_ujik_pric";
+						me.validList.push(tempObj);
+					}
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(me.thvViewFlag) {
+					tempObj = new Object();
+					tempObj.data = "ti_thv0_pric";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_thv0_grvt";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_thv0_idia";
+					me.validList.push(tempObj);
+					
+					tempObj = new Object();
+					tempObj.data = "ti_thv0_odia";
+					me.validList.push(tempObj);
+				}
+			}
+			
+			if(me.matlViewFlag2) {
+				if(me.midViewFlag) {
+
+					if(UT.isEmpty(me.get("inputParam.hosi_mid0_code"))) { 
+						UT.alert("중간고무 재질을 선택하여 주세요.");
+						return false;
+					}
+					
+					tempObj = new Object();
+					tempObj.data = "ti_mid0_pric";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_mid0_grvt";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_mid0_idia";
+					me.validList.push(tempObj);
+					
+					tempObj = new Object();
+					tempObj.data = "ti_mid0_odia";
+					me.validList.push(tempObj);
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(me.outViewFlag) {
+
+					if(UT.isEmpty(me.get("inputParam.hosi_out0_code"))) { 
+						UT.alert("외고무 재질을 선택하여 주세요.");
+						return false;
+					}
+					
+					tempObj = new Object();
+					tempObj.data = "ti_out0_pric";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_out0_grvt";
+					me.validList.push(tempObj);
+
+					tempObj = new Object();
+					tempObj.data = "ti_out0_idia";
+					me.validList.push(tempObj);
+					
+					tempObj = new Object();
+					tempObj.data = "ti_out0_odia";
+					me.validList.push(tempObj);
+				}
+			}
+			
+			
+			if (!commonAS.validCheck(me.validList)) {
+                return false;
+			}
+
+			return true;
+
+	    },
+	    
+	    /**
+         * 구분 코드 SET
+         **/
+	    gubnCodeSet : function() {
+	    	var me = this;
+
+	    },
+	    
+	    cleanUnvisibleData : function() {
+	    	var me = this;
+
+			// 각 공법별 상이하게 구현(예시-구분코드와 코드는 항상 쌍으로 움직이도록 처리!!)
+			if(!me.shapViewFlag) {
+				me.set("inputParam.hosi_shap_code" , "");
+				me.set("inputParam.hosi_curv_qty0" , "");
+			}
+
+			if(me.shapViewFlag) {
+				if(!me.curvViewFlag) {
+					me.set("inputParam.hosi_curv_qty0" , "");
+				}
+			}
+
+			if(!me.matlViewFlag) {
+				me.set("inputParam.hosi_injt_code", "");
+				me.set("inputParam.hosi_unus_pric", "");
+				me.set("inputParam.hosi_net0_size", "");
+			}
+
+			if(me.matlViewFlag) {
+				if(!me.injtViewFlag) {
+					me.set("inputParam.hosi_injt_code", "");
+				}
+
+				if(!me.netViewFlag) {
+					me.set("inputParam.hosi_net0_size", "");
+				}
+			}
+
+			if(!me.matlViewFlag2) {
+				me.set("inputParam.hosi_matl_corp", "");
+				me.set("inputParam.hosi_matl_stnd", "");
+				me.set("inputParam.hosi_matl_gubn", "");
+				me.set("inputParam.hosi_matl_code", "");
+				me.set("inputParam.hosi_matl_apdt", "");
+				me.set("inputParam.hosi_matl_pric", "");
+				me.set("inputParam.hosi_matl_unit", "");
+				me.set("inputParam.hosi_grvt_numb", "");
+				me.set("inputParam.hosi_in00_idia", "");
+				me.set("inputParam.hosi_in00_odia", "");
+				me.set("inputParam.hosi_in00_mrgn", "");
+				me.set("inputParam.hosi_in00_loss", "");
+				me.set("inputParam.hosi_in00_leng", "");
+
+				me.set("inputParam.hosi_thv0_pric", "");
+				me.set("inputParam.hosi_thv_unit", "");
+				me.set("inputParam.hosi_thv0_grvt", "");
+				me.set("inputParam.hosi_thv0_idia", "");
+				me.set("inputParam.hosi_thv0_odia", "");
+				me.set("inputParam.hosi_thv0_mrgn", "");
+				me.set("inputParam.hosi_thv0_loss", "");
+				me.set("inputParam.hosi_thv0_leng", "");
+
+				
+				me.set("inputParam.hosi_mid0_corp", "");
+				me.set("inputParam.hosi_mid0_stnd", "");
+				me.set("inputParam.hosi_mid0_gubn", "");
+				me.set("inputParam.hosi_mid0_code", "");
+				me.set("inputParam.hosi_mid0_apdt", "");
+				me.set("inputParam.hosi_mid0_pric", "");
+				me.set("inputParam.hosi_mid0_unit", "");
+				me.set("inputParam.hosi_mid0_grvt", "");
+				me.set("inputParam.hosi_mid0_idia", "");
+				me.set("inputParam.hosi_mid0_odia", "");
+				me.set("inputParam.hosi_mid0_mrgn", "");
+				me.set("inputParam.hosi_mid0_loss", "");
+				me.set("inputParam.hosi_mid0_leng", "");
+
+				me.set("inputParam.hosi_ujik_code", "");
+				me.set("inputParam.hosi_ujik_pric", "");
+				me.set("inputParam.hosi_knit_idia", "");
+				me.set("inputParam.hosi_knit_odia", "");
+				me.set("inputParam.hosi_knit_mrgn", "");
+				me.set("inputParam.hosi_knit_loss", "");
+				me.set("inputParam.hosi_knit_leng", "");
+
+				me.set("inputParam.hosi_out0_corp", "");
+				me.set("inputParam.hosi_out0_stnd", "");
+				me.set("inputParam.hosi_out0_gubn", "");
+				me.set("inputParam.hosi_out0_code", "");
+				me.set("inputParam.hosi_out0_apdt", "");
+				me.set("inputParam.hosi_out0_pric", "");
+				me.set("inputParam.hosi_out0_unit", "");
+				me.set("inputParam.hosi_out0_grvt", "");
+				me.set("inputParam.hosi_out0_idia", "");
+				me.set("inputParam.hosi_out0_odia", "");
+				me.set("inputParam.hosi_out0_mrgn", "");
+				me.set("inputParam.hosi_out0_loss", "");
+				me.set("inputParam.hosi_out0_leng", "");	
+			}
+
+			if(!me.hoseViewFlag) {
+				me.set("inputParam.hosi_hose_code", "");	
+			}
+
+			if(!me.subViewFlag) {
+				me.set("inputParam.hosi_barc_code", "");
+			}
+
+			if(me.matlViewFlag2) {
+				if(!me.inViewFlag) {
+					me.set("inputParam.hosi_matl_corp", "");
+					me.set("inputParam.hosi_matl_stnd", "");
+					me.set("inputParam.hosi_matl_gubn", "");
+					me.set("inputParam.hosi_matl_code", "");
+					me.set("inputParam.hosi_matl_apdt", "");
+					me.set("inputParam.hosi_matl_pric", "");
+					me.set("inputParam.hosi_matl_unit", "");
+					me.set("inputParam.hosi_grvt_numb", "");
+					me.set("inputParam.hosi_in00_idia", "");
+					me.set("inputParam.hosi_in00_odia", "");
+					me.set("inputParam.hosi_in00_mrgn", "");
+					me.set("inputParam.hosi_in00_loss", "");
+					me.set("inputParam.hosi_in00_leng", "");
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(!me.ujikViewFlag) {
+					me.set("inputParam.hosi_ujik_code", "");
+					me.set("inputParam.hosi_ujik_pric", "");
+					me.set("inputParam.hosi_knit_idia", "");
+					me.set("inputParam.hosi_knit_odia", "");
+					me.set("inputParam.hosi_knit_mrgn", "");
+					me.set("inputParam.hosi_knit_loss", "");
+					me.set("inputParam.hosi_knit_leng", "");
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(!me.thvViewFlag) {
+					me.set("inputParam.hosi_thv0_pric", "");
+					me.set("inputParam.hosi_thv_unit", "");
+					me.set("inputParam.hosi_thv0_grvt", "");
+					me.set("inputParam.hosi_thv0_idia", "");
+					me.set("inputParam.hosi_thv0_odia", "");
+					me.set("inputParam.hosi_thv0_mrgn", "");
+					me.set("inputParam.hosi_thv0_loss", "");
+					me.set("inputParam.hosi_thv0_leng", "");
+				}
+			}
+			
+			if(me.matlViewFlag2) {
+				if(!me.midViewFlag) {
+					me.set("inputParam.hosi_mid0_corp", "");
+					me.set("inputParam.hosi_mid0_stnd", "");
+					me.set("inputParam.hosi_mid0_gubn", "");
+					me.set("inputParam.hosi_mid0_code", "");
+					me.set("inputParam.hosi_mid0_apdt", "");
+					me.set("inputParam.hosi_mid0_pric", "");
+					me.set("inputParam.hosi_mid0_unit", "");
+					me.set("inputParam.hosi_mid0_grvt", "");
+					me.set("inputParam.hosi_mid0_idia", "");
+					me.set("inputParam.hosi_mid0_odia", "");
+					me.set("inputParam.hosi_mid0_mrgn", "");
+					me.set("inputParam.hosi_mid0_loss", "");
+					me.set("inputParam.hosi_mid0_leng", "");
+				}
+			}
+
+			if(me.matlViewFlag2) {
+				if(!me.outViewFlag) {
+					me.set("inputParam.hosi_out0_corp", "");
+					me.set("inputParam.hosi_out0_stnd", "");
+					me.set("inputParam.hosi_out0_gubn", "");
+					me.set("inputParam.hosi_out0_code", "");
+					me.set("inputParam.hosi_out0_apdt", "");
+					me.set("inputParam.hosi_out0_pric", "");
+					me.set("inputParam.hosi_out0_unit", "");
+					me.set("inputParam.hosi_out0_grvt", "");
+					me.set("inputParam.hosi_out0_idia", "");
+					me.set("inputParam.hosi_out0_odia", "");
+					me.set("inputParam.hosi_out0_mrgn", "");
+					me.set("inputParam.hosi_out0_loss", "");
+					me.set("inputParam.hosi_out0_leng", "");	
+				}
+			}
+			
+			if(!me.padViewFlag) {
+				var provider = me.$.datagrid.getDataProvider();
+				provider.removeAll();
+			}
+
+	    },
+
+	    
+		
+    });
+    </script>
+    
