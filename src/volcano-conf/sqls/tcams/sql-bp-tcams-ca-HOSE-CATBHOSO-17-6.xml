@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSO/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSO_CORP_CODE
+ ,HOSO_STND_GUBN
+ ,HOSO_STND_DEGR
+ ,HOSO_SEQ0
+ ,HOSO_LOSS_GUBN
+ ,HOSO_HOSE_CODE
+ ,HOSO_INJT_CODE
+ ,HOSO_IN00_MIN0
+ ,HOSO_IN00_MAX0
+ ,HOSO_LOSS_LENG
+ ,HOSO_LOSS_RATE
+ ,HOSO_APPL_GUBN
+ ,HOSO_REMK
+ ,HOSO_UPDT_CMAN
+ ,HOSO_UPDT_DATE
+ ,HOSO_INIT_CMAN
+ ,HOSO_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'TEST' ,'GENL' ,'S' ,'0' ,'99999999' ,'15' ,'0' ,'Y' ,'TEST=시압출 LOSS' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'TEST' ,'GENL' ,'D' ,'0' ,'99999999' ,'30' ,'0' ,'Y' ,'이중(30)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'TEST' ,'GENL' ,'SKO' ,'0' ,'99999999' ,'15' ,'0' ,'Y' ,'단일+편조+외압출(15)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'TEST' ,'GENL' ,'DKO' ,'0' ,'99999999' ,'45' ,'0' ,'Y' ,'이중(30)+편조+외압출(15)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'TEST' ,'GENL' ,'SK' ,'0' ,'99999999' ,'15' ,'0' ,'Y' ,'단일(15)+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'TEST' ,'GENL' ,'DK' ,'0' ,'99999999' ,'30' ,'0' ,'Y' ,'이중(30)+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'TEST' ,'GENL' ,'STO' ,'0' ,'99999999' ,'30' ,'0' ,'N' ,'단일+THV(0)+외압출(15)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'TEST' ,'GENL' ,'STO' ,'0' ,'99999999' ,'30' ,'0' ,'Y' ,'단일+THV(30)+외압출(15)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'CHANGE' ,'GENL' ,'S' ,'0' ,'21' ,'4.6' ,'0' ,'Y' ,'CHANGE=재료교환 LOSS' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'CHANGE' ,'GENL' ,'S' ,'21' ,'45' ,'4' ,'0' ,'Y' ,'단일압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'CHANGE' ,'GENL' ,'S' ,'45' ,'99999999' ,'3.6' ,'0' ,'Y' ,'단일압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'CHANGE' ,'GENL' ,'D' ,'0' ,'99999999' ,'24' ,'0' ,'Y' ,'이중압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'CHANGE' ,'GENL' ,'SKO' ,'0' ,'21' ,'4.6' ,'0' ,'Y' ,'단일+편조+외압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'CHANGE' ,'GENL' ,'SKO' ,'21' ,'45' ,'4' ,'0' ,'Y' ,'단일+편조+외압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'CHANGE' ,'GENL' ,'SKO' ,'45' ,'99999999' ,'3.6' ,'0' ,'Y' ,'단일+편조+외압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'CHANGE' ,'GENL' ,'DKO' ,'0' ,'99999999' ,'24' ,'0' ,'Y' ,'이중+편조+외압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'CHANGE' ,'GENL' ,'SK' ,'0' ,'21' ,'4.6' ,'0' ,'Y' ,'단일압출+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'CHANGE' ,'GENL' ,'SK' ,'21' ,'45' ,'4' ,'0' ,'Y' ,'단일압출+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'CHANGE' ,'GENL' ,'SK' ,'45' ,'99999999' ,'3.6' ,'0' ,'Y' ,'단일압출+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'CHANGE' ,'GENL' ,'DK' ,'0' ,'99999999' ,'24' ,'0' ,'Y' ,'이중+편조' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'CHANGE' ,'GENL' ,'STO' ,'0' ,'99999999' ,'24' ,'0' ,'Y' ,'단일+THV+외압출' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'ALL' ,'WASHER' ,'ALL' ,'0' ,'99999999' ,'0' ,'0' ,'Y' ,'WASHER HOSE LOSS=미존재' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'23' ,'ALL' ,'PAD' ,'ALL' ,'0' ,'99999999' ,'0' ,'6.1' ,'Y' ,'NET길이에 율 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'24' ,'ALL' ,'DIFF' ,'ALL' ,'0' ,'99999999' ,'40' ,'0' ,'Y' ,'(시압출(10)+재료교환(30))/LOT' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'25' ,'ALL' ,'RETURN' ,'ALL' ,'0' ,'99999999' ,'19.6' ,'0' ,'Y' ,'(시압출(15)+재료교환(4.6))/LOT' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSO_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSO_UPDT_DATE > B.HOSO_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSO B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSO (
+  HOSO_CORP_CODE
+ ,HOSO_STND_GUBN
+ ,HOSO_STND_DEGR
+ ,HOSO_SEQ0
+ ,HOSO_LOSS_GUBN
+ ,HOSO_HOSE_CODE
+ ,HOSO_INJT_CODE
+ ,HOSO_IN00_MIN0
+ ,HOSO_IN00_MAX0
+ ,HOSO_LOSS_LENG
+ ,HOSO_LOSS_RATE
+ ,HOSO_APPL_GUBN
+ ,HOSO_REMK
+ ,HOSO_UPDT_CMAN
+ ,HOSO_UPDT_DATE
+ ,HOSO_INIT_CMAN
+ ,HOSO_INIT_DATE
+) VALUES (
+  #hoso_corp_code#
+ ,#hoso_stnd_gubn#
+ ,#hoso_stnd_degr#
+ ,#hoso_seq0#
+ ,#hoso_loss_gubn#
+ ,#hoso_hose_code#
+ ,#hoso_injt_code#
+ ,#hoso_in00_min0#
+ ,#hoso_in00_max0#
+ ,#hoso_loss_leng#
+ ,#hoso_loss_rate#
+ ,#hoso_appl_gubn#
+ ,#hoso_remk#
+ ,#hoso_updt_cman#
+ ,#hoso_updt_date#
+ ,#hoso_init_cman#
+ ,#hoso_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSO
+HOSO_CORP_CODE = #hoso_corp_code#   SET HOSO_STND_GUBN = #hoso_stnd_gubn#
+      ,HOSO_STND_DEGR = #hoso_stnd_degr#
+      ,HOSO_SEQ0 = #hoso_seq0#
+      ,HOSO_LOSS_GUBN = #hoso_loss_gubn#
+      ,HOSO_HOSE_CODE = #hoso_hose_code#
+      ,HOSO_INJT_CODE = #hoso_injt_code#
+      ,HOSO_IN00_MIN0 = #hoso_in00_min0#
+      ,HOSO_IN00_MAX0 = #hoso_in00_max0#
+      ,HOSO_LOSS_LENG = #hoso_loss_leng#
+      ,HOSO_LOSS_RATE = #hoso_loss_rate#
+      ,HOSO_APPL_GUBN = #hoso_appl_gubn#
+      ,HOSO_REMK = #hoso_remk#
+      ,HOSO_UPDT_CMAN = #hoso_updt_cman#
+      ,HOSO_UPDT_DATE = #hoso_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 

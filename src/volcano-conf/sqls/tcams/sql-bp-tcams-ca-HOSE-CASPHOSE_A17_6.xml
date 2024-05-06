@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/hose/CASPHOSE_A17_6" data-source="tcamsDS">
+
+ <sql id="drop" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPHOSE_A17_6  
+  ]]>
+ </sql>
+
+ <sql id="error" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPHOSE_A17_6'    
+  ]]>
+ </sql>
+
+ <sql id="create" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPHOSE_A17_6
+(
+    I_CORP_CODE  IN  CATBHOSI.HOSI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CATBHOSI.HOSI_PART_NO%TYPE  ,
+    I_EONO       IN  CATBHOSI.HOSI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CATBHOSI.HOSI_CUMT_NO%TYPE  ,
+    I_STND_GUBN  IN  CRTBCMMS.CMMS_STND_GUBN%TYPE, --표준구분
+    I_STND_DEGR  IN  CRTBCMMS.CMMS_STND_DEGR%TYPE, --개정차수
+    ---------------------------------------------------------------------------
+    I_HOSE_CODE  IN  CATBHOSI.HOSI_HOSE_CODE%TYPE, --HOSE종류
+    I_INJT_CODE  IN  CATBHOSI.HOSI_INJT_CODE%TYPE, --압출방법
+    I_SHAP_CODE  IN  CATBHOSI.HOSI_SHAP_CODE%TYPE, --제품형상
+    I_UJIK_CODE  IN  CATBHOSI.HOSI_UJIK_CODE%TYPE, --유직사종류
+    
+    I_LOTQ_QTY0  IN  CRTBCMMS.CMMS_LOTQ_QTY0%TYPE, --LOT
+    I_NET0_SIZE  IN  CATBHOSI.HOSI_NET0_SIZE%TYPE, --NET길이
+    I_IN00_SIZE  IN  CATBHOSI.HOSI_IN00_SIZE%TYPE, --내경 (내고무 내경)
+    I_OUT0_SIZE  IN  CATBHOSI.HOSI_OUT0_SIZE%TYPE, --외경 (내고무 외경)
+
+  --I_IN00_GRAV  IN  CITBMATL.MATL_SPEC_GRAV%TYPE, --비중(내고무)   : 제외
+  --I_MID0_GRAV  IN  CITBMATL.MATL_SPEC_GRAV%TYPE, --비중(중간고무) : 제외
+  --I_OUT0_GRAV  IN  CITBMATL.MATL_SPEC_GRAV%TYPE, --비중(외고무)   : 제외
+
+    ---------------------------------------------------------------------------
+    -- 실행결과 OUTPUT : 해당하는 것만 RETURN함
+    ---------------------------------------------------------------------------
+    O_IN00_MRGN  OUT NUMBER,   --재단여유(내고무)
+    O_IN00_LOSS  OUT NUMBER,   --LOSS길이(내고무)
+
+    O_MID0_MRGN  OUT NUMBER,   --재단여유(중간고무)
+    O_MID0_LOSS  OUT NUMBER,   --LOSS길이(중간고무)
+
+    O_THV0_MRGN  OUT NUMBER,   --재단여유(THV)
+    O_THV0_LOSS  OUT NUMBER,   --LOSS길이(THV)
+
+    O_KNIT_MRGN  OUT NUMBER,   --재단여유(유직사)
+    O_KNIT_LOSS  OUT NUMBER,   --LOSS길이(유직사)
+
+    O_OUT0_MRGN  OUT NUMBER,   --재단여유(외고무)
+    O_OUT0_LOSS  OUT NUMBER,   --LOSS길이(외고무)
+
+  --O_IN00_WEGT  OUT NUMBER,   --m당중량 (내고무)    : 제외
+  --O_MID0_WEGT  OUT NUMBER,   --m당중량 (중간고무)  : 제외
+  --O_OUT0_WEGT  OUT NUMBER,   --m당중량 (외고무)    : 제외
+  --O_KNIT_WEGT  OUT NUMBER,   --m당중량 (유직사)    : 제외
+  --O_THV0_WEGT  OUT NUMBER,   --m당중량 (THV)       : 제외
+    ---------------------------------------------------------------------------
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_일반HOSE : 재단여유 및 LOSS길이,총투입길이 계산
+ * [HISTORY ]
+ *  - 2020.01.01 [A.S.M] : 신규작성(17  차)
+ *  - 2022.10.01 [A.S.M] : 개정    (17-2차)
+ *  - 2023.09.01 [A.S.M] : 개정    (17-4차) : 특이사항없음
+ *  - 2024.02.15 [A.S.M] : 개정    (17-6차) : 특이사항없음
+ *
+ * [COMMENT ]
+ *  - 참고 : HOSE종류별로 산출해야할 정보가 상이함.
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    rt_HOST      CATBHOST%ROWTYPE;  --재단여유
+    rt_HOSO      CATBHOSO%ROWTYPE;  --LOSS길이
+    rt_HOSU      CATBHOSU%ROWTYPE;  --유직사중량
+
+    --WORKING VARIABLE
+    v_APPL_CORP       CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_IN_TITLE        VARCHAR2(20) ;
+    trCo              NUMBER := 2  ; --원가TRUNC처리소수점단위
+    v_CVT             NUMBER := 0  ; --직HOSE CVT(WASHER HOSE,PAD계산시 필요)
+
+BEGIN
+    DBMS_OUTPUT.ENABLE(100000);
+  --DBMS_OUTPUT.DISABLE;
+
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPHOSE_A17_6';
+    O_LINE_NO   := 'ST-START';
+
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    -- 입력값 체크
+    ---------------------------------------------------------------------------
+    IF  I_LOTQ_QTY0 <= 0 THEN
+        O_MESG := 'LOT를 입력후 계산하시기 바랍니다.';
+        RAISE UD_EX_ERROR;
+    END IF;
+    
+    ---------------------------------------------------------------------------
+    --2.사전정보추출
+    ---------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
+    -- 재단여유정보 
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-21100';
+
+    BEGIN
+        SELECT NVL(HOST_SPAR_COEF1,0)
+              ,NVL(HOST_SPAR_COEF2,0)
+              ,NVL(HOST_SPAR_COEF3,0)
+              ,NVL(HOST_SPAR_COEF4,0)
+              ,NVL(HOST_SPAR_COEF5,0)
+              ,NVL(HOST_SPAR_MAX0 ,0)
+          INTO rt_HOST.HOST_SPAR_COEF1
+              ,rt_HOST.HOST_SPAR_COEF2
+              ,rt_HOST.HOST_SPAR_COEF3
+              ,rt_HOST.HOST_SPAR_COEF4
+              ,rt_HOST.HOST_SPAR_COEF5
+              ,rt_HOST.HOST_SPAR_MAX0 
+          FROM CATBHOST
+         WHERE HOST_CORP_CODE = v_APPL_CORP
+           AND HOST_STND_GUBN = I_STND_GUBN
+           AND HOST_STND_DEGR = I_STND_DEGR
+           AND HOST_HOSE_CODE IN ('ALL', I_HOSE_CODE)
+           AND HOST_SHAP_CODE IN ('ALL', I_SHAP_CODE)
+         --AND HOSB_WIDN_CODE IN ('ALL')   --NAMING도 잘못되었고, 필요한 인자값도 아님.(ALL만 존재)
+           AND NVL(HOST_IN00_MIN0,0) <  I_IN00_SIZE  --초과
+           AND NVL(HOST_IN00_MAX0,0) >= I_IN00_SIZE  --이하
+           AND NVL(HOST_NET0_MIN0,0) <  I_NET0_SIZE  --초과
+           AND NVL(HOST_NET0_MAX0,0) >= I_NET0_SIZE  --이하
+           AND HOST_APPL_GUBN = 'Y'
+        ;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN O_MESG := '재단여유 계산정보가 존재하지 않습니다.(운영자에 문의요망)';
+             RAISE UD_EX_ERROR;
+    END;
+
+    ---------------------------------------------------------------------------
+    -- LOSS길이계산 (시압출LOSS, 재료교환LOSS)
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-21200';
+
+    IF  I_HOSE_CODE = 'GENL' THEN
+        BEGIN
+            SELECT SUM(HOSO_LOSS_LENG * 1000.0)  --mm단위 맞추기위해 *1000처리
+              INTO rt_HOSO.HOSO_LOSS_LENG
+              FROM CATBHOSO
+             WHERE HOSO_CORP_CODE = v_APPL_CORP
+               AND HOSO_STND_GUBN = I_STND_GUBN
+               AND HOSO_STND_DEGR = I_STND_DEGR
+               AND HOSO_HOSE_CODE IN ('ALL', I_HOSE_CODE)
+               AND HOSO_INJT_CODE IN ('ALL', I_INJT_CODE)
+               AND NVL(HOSO_IN00_MIN0,0) <   I_IN00_SIZE  --초과
+               AND NVL(HOSO_IN00_MAX0,0) >=  I_IN00_SIZE  --이하
+               AND HOSO_APPL_GUBN = 'Y'
+            ;
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN O_MESG := 'LOSS길이계산 정보가 존재하지 않습니다.(운영자에 문의요망)';
+                 RAISE UD_EX_ERROR;
+        END;
+
+        -- 유직사 중량
+        IF  I_INJT_CODE LIKE '%K%' THEN
+            BEGIN
+                SELECT NVL(HOSU_UJIK_WGHT, 0)
+                  INTO rt_HOSU.HOSU_UJIK_WGHT
+                  FROM CATBHOSU
+                 WHERE HOSU_CORP_CODE = v_APPL_CORP
+                   AND HOSU_STND_GUBN = I_STND_GUBN
+                   AND HOSU_STND_DEGR = I_STND_DEGR
+                   AND HOSU_UJIK_CODE = I_UJIK_CODE
+                   AND NVL(HOSU_IN00_MIN0,0) <  I_IN00_SIZE -- 초과
+                   AND NVL(HOSU_IN00_MAX0,0) >= I_IN00_SIZE -- 이하
+                   AND HOSU_APPL_GUBN = 'Y'
+                ;
+            EXCEPTION
+                WHEN NO_DATA_FOUND THEN O_MESG := '유직사중량계산 정보가 존재하지 않습니다.(운영자에 문의요망)';
+                     RAISE UD_EX_ERROR;
+            END;
+        ELSE
+            rt_HOSU.HOSU_UJIK_WGHT := 0.0;
+        END IF;
+    END IF;
+
+    ---------------------------------------------------------------------------
+    -- MAIN
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-31000';
+
+    CASE 
+         ----------------------------------------------------------------------
+         -- 일반HOSE
+         ----------------------------------------------------------------------
+         WHEN I_HOSE_CODE = 'GENL' THEN
+            -- 17-2차 재단여유길이가 음수발생시 메세지 발생하는 것으로 처리변경함.
+            --IF  I_SHAP_CODE = 'ST' AND
+            --    rt_HOST.HOST_SPAR_COEF1 > 0 AND
+            --    rt_HOST.HOST_SPAR_COEF2 < I_NET0_SIZE THEN
+            --    O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.(직HOSE는 150mm 또는 2000mm까지 가능)';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+            --
+            --IF  I_SHAP_CODE = 'CURV' AND
+            --    I_NET0_SIZE > rt_HOST.HOST_SPAR_COEF2 THEN
+            --    O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.(곡HOSE는 300mm 미만)';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+
+              IF  I_IN00_SIZE >= I_OUT0_SIZE THEN
+                  O_MESG := '내,외경 SIZE를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+            --IF  I_IN00_GRAV <= 0 THEN
+            --    O_MESG := '내고무 비중을 입력후 계산하시기 바랍니다.';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+              
+              -- 재단여유
+              CASE I_SHAP_CODE
+                   WHEN 'ST'   THEN IF  rt_HOST.HOST_SPAR_COEF1 = 0 THEN 
+                                        O_IN00_MRGN := 0;
+                                    ELSE 
+                                        O_IN00_MRGN := rt_HOST.HOST_SPAR_COEF1 / TRUNC(rt_HOST.HOST_SPAR_COEF2 / I_NET0_SIZE, 0);
+                                    END IF;
+                   WHEN 'CURV' THEN O_IN00_MRGN := rt_HOST.HOST_SPAR_COEF1  + (I_NET0_SIZE - rt_HOST.HOST_SPAR_COEF2) * rt_HOST.HOST_SPAR_COEF3 / rt_HOST.HOST_SPAR_COEF4;
+                   WHEN 'ONE'  THEN O_IN00_MRGN := (rt_HOST.HOST_SPAR_COEF1 + (I_NET0_SIZE - rt_HOST.HOST_SPAR_COEF2) * rt_HOST.HOST_SPAR_COEF3 / rt_HOST.HOST_SPAR_COEF4) + rt_HOST.HOST_SPAR_COEF5;
+                   WHEN 'TWO'  THEN O_IN00_MRGN := (rt_HOST.HOST_SPAR_COEF1 + (I_NET0_SIZE - rt_HOST.HOST_SPAR_COEF2) * rt_HOST.HOST_SPAR_COEF3 / rt_HOST.HOST_SPAR_COEF4) + rt_HOST.HOST_SPAR_COEF5;
+                   ELSE O_MESG := '처리불가능한 제품형상입니다.';
+                        RAISE UD_EX_ERROR;
+              END CASE;
+              
+              -- 17-2 차 ADD
+              IF  O_IN00_MRGN < 0 THEN
+                  O_MESG := '재단여유 길이가 음수가 발생했습니다. NET길이를 확인하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+              O_IN00_MRGN := TRUNC(O_IN00_MRGN, 2);
+              O_MID0_MRGN := O_IN00_MRGN;
+              O_THV0_MRGN := O_IN00_MRGN;
+              O_OUT0_MRGN := O_IN00_MRGN;
+              O_KNIT_MRGN := O_IN00_MRGN;
+              
+              -- LOSS길이 : LOT반영하여 길이계산
+              O_IN00_LOSS := (rt_HOSO.HOSO_LOSS_LENG / I_LOTQ_QTY0);
+              O_IN00_LOSS := TRUNC(O_IN00_LOSS, 2);
+              O_MID0_LOSS := O_IN00_LOSS;
+              O_THV0_LOSS := O_IN00_LOSS;
+              O_OUT0_LOSS := O_IN00_LOSS;
+              O_KNIT_LOSS := O_IN00_LOSS;
+
+              -- m당 중량
+            --O_IN00_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_IN00_GRAV;
+            --O_IN00_WEGT := TRUNC(O_IN00_WEGT, 2);
+            --O_MID0_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_MID0_GRAV;
+            --O_MID0_WEGT := TRUNC(O_MID0_WEGT, 2);
+            --O_OUT0_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_OUT0_GRAV;
+            --O_OUT0_WEGT := TRUNC(O_OUT0_WEGT, 2);
+            --O_KNIT_WEGT := rt_HOSU.HOSU_UJIK_WGHT;
+            --O_KNIT_WEGT := TRUNC(O_IN00_WEGT, 2);
+
+         ----------------------------------------------------------------------
+         -- PAD : 여러건 입력하는 구조이므로, 본 프로시저로 계산 불가 (로직은 남겨두었으며, 실제 처리는 화면에서 처리 또는 반복처리필요)
+         --       [참고]PAD의 비중은 물성치를 고려한 비중값으로 계산
+         ----------------------------------------------------------------------
+         WHEN I_HOSE_CODE = 'PAD' THEN
+              IF  TRUNC(2400 / I_NET0_SIZE, 0) <= 0 THEN
+                  O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.(PAD 2400mm까지 가능)';
+                  RAISE UD_EX_ERROR;
+              END IF;
+
+              IF  I_IN00_SIZE >= I_OUT0_SIZE THEN
+                  O_MESG := '내,외경 SIZE를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+            --IF  I_IN00_GRAV <= 0 THEN
+            --    O_MESG := '내고무 비중을 입력후 계산하시기 바랍니다.';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+              
+              -- 재단여유 : CVT산출후 계산
+              v_CVT := TRUNC(rt_HOST.HOST_SPAR_COEF1 / I_NET0_SIZE, 0);               --COEF1: 2400
+              O_IN00_MRGN := (rt_HOST.HOST_SPAR_COEF2 - v_CVT * I_NET0_SIZE) / v_CVT; --COEF2: 2400
+              O_IN00_MRGN := TRUNC(O_IN00_MRGN, 2);
+              
+              -- LOSS길이 
+              O_IN00_LOSS := I_NET0_SIZE * (6.1 /100);  --6.1%
+
+              -- m당 중량
+            --O_IN00_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_IN00_GRAV;
+            --O_IN00_WEGT := TRUNC(O_IN00_WEGT, 2);
+
+         ----------------------------------------------------------------------
+         -- WASHER HOSE 
+         ----------------------------------------------------------------------
+         WHEN I_HOSE_CODE = 'WASHER' THEN
+              IF  TRUNC(4100 / I_NET0_SIZE, 0) <= 0 THEN
+                  O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.(WATER HOSE 4100mm까지 가능)';
+                  RAISE UD_EX_ERROR;
+              END IF;
+
+              IF  I_IN00_SIZE >= I_OUT0_SIZE THEN
+                  O_MESG := '내,외경 SIZE를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+            --IF  I_IN00_GRAV <= 0 THEN
+            --    O_MESG := '내고무 비중을 입력후 계산하시기 바랍니다.';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+              
+              -- 재단여유 :직HOSE는 CVT산출
+              IF  I_SHAP_CODE = 'STRA' THEN
+                  v_CVT := TRUNC(4100 / I_NET0_SIZE, 0);
+                  O_IN00_MRGN := rt_HOST.HOST_SPAR_COEF2 / v_CVT;  --COEF2: 82
+              ELSE 
+                  O_IN00_MRGN := rt_HOST.HOST_SPAR_COEF1;          --COEF1: 43
+              END IF;
+              O_IN00_MRGN := TRUNC(O_IN00_MRGN, 2);
+              
+              -- LOSS길이 
+              O_IN00_LOSS := 0;
+
+              -- m당 중량
+            --O_IN00_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_IN00_GRAV;
+            --O_IN00_WEGT := TRUNC(O_IN00_WEGT, 2);
+
+         ----------------------------------------------------------------------
+         -- DIFF HOSE 
+         ----------------------------------------------------------------------
+         WHEN I_HOSE_CODE = 'DIFF' THEN
+              IF  I_NET0_SIZE <= 0 THEN
+                  O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+
+              IF  I_IN00_SIZE >= I_OUT0_SIZE THEN
+                  O_MESG := '내,외경 SIZE를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+            --IF  I_IN00_GRAV <= 0 OR 
+            --    I_OUT0_GRAV <= 0 THEN
+            --    O_MESG := '내,외고무 비중을 입력후 계산하시기 바랍니다.';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+              
+              -- 재단여유
+              O_IN00_MRGN := rt_HOST.HOST_SPAR_COEF1;
+              O_KNIT_MRGN := rt_HOST.HOST_SPAR_COEF1;
+              O_OUT0_MRGN := rt_HOST.HOST_SPAR_COEF1;
+              
+              -- LOSS길이  RUBBER=(시압출 10m + 재료교환 30m) / LOT (최대 20적용)
+              IF  (10000 + 30000) / I_LOTQ_QTY0 > 20 THEN
+                  O_IN00_LOSS := 20;
+                  O_KNIT_LOSS := O_IN00_LOSS;
+                  O_OUT0_LOSS := O_IN00_LOSS;
+              ELSE
+                  O_IN00_LOSS := (10000 + 30000) / I_LOTQ_QTY0;
+                  O_IN00_LOSS := TRUNC(O_IN00_LOSS, 2);
+                  O_KNIT_LOSS := O_IN00_LOSS;
+                  O_OUT0_LOSS := O_IN00_LOSS;
+              END IF;
+
+              -- m당 중량
+            --O_IN00_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_IN00_GRAV;
+            --O_IN00_WEGT := TRUNC(O_IN00_WEGT, 2);
+            --O_OUT0_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE, 2) - POWER(I_IN00_SIZE, 2) ) * I_OUT0_GRAV;
+            --O_OUT0_WEGT := TRUNC(O_OUT0_WEGT, 2);
+            --O_KNIT_WEGT := 5.0;
+
+         ----------------------------------------------------------------------
+         -- ACTUATOR/RETURN HOSE : 내고무,편조사 각각 계산
+         ----------------------------------------------------------------------
+         WHEN I_HOSE_CODE = 'RETURN' THEN
+              IF  TRUNC(1500 / I_NET0_SIZE, 0) <= 0 THEN
+                  O_MESG := 'NET길이를 확인후 계산하시기 바랍니다.(ACTUATOR/RETURN HOSE 1500mm까지 가능)';
+                  RAISE UD_EX_ERROR;
+              END IF;
+
+              IF  I_IN00_SIZE NOT IN (3,4) THEN
+                  O_MESG := '내경은 3 또는 4 를 입력하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+
+              IF  I_IN00_SIZE >= I_OUT0_SIZE THEN
+                  O_MESG := '내,외경 SIZE를 확인후 계산하시기 바랍니다.';
+                  RAISE UD_EX_ERROR;
+              END IF;
+              
+            --IF  I_IN00_GRAV <= 0 THEN
+            --    O_MESG := '내고무 비중을 입력후 계산하시기 바랍니다.';
+            --    RAISE UD_EX_ERROR;
+            --END IF;
+              
+              -- 재단여유
+              O_IN00_MRGN := 100  / TRUNC(1500 / I_NET0_SIZE, 0);
+              O_IN00_MRGN := TRUNC(O_IN00_MRGN, 2);
+              O_KNIT_MRGN := 1750 / TRUNC(1500 / I_NET0_SIZE, 0) - I_NET0_SIZE;
+              O_KNIT_MRGN := TRUNC(O_KNIT_MRGN, 2);
+              
+              -- LOSS길이  RUBBER=(시압출 15m + 재료교환 4.6m) / LOT
+              O_IN00_LOSS := (15000 + 4600) / I_LOTQ_QTY0;
+              O_IN00_LOSS := TRUNC(O_IN00_LOSS, 2);
+              O_KNIT_LOSS := (I_NET0_SIZE + O_KNIT_MRGN) * (10 /100); --10%적용
+              O_KNIT_LOSS := TRUNC(O_KNIT_LOSS, 2);
+
+              -- m당 중량
+            --O_IN00_WEGT := (ACOS(-1.0) / 4.0) * (POWER(I_OUT0_SIZE - 1.1, 2) - POWER(I_IN00_SIZE, 2) ) * I_IN00_GRAV;
+            --O_IN00_WEGT := TRUNC(O_IN00_WEGT, 2);
+            --IF  I_IN00_SIZE = 3 THEN                        
+            --    O_KNIT_WEGT := 15.43 * (I_NET0_SIZE + O_KNIT_MRGN + O_KNIT_LOSS);
+            --ELSE
+            --    O_KNIT_WEGT := 16.17 * (I_NET0_SIZE + O_KNIT_MRGN + O_KNIT_LOSS);
+            --END IF;
+            --O_KNIT_WEGT := TRUNC(O_KNIT_WEGT, 2);
+         
+         ELSE
+              O_MESG := '처리불가능한 HOSE종류입니다.<br>' 
+                     || '  HOSE종류=' || I_HOSE_CODE;
+              RAISE UD_EX_ERROR;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || SQLERRM;
+                            END CASE;
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 

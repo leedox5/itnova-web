@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSU/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSU_CORP_CODE
+ ,HOSU_STND_GUBN
+ ,HOSU_STND_DEGR
+ ,HOSU_SEQ0
+ ,HOSU_UJIK_CODE
+ ,HOSU_IN00_MIN0
+ ,HOSU_IN00_MAX0
+ ,HOSU_UJIK_WGHT
+ ,HOSU_APPL_GUBN
+ ,HOSU_REMK
+ ,HOSU_REMK_0002
+ ,HOSU_UPDT_DATE
+ ,HOSU_INIT_CMAN
+ ,HOSU_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'PET' ,'0' ,'8' ,'2.78' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'PET' ,'8' ,'10' ,'4.03' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'PET' ,'10' ,'30' ,'7.56' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'PET' ,'30' ,'50' ,'8.31' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'PET' ,'50' ,'99999999' ,'9.31' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'KEV' ,'0' ,'8' ,'2.64' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'KEV' ,'8' ,'30' ,'3.82' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'KEV' ,'30' ,'50' ,'4.2' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'KEV' ,'50' ,'99999999' ,'4.71' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'NYL' ,'0' ,'8' ,'6.57' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'NYL' ,'8' ,'30' ,'7.12' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'NYL' ,'30' ,'50' ,'7.83' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'NYL' ,'50' ,'99999999' ,'8.78' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSU_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSU_UPDT_DATE > B.HOSU_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSU B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSU (
+  HOSU_CORP_CODE
+ ,HOSU_STND_GUBN
+ ,HOSU_STND_DEGR
+ ,HOSU_SEQ0
+ ,HOSU_UJIK_CODE
+ ,HOSU_IN00_MIN0
+ ,HOSU_IN00_MAX0
+ ,HOSU_UJIK_WGHT
+ ,HOSU_APPL_GUBN
+ ,HOSU_REMK
+ ,HOSU_REMK_0002
+ ,HOSU_UPDT_DATE
+ ,HOSU_INIT_CMAN
+ ,HOSU_INIT_DATE
+) VALUES (
+  #hosu_corp_code#
+ ,#hosu_stnd_gubn#
+ ,#hosu_stnd_degr#
+ ,#hosu_seq0#
+ ,#hosu_ujik_code#
+ ,#hosu_in00_min0#
+ ,#hosu_in00_max0#
+ ,#hosu_ujik_wght#
+ ,#hosu_appl_gubn#
+ ,#hosu_remk#
+ ,#hosu_remk_0002#
+ ,#hosu_updt_date#
+ ,#hosu_init_cman#
+ ,#hosu_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSU
+HOSU_CORP_CODE = #hosu_corp_code#   SET HOSU_STND_GUBN = #hosu_stnd_gubn#
+      ,HOSU_STND_DEGR = #hosu_stnd_degr#
+      ,HOSU_SEQ0 = #hosu_seq0#
+      ,HOSU_UJIK_CODE = #hosu_ujik_code#
+      ,HOSU_IN00_MIN0 = #hosu_in00_min0#
+      ,HOSU_IN00_MAX0 = #hosu_in00_max0#
+      ,HOSU_UJIK_WGHT = #hosu_ujik_wght#
+      ,HOSU_APPL_GUBN = #hosu_appl_gubn#
+      ,HOSU_REMK = #hosu_remk#
+      ,HOSU_REMK_0002 = #hosu_remk_0002#
+      ,HOSU_UPDT_DATE = #hosu_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 

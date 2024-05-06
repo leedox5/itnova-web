@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOST/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOST_CORP_CODE
+ ,HOST_STND_GUBN
+ ,HOST_STND_DEGR
+ ,HOST_SEQ0
+ ,HOST_HOSE_CODE
+ ,HOST_SHAP_CODE
+ ,HOSB_WIDN_CODE
+ ,HOST_IN00_MIN0
+ ,HOST_IN00_MAX0
+ ,HOST_NET0_MIN0
+ ,HOST_NET0_MAX0
+ ,HOST_SPAR_COEF1
+ ,HOST_SPAR_COEF2
+ ,HOST_SPAR_COEF3
+ ,HOST_SPAR_COEF4
+ ,HOST_SPAR_COEF5
+ ,HOST_SPAR_MAX0
+ ,HOST_APPL_GUBN
+ ,HOST_REMK
+ ,HOST_UPDT_CMAN
+ ,HOST_UPDT_DATE
+ ,HOST_INIT_CMAN
+ ,HOST_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'GENL' ,'ST' ,'ALL' ,'0' ,'3.5' ,'0' ,'99999999' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,'재단여유없음' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'GENL' ,'ST' ,'ALL' ,'3.5' ,'16' ,'0' ,'99999999' ,'100' ,'1500' ,'0' ,'0' ,'0' ,'100' ,'Y' ,'계수1/RD(계수2/NET길이,0)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'GENL' ,'ST' ,'ALL' ,'16' ,'99999999' ,'0' ,'99999999' ,'100' ,'2000' ,'0' ,'0' ,'0' ,'100' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'GENL' ,'ST_ONE' ,'ALL' ,'0' ,'30' ,'0' ,'99999999' ,'50' ,'300' ,'2' ,'100' ,'5' ,'0' ,'Y' ,'곡HOSE여유 기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'GENL' ,'ST_ONE' ,'ALL' ,'30' ,'99999999' ,'0' ,'99999999' ,'60' ,'300' ,'2' ,'100' ,'5' ,'0' ,'Y' ,'곡HOSE여유 기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'GENL' ,'ST_TWO' ,'ALL' ,'0' ,'30' ,'0' ,'99999999' ,'50' ,'300' ,'2' ,'100' ,'10' ,'0' ,'Y' ,'곡HOSE여유 기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'GENL' ,'ST_TWO' ,'ALL' ,'30' ,'99999999' ,'0' ,'99999999' ,'60' ,'300' ,'2' ,'100' ,'10' ,'0' ,'Y' ,'곡HOSE여유 기준' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'GENL' ,'CURV' ,'ALL' ,'0' ,'30' ,'0' ,'99999999' ,'50' ,'300' ,'2' ,'100' ,'0' ,'0' ,'Y' ,'계수1+(NET길이-계수2)*계수3/계수4+계수5' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'GENL' ,'CURV' ,'ALL' ,'30' ,'99999999' ,'0' ,'99999999' ,'60' ,'300' ,'2' ,'100' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'GENL' ,'ONE' ,'ALL' ,'0' ,'30' ,'0' ,'99999999' ,'50' ,'300' ,'2' ,'100' ,'5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'GENL' ,'ONE' ,'ALL' ,'30' ,'99999999' ,'0' ,'99999999' ,'60' ,'300' ,'2' ,'100' ,'5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'GENL' ,'TWO' ,'ALL' ,'0' ,'30' ,'0' ,'99999999' ,'50' ,'300' ,'2' ,'100' ,'10' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'GENL' ,'TWO' ,'ALL' ,'30' ,'99999999' ,'0' ,'99999999' ,'60' ,'300' ,'2' ,'100' ,'10' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'PAD' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'2400' ,'2400' ,'0' ,'0' ,'0' ,'0' ,'Y' ,'(계수1-CVT*NET길이)/CVT,CVT=계수2/NET길이' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'WASHER' ,'STRA' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'0' ,'82' ,'0' ,'0' ,'0' ,'0' ,'Y' ,'계수1/CVT' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'WASHER' ,'CURV1' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'43' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'WASHER' ,'CURV2' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'43' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'WASHER' ,'CURV3' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'43' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'DIFF' ,'STRA' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'50' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'DIFF' ,'CURV' ,'ALL' ,'0' ,'99999999' ,'0' ,'300' ,'70' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'DIFF' ,'CURV' ,'ALL' ,'0' ,'99999999' ,'300' ,'99999999' ,'95' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'RETURN' ,'STRA' ,'ALL' ,'0' ,'99999999' ,'0' ,'99999999' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'Y' ,'RUBBER,편조사 상이(별도계산식 적용)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOST_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOST_UPDT_DATE > B.HOST_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOST B                                          
+
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOST (
+  HOST_CORP_CODE
+ ,HOST_STND_GUBN
+ ,HOST_STND_DEGR
+ ,HOST_SEQ0
+ ,HOST_HOSE_CODE
+ ,HOST_SHAP_CODE
+ ,HOSB_WIDN_CODE
+ ,HOST_IN00_MIN0
+ ,HOST_IN00_MAX0
+ ,HOST_NET0_MIN0
+ ,HOST_NET0_MAX0
+ ,HOST_SPAR_COEF1
+ ,HOST_SPAR_COEF2
+ ,HOST_SPAR_COEF3
+ ,HOST_SPAR_COEF4
+ ,HOST_SPAR_COEF5
+ ,HOST_SPAR_MAX0
+ ,HOST_APPL_GUBN
+ ,HOST_REMK
+ ,HOST_UPDT_CMAN
+ ,HOST_UPDT_DATE
+ ,HOST_INIT_CMAN
+ ,HOST_INIT_DATE
+) VALUES (
+  #host_corp_code#
+ ,#host_stnd_gubn#
+ ,#host_stnd_degr#
+ ,#host_seq0#
+ ,#host_hose_code#
+ ,#host_shap_code#
+ ,#hosb_widn_code#
+ ,#host_in00_min0#
+ ,#host_in00_max0#
+ ,#host_net0_min0#
+ ,#host_net0_max0#
+ ,#host_spar_coef1#
+ ,#host_spar_coef2#
+ ,#host_spar_coef3#
+ ,#host_spar_coef4#
+ ,#host_spar_coef5#
+ ,#host_spar_max0#
+ ,#host_appl_gubn#
+ ,#host_remk#
+ ,#host_updt_cman#
+ ,#host_updt_date#
+ ,#host_init_cman#
+ ,#host_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOST
+HOST_CORP_CODE = #host_corp_code#   SET HOST_STND_GUBN = #host_stnd_gubn#
+      ,HOST_STND_DEGR = #host_stnd_degr#
+      ,HOST_SEQ0 = #host_seq0#
+      ,HOST_HOSE_CODE = #host_hose_code#
+      ,HOST_SHAP_CODE = #host_shap_code#
+      ,HOSB_WIDN_CODE = #hosb_widn_code#
+      ,HOST_IN00_MIN0 = #host_in00_min0#
+      ,HOST_IN00_MAX0 = #host_in00_max0#
+      ,HOST_NET0_MIN0 = #host_net0_min0#
+      ,HOST_NET0_MAX0 = #host_net0_max0#
+      ,HOST_SPAR_COEF1 = #host_spar_coef1#
+      ,HOST_SPAR_COEF2 = #host_spar_coef2#
+      ,HOST_SPAR_COEF3 = #host_spar_coef3#
+      ,HOST_SPAR_COEF4 = #host_spar_coef4#
+      ,HOST_SPAR_COEF5 = #host_spar_coef5#
+      ,HOST_SPAR_MAX0 = #host_spar_max0#
+      ,HOST_APPL_GUBN = #host_appl_gubn#
+      ,HOST_REMK = #host_remk#
+      ,HOST_UPDT_CMAN = #host_updt_cman#
+      ,HOST_UPDT_DATE = #host_updt_date#
+
+  ]]>
+ </sql>
+</sql-descriptor> 
