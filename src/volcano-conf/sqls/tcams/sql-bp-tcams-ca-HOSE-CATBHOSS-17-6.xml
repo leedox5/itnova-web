@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSS/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSS_CORP_CODE
+ ,HOSS_STND_GUBN
+ ,HOSS_STND_DEGR
+ ,HOSS_SEQ0
+ ,HOSS_POSI_CODE
+ ,HOSS_SIZE_MIN0
+ ,HOSS_SIZE_MAX0
+ ,HOSS_NET0_CYTM
+ ,HOSS_NET0_UNIT
+ ,HOSS_SPNG_PRSN
+ ,HOSS_APPL_GUBN
+ ,HOSS_REMK
+ ,HOSS_UPDT_CMAN
+ ,HOSS_UPDT_DATE
+ ,HOSS_INIT_CMAN
+ ,HOSS_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'ST50' ,'0' ,'50' ,'6' ,'Sec/EA' ,'1' ,'Y' ,'HOSE직선부,위치는 0부터 허용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'ST50' ,'50' ,'80' ,'7' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'ST50' ,'80' ,'120' ,'8' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'ST50' ,'120' ,'150' ,'9' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'ST50' ,'150' ,'200' ,'10' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'ST50' ,'200' ,'99999999' ,'11' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'ST100' ,'0' ,'50' ,'8' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'ST100' ,'50' ,'80' ,'9' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'ST100' ,'80' ,'120' ,'10' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'ST100' ,'120' ,'150' ,'11' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'ST100' ,'150' ,'200' ,'12' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'ST100' ,'200' ,'99999999' ,'13' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'ST150' ,'0' ,'50' ,'10' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'ST150' ,'50' ,'80' ,'11' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'ST150' ,'80' ,'120' ,'12' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'ST150' ,'120' ,'150' ,'13' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'ST150' ,'150' ,'200' ,'14' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'ST150' ,'200' ,'99999999' ,'15' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'ST200' ,'0' ,'50' ,'12' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'ST200' ,'50' ,'80' ,'13' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'ST200' ,'80' ,'120' ,'14' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'ST200' ,'120' ,'150' ,'15' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'23' ,'ST200' ,'150' ,'200' ,'16' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'24' ,'ST200' ,'200' ,'99999999' ,'17' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'25' ,'ST200OV' ,'0' ,'50' ,'14' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'26' ,'ST200OV' ,'50' ,'80' ,'15' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'27' ,'ST200OV' ,'80' ,'120' ,'16' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'28' ,'ST200OV' ,'120' ,'150' ,'17' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'29' ,'ST200OV' ,'150' ,'200' ,'18' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'30' ,'ST200OV' ,'200' ,'99999999' ,'19' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'31' ,'CV50' ,'0' ,'50' ,'9' ,'Sec/EA' ,'1' ,'Y' ,'HOSE곡선부 or 곡선부통과,위치는 0부터 허용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'32' ,'CV50' ,'50' ,'80' ,'10.6' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'33' ,'CV50' ,'80' ,'120' ,'12.2' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'34' ,'CV50' ,'120' ,'150' ,'13.8' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'35' ,'CV50' ,'150' ,'200' ,'15.4' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'36' ,'CV50' ,'200' ,'99999999' ,'17' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'37' ,'CV100' ,'0' ,'50' ,'12.5' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'38' ,'CV100' ,'50' ,'80' ,'14.1' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'39' ,'CV100' ,'80' ,'120' ,'15.7' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'40' ,'CV100' ,'120' ,'150' ,'17.3' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'41' ,'CV100' ,'150' ,'200' ,'18.9' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'42' ,'CV100' ,'200' ,'99999999' ,'20.5' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'43' ,'CV150' ,'0' ,'50' ,'16' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'44' ,'CV150' ,'50' ,'80' ,'17.6' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'45' ,'CV150' ,'80' ,'120' ,'19.2' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'46' ,'CV150' ,'120' ,'150' ,'20.8' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'47' ,'CV150' ,'150' ,'200' ,'22.4' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'48' ,'CV150' ,'200' ,'99999999' ,'24' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'49' ,'CV200' ,'0' ,'50' ,'19.5' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'50' ,'CV200' ,'50' ,'80' ,'21.1' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'51' ,'CV200' ,'80' ,'120' ,'22.7' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'52' ,'CV200' ,'120' ,'150' ,'24.3' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'53' ,'CV200' ,'150' ,'200' ,'25.9' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'54' ,'CV200' ,'200' ,'99999999' ,'27.5' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'55' ,'CV200OV' ,'0' ,'50' ,'23' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'56' ,'CV200OV' ,'50' ,'80' ,'24.6' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'57' ,'CV200OV' ,'80' ,'120' ,'26.2' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'58' ,'CV200OV' ,'120' ,'150' ,'27.8' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'59' ,'CV200OV' ,'150' ,'200' ,'29.4' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'60' ,'CV200OV' ,'200' ,'99999999' ,'31' ,'Sec/EA' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSS_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSS_UPDT_DATE > B.HOSS_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSS B                                          
+      ON    B.HOSS_CORP_CODE = A.HOSS_CORP_CODE
+        AND B.HOSS_STND_GUBN = A.HOSS_STND_GUBN
+        AND B.HOSS_STND_DEGR = A.HOSS_STND_DEGR
+        AND B.HOSS_SEQ0 = A.HOSS_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSS (
+  HOSS_CORP_CODE
+ ,HOSS_STND_GUBN
+ ,HOSS_STND_DEGR
+ ,HOSS_SEQ0
+ ,HOSS_POSI_CODE
+ ,HOSS_SIZE_MIN0
+ ,HOSS_SIZE_MAX0
+ ,HOSS_NET0_CYTM
+ ,HOSS_NET0_UNIT
+ ,HOSS_SPNG_PRSN
+ ,HOSS_APPL_GUBN
+ ,HOSS_REMK
+ ,HOSS_UPDT_CMAN
+ ,HOSS_UPDT_DATE
+ ,HOSS_INIT_CMAN
+ ,HOSS_INIT_DATE
+) VALUES (
+  #hoss_corp_code#
+ ,#hoss_stnd_gubn#
+ ,#hoss_stnd_degr#
+ ,#hoss_seq0#
+ ,#hoss_posi_code#
+ ,#hoss_size_min0#
+ ,#hoss_size_max0#
+ ,#hoss_net0_cytm#
+ ,#hoss_net0_unit#
+ ,#hoss_spng_prsn#
+ ,#hoss_appl_gubn#
+ ,#hoss_remk#
+ ,#hoss_updt_cman#
+ ,#hoss_updt_date#
+ ,#hoss_init_cman#
+ ,#hoss_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSS
+   SET HOSS_POSI_CODE = #hoss_posi_code#
+      ,HOSS_SIZE_MIN0 = #hoss_size_min0#
+      ,HOSS_SIZE_MAX0 = #hoss_size_max0#
+      ,HOSS_NET0_CYTM = #hoss_net0_cytm#
+      ,HOSS_NET0_UNIT = #hoss_net0_unit#
+      ,HOSS_SPNG_PRSN = #hoss_spng_prsn#
+      ,HOSS_APPL_GUBN = #hoss_appl_gubn#
+      ,HOSS_REMK = #hoss_remk#
+      ,HOSS_UPDT_CMAN = #hoss_updt_cman#
+      ,HOSS_UPDT_DATE = #hoss_updt_date#
+ WHERE HOSS_CORP_CODE = #hoss_corp_code#
+   AND HOSS_STND_GUBN = #hoss_stnd_gubn#
+   AND HOSS_STND_DEGR = #hoss_stnd_degr#
+   AND HOSS_SEQ0 = #hoss_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSV/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSV_CORP_CODE
+ ,HOSV_STND_GUBN
+ ,HOSV_STND_DEGR
+ ,HOSV_SEQ0
+ ,HOSV_ITEM_CODE
+ ,HOSV_THIK_MIN0
+ ,HOSV_THIK_MAX0
+ ,HOSV_PAD0_GRVT
+ ,HOSV_APPL_GUBN
+ ,HOSV_REMK
+ ,HOSV_REMK_0002
+ ,HOSV_UPDT_DATE
+ ,HOSV_INIT_CMAN
+ ,HOSV_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'SPON_G' ,'0' ,'2' ,'0.44' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'SPON_G' ,'2' ,'99999999' ,'0.23' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'SPON_H' ,'-1' ,'99999999' ,'0.79' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'SOLID' ,'-1' ,'99999999' ,'1.3' ,'Y' ,NULL ,'SYSTEM' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSV_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSV_UPDT_DATE > B.HOSV_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSV B                                          
+      ON    B.HOSV_CORP_CODE = A.HOSV_CORP_CODE
+        AND B.HOSV_STND_GUBN = A.HOSV_STND_GUBN
+        AND B.HOSV_STND_DEGR = A.HOSV_STND_DEGR
+        AND B.HOSV_SEQ0 = A.HOSV_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSV (
+  HOSV_CORP_CODE
+ ,HOSV_STND_GUBN
+ ,HOSV_STND_DEGR
+ ,HOSV_SEQ0
+ ,HOSV_ITEM_CODE
+ ,HOSV_THIK_MIN0
+ ,HOSV_THIK_MAX0
+ ,HOSV_PAD0_GRVT
+ ,HOSV_APPL_GUBN
+ ,HOSV_REMK
+ ,HOSV_REMK_0002
+ ,HOSV_UPDT_DATE
+ ,HOSV_INIT_CMAN
+ ,HOSV_INIT_DATE
+) VALUES (
+  #hosv_corp_code#
+ ,#hosv_stnd_gubn#
+ ,#hosv_stnd_degr#
+ ,#hosv_seq0#
+ ,#hosv_item_code#
+ ,#hosv_thik_min0#
+ ,#hosv_thik_max0#
+ ,#hosv_pad0_grvt#
+ ,#hosv_appl_gubn#
+ ,#hosv_remk#
+ ,#hosv_remk_0002#
+ ,#hosv_updt_date#
+ ,#hosv_init_cman#
+ ,#hosv_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSV
+   SET HOSV_ITEM_CODE = #hosv_item_code#
+      ,HOSV_THIK_MIN0 = #hosv_thik_min0#
+      ,HOSV_THIK_MAX0 = #hosv_thik_max0#
+      ,HOSV_PAD0_GRVT = #hosv_pad0_grvt#
+      ,HOSV_APPL_GUBN = #hosv_appl_gubn#
+      ,HOSV_REMK = #hosv_remk#
+      ,HOSV_REMK_0002 = #hosv_remk_0002#
+      ,HOSV_UPDT_DATE = #hosv_updt_date#
+ WHERE HOSV_CORP_CODE = #hosv_corp_code#
+   AND HOSV_STND_GUBN = #hosv_stnd_gubn#
+   AND HOSV_STND_DEGR = #hosv_stnd_degr#
+   AND HOSV_SEQ0 = #hosv_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 

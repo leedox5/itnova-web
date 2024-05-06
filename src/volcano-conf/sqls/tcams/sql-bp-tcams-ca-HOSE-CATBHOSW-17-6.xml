@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSW/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSW_CORP_CODE
+ ,HOSW_STND_GUBN
+ ,HOSW_STND_DEGR
+ ,HOSW_SEQ0
+ ,HOSW_PROC_GUBN
+ ,HOSW_WASH_CODE
+ ,HOSW_OUT0_MIN0
+ ,HOSW_OUT0_MAX0
+ ,HOSW_NET0_MIN0
+ ,HOSW_NET0_MAX0
+ ,HOSW_NET0_CYTM
+ ,HOSW_NET0_COEF1
+ ,HOSW_NET0_COEF2
+ ,HOSW_APPL_GUBN
+ ,HOSW_REMK
+ ,HOSW_UPDT_CMAN
+ ,HOSW_UPDT_DATE
+ ,HOSW_INIT_CMAN
+ ,HOSW_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'1' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'0' ,'150' ,'2.1' ,'1.5' ,'0' ,'Y' ,'직HOSE=곡HOSE/1.5' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'2' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'150' ,'200' ,'2.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'3' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'200' ,'280' ,'2.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'4' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'280' ,'350' ,'2.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'5' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'350' ,'440' ,'2.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'6' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'440' ,'520' ,'2.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'7' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'520' ,'600' ,'3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'8' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'600' ,'800' ,'3.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'9' ,'WASH' ,'Y_NA' ,'0' ,'10' ,'800' ,'99999999' ,'3.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'10' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'0' ,'150' ,'2.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'11' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'150' ,'200' ,'2.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'12' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'200' ,'280' ,'2.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'13' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'280' ,'350' ,'2.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'14' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'350' ,'440' ,'2.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'15' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'440' ,'520' ,'3.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'16' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'520' ,'600' ,'3.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'17' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'600' ,'800' ,'4.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'18' ,'WASH' ,'Y_NA' ,'10' ,'20' ,'800' ,'99999999' ,'4.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'19' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'0' ,'150' ,'2.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'20' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'150' ,'200' ,'2.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'21' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'200' ,'280' ,'2.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'22' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'280' ,'350' ,'3.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'23' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'350' ,'440' ,'6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'24' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'440' ,'520' ,'7.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'25' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'520' ,'600' ,'8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'26' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'600' ,'800' ,'9.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'27' ,'WASH' ,'Y_NA' ,'20' ,'30' ,'800' ,'99999999' ,'14.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'28' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'0' ,'150' ,'2.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'29' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'150' ,'200' ,'3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'30' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'200' ,'280' ,'3.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'31' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'280' ,'350' ,'5.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'32' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'350' ,'440' ,'7.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'33' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'440' ,'520' ,'8.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'34' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'520' ,'600' ,'9.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'35' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'600' ,'800' ,'15.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'36' ,'WASH' ,'Y_NA' ,'30' ,'40' ,'800' ,'99999999' ,'26.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'37' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'0' ,'150' ,'3.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'38' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'150' ,'200' ,'3.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'39' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'200' ,'280' ,'5.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'40' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'280' ,'350' ,'8.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'41' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'350' ,'440' ,'9.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'42' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'440' ,'520' ,'10.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'43' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'520' ,'600' ,'15' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'44' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'600' ,'800' ,'20' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'45' ,'WASH' ,'Y_NA' ,'40' ,'50' ,'800' ,'99999999' ,'30' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'46' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'0' ,'150' ,'3.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'47' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'150' ,'200' ,'5.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'48' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'200' ,'280' ,'8.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'49' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'280' ,'350' ,'9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'50' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'350' ,'440' ,'10.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'51' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'440' ,'520' ,'14.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'52' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'520' ,'600' ,'20' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'53' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'600' ,'800' ,'30' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'54' ,'WASH' ,'Y_NA' ,'50' ,'99999999' ,'800' ,'99999999' ,'60' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'55' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'0' ,'150' ,'3.7' ,'1.5' ,'0' ,'Y' ,'직HOSE=곡HOSE/1.5' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'56' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'150' ,'200' ,'4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'57' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'200' ,'280' ,'4.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'58' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'280' ,'350' ,'4.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'59' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'350' ,'440' ,'4.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'60' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'440' ,'520' ,'5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'61' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'520' ,'600' ,'5.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'62' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'600' ,'800' ,'6.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'63' ,'WASH' ,'Y_AC' ,'0' ,'10' ,'800' ,'99999999' ,'7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'64' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'0' ,'150' ,'4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'65' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'150' ,'200' ,'4.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'66' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'200' ,'280' ,'4.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'67' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'280' ,'350' ,'4.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'68' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'350' ,'440' ,'5.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'69' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'440' ,'520' ,'5.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'70' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'520' ,'600' ,'6.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'71' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'600' ,'800' ,'7.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'72' ,'WASH' ,'Y_AC' ,'10' ,'20' ,'800' ,'99999999' ,'8.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'73' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'0' ,'150' ,'4.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'74' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'150' ,'200' ,'4.8' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'75' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'200' ,'280' ,'5.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'76' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'280' ,'350' ,'6.6' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'77' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'350' ,'440' ,'10.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'78' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'440' ,'520' ,'13' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'79' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'520' ,'600' ,'14.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'80' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'600' ,'800' ,'17.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'81' ,'WASH' ,'Y_AC' ,'20' ,'30' ,'800' ,'99999999' ,'24' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'82' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'0' ,'150' ,'4.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'83' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'150' ,'200' ,'5.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'84' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'200' ,'280' ,'6.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'85' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'280' ,'350' ,'9.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'86' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'350' ,'440' ,'13.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'87' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'440' ,'520' ,'15.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'88' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'520' ,'600' ,'17.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'89' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'600' ,'800' ,'25.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'90' ,'WASH' ,'Y_AC' ,'30' ,'40' ,'800' ,'99999999' ,'37.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'91' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'0' ,'150' ,'5.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'92' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'150' ,'200' ,'6.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'93' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'200' ,'280' ,'9.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'94' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'280' ,'350' ,'14.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'95' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'350' ,'440' ,'16.2' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'96' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'440' ,'520' ,'18.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'97' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'520' ,'600' ,'25' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'98' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'600' ,'800' ,'28.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'99' ,'WASH' ,'Y_AC' ,'40' ,'50' ,'800' ,'99999999' ,'43.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'100' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'0' ,'150' ,'6.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'101' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'150' ,'200' ,'10' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'102' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'200' ,'280' ,'14.4' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'103' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'280' ,'350' ,'15.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'104' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'350' ,'440' ,'18.1' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'105' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'440' ,'520' ,'24.5' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'106' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'520' ,'600' ,'28.9' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'107' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'600' ,'800' ,'43.3' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'108' ,'WASH' ,'Y_AC' ,'50' ,'99999999' ,'800' ,'99999999' ,'86.7' ,'1.5' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSW_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSW_UPDT_DATE > B.HOSW_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSW B                                          
+      ON    B.HOSW_CORP_CODE = A.HOSW_CORP_CODE
+        AND B.HOSW_STND_GUBN = A.HOSW_STND_GUBN
+        AND B.HOSW_STND_DEGR = A.HOSW_STND_DEGR
+        AND B.HOSW_SEQ0 = A.HOSW_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSW (
+  HOSW_CORP_CODE
+ ,HOSW_STND_GUBN
+ ,HOSW_STND_DEGR
+ ,HOSW_SEQ0
+ ,HOSW_PROC_GUBN
+ ,HOSW_WASH_CODE
+ ,HOSW_OUT0_MIN0
+ ,HOSW_OUT0_MAX0
+ ,HOSW_NET0_MIN0
+ ,HOSW_NET0_MAX0
+ ,HOSW_NET0_CYTM
+ ,HOSW_NET0_COEF1
+ ,HOSW_NET0_COEF2
+ ,HOSW_APPL_GUBN
+ ,HOSW_REMK
+ ,HOSW_UPDT_CMAN
+ ,HOSW_UPDT_DATE
+ ,HOSW_INIT_CMAN
+ ,HOSW_INIT_DATE
+) VALUES (
+  #hosw_corp_code#
+ ,#hosw_stnd_gubn#
+ ,#hosw_stnd_degr#
+ ,#hosw_seq0#
+ ,#hosw_proc_gubn#
+ ,#hosw_wash_code#
+ ,#hosw_out0_min0#
+ ,#hosw_out0_max0#
+ ,#hosw_net0_min0#
+ ,#hosw_net0_max0#
+ ,#hosw_net0_cytm#
+ ,#hosw_net0_coef1#
+ ,#hosw_net0_coef2#
+ ,#hosw_appl_gubn#
+ ,#hosw_remk#
+ ,#hosw_updt_cman#
+ ,#hosw_updt_date#
+ ,#hosw_init_cman#
+ ,#hosw_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSW
+   SET HOSW_PROC_GUBN = #hosw_proc_gubn#
+      ,HOSW_WASH_CODE = #hosw_wash_code#
+      ,HOSW_OUT0_MIN0 = #hosw_out0_min0#
+      ,HOSW_OUT0_MAX0 = #hosw_out0_max0#
+      ,HOSW_NET0_MIN0 = #hosw_net0_min0#
+      ,HOSW_NET0_MAX0 = #hosw_net0_max0#
+      ,HOSW_NET0_CYTM = #hosw_net0_cytm#
+      ,HOSW_NET0_COEF1 = #hosw_net0_coef1#
+      ,HOSW_NET0_COEF2 = #hosw_net0_coef2#
+      ,HOSW_APPL_GUBN = #hosw_appl_gubn#
+      ,HOSW_REMK = #hosw_remk#
+      ,HOSW_UPDT_CMAN = #hosw_updt_cman#
+      ,HOSW_UPDT_DATE = #hosw_updt_date#
+ WHERE HOSW_CORP_CODE = #hosw_corp_code#
+   AND HOSW_STND_GUBN = #hosw_stnd_gubn#
+   AND HOSW_STND_DEGR = #hosw_stnd_degr#
+   AND HOSW_SEQ0 = #hosw_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
