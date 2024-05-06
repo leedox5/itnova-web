@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/HOSE/CATBHOSL/17-6" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  HOSL_CORP_CODE
+ ,HOSL_STND_GUBN
+ ,HOSL_STND_DEGR
+ ,HOSL_SEQ0
+ ,HOSL_HOSE_CODE
+ ,HOSL_SHAP_GRP2
+ ,HOSL_IN00_MIN0
+ ,HOSL_IN00_MAX0
+ ,HOSL_OUT0_MIN0
+ ,HOSL_OUT0_MAX0
+ ,HOSL_TOTL_MIN0
+ ,HOSL_TOTL_MAX0
+ ,HOSL_LNG0_PRIC
+ ,HOSL_MATL_UNIT
+ ,HOSL_APPL_GUBN
+ ,HOSL_REMK_0001
+ ,HOSL_UPDT_CMAN
+ ,HOSL_UPDT_DATE
+ ,HOSL_INIT_CMAN
+ ,HOSL_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'1' ,'GRP2_STR' ,'0' ,'3.5' ,'0' ,'99999999' ,'0' ,'99999999' ,'4.7' ,'m' ,'Y' ,'직형' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'2' ,'GRP2_STR' ,'3.5' ,'99999999' ,'0' ,'10' ,'0' ,'99999999' ,'26.4' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'3' ,'GRP2_STR' ,'3.5' ,'99999999' ,'10' ,'20' ,'0' ,'99999999' ,'52.8' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'4' ,'GRP2_STR' ,'3.5' ,'99999999' ,'20' ,'30' ,'0' ,'99999999' ,'81.2' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'5' ,'GRP2_STR' ,'3.5' ,'99999999' ,'30' ,'40' ,'0' ,'99999999' ,'105.5' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'6' ,'GRP2_STR' ,'3.5' ,'99999999' ,'40' ,'50' ,'0' ,'99999999' ,'131.9' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'7' ,'GRP2_STR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'0' ,'99999999' ,'175.9' ,'m' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'8' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'0' ,'150' ,'54.6' ,'ea' ,'Y' ,'곡형' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'9' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'150' ,'200' ,'58.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'10' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'200' ,'280' ,'61.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'11' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'280' ,'350' ,'64.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'12' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'350' ,'440' ,'69.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'13' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'440' ,'520' ,'74.7' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'14' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'520' ,'600' ,'79.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'15' ,'GRP2_CUR' ,'0' ,'3.5' ,'0' ,'99999999' ,'600' ,'99999999' ,'93.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'16' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'0' ,'150' ,'54.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'17' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'150' ,'200' ,'58.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'18' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'200' ,'280' ,'61.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'19' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'280' ,'350' ,'64.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'20' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'350' ,'440' ,'69.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'21' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'440' ,'520' ,'74.7' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'22' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'520' ,'600' ,'79.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'23' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'0' ,'10' ,'600' ,'99999999' ,'93.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'24' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'0' ,'150' ,'59.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'25' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'150' ,'200' ,'64.3' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'26' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'200' ,'280' ,'67.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'27' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'280' ,'350' ,'71.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'28' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'350' ,'440' ,'77.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'29' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'440' ,'520' ,'84.2' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'30' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'520' ,'600' ,'91' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'31' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'10' ,'20' ,'600' ,'99999999' ,'108.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'32' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'0' ,'150' ,'65.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'33' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'150' ,'200' ,'71.3' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'34' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'200' ,'280' ,'75.4' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'35' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'280' ,'350' ,'80.8' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'36' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'350' ,'440' ,'87.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'37' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'440' ,'520' ,'96.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'38' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'520' ,'600' ,'105.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'39' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'20' ,'30' ,'600' ,'99999999' ,'129.7' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'40' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'0' ,'150' ,'72.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'41' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'150' ,'200' ,'79.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'42' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'200' ,'280' ,'85.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'43' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'280' ,'350' ,'92' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'44' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'350' ,'440' ,'101.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'45' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'440' ,'520' ,'113.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'46' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'520' ,'600' ,'127.7' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'47' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'30' ,'40' ,'600' ,'99999999' ,'161.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'48' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'0' ,'150' ,'81.6' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'49' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'150' ,'200' ,'91' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'50' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'200' ,'280' ,'97.7' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'51' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'280' ,'350' ,'107' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'52' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'350' ,'440' ,'119.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'53' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'440' ,'520' ,'136.5' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'54' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'520' ,'600' ,'158.3' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'55' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'40' ,'50' ,'600' ,'99999999' ,'213.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'56' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'0' ,'150' ,'87.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'57' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'150' ,'200' ,'98.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'58' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'200' ,'280' ,'107' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'59' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'280' ,'350' ,'118.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'60' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'350' ,'440' ,'134.1' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'61' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'440' ,'520' ,'155.2' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'62' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'520' ,'600' ,'179.9' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'GENL' ,'63' ,'GRP2_CUR' ,'3.5' ,'99999999' ,'50' ,'99999999' ,'600' ,'99999999' ,'263.8' ,'ea' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'RETURN' ,'64' ,'ALL' ,'0' ,'3.5' ,'0' ,'99999999' ,'0' ,'99999999' ,'4.7' ,'m' ,'Y' ,'직형을 따름' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'17-6' ,'RETURN' ,'65' ,'ALL' ,'3.5' ,'99999999' ,'0' ,'99999999' ,'0' ,'99999999' ,'26.4' ,'m' ,'Y' ,'내경=3,외경=7/내경=4,외경=8.5만 발생' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.HOSL_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.HOSL_UPDT_DATE > B.HOSL_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBHOSL B                                          
+      ON    B.HOSL_CORP_CODE = A.HOSL_CORP_CODE
+        AND B.HOSL_STND_GUBN = A.HOSL_STND_GUBN
+        AND B.HOSL_STND_DEGR = A.HOSL_STND_DEGR
+        AND B.HOSL_SEQ0 = A.HOSL_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBHOSL (
+  HOSL_CORP_CODE
+ ,HOSL_STND_GUBN
+ ,HOSL_STND_DEGR
+ ,HOSL_SEQ0
+ ,HOSL_HOSE_CODE
+ ,HOSL_SHAP_GRP2
+ ,HOSL_IN00_MIN0
+ ,HOSL_IN00_MAX0
+ ,HOSL_OUT0_MIN0
+ ,HOSL_OUT0_MAX0
+ ,HOSL_TOTL_MIN0
+ ,HOSL_TOTL_MAX0
+ ,HOSL_LNG0_PRIC
+ ,HOSL_MATL_UNIT
+ ,HOSL_APPL_GUBN
+ ,HOSL_REMK_0001
+ ,HOSL_UPDT_CMAN
+ ,HOSL_UPDT_DATE
+ ,HOSL_INIT_CMAN
+ ,HOSL_INIT_DATE
+) VALUES (
+  #hosl_corp_code#
+ ,#hosl_stnd_gubn#
+ ,#hosl_stnd_degr#
+ ,#hosl_seq0#
+ ,#hosl_hose_code#
+ ,#hosl_shap_grp2#
+ ,#hosl_in00_min0#
+ ,#hosl_in00_max0#
+ ,#hosl_out0_min0#
+ ,#hosl_out0_max0#
+ ,#hosl_totl_min0#
+ ,#hosl_totl_max0#
+ ,#hosl_lng0_pric#
+ ,#hosl_matl_unit#
+ ,#hosl_appl_gubn#
+ ,#hosl_remk_0001#
+ ,#hosl_updt_cman#
+ ,#hosl_updt_date#
+ ,#hosl_init_cman#
+ ,#hosl_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBHOSL
+   SET HOSL_HOSE_CODE = #hosl_hose_code#
+      ,HOSL_SHAP_GRP2 = #hosl_shap_grp2#
+      ,HOSL_IN00_MIN0 = #hosl_in00_min0#
+      ,HOSL_IN00_MAX0 = #hosl_in00_max0#
+      ,HOSL_OUT0_MIN0 = #hosl_out0_min0#
+      ,HOSL_OUT0_MAX0 = #hosl_out0_max0#
+      ,HOSL_TOTL_MIN0 = #hosl_totl_min0#
+      ,HOSL_TOTL_MAX0 = #hosl_totl_max0#
+      ,HOSL_LNG0_PRIC = #hosl_lng0_pric#
+      ,HOSL_MATL_UNIT = #hosl_matl_unit#
+      ,HOSL_APPL_GUBN = #hosl_appl_gubn#
+      ,HOSL_REMK_0001 = #hosl_remk_0001#
+      ,HOSL_UPDT_CMAN = #hosl_updt_cman#
+      ,HOSL_UPDT_DATE = #hosl_updt_date#
+ WHERE HOSL_CORP_CODE = #hosl_corp_code#
+   AND HOSL_STND_GUBN = #hosl_stnd_gubn#
+   AND HOSL_STND_DEGR = #hosl_stnd_degr#
+   AND HOSL_SEQ0 = #hosl_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
