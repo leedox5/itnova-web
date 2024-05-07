@@ -1,0 +1,1319 @@
+<sc-link rel="import" href="ep-cacm-01-01.html"></sc-link>
+<sc-link rel="import" href="ep-cacm-02-01.html"></sc-link>
+<sc-link rel="import" href="es-cacm-04.html"></sc-link>
+
+<dom-module id="es-cacm-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 공법계산 TOP 공통
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2019.11.11
+        ** @History         : 2019.11.11 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+		<!-- 공통 코드 조회-->
+		<sc-service-group id="codes">
+			<sc-code-provider code="CM_RPAYGUBN" target="{{codes.rpay_gubn}}"></sc-code-provider> <!-- 상각구분 -->
+		</sc-service-group>
+		
+		<!-- 상각구분 공법마스터 테이블 UPDATE(금형전용) -->
+		<sc-service-provider id="updateCMMSRpayRPC" descriptor="bp/tcams/ca/common" service-id="update.CMMSRpay" on-result="sendCalcEvent">
+			<inputs>
+				<sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+			</inputs>
+		</sc-service-provider>
+		
+		<!-- 상각구분 공법마스터 테이블 조회 -->
+		<sc-service-provider id="getCMMSRpayRPC" descriptor="bp/tcams/cm/common" service-id="get.new0_stat" on-result="setRpay">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{resultRpay}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+	
+		<!-- 년간생산갯수, LOT량 공법마스터 테이블 UPDATE -->
+		<sc-service-provider id="updateCMMSInfoRPC" descriptor="bp/tcams/ca/common" service-id="update.CMMSInfo" on-result="sendCalcEvent">
+			<inputs>
+				<sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+			</inputs>
+		</sc-service-provider>
+	
+		<!-- 년간생산갯수, LOT량 기계가공 메인 테이블 UPDATE -->
+		<sc-service-provider id="updateMCHIInfoRPC" descriptor="bp/tcams/ca/common" service-id="update.MCHIInfo" on-result="sendCalcEvent">
+			<inputs>
+				<sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+			</inputs>
+		</sc-service-provider>
+		
+		<!-- 년간생산갯수, LOT량 공법마스터 테이블 조회 ('CMMS') -->
+       	<sc-service-provider id="getCMMSInfoRPC" body-name="param" body="{{searchParam}}" descriptor="bp/tcams/ca/common" service-id="get.CMMSInfo" on-response="setData"></sc-service-provider>
+		
+		<!-- 년간생산갯수, LOT량 기계가공 메인 테이블 조회 ('MCHI') -->
+		<sc-service-provider id="getMCHIInfoRPC" descriptor="bp/tcams/ca/common" service-id="get.MCHIInfo" on-response="setData">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="mchi_info" target="{{resultObj}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+		
+		<!-- 기계가공 개정내용 조회 : : 20171116 LSM 추가-->
+		<sc-service-provider id="getMCHHDegrContInfoRPC" descriptor="bp/tcams/ca/common" service-id="get.MCHHdegrContInfo" on-response="setDegrCont">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="cont_info" target="{{contObj}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+		
+		<!-- LOT LIST Retrieve -->
+		<sc-service-provider id="getLotqListRPC" descriptor="bp/tcams/ca/common" service-id="get.lotqList" on-result="lotqDataSet">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{lotParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="list" target="{{resultList}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+
+		<!-- LOT LIST Retrieve(OILS) -->
+		<sc-service-provider id="getOilsLotqListRPC" descriptor="bp/tcams/ca/oils/p14" service-id="get.lotqList" on-response="setLotqQty0">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="list" target="{{oilsList}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+		
+		<!-- LOT LIST Retrieve(BOLT) -->
+		<sc-service-provider id="getBoltLotqListRPC" descriptor="bp/tcams/ca/common" service-id="get.BoltlotqList" on-result="setLotqQty0">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="list" target="{{boltList}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+		
+		<!-- 계산 진행상태 유무 조회 -->
+		<sc-service-provider id="getPassStatRPC" descriptor="bp/tcams/ca/common" service-id="get.pass_stat" on-result="checkPassStat">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{passCnt}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+		
+		<!-- 계산 진행상태 유무 조회(금형) -->
+		<sc-service-provider id="getMoldPassStatRPC" descriptor="bp/tcams/cm/common" service-id="get.new0_stat" on-result="checkPassStat">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{passCnt}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+  		
+  		<!--
+	    *********************************************************************************************************
+	    *************************         UI Area                                          **********************   
+	    *********************************************************************************************************
+	    -->
+
+        <cc-page-title-bar id="methodDetail" page-title=" ">
+        	<sc-label  id="passMsg"   text="" 		style="color:red; text-align:left;"></sc-label>
+            <sc-button id="copyBtn"	  text="공법복사"	on-click="copy"		 style="align:right;" hidden="true"></sc-button>
+            <sc-button id="resetBtn"  text="초기화"	on-click="init"		 style="align:right;"></sc-button>
+            <sc-button id="searchBtn" text="조회"		on-click="getInfo"	 style="align:right;"></sc-button>
+            <sc-button id="resultBtn" text="결과조회"	on-click="getResult" style="align:right;"></sc-button>
+            <sc-button id="calcBtn"	  text="계산"		on-click="askCalc"	 style="align:right;"></sc-button>
+			<sc-button id="closeBtn"  text="닫기"	    on-click="onClose"   hidden="true"       ></sc-button>
+        </cc-page-title-bar>
+		
+		<cc-search-container on-search="onSearch" validation-group="search" search-button-hidden="true" reset-button-hidden="true">
+			<table>
+				<colgroup>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
+                <tr>
+                    <th style="width:100px;"><sc-label text="계산 PART NO"></sc-label></th>
+                    <td style="width:110px;">
+                        <sc-text-field value="{{searchParam.part_no}}" disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <td colspan="2" style="width:210px">
+                        <sc-text-field value="{{searchParam.part_name}}" disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <th style="width:100px;"><sc-label text="EO NO"></sc-label></th>
+                    <td style="width:100px">
+                        <sc-text-field value="{{searchParam.eono}}"  disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <th style="width:70px"><sc-label text="SEQ"></sc-label></th>
+                    <td style="width:70px">
+                        <sc-text-field value="{{searchParam.cumt_no}}"  disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <th style="width:70px"><sc-label text="작성자" style="width:100%"></sc-label></th>
+                    <td style="width:100px">
+                        <sc-text-field id="init_cman" value="{{searchParam.init_cman}}"  disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <th style="width:70px"><sc-label text="표준담당" style="width:100%"></sc-label></th>
+                    <td style="width:100px">
+                        <sc-text-field value="{{searchParam.stnd_man1}}"  disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="width:100px;"><sc-label text="원가계산 기준일"></sc-label></th>
+                    <td style="width:110px;">
+                        <sc-date-field value="{{searchParam.base_date}}" string-date="true" disabled="true" style="width:100%"></sc-date-field>
+                    </td>
+                    <th style="width:100px;"><sc-label id="lotq_prod_cnt0_Lb" text="년간생산갯수" style="width:100%" ></sc-label></th>
+                    <td style="width:110px;">
+                        <sc-text-field id="lotq_prod_cnt0" on-blur="setLotqData" on-change="prodChangeEventHandler" value="{{searchParam.lotq_prod_cnt0}}" format-type="number" style="width:100%" class="align-right" mask-re="/[0-9]/" maxlength="10" input-cover="true" editVal></sc-text-field>
+                    </td>
+                    <th style="width:100px;">
+                    	<sc-label id="lotLbl" text="LOT 구분" style="width:80px"></sc-label>
+                    	<a><img id="lotInfoImg" src="../../../../assets/img/bull_choice.gif" on-click="lotqGubnPopup" style="padding-left:5px; width:15px"/></a>
+                    </th>
+                    <td style="width:100px">
+                    	<sc-text-field id="lotq_qty0" value="{{searchParam.lotq_qty0}}" style="width:100%" on-change="lotChangeEventHandler" class="align-right" mask-re="/[0-9]/" maxlength="10" editVal></sc-text-field> 
+                   		<sc-combobox-field id="sb_rpaygubn" display-field="label" value-field="data" on-change="rpayChange" 
+										   items="{{codes.rpay_gubn}}" value="{{searchParam.rpay_code}}" input-clear="false"
+										   selected-index="0" hidden="true">
+						</sc-combobox-field>
+                    </td>
+                    <th style="width:70px"><sc-label text="개정 차수"></sc-label></th>
+                    <td style="width:70px">
+                        <sc-text-field value="{{searchParam.degr}}" disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <th style="width:70px"><sc-label text="개정 내용"></sc-label></th>
+                    <td colspan="3" style="width:270px">
+                        <sc-text-field id="degr_cont" value="{{searchParam.degr_cont}}" disabled="true" style="width:100%"></sc-text-field>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+            </table>
+		</cc-search-container>
+	</template>
+
+	<script>
+		Polymer({
+			is: "es-cacm-01",
+			properties: {
+				// 공통코드
+                codes         : {type: Object , value: function() { return {rpay_gubn:[]}}, reset: false},
+             	// 조회조건
+                searchParam   : {type: Object , value : function() { return {}; } ,notify : true},
+
+                lotParam      : {type: Object , value : function() { return {}; } },
+				// 상태코드 체크 값
+                passCnt       : {type: Object , value : function() { return {new0_stat:""}; }},
+				// 금형마스터 정보
+                resultRpay    : {type: Object , value : function() { return {}; } },
+                
+                resultObj     : {type: Object , value : function() { return {}; } },
+                resultRpay    : {type: Object , value : function() { return {}; } },
+                contObj       : {type: Object , value : function() { return {}; } },
+                resultList    : {type: Array  , value : function() { return [];}},
+                oilsList      : {type: Array  , value : function() { return [];}},
+                boltList      : {type: Array  , value : function() { return [];}}
+                
+            },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+                me.$.codes.service();
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+                me.set("searchParam", obj);
+                me.set("searchParam.dept_cd", SCSessionManager.getCurrentUser().dept_cd);
+
+                me.setParam();
+                
+				// Formula 설정             	
+             	me.applyFormula();
+
+				// LOT 정보 설정
+             	me.getLotqInfo();
+
+				me.$.methodDetail.pageTitle = me.searchParam.title;
+
+				me.$.lotq_prod_cnt0.focus();	// 2020.04 공법화면 진입 시, 연간생산수량 focus
+            }, 
+
+            /**
+			 * Sub Part에서 넘어오는 값 Set
+			 */
+            setParam : function() {
+                var me = this;
+
+                me.set("searchParam.part_name", me.get("searchParam.cmms_part_name"));
+                me.set("searchParam.path_gubn", me.get("searchParam.cmms_path_gubn"));
+                me.set("searchParam.new0_stat", me.get("searchParam.new0_stat"));
+                me.set("searchParam.mold_stat", me.get("searchParam.new0_stat"));
+                
+				var scom_code = me.get("searchParam.comd_scom_code");
+				var prod_cnt0 = me.get("searchParam.cmms_lotq_prod_cnt0");
+				var lotq_qty0 = me.get("searchParam.cmms_lotq_qty0");
+				var come_code = me.get("searchParam.cmms_come_code");
+				var rpay_code = me.get("searchParam.rpay_code");
+
+             	// 개정내용 없는 경우 처리, 가공으로 인해 bindingObject 해제 처리
+             	if (me.get("searchParam.cmms_degr_cont") == "|") {
+             		me.set("searchParam.degr_cont", "");
+              	} else {
+              		me.set("searchParam.degr_cont", me.get("searchParam.cmms_degr_cont"));
+               	}
+
+               	// 기계가공인 경우, 개정내용 조회 : 20171116 LSM 추가
+               	if (   come_code == "GEAR" || come_code == "GRIN"
+                    || come_code == "BROA" || come_code == "GENL") {
+               		me.set("searchParam.come_code" , come_code);
+                    me.$.getMCHHDegrContInfoRPC.service();
+               	}
+
+               	// 작성자 없는 경우 처리, 가공으로 인해 bindingObject 해제 처리
+               	if (me.get("searchParam.cmms_init_cman") == "|") {
+               		me.set("searchParam.init_cman", "");
+              	} else {
+              		me.set("searchParam.init_cman", me.get("searchParam.cmms_init_cman"));
+               	}
+
+                if (rpay_code == null || rpay_code == "") {
+                    me.$.sb_rpaygubn.selectedIndex = 0;
+                }
+
+                /*
+				* 20140813_GYD 기계 가공 sub 화면에서는 연산, lot량은 기계가공 메인 테이블에서 정보를 가져온다.
+				* 기계 가공 sub 화면에서는 연산, lot량 메인 화면에서 넘겨 받는 것으로 처리(가변적인 상황을 대비하여 주석으로만 막아 놓음
+				*
+				*/
+				if (scom_code != "" && scom_code != null) {
+					if (prod_cnt0 != "" && prod_cnt0 != null) {
+						me.$.lotq_prod_cnt0.value = prod_cnt0;
+					}
+					
+					if (lotq_qty0 != "" && lotq_qty0 != null) {
+						me.$.lotq_qty0.value = lotq_qty0;
+					}
+				}
+
+				// 계산 진행상태 체크
+				me.enableSetPassStat();
+            },
+
+            /**
+			 * 기계가공 재정내용 Set : 20171116 LSM 추가
+			 */
+            setDegrCont : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+                me.set("searchParam.degr_cont", data.cont_info.comd_degr_cont);
+            },                            
+
+
+            /**
+             * formulas 선언
+             **/            
+            formulas: {
+            	isHiddenMode: function() {
+            		var me = this;
+					// 자동공법
+            		if (me.get("searchParam.meth_gubn") == "A") {
+            			return false;
+            		
+            		// 금형공법
+            		} else if (me.get("searchParam.meth_gubn") == "M") {
+            			return true;
+            		}
+            	}
+            },
+
+			/**
+			 * 화면 그리기가 완료 후 연산, LOT량을 조회
+			 */
+			getLotqInfo : function() {
+				var me = this;
+				var come_code = me.get("searchParam.come_code");
+
+				// 신규 공법 추가시 추가 필요
+				if (   come_code == "CICT" || come_code == "DIEC" || come_code == "HEAT"
+					|| come_code == "COFO" || come_code == "RUBB" || come_code == "HEFO"
+					|| come_code == "PLIJ" || come_code == "OILS" || come_code == "PRES"
+					|| come_code == "COIL" || come_code == "COSP" || come_code == "AXSH"
+					|| come_code == "SINT" || come_code == "DTCT" || come_code == "HUBB"
+					|| come_code == "PIPE" || come_code == "PIDR" || come_code == "PIWR"
+					|| come_code == "MCHH" || come_code == "BEAR" || come_code == "AUST"
+					|| come_code == "STTB" || come_code == "BRAZ" || come_code == "HOSE"
+					|| come_code == "PCBD" || come_code == "MT10" || come_code == "MT20"
+			        || come_code == "GMTF" || come_code == "BLMD" || come_code == "ALCT"
+				    || come_code == "ALMC" || come_code == "PADD" || come_code == "STPA"
+				    || come_code == "DICT" || come_code == "WBEN" || come_code == "MIMF"
+				    || come_code == "SYNC" || come_code == "AXSH" || come_code == "UNIT"
+				    || come_code == "MIMF" || come_code == "HYGE" || come_code == "WIRH"
+				    || come_code == "EWIR" || come_code == "STWA") {
+					
+					//공법 마스터 테이블에서 정보 조회
+					me.$.getCMMSInfoRPC.service();
+					
+				} else if (   come_code == "BROA" || come_code == "GRIN"
+						   || come_code == "GENL" || come_code == "GEAR") {
+
+					//기계가공 메인 테이블에서 정보 조회
+					me.$.getMCHIInfoRPC.service();
+					
+				} else if (   come_code == "MCFO" || come_code == "MCIC" || come_code == "MDIE"
+					       || come_code == "MPCA" || come_code == "MPST" || come_code == "MHFO"
+						   || come_code == "MINP" || come_code == "MSIN" || come_code == "MPLJ"
+						   || come_code == "MRUB" || come_code == "MFIN" || come_code == "MALC" ) {
+
+					//금형 마스터 테이블에서 정보 조회
+					me.$.getCMMSRpayRPC.service();
+
+					//PRESS STEEL 금형 연산 조회(예외사항)
+					if (come_code == "MPST") {
+						//공법 마스터 테이블에서 정보 조회
+						me.$.getCMMSInfoRPC.service();
+					}
+				}
+			},
+
+            /**
+			 * 년간생산갯수, LOT량 조회 데이터 Set
+			 */
+            setData : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+            	
+            	if(data.result.MESG_CODE == "SA-001") {
+                  	if (target == "getCMMSInfoRPC") {
+                       	me.set("searchParam.lotq_prod_cnt0", data.cmms_info.cmms_prod_cnt0); 
+                       	me.set("searchParam.lotq_qty0"     , data.cmms_info.cmms_lotq_qty0);
+
+                       	me.set("old_prod_cnt0", me.searchParam.lotq_prod_cnt0);
+                    }
+            	} else {
+					UT.alert(data.result.MESG);            		
+            	}
+            },
+
+            /*
+			* 상각구분 조회 데이터 Set(금형전용)
+			*/
+            setRpay : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	var rpay_code = res.result.rpay_code;
+
+                if (rpay_code == null || rpay_code == "") {
+                    me.$.sb_rpaygubn.selectedIndex = 0;
+                    
+                } else {
+                    me.set("searchParam.rpay_code", rpay_code);
+                }
+
+                me.set("searchParam.pass_stat", res.result.pass_stat);
+                me.set("searchParam.new0_stat", res.result.new0_stat);
+                me.set("searchParam.mold_stat", res.result.mold_stat);
+
+                me.enableSetPassStat();
+            },
+
+            /*
+			* 계산 진행상태 체크
+			*/
+            enableSetPassStat : function() {
+                var me = this;
+                var passStatDesc = ""; // 상태코드 명칭
+                var pass_cnt  = me.get("searchParam.pass_cnt");
+                var rpay_code = me.get("searchParam.rpay_code"); //금형코드
+                var pass_stat = me.get("searchParam.pass_stat"); //상태코드
+                var cost_gubn = me.get("searchParam.cost_gubn"); //원가구분
+                var new0_stat = me.get("searchParam.new0_stat"); 
+                var scom_code = me.get("searchParam.comd_scom_code"); // 기계가공 SUB 공법 코드
+                var path_gubn = me.get("searchParam.path_gubn"); // 진입경로 구분
+
+                // 진행상태가  가격관리전송, 결재완료 인 경우에는 계산, 초기화, 조회 버튼, 년생산갯수, lot량 상각구분 enable = false
+                if (pass_cnt != "0" && rpay_code != "L") {
+                    if (cost_gubn == "RD") {
+                        if (pass_stat == "30") {
+                        	me.$.calcBtn.disabled        = true;
+                        	me.$.resetBtn.disabled       = true;
+                        	me.$.copyBtn.disabled        = true;
+                        	me.$.lotq_prod_cnt0.disabled = true;
+                        	me.$.lotInfoImg.disabled     = true;
+                        	me.$.sb_rpaygubn.disabled    = true;
+
+                        	me.$.lotq_qty0.set("editable", false);
+                        	
+                        	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                        	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+
+                        	passStatDesc = "가격관리 전송";
+                        	
+                        } else if (pass_stat == "40") {
+                        	me.$.calcBtn.disabled        = true;
+                        	me.$.resetBtn.disabled       = true;
+                        	me.$.copyBtn.disabled        = true;
+                        	me.$.lotq_prod_cnt0.disabled = true;
+                        	me.$.lotInfoImg.disabled     = true;
+                        	me.$.sb_rpaygubn.disabled    = true;
+
+                        	me.$.lotq_qty0.set("editable", false);
+                        	
+                        	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                        	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                        	passStatDesc = "결재완료";
+                        }
+                        
+                    } else {
+                    	if (pass_stat == "30") {
+                        	me.$.calcBtn.disabled        = true;
+                        	me.$.resetBtn.disabled       = true;
+                        	me.$.copyBtn.disabled        = true;
+                        	me.$.lotq_prod_cnt0.disabled = true;
+                        	me.$.lotInfoImg.disabled     = true;
+                        	me.$.sb_rpaygubn.disabled    = true;
+
+                        	me.$.lotq_qty0.set("editable", false);
+                        	
+                        	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                        	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                        	passStatDesc = "결재요청";
+                        	
+                        } else if (pass_stat == "2C") {
+                        	me.$.calcBtn.disabled        = true;
+                        	me.$.resetBtn.disabled       = true;
+                        	me.$.copyBtn.disabled        = true;
+                        	me.$.lotq_prod_cnt0.disabled = true;
+                        	me.$.lotInfoImg.disabled     = true;
+                        	me.$.sb_rpaygubn.disabled    = true;
+
+                        	me.$.lotq_qty0.set("editable", false);
+                        	
+                        	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                        	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                        	passStatDesc = "계산완료";
+                        } else if (pass_stat == "40") {
+                        	me.$.calcBtn.disabled        = true;
+                        	me.$.resetBtn.disabled       = true;
+                        	me.$.copyBtn.disabled        = true;
+                        	me.$.lotq_prod_cnt0.disabled = true;
+                        	me.$.lotInfoImg.disabled     = true;
+                        	me.$.sb_rpaygubn.disabled    = true;
+
+                        	me.$.lotq_qty0.set("editable", false);
+                        	
+                        	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                        	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                        	passStatDesc = "결재완료";
+                        }
+                    }
+
+                    if (passStatDesc == null || StringUtil.trim(passStatDesc) == "") {
+                    	me.$.passMsg.text = "";
+                    } else {
+                    	me.$.passMsg.text = "( 진행상태 : "+passStatDesc+" )";
+                    }
+                    
+                } else if (cost_gubn == "L") {
+                	//설계 개발 동일하게 작업 GYD
+					//일시불인 경우는 언제든지 수정 가능하게 처리
+					if (new0_stat == "30") {
+                       	me.$.calcBtn.disabled        = true;
+                       	me.$.resetBtn.disabled       = true;
+                       	me.$.copyBtn.disabled        = true;
+                       	me.$.lotq_prod_cnt0.disabled = true;
+                       	me.$.lotInfoImg.disabled     = true;
+                       	me.$.sb_rpaygubn.disabled    = true;
+
+                       	me.$.lotq_qty0.set("editable", false);
+                       	
+                       	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                       	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                       	passStatDesc = "가격관리 전송";
+                       	
+                    } else if (new0_stat == "2C") {
+                       	me.$.calcBtn.disabled        = true;
+                       	me.$.resetBtn.disabled       = true;
+                       	me.$.copyBtn.disabled        = true;
+                       	me.$.lotq_prod_cnt0.disabled = true;
+                       	me.$.lotInfoImg.disabled     = true;
+                       	me.$.sb_rpaygubn.disabled    = true;
+
+                       	me.$.lotq_qty0.set("editable", false);
+                       	
+                       	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                       	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                       	passStatDesc = "계산완료";
+                    } else if (new0_stat == "40") {
+                       	me.$.calcBtn.disabled        = true;
+                       	me.$.resetBtn.disabled       = true;
+                       	me.$.copyBtn.disabled        = true;
+                       	me.$.lotq_prod_cnt0.disabled = true;
+                       	me.$.lotInfoImg.disabled     = true;
+                       	me.$.sb_rpaygubn.disabled    = true;
+
+                       	me.$.lotq_qty0.set("editable", false);
+                       	
+                       	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffff";
+                       	me.$.lotq_qty0.style.backgroundColor      = "#ffffff";
+                       	passStatDesc = "결재완료";
+                 	}
+
+					if (passStatDesc == null || StringUtil.trim(passStatDesc) == "") {
+                    	me.$.passMsg.text = "";
+                    } else {
+                    	me.$.passMsg.text = "( 진행상태 : "+ passStatDesc + " )";
+                    }
+                    
+                } else {
+
+                	me.$.calcBtn.disabled        = false;
+                	me.$.calcBtn.disabled        = false;
+                   	me.$.resetBtn.disabled       = false;
+                   	me.$.copyBtn.disabled        = false;
+                   	me.$.lotq_prod_cnt0.disabled = false;
+                   	me.$.lotInfoImg.disabled     = false;
+                   	me.$.sb_rpaygubn.disabled    = false;
+
+                   	//me.$.lotq_qty0.editable = false;
+                   	//me.$.lotq_qty0.set("editable", false);
+                   	me.$.lotq_qty0.setAttribute("editable", "false");
+                   	
+                   	me.$.lotq_prod_cnt0.style.backgroundColor = "#ffffcc";
+                   	me.$.lotq_qty0.style.backgroundColor      = "#ffffcc";
+                   	passStatDesc = "";
+
+                 	// 다시한번 해당 공법
+					me.setComeCode();
+                }
+
+             	// 기계가공 서브 화면에서는 복사버튼 숨김 처리
+             	if (scom_code != "" && scom_code != null) {
+                 	var tempScomCode = scom_code.substr(0, 4);
+
+                 	if (   tempScomCode == "GEAR" || tempScomCode == "GRIN"
+               			|| tempScomCode == "BROA" || tempScomCode == "GENL") {
+                 		me.$.copyBtn.hidden = true
+                 		// 결과 조회는 메인 공법화면에서만 사용
+              			me.$.resultBtn.hidden = true;
+                 		me.$.closeBtn.hidden = false;
+               			/*
+						* 기계 가공 sub화면에서 각 공법별로 연산, lot량 처리하도록 수정
+						* 기계가공 메인에서 데이터를 가져와서 처리 할 경우 edit 기능을 막음(추후 변경 사항을 대비하여 주석으로 막아놓음)
+						*/              			
+                 		
+						me.$.lotq_prod_cnt0.set("editable", false);
+						me.$.lotq_qty0.set("editable", false);
+						me.$.lotq_prod_cnt0.backgroundColor = "#E7E7E7";
+						me.$.lotq_qty0.style.backgroundColor = "#E7E7E7";
+						
+           			} else {
+                 		me.$.closeBtn.hidden = true;
+           			}
+              	}
+
+              	// 금형비 화면 진입 시 조회 기능만 되도록 다시 한 번 처리
+              	if (path_gubn == "CM02") {
+              		me.$.copyBtn.setAttribute("hidden", "hidden");
+              		me.$.resetBtn.setAttribute("hidden", "hidden");
+              		me.$.calcBtn.setAttribute("hidden", "hidden");
+              	}
+            }, 
+
+			/**
+			 * _01.html 파일에서 es-cacm-01 부분을 직접 접근해 사용
+			 */
+			setComeCode : function() {
+				var me = this;
+
+				var come_code  = me.get("searchParam.come_code");
+
+				if (   come_code == "CICT" || come_code == "DIEC" || come_code == "HEAT" || come_code == "BEAR" || come_code == "SINT"
+					|| come_code == "COIL" || come_code == "DTCT" || come_code == "PIPE" || come_code == "PIDR" || come_code == "PIWR"
+					|| come_code == "STTB" || come_code == "HOSE" || come_code == "PCBD" || come_code == "MT10" || come_code == "MT20"
+					|| come_code == "BLMD" || come_code == "ALCT" || come_code == "ALMC" || come_code == "STPA" || come_code == "DICT"
+					|| come_code == "GMTF" || come_code == "UNIT" || come_code == "MIMF" || come_code == "SYNC" || come_code == "HYGE"
+					|| come_code == "WIRH" || come_code == "EWIR" || come_code == "STWA") {
+					me.$.lotInfoImg.setAttribute("hidden", "hidden");
+				} else if (come_code=="BROA" || come_code=="GRIN" || come_code=="GENL" || come_code=="GEAR" || come_code=="MCHH") {
+					if (come_code == "MCHH") {
+						
+					} else {
+						me.$.lotq_prod_cnt0_Lb.removeAttribute("hidden");
+						me.$.lotq_prod_cnt0.removeAttribute("hidden");
+						me.$.lotLbl.removeAttribute("hidden");
+						me.$.lotInfoImg.setAttribute("hidden", "hidden");
+						me.$.lotq_qty0.removeAttribute("hidden");
+						
+	                   	me.$.lotq_prod_cnt0.disabled = true;
+	                   	me.$.lotq_qty0.disabled      = true;
+	                   	
+	                   	me.$.lotq_prod_cnt0.required = false;
+	                   	me.$.lotq_qty0.required      = false;
+
+	                   	me.$.lotq_prod_cnt0.style.backgroundColor = "";
+	                   	me.$.lotq_qty0.style.backgroundColor      = "";
+					}
+					
+				} else if (   come_code=="ANOD" || come_code=="ZNAL" || come_code=="STCT" || come_code=="STGC"
+						   || come_code=="WELD" || come_code=="TERM" || come_code=="HOUS" || come_code=="BOLT"
+						   || come_code=="NIZN" || come_code=="NUTT" || come_code=="PLEX" || come_code=="SEWW" 
+						   || come_code=="FWEL" || come_code=="LAMN") {
+					me.$.lotq_prod_cnt0_Lb.setAttribute("hidden", "hidden");
+					me.$.lotq_prod_cnt0.setAttribute("hidden", "hidden");
+					me.$.lotLbl.setAttribute("hidden", "hidden");
+					me.$.lotInfoImg.setAttribute("hidden", "hidden");
+					me.$.lotq_qty0.setAttribute("hidden", "hidden");
+
+				} else if (   come_code=="MCFO" || come_code=="MCIC" || come_code=="MDIE" || come_code=="MHFO"
+					       || come_code=="MPCA" || come_code=="MPST" || come_code=="MINP" || come_code=="MPRO" 
+					       || come_code=="MCHK" || come_code=="MCFO" || come_code=="MSIN" || come_code=="MPLJ" 
+					       || come_code=="MRUB" || come_code=="MFIN" || come_code=="MALC") {
+					me.$.lotq_prod_cnt0_Lb.setAttribute("hidden", "hidden");
+					me.$.lotq_prod_cnt0.setAttribute("hidden", "hidden");
+					me.$.lotInfoImg.setAttribute("hidden", "hidden");
+					me.$.lotq_qty0.setAttribute("hidden", "hidden");
+					
+						// PRESS STEEL 금형은 연산 입력 받음(예외처리)
+						if (come_code=="MPST") {
+							me.$.lotq_prod_cnt0_Lb.removeAttribute("hidden");
+							me.$.lotq_prod_cnt0.removeAttribute("hidden");
+						}
+
+						me.$.lotLbl.text = "상각구분";
+						me.$.sb_rpaygubn.removeAttribute("hidden");
+						
+				// LOT 미사용 공법
+				} else if (come_code=="HUBB") {
+					me.$.lotLbl.setAttribute("hidden", "hidden");
+					me.$.lotInfoImg.setAttribute("hidden", "hidden");
+					me.$.lotq_qty0.setAttribute("hidden", "hidden");
+				} else if (come_code=="AUST") {
+					if (me.searchParam.degr_desc == "12-2") {
+						me.$.lotLbl.setAttribute("hidden", "hidden");
+						me.$.lotInfoImg.setAttribute("hidden", "hidden");
+						me.$.lotq_qty0.setAttribute("hidden", "hidden");						
+					} else {
+						me.$.lotInfoImg.setAttribute("hidden", "hidden");
+						me.$.lotq_qty0.disabled = true;
+					}
+				}
+			},                         			              
+
+            /*
+			* 계산
+			*/
+            askCalc : function() {
+                var me = this;
+
+                if (me.get("searchParam.rpay_code") == "L") {
+                	me.$.getMoldPassStatRPC.service();
+                } else {
+                	me.$.getPassStatRPC.service();
+                }
+            },
+
+            /*
+			* 계산 실행상태 유무 체크
+			*/
+            checkPassStat : function() {
+                var me = this;
+
+                var rpay_code = me.get("searchParam.rpay_code");
+                var new0_stat = me.get("passCnt.new0_stat");
+                var mold_stat = me.get("passCnt.mold_stat");
+                var come_code = me.get("searchParam.come_code");
+
+                if (rpay_code == "L") {
+                    if (new0_stat == "2C" || new0_stat == "30" || new0_stat == "40") {
+                        UT.alert("이미 결재진행중/결재완료/계산완료 되었습니다.\n계산이 불가능합니다.");
+                        return;
+                        
+                    } else if (mold_stat == "30" || mold_stat == "40") {
+                    	UT.alert("수정금형이 결재진행중이거나\n결재완료되었습니다.\n계산이 불가능합니다.");
+                        return;
+                    }
+                    
+                } else if (rpay_code != "L" && (new0_stat == "2C" || new0_stat == "30" || new0_stat == "40")) {
+                	UT.alert("END ITEM 진행상태가 대상, 작성중이 아니면\n계산이 불가능합니다.");
+                    return;
+                }
+                
+                UT.confirm("실행 하시겠습니까?", function() {
+                    me.calc();
+                });
+                
+            },
+
+            /*
+			*  계산상태 체크 후 실행 여부에서 예를 선택할 때 발생
+			*/
+            calc : function() {
+                var me = this;
+
+                var come_code = me.get("searchParam.come_code");
+
+             	// OILS LOT량 자동조회
+             	if (come_code == "OILS") {
+                 	me.set("searchParam.prod_cnt0", me.$.lotq_prod_cnt0.value);
+                 	me.fire("get-item-type");
+                 	me.$.getOilsLotqListRPC.service();
+
+              	} else {
+                  	me.goCMMS();
+               	}
+            },            
+
+            /**
+             * 공법 마스터 호출
+             **/			
+			goCMMS : function() {
+				var me = this;
+
+				var come_code = me.get("searchParam.come_code");
+
+				// 자동공법
+				if (   come_code == "CICT" || come_code == "DIEC" || come_code == "HEAT" || come_code == "COFO" || come_code == "RUBB" 
+					|| come_code == "HEFO" || come_code == "PLIJ" || come_code == "OILS" || come_code == "PRES" || come_code == "AXSH" 
+					|| come_code == "COIL" || come_code == "COSP" || come_code == "SINT" || come_code == "DTCT" || come_code == "HUBB" 
+					|| come_code == "HOSE" || come_code == "PIPE" || come_code == "PIDR" || come_code == "PIWR" || come_code == "MCHH" 
+					|| come_code == "BEAR" || come_code == "AUST" || come_code == "STTB" || come_code == "BRAZ" || come_code == "PCBD"
+					|| come_code == "MT10" || come_code == "MT20" || come_code == "GMTF" || come_code == "BLMD" || come_code == "ALCT"
+					|| come_code == "ALMC" || come_code == "PADD" || come_code == "STPA" || come_code == "AXSH" || come_code == "UNIT"
+					|| come_code == "DICT" || come_code == "WBEN" || come_code == "MIMF" || come_code == "SYNC" || come_code == "HYGE"
+					|| come_code == "WIRH" || come_code == "EWIR" || come_code == "STWA") {
+					// 핍수 입력 체크 후 저장 로직 호출
+					if (me.validationCheck()) {
+						// 자동 공법 마스터 UPDATE 호출
+						me.$.updateCMMSInfoRPC.service();
+					} else {
+						return;
+					}
+				} else if (   come_code=="MCFO" || come_code=="MCIC" || come_code=="MDIE" || come_code=="MPCA" || come_code=="MPST" || come_code=="MCHK"
+					       || come_code=="MHFO" || come_code=="MINP" || come_code=="MPRO" || come_code=="MSIN" || come_code=="MPLJ" || come_code=="MRUB"
+						   || come_code=="MFIN" || come_code=="MALC") {
+					// 금형 공법 마스터 UPDATE 호출
+					me.$.updateCMMSRpayRPC.service();
+					return;
+				} else {
+					me.sendCalcEvent();	
+				}
+			},
+
+			/**
+			 * 필수입력 Validation Check(일반)
+			 */
+			 validationCheck : function() {
+				 var me = this;
+
+				 var prod_cnt0 = me.get("searchParam.lotq_prod_cnt0");
+				 var lotq_qty0 = me.get("searchParam.lotq_qty0");
+				 var come_code = me.get("searchParam.come_code");
+				 var inds_code = me.get("searchParam.inds_code");
+
+				 // SEAT WARMER공법의 경우, 년간생산갯수 LOT구분 숨겨진 경우 값 clear 처리 
+				 if (come_code == "STWA") {
+					// 년간생산갯수 활성화인 경우만 값 저장
+					if (me.$.lotq_prod_cnt0.hidden == true) {
+						me.$.lotq_prod_cnt0.value = null;
+					}
+
+					// LOT수 활성화인 경우만 값 저장
+					if (me.$.lotq_qty0.hidden == true) {
+						me.$.lotq_qty0.value = null;
+					}
+				 }
+
+				 if (me.$.lotq_prod_cnt0.hidden == false) {
+					 if (prod_cnt0 == null || prod_cnt0 == "" || prod_cnt0 == 0) {
+						 UT.alert("년간생산갯수는 필수입력 항목입니다.");
+						 return false;
+					 }
+				 }
+
+				 if (me.$.lotq_qty0.hidden == false) {
+					// 기계가공, HUBB LOT량 체크 해제 처리
+					if (   come_code == "HUBB" || come_code == "GRIN"
+						|| inds_code== "KA"    || come_code == "GEAR"
+						|| come_code == "BROA" || come_code == "GENL") {
+						return true;
+						
+					} else {
+						if (lotq_qty0 == null || lotq_qty0 == "" || lotq_qty0 == 0) {
+							UT.alert("LOT량은 필수입력 항목입니다.");
+							return false;
+						}
+					}
+				 }
+
+				return true;
+			 },
+
+            /*
+			* 계산 실행 이벤트 호출
+			*/
+            sendCalcEvent : function() {
+                var me = this;
+            	// 금형공법 결과화면 처리를 위한 Flag
+				// 계산을 실행해서 결과화면으로 갈 경우엔 첫번째 금형공법 코드의 값을 display 해주기위한 처리
+				// 이값은 Service 에서 사용한다. get.mold.totl
+				me.set("searchParam.calc_flag", "Y");
+				me.fire("calculate");
+            },
+
+            /*
+			* LOT량 조회 데이터 Set(OILS)
+			*/
+            setLotqQty0 : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+            	
+            	var come_code = me.get("searchParam.come_code");
+
+                if (come_code == "OILS") {
+                    if (data.list.length > 0) {
+                        //me.$.searchParam.lotq_qty0 = data.list[0].lotq_qty0;
+                        me.set("searchParam.lotq_qty0", data.list[0].lotq_qty0);
+                        
+                        if (me.goCMMS()) {
+                        	me.fire("calculate");
+                        }
+                        
+                    } else {
+                        UT.alert("LOT량이 존재하지 않습니다.\rITEM구분과 년간생산갯수를 확인하세요.");
+                    }
+                }
+            },            
+
+            /*
+			* BOLT LOT량 기초데이터 초기화
+			*/
+            clearBoltData : function() {
+                var me = this;
+             	// 이전 호칭경, Bolt 길이 초기화
+             	me.set("searchParam.dia0_data", "");
+             	me.set("searchParam.leng_data", "");
+            },
+
+            /**
+			 *  초기화 버튼 클릭 시 이벤트
+			 */
+			init : function() {
+				var me = this;
+				me.fire("init-data");
+			},
+
+			/**
+			 *  조회 버튼 클릭 시 이벤트
+			 */
+			getInfo : function() {
+				var me = this;
+				
+				me.fire("get-info");
+
+				var come_code = me.get("searchParam.come_code");
+
+				if (   come_code == "CICT" || come_code == "DIEC" || come_code == "HEAT"
+					|| come_code == "COFO" || come_code == "RUBB" || come_code == "HEFO"
+					|| come_code == "PLIJ" || come_code == "OILS" || come_code == "PRES"
+					|| come_code == "COIL" || come_code == "COSP" || come_code == "AXSH"
+					|| come_code == "SINT" || come_code == "DTCT" || come_code == "HUBB"
+					|| come_code == "PIPE" || come_code == "PIDR" || come_code == "PIWR"
+					|| come_code == "MCHH" || come_code == "BEAR" || come_code == "AUST"
+					|| come_code == "STTB" || come_code == "BRAZ" || come_code == "HOSE"
+					|| come_code == "PCBD" || come_code == "MT10" || come_code == "MT20"
+					|| come_code == "GMTF" || come_code == "BLMD" || come_code == "ALCT"
+					|| come_code == "ALMC" || come_code == "PADD" || come_code == "STPA"
+					|| come_code == "DICT" || come_code == "WBEN" || come_code == "MIMF"
+					|| come_code == "SYNC" || come_code == "AXSH" || come_code == "UNIT"
+					|| come_code == "HYGE" || come_code == "WIRH" || come_code == "EWIR") {
+					
+					//공법 마스터 테이블에서 정보 조회
+					me.$.getCMMSInfoRPC.service();
+				} else if (   come_code == "BROA" || come_code == "GRIN"
+						   || come_code == "GENL" || come_code == "GEAR") {
+
+					//기계가공 메인 테이블에서 정보 조회
+					me.$.getMCHIInfoRPC.service();
+				} else if (   come_code == "MCFO" || come_code == "MCIC" || come_code == "MDIE"
+					       || come_code == "MPCA" || come_code == "MPST" || come_code == "MHFO"
+						   || come_code == "MINP" || come_code == "MSIN" || come_code == "MPLJ"
+						   || come_code == "MRUB" || come_code == "MFIN" || come_code == "MALC" ) {
+					me.$.getCMMSRpayRPC.service(); 
+				}
+			},
+
+			/**
+			 * 결과 조회
+			 */
+			getResult : function() {
+				var me = this;
+				
+				me.fire("result-calc");
+			},
+
+			/*
+			* LOT량  Popup 추가작업 필요
+			*/
+            lotqGubnPopup : function(){
+            	var me   = this;
+            	var gubn = me.get("searchParam.come_code");
+            	var tmpParam = {};
+
+            	me.set("searchParam.inds_code", me.get("searchParam.cmms_inds_code"));
+            	me.set("searchParam.prod_cnt0", me.get("searchParam.lotq_prod_cnt0"));
+            	
+            	if (me.$.lotq_prod_cnt0.value != null && me.$.lotq_prod_cnt0.value != "" && me.$.lotq_prod_cnt0.value != "0") {
+
+                   	me.set("param", me.get("tmpParam"));
+
+   					me.lotqPopup = UT.popup("es-cacm-04", me, 600, 400, {
+   						"selected-items" : function(popup, e) {
+   							var selected = e.detail;
+   							
+   							// 선택 완료 후 callback
+   			    			me.onPopupSelectedItems("es-cacm-04", selected);
+   							popup.close();
+   						}
+   		            }, {title: me.translate("LOT량 정보")});
+
+                	me.lotqPopup.show();
+
+                	// BRAZING, WIRE BENDING --> PRESS기준
+                	// 일반PAD                --> 내장 적용
+                	if (gubn == "BRAZ" || gubn == "WBEN" || gubn == "PADD") {
+	            		me.set("tmpParam", {});
+	            		me.set("tmpParam", UT.copy(me.get("searchParam")));
+
+	            		// BRAZING, WIRE BENDING
+	            		if (gubn == "BRAZ" || gubn == "WBEN") {
+		            		me.set("tmpParam.come_code", "PRES");
+		            		me.set("tmpParam.inds_code", "P2");
+
+	            		// 일반PAD
+	            		} else if (gubn == "PADD") {
+	            			me.set("tmpParam.come_code", "ETC");
+		            		me.set("tmpParam.inds_code", "MO");
+	            		}
+	            		
+	    				me.lotqPopup.getWindowContent().load({singleSelect : true, defaultParam : me.tmpParam});
+
+	    			// AXLE SHAFT소재 열간단조 PRESS LOT적용
+                   	} else if (gubn == "AXSH") {
+                   		me.set("tmpParam", {});
+	            		me.set("tmpParam", UT.copy(me.get("searchParam")));
+	            		me.set("tmpParam.come_code", "HEFO");
+                       	
+	            		me.lotqPopup.getWindowContent().load({singleSelect : true, defaultParam : me.tmpParam});
+	            		
+                   	} else {
+	    				me.lotqPopup.getWindowContent().load({singleSelect : true, defaultParam : me.searchParam});
+                   	}
+                	
+               	} else {
+                   	UT.alert("년간생산갯수를 입력하세요.", function() {
+                   		me.$.lotq_prod_cnt0.focus();
+    				});
+               	}
+            },
+
+          	/*
+			* 팝업에서 선택된 아이템  반환
+            */
+            onPopupSelectedItems : function(sPopupID, pRows) {
+            	var me = this;
+
+            	//LOT 팝업
+                if (sPopupID == "es-cacm-04") {
+                    me.$.lotq_qty0.value      = pRows.lotq_qty0;
+                    me.$.lotq_prod_cnt0.value = pRows.prod_cnt0;
+
+                    me.lotChangeEventHandler();
+                }
+            },
+
+            /*
+			* 공법에 따른 LOT량 팝업 param SET(OILS) -- 미사용??
+			*/
+			setItemData : function(data) {
+				var me = this;
+
+				me.set("searchParam.dia0_data", data);
+			},
+
+            /*
+			* 공법에 따른 LOT량 팝업 param SET(BOLT) -- 미사용??
+			*/
+			setBoltLengData : function(data) {
+				var me = this;
+
+				me.set("searchParam.leng_data", data);
+			},
+
+            /*
+			* 년간생산갯수 Change Event Handler
+			*/
+			prodChangeEventHandler : function() {
+				var me = this;
+
+				var come_code = me.get("searchParam.come_code");
+
+				if (   come_code == "PRES" || come_code == "COSP" || come_code == "HUBB"
+					|| come_code == "BEAR" || come_code == "AUST" || come_code == "STTB"
+					|| come_code == "BRAZ" || come_code == "MCHH" || come_code == "SINT"
+					|| come_code == "RUBB" || come_code == "MPST" || come_code == "GMTF"
+					|| come_code == "ALCT" || come_code == "ALMC" || come_code == "BLMD"
+					|| come_code == "STPA" || come_code == "WBEN" || come_code == "MIMF"
+					|| come_code == "PADD") {
+						me.fire("prod-change");
+					}
+			},
+
+			/*
+			* 년간생산갯수 변경시 -> LOT량 자동 조회
+			*/
+			setLotqData : function(e) {
+				var me = this;
+				
+				var newVal = e.target.value;
+				
+				if(me.old_prod_cnt0 == newVal) {
+					return;
+				} else {
+					me.set("old_prod_cnt0", newVal);
+				}
+				
+				//me.set("searchParam.tmp_come_code", me.get("searchParam.come_code"));
+				//me.set("searchParam.tmp_inds_code", me.get("searchParam.inds_code"));
+				
+				var come_code = me.get("searchParam.come_code");
+				var inds_code = me.get("searchParam.inds_code");
+				me.set("lotParam", UT.copy(me.get("searchParam")));
+				
+
+				if (me.get("searchParam.pass_cnt") != "0") {
+					// 작성중인 경우 재계산 처리 막음
+					
+				} else {
+					if (   come_code == "CICT" || come_code == "DIEC" || come_code == "SINT"
+						|| come_code == "BEAR" || come_code == "AUST" || come_code == "STTB"
+						|| come_code == "COIL" || come_code == "DTCT" || come_code == "PIPE"
+						|| come_code == "PIDR" || come_code == "PIWR" || inds_code == "KA"
+						|| come_code == "MCHH" || come_code == "HOSE" || come_code == "PCBD"
+						|| come_code == "MT10" || come_code == "MT20" || come_code == "BLMD"
+						|| come_code == "ALCT" || come_code == "ALMC" || come_code == "STPA"
+						|| come_code == "SYNC" || come_code == "GMTF" || come_code == "UNIT"
+						|| come_code == "MIMF" || come_code == "HYGE" || come_code == "WIRH"
+						|| come_code == "EWIR" || come_code == "STWA") {
+
+						// 년간생산수량 입력(존재)하는 경우에만 LOT량 자동 조회 처리
+						if (UT.isNotEmpty(me.$.lotq_prod_cnt0.value)) {
+							me.set("lotParam.prod_cnt0", me.$.lotq_prod_cnt0.value);
+	
+							// PIPE 인발,가공은 총론에 명기된 프레스 소물500mm미만 후처리미실시로 처리
+							if (come_code == "PIPE" || come_code == "PIDR" || come_code == "PIWR") {
+								me.set("lotParam.come_code"      , "PRES");
+								me.set("lotParam.inds_code"      , "P2");
+								me.set("lotParam.lotq_detl_name1", "소물 500mm미만");
+								me.set("lotParam.lotq_detl_name2", "후처리 미실시");
+							}
+	
+							// 열처리는 기계가공 기준으로 처리
+							if (come_code == "HEAT") {
+								me.set("lotParam.come_code"      , "MCHH");
+								me.set("lotParam.inds_code"      , "KA");
+								me.set("lotParam.lotq_detl_name1", "");
+								me.set("lotParam.lotq_detl_name2", "");
+							}
+	
+							//ETC(상기 외 기준) 기준으로 처리
+							//PCB & CURCUIT or MOTOR or 환경차모터  or UNIT or SEAT WARMER(제품구분 UNIT인 경우만)
+							if (come_code == "PCBD" || come_code == "MT10" || come_code == "MT20" || come_code == "UNIT" || come_code == "HYGE" || come_code == "STWA") {
+								me.set("lotParam.come_code", "ETC");
+								me.set("lotParam.inds_code", "MO");
+							}
+	
+							// GMT성형, BLOW MOLDING => PL사출 PRESS중물(100mm초과) 기준으로 처리
+							if (come_code == "GMTF" || come_code == "BLMD") {
+								me.set("lotParam.come_code"      , "PLIJ");
+								me.set("lotParam.inds_code"      , "PL");
+								me.set("lotParam.lotq_detl_name1", "PL 사출");
+								me.set("lotParam.lotq_detl_name2", "중물(100mm초과)");
+							}
+	
+							// 금속분말 사출성형(MIM) => 소결 기준으로 처리
+							if (come_code == "MIMF") {
+								me.set("lotParam.come_code", "SINT");
+							}
+	
+							// AL사형주조, SYNCHRONIZER RING, 정밀주조 주철주조 기준으로
+							if (come_code == "ALMC" || come_code == "SYNC" || come_code == "DTCT") {
+								me.set("lotParam.come_code", "CICT");
+								me.set("lotParam.inds_code", "CT");
+							}
+
+							// EXTENTION WIRING => WIR'G HARNESS 기준으로 처리
+							if (come_code == "EWIR") {
+								me.set("lotParam.come_code", "WIRH");
+							}
+	
+							me.$.getLotqListRPC.service();
+						}
+					}
+				}
+			},
+
+			/*
+			* SET LOT량 데이터
+			*/
+			lotqDataSet : function(e, res) {
+				var me = this,
+            	//data = res.response,
+            	target = e.currentTarget.id;
+
+				//me.set("searchParam.come_code", me.get("searchParam.tmp_come_code"));
+				//me.set("searchParam.inds_code", me.get("searchParam.tmp_inds_code"));
+				
+				if (res.list.length > 0) {
+					me.$.lotq_qty0.value = res.list[0].lotq_qty0;
+
+					if (me.searchParam.come_code == "STTB") {
+						me.fire("set-sttb-lotq");
+					}
+				}
+
+				if (me.searchParam.come_code == "MCHH") {
+					me.lotChangeEventHandler();
+				}
+			},
+
+			/**
+			 *  lot change
+			 */
+			lotChangeEventHandler : function() {
+				var me = this;
+				var come_code = me.get("searchParam.come_code");
+
+				if (come_code == "GMTF" || come_code == "MCHH" || come_code == "STTB" || come_code == "COSP" ) {
+					me.fire("change-lot");
+				}
+	        }, 			
+
+			/*
+			* 수정금형 상각구분 Editable = false Set
+			*/
+			setRpayDisabled : function() {
+				var me = this;
+				
+				me.$.sb_rpaygubn.disabled = true;
+			},
+
+			/*
+			* 수정금형 타이틀 Set
+			*/
+			setTitle : function(title) {
+				var me = this;
+				me.set("searchParam.title", title);
+			},
+
+			/**
+			 *  상각구분 change
+			 */
+			rpayChange : function() {
+				var me = this;
+
+				var come_code = me.get("searchParam.come_code");
+
+				// 영구 상각 - P
+				// 일시불 - L
+				if (   come_code == "MHFO" || come_code == "MDIE" || come_code == "MPST"
+					|| come_code == "MINP" || come_code == "MPRO" || come_code == "MCHK"
+					|| come_code == "MCFO" || come_code == "MSIN" || come_code == "MPLJ"
+					|| come_code == "MRUB" || come_code == "MPCA" || come_code == "MCIC"
+					|| come_code == "MFIN" || come_code == "MALC") {
+
+					me.fire("rpay-change");
+				}
+			},
+
+			/**
+			 *  복사 : Event Patch
+			 */
+			copy : function() {
+				var me = this;
+
+				me.fire("copy");
+			},
+
+            onClose: function () {
+                var me = this;
+                
+                me.fire("close");
+            },   
+			
+			/**
+			 *  SEAT WARMER공법의 경우
+			 *  적용부품이 SEAT WARMER UNIT인 경우만 년간생산갯수와 LOT구분 활성화 가능
+			 */
+			setVisibleSTWA : function(gubn) {
+				var me = this;
+
+				// SEAT WARMER 제품구분이 SEAT WARMER UNIT인 경우만 년간생산갯수와 LOT구분 활성화 가능
+				if (gubn == "UNIT") {
+					me.$.lotq_prod_cnt0_Lb.hidden = false;
+					me.$.lotq_prod_cnt0.hidden    = false;
+					me.$.lotLbl.hidden            = false;
+					me.$.lotq_qty0.hidden         = false;
+				} else {
+					me.$.lotq_prod_cnt0_Lb.hidden = true;
+					me.$.lotq_prod_cnt0.hidden    = true;
+					me.$.lotLbl.hidden            = true;
+					me.$.lotq_qty0.hidden         = true;
+				}
+			}
+        });
+	</script>
+</dom-module>

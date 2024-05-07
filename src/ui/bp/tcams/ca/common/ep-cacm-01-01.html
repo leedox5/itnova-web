@@ -1,0 +1,183 @@
+<dom-module id="ep-cacm-01-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : LOT량 적용기준 팝업
+        ** @Description     :
+        ** @Author          : sdMoon
+        ** @Create Date     : 2017.05.18
+        ** @History         : 2017.05.18 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+		<sc-request-group>
+			<!-- 코드 조회 -->
+			<sc-ajax
+					id="findCodeList"
+					url="findCodeListCacm_01_01.do"
+					body="{{searchParam}}"
+					on-response="completeFindCodeList">
+			</sc-ajax>
+		</sc-request-group>    
+		
+		<!-- LOT량 적용기준 조회 -->
+		<sc-ajax
+				id="findList"
+				url="findListCacm_01_01.do"
+				body="{{searchParam}}"
+				last-response="{{resultList}}">
+		</sc-ajax>
+        
+        <cc-auth-checker check-list="auth-r"></cc-auth-checker>
+        
+		<cc-search-container on-search="onSearch" validation-group="search" auth-r>
+			<table>
+				<colgroup>
+		       		<col style="width:150px">
+		       		<col>
+		     	</colgroup>
+				<tr>
+					<th><sc-label text="구분"></sc-label></th>
+					<td>
+                        <sc-combobox-field
+                                display-field="label" value-field="data"
+                                items="{{codes.detlCode1List}}" value="{{searchParam.detl_name1}}" placeholder="전체">
+                        </sc-combobox-field>
+					</td>
+				</tr>
+				<tr>
+					<th><sc-label text="상세구분"></sc-label></th>
+					<td>
+                        <sc-combobox-field
+                                display-field="label" value-field="data"
+                                items="{{codes.detlCode2List}}" value="{{searchParam.detl_name2}}" placeholder="전체">
+                        </sc-combobox-field>
+					</td>
+				</tr>
+				<tr>
+					<th><sc-label text="연간 생산갯수"></sc-label></th>
+					<td>
+						<sc-text-field value="{{searchParam.prod_cnt}}" on-enter="onEnterSearch" max-length="18"></sc-text-field>
+					</td>
+				</tr>				
+			</table>
+		</cc-search-container>
+		
+		<sc-grid id="gridPanel"	data-provider="{{resultList}}" class="flex" use-state="false" selection-mode="radio">
+	         	<cc-grid-toolbar>
+				<sc-button text="선택" on-click="onSelectedList"></sc-button>
+          	 	</cc-grid-toolbar>
+			<sc-grid-columns>
+				<sc-data-column data-field="prod_name" header-text="연간 생산갯수" width="100" text-align="center"></sc-data-column>
+				<sc-data-column data-field="qty"       header-text="LOT"           width="100" text-align="center"></sc-data-column>
+				<sc-data-column	data-field="appl_date" header-text="적용일"	       width="100" text-align="center" format-type="date"></sc-data-column>
+			</sc-grid-columns>
+		</sc-grid>
+	</template>
+
+	<script>
+		Polymer({
+			is: "ep-cacm-01-01",
+			properties: {
+                codes: {
+                    type: Object,
+                    reset: false,
+                    value: function() {
+                        return {
+                        	detlCode1List: [],
+                        	detlCode2List: []
+                        }
+                    }
+                },
+
+                // 조회조건
+                searchParam: {
+                    type: Object,
+                    value: function() {
+                        return {};
+                    }
+                },
+
+                // 조회 결과 
+                resultMap: {
+                	type: Object,
+                    value: function() {
+                        return {};
+                    }
+                }
+            },
+
+            /******************************
+             * 초기화 설정
+             ******************************/
+            // 초기화 완료 후 호출 함수
+            initialized: function() {
+                var me = this;
+                
+            },
+
+            load: function(options) {
+                var me = this;
+                options = options || {};
+
+                // 전달값 조회조건에 설정
+                me.set("searchParam", options.defaultParam);
+
+                // 조회조건 콤보 조회
+                UT.request(me.$.findCodeList);
+            },              
+            
+            // 코드 목록 조회 callback
+            completeFindCodeList: function(e, res) {
+                var me = this;
+                
+                me.set("codes.detlCode1List", res.response.detl_code1);
+                me.set("codes.detlCode2List", res.response.detl_code2);
+                
+                // GRID 조회
+                me.onSearch();
+            },
+            
+            /******************************
+             * 버튼 이벤트
+             ******************************/
+            // 엔터키 조회
+            onEnterSearch: function(){
+                var me = this;
+
+                me.onSearch();
+            },
+
+         	// GRID 조회
+            onSearch: function() {
+                var me = this;
+
+                if (!me.validate('search')) {
+                    UT.alert("STD.E0000");
+                    return false;
+                }
+
+                // GRID 현황 조회
+                UT.request(me.$.findList);
+            },
+            
+            // 선택 목록 반환
+            onSelectedList: function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+                var selected = provider.selectionCheckedItems();
+                
+                if (UT.isEmpty(selected)) {
+                	UT.alert("STD.N1600");
+                } else {
+                	me.fire("selected-items", selected);
+                }
+            }                
+        });
+	</script>
+</dom-module>

@@ -1,0 +1,386 @@
+<dom-module id="es-cacm-04">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : LOT량 적용 정보
+        ** @Description     :
+        ** @Author          : [L.M.H]
+        ** @Create Date     : 2019.11.28
+        ** @History         : 2019.11.28 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+		<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- LOT COMBO DATA GET -->
+        <sc-service-provider id="getLotqComboListRPC" descriptor="bp/tcams/ca/common" service-id="get.lotqComboData" on-response="setComboList" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="list" target="{{comboList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- LOT COMBO DATA DETAIL GET -->
+        <sc-service-provider id="getLotqComboListDetailRPC" descriptor="bp/tcams/ca/common" service-id="get.lotqComboDetailData" on-response="setComboDetailList" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="list" target="{{detailList2}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 업종 구분 COMBO DATA GET  -->
+        <sc-service-provider id="getComeComboListRPC" descriptor="bp/tcams/ca/common" service-id="get.lotIndsCodeData" on-response="setComeCodeList" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="list" target="{{comeCodeList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- LOT LIST Retrieve -->
+        <sc-service-provider id="getLotqListRPC" descriptor="bp/tcams/ca/common" service-id="get.lotqList" on-response="setSeqData" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="list" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+	    
+        <cc-page-title-bar id="methodDetail" page-title="LOT량 적용기준 정보">
+        	<sc-label  id="passMsg"   text=""	 	style="color=:red; text-align:left;"></sc-label>
+            <sc-button id="searchBtn" text="조회"	    on-click="onSearch"	         style="align:right;"></sc-button>
+            <sc-button id="selectBtn" text="확인"	    on-click="onSelectedList"	 style="align:right;"></sc-button>
+            <sc-button id="closeBtn"  text="닫기"		on-click="onClose"	         style="align:right;"></sc-button>
+        </cc-page-title-bar>
+		<table class="come-form" style="border-top: 1px solid #1e5784;border-bottom: 1px solid #1e5784">
+            <colgroup>
+                <col style="width:150px">
+                <col style="width:170px">
+                <col>
+            </colgroup>
+			<tr id="tr_come">
+				<td>
+                   	<sc-label text="공법 구분" style="width:80px"></sc-label>
+				</td>
+				<td>
+					<sc-combobox-field  id="sb_comecode" items="{{comeCodeList}}" display-field="label" value-field="data" value="{{inputParam.cosi_clen_yn}}" selected-index="0"
+										input-clear="false" on-select="comeCodeChangeEventHandler"></sc-combobox-field>	                    
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>
+                   	<sc-label text="구분" style="width:80px"></sc-label>
+				</td>
+				<td>
+					<sc-combobox-field  id="sb_detlname1" items="{{comboList}}" display-field="label" value-field="data" selected-index="0" input-clear="false" on-select="detl1ChangeEventHandler"></sc-combobox-field>	                    
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>
+                   	<sc-label text="상세구분" style="width:80px"></sc-label>
+				</td>
+				<td>
+					<sc-combobox-field  id="sb_detlname2" items="{{detailList2}}" display-field="label2" value-field="data2" selected-index="0" input-clear="false" on-select="onSearch"></sc-combobox-field>	                    
+				</td>
+				<td>
+				</td>
+			</tr>
+			<tr>
+				<td>
+                   	<sc-label text="년간생산갯수" style="width:80px"></sc-label>
+				</td>
+				<td>
+	           		<sc-text-field class="align-right" value="{{searchParam.prod_cnt0}}" format-type="number" input-cover="true" editVal></sc-text-field>
+				</td>
+				<td>
+				</td>
+			</tr>
+		</table>
+		<sc-grid id="gridPanel" class="flex" editable="true" use-state="false" selection-mode="radio" use-selection="true" show-number-line="true"  on-item-double-click="itemDoubleClickHandler">
+			<cc-grid-toolbar>
+			</cc-grid-toolbar>			
+    		<sc-grid-columns>
+				<sc-data-column	data-field="lotq_prod_name" header-text="년간생산갯수"  width="130"	text-align="center"></sc-data-column>
+				<sc-data-column	data-field="lotq_qty0"      header-text="LOT"       width="130" text-align="center" data-type="number" format-type="number" ></sc-data-column>
+				<sc-data-column	data-field="lotq_appl_date" header-text="적용일"      width="130" text-align="center" 	format-type="date"></sc-data-column>
+    		</sc-grid-columns>
+		</sc-grid>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is:	"es-cacm-04",
+			properties:	{
+				searchParam	   : {type:	Object,	value: function() {return {};}},
+				
+				comboList      : {type:	Array ,	value: function() {return [];}},
+				comeCodeList   : {type:	Array ,	value: function() {return [];}},
+				resultList     : {type:	Array ,	value: function() {return [];}},
+				
+				detailList1    : {type:	Array ,	value: function() {return [];}},
+				detailList2    : {type:	Array ,	value: function() {return [];}},
+			},
+	
+			/******************************
+			 * 초기화 설정
+			 ******************************/
+			// 초기화 완료 후 호출 함수
+			initialized	: function() {
+				var	me = this;
+				me.checkFlag = 'N';
+			},
+			
+			/**
+			 * 부모에서	호출
+			 */
+			load : function(obj) {
+				var	me = this;
+	
+				// 부모로 부터 전달된 파라미터 SET
+				me.set('searchParam'  ,	obj.defaultParam);
+				
+				me.set("searchParam.org_come_code", me.get("searchParam.come_code"));
+				me.set("searchParam.org_inds_code", me.get("searchParam.inds_code"));
+				
+				me.set("searchParam.prod_cnt0"    , me.get("searchParam.prod_cnt0"));
+				
+				me.$.getComeComboListRPC.service();
+				
+				if(me.searchParam.org_come_code == "MANU") {
+					me.$.tr_come.hidden = false;
+				} else {
+					me.$.tr_come.hidden = true;
+				}
+				
+		        // 가공공법이나 열처리의 경우 PISTON-RING은 제외
+				if(me.searchParam["inds_code"] == "KA") {
+					me.set("searchParam.lotq_lotq_name1", "PISTON-RING");
+				}
+			},
+
+			setComeCodeList : function(e, res) {
+				var me = this;
+		    	var filteredList = me.comeCodeList.filter(function(e) {
+		    		return e.inds_code == me.searchParam.inds_code 
+		    	});
+
+		    	me.set("comeCodeList", filteredList);
+		    	
+		    	if(me.searchParam.come_code == "MANU" || me.searchParam.come_code == "ETC") {
+
+		    	} else {
+		    		if(me.searchParam.come_code == "MCHH") {
+			    		me.$.sb_comecode.selectedIndex = 0;
+		    		} else {
+			    		me.$.sb_comecode.value = me.searchParam.org_come_code;
+		    		}
+		    	}
+		    	
+		    	if(me.$.sb_comecode.value == "PIPE") {
+		    		me.searchParam["come_code"] = "PRES";
+		    		me.searchParam["inds_code"] = "P2";
+		    		me.searchParam["lotq_detl_name1"] = '소물 500mm미만';
+		    		me.searchParam["lotq_detl_name2"] = '후처리 미실시';
+		    		
+		    	} else if (me.get("searchParam.cmms_come_code") == "PADD") {
+		    		me.searchParam["come_code"] = me.$.sb_comecode.value;
+
+		    		if(!me.$.tr_come.hidden) {
+			    		if(me.comeCodeList.length > me.$.sb_comecode.selectedIndex) {
+							me.searchParam["inds_code"] = me.comeCodeList[me.$.sb_comecode.selectedIndex].inds_code;		    			
+			    		} else {
+				    		me.searchParam["inds_code"] = null;
+			    		}
+		    		}
+		    		
+		    		me.searchParam["lotq_detl_name1"] = null;
+		    		me.searchParam["lotq_detl_name2"] = null;
+			    	
+		    	} else if(me.$.sb_comecode.value == "PRES" || me.$.sb_comecode.value == "COSP" || me.$.sb_comecode.value == "PLIJ") {
+		    		me.searchParam["come_code"] = me.$.sb_comecode.value;
+		    		me.searchParam["inds_code"] = me.comeCodeList[me.$.sb_comecode.selectedIndex].inds_code;
+		    		if(me.$.sb_comecode.value == "PRES" && me.searchParam.org_inds_code == "P1") {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		} else if (me.$.sb_comecode.value == "PRES" && me.searchParam.org_inds_code == "P2") {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		} else {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		}
+		    	} else {
+		    		me.searchParam["come_code"] = me.$.sb_comecode.value;
+		    		
+		    		if(!me.$.tr_come.hidden) {
+			    		if(me.comeCodeList.length > me.$.sb_comecode.selectedIndex) {
+							me.searchParam["inds_code"] = me.comeCodeList[me.$.sb_comecode.selectedIndex].inds_code;		    			
+			    		} else {
+				    		me.searchParam["inds_code"] = null;
+			    		}
+		    		}
+		    		me.searchParam["lotq_detl_name1"] = null;
+		    		me.searchParam["lotq_detl_name2"] = null;
+		    	}
+		    	
+            	me.$.getLotqComboListRPC.service();
+			},
+
+			setComboList : function(e, res) {
+				var me = this;
+				
+				if(me.searchParam.come_code == "COFO") {
+					me.$.sb_detlname1.selectedIndex = 1;
+				} else {
+					me.$.sb_detlname1.selectedIndex = 0;
+				}
+				
+				me.set("searchParam.lotq_detl_name1", me.$.sb_detlname1.value);
+				
+				me.$.getLotqComboListDetailRPC.service();
+				
+			},
+			
+			setComboDetailList : function(e, res) {
+				var me = this;
+		    	me.$.sb_detlname2.selectedIndex = 0;
+		    	me.set("searchParam.lotq_detl_name2", me.$.sb_detlname2.value);
+		    	me.$.getLotqListRPC.service();
+			},
+			
+			setSeqData : function(e, res) {
+				var me = this;
+				me.$.gridPanel.setDataProvider(me.resultList);
+			},
+
+			onSearch : function() {
+				var me = this;
+				
+				me.set("searchParam.lotq_detl_name1", me.$.sb_detlname1.value);
+		        me.set("searchParam.lotq_detl_name2", me.$.sb_detlname2.value);
+		        
+				me.$.getLotqListRPC.service();
+			},
+			
+			// 선택 목록 반환
+            onSelectedList: function() {
+               var me = this;
+               
+               var provider = me.$.gridPanel.getDataProvider();
+               var checked = provider.selectionCheckedItems();
+               
+               if(checked.length < 1) {
+            	   UT.alert("선택된 항목이 없습니다.");
+            	   return;
+               } 
+               
+               if(checked.length > 1) {
+            	   UT.alert("하나의 행만 선택하세요.");
+            	   return;
+               }
+               
+           	   var selected = checked[0];
+			   selected.prod_cnt0 = me.get("searchParam.prod_cnt0");            	   
+               me.fire("selected-items", selected);
+            },
+			
+			/**
+             * 닫기
+             */
+            onClose: function () {
+                var me = this;
+                me.fire("close");
+            },
+
+            /**
+             * 공법 구분 Change Event Handler
+             */
+            comeCodeChangeEventHandler : function() {
+                var me = this;
+
+                if(me.$.sb_comecode.value == "PIPE") {
+		    		me.searchParam["come_code"] = "PRES";
+		    		me.searchParam["inds_code"] = "P2";
+		    		me.searchParam["lotq_detl_name1"] = '소물 500mm미만';
+		    		me.searchParam["lotq_detl_name2"] = '후처리 미실시';
+		    		
+		    	} else if(me.$.sb_comecode.value == "PRES" || me.$.sb_comecode.value == "COSP" || me.$.sb_comecode.value == "PLIJ") {
+		    		me.searchParam["come_code"] = me.$.sb_comecode.value;
+		    		me.searchParam["inds_code"] = me.comeCodeList[me.$.sb_comecode.selectedIndex].inds_code;
+		    		if(me.$.sb_comecode.value == "PRES" && me.searchParam.org_inds_code == "P1") {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		} else if (me.$.sb_comecode.value == "PRES" && me.searchParam.org_inds_code == "P2") {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		} else if (me.$.sb_comecode.value == "PLIJ" && me.searchParam.org_inds_code == "PL") {
+		    			me.searchParam["lotq_detl_name1"] = "PL 사출";
+			    		me.searchParam["lotq_detl_name2"] = "중물(100mm초과)";
+		    		} else {
+			    		me.searchParam["lotq_detl_name1"] = null;
+			    		me.searchParam["lotq_detl_name2"] = null;
+		    		}
+		    	} else {
+		    		me.searchParam["come_code"] = me.$.sb_comecode.value;
+		    		
+		    		if(!me.$.tr_come.hidden) {
+			    		if(me.comeCodeList.length > me.$.sb_comecode.selectedIndex) {
+							me.searchParam["inds_code"] = me.comeCodeList[me.$.sb_comecode.selectedIndex].inds_code;		    			
+			    		} else {
+				    		me.searchParam["inds_code"] = null;
+			    		}
+		    		}
+		    		me.searchParam["lotq_detl_name1"] = null;
+		    		me.searchParam["lotq_detl_name2"] = null;
+		    	}
+
+		    	me.$.getLotqComboListRPC.service();
+            },
+
+            /**
+             * 구분 Change Event Handler
+             */
+            detl1ChangeEventHandler : function() {
+                var me = this;
+
+                me.onSearch();
+                me.searchParam["lotq_detl_name2"] = null;
+                me.$.getLotqComboListDetailRPC.service();
+            },
+
+            /**
+             * grid item 더블클릭 시 리턴
+             */
+            itemDoubleClickHandler : function(event) {
+				var me = this;
+				var item = event.detail.item;
+
+				me.$.gridPanel.selectionCheck(item.rowIndex,true,true);
+				me.onSelectedList();
+			}
+        });
+	</script>
+</dom-module>

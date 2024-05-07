@@ -1,0 +1,355 @@
+<dom-module id="es-cacm-05">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : 공법 결과조회(금형)
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2019.12.26
+        ** @History         : 2019.12.26 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+	
+	<template>
+		<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- ServiceBinder : 종합내역 조회 -->
+		<sc-service-provider id="getMoldTotlRPC" descriptor="bp/tcams/ca/common" service-id="get.mold.totl" on-response="afterTotl">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result"     target="{{resultListMoldTotl}}" change-comparable="true"></sc-service-output>
+	            <sc-service-output name="resultCmat" target="{{resultListMmat}}"     change-comparable="true"></sc-service-output>
+	            <sc-service-output name="resultCpro" target="{{resultListMpro}}"     change-comparable="true"></sc-service-output>
+	            <sc-service-output name="initParam"  target="{{initParam}}"          change-comparable="true"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+  		
+		<!-- ServiceBinder : 재료비, 가공비 별도 조회용(종합내역 클릭시 조회) -->
+		<sc-service-provider id="getMoldMmatMpro" descriptor="bp/tcams/ca/common" service-id="get.mmat.mpro" on-response="afterTotl">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="resultCmat" target="{{resultListMmat}}"></sc-service-output>
+	            <sc-service-output name="resultCpro" target="{{resultListMpro}}"></sc-service-output>
+	        </outputs>
+  		</sc-service-provider>
+
+		<!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+		<cc-page-title-bar id="pageTitle" page-title=" ">
+			<sc-button id="close1" text="닫기" on-click="closeRes"></sc-button>
+			<sc-button id="close2" text="닫기" on-click="closeTab" hidden="true"></sc-button>
+        </cc-page-title-bar>     
+	    
+	    <cc-search-container on-search="onSearch" >
+            <table>
+                <colgroup>
+                    <col style="width:100px">
+                    <col style="width:110px">
+                    <col style="width:150px">
+                    <col style="width:100px">
+                    <col style="width:110px">
+                    <col style="width:70px">
+					<col style="width:100px">
+                    <col style="width:70px">
+                    <col style="width:70px">
+                    <col></col>
+                </colgroup>
+                <tr>
+                    <th>
+                    	<sc-label text="계산PART NO :"></sc-label>
+                    </th>                  
+                    <td>
+                        <sc-text-field id="part_no" value="{{searchParam.part_no}}" disabled="true"></sc-text-field>
+                    </td>
+                    <td>
+						<sc-text-field value="{{searchParam.part_name}}" on-enter="onEnterSearch" disabled="true" style="width:100%"></sc-text-field>
+					</td>
+                    <th>
+                    	<sc-label text="EO NO : "></sc-label>
+                   	</th>
+                    <td>
+                        <sc-text-field id="eono" value="{{searchParam.eono}}" disabled="true"></sc-text-field>
+                    </td>
+                    <th>
+                    	<sc-label text="SEQ :"></sc-label>
+                    </th>
+                    <td>
+                        <sc-text-field id="cumt_no" value="{{searchParam.cumt_no}}" disabled="true"></sc-text-field>
+                    </td>
+                    <th>
+                    	<sc-label text="개정차수 :"></sc-label>
+                   	</th>
+                    <td>
+                        <sc-text-field id="degr" value="{{searchParam.degr}}" disabled="true"></sc-text-field>
+                    </td>
+                    <td>
+                        <span id="SP10"></span>
+                    </td>
+                </tr>
+            </table>
+        </cc-search-container>
+
+		<div class="flex page">
+			<sc-panel id="ct_totl" title="종합 내역" collapsible="true" collapsed="true">  
+                <sc-grid id="dgTotalDatas" data-provider="{{resultListMoldTotl}}" editable="true" style="height:200px;" on-item-click="itemClickHandler" class="flex"
+                		 use-dummy="true" use-selection="false" use-state="false" row-style-function="bgColor" show-number-line="false" header-height="30" row-height="25">
+                    <cc-grid-toolbar></cc-grid-toolbar>
+                    <sc-grid-columns>
+                        <sc-data-column id="col14" data-field="msum_mold_seq0"	header-text="SEQ"		width="40"	editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column id="col01" data-field="msum_mold_code"	header-text="금형코드" 	width="80"	editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column id="col02" data-field="msum_mold_name"	header-text="금형명칭"		width="155" editable="false" text-align="left"></sc-data-column> 
+                        <sc-data-column id="col03" data-field="msum_kind_cont"	header-text="벌수"		width="50"	editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column id="col04" data-field="msum_cavt" 		header-text="CVT" 		width="50"	editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column id="col05" data-field="msum_rpay_cont"	header-text="상각수량" 	width="80"	editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column id="col06" data-field="msum_matl_cost"	header-text="재료비"		width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col07" data-field="msum_proc_cost"	header-text="가공비"		width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col08" data-field="msum_gme0_cost"	header-text="일반관리비"	width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col09" data-field="msum_prof_cost"	header-text="이윤"		width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col10" data-field="msum_tmld_cost"	header-text="계산금형비" 	width="115"	editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col11" data-field="msum_adel_pric"	header-text="조정금액" 	width="80"	editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col12" data-field="msum_last_cost"	header-text="금형비" 		width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column id="col13" data-field="msum_dmld_cost"	header-text="상각금형비" 	width="115" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                    </sc-grid-columns>
+                </sc-grid>
+            </sc-panel>
+            
+            <sc-panel id="ct_mmat" title="재료비 계산내역" collapsible="true" collapsed="true">
+                <sc-grid id="dgMatlDatas" editable="false" data-provider="{{resultListMmat}}" style="height:200px;"  class="flex" use-dummy="true" use-selection="false"
+                		 use-state="false" show-number-line="false" header-height="30" row-height="25">
+                    <cc-grid-toolbar></cc-grid-toolbar>
+                    <sc-grid-columns>
+                        <sc-data-column data-field="mmat_seq0"		header-text="SEQ"		width="35"  editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column data-field="mmat_matl_code" header-text="재질코드"		width="140" editable="false" text-align="left"></sc-data-column>
+                        <sc-data-column data-field="mmat_matl_name" header-text="재료명칭"		width="220" editable="false" text-align="left"></sc-data-column>
+                        <sc-data-column data-field="mmat_matl_pric" header-text="단가"		width="140" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mmat_unit" 		header-text="단위"		width="100" editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column data-field="mmat_use0_wegt" header-text="U/S"		width="80"  editable="false" text-align="right"></sc-data-column>
+                        <sc-data-column data-field="mmat_wegt" 		header-text="중량/사용량"	width="100" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mmat_matl_cost" header-text="재료비"		width="140" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                    </sc-grid-columns>
+                </sc-grid>
+            </sc-panel>
+            
+            <sc-panel id="ct_mpro" title="가공비 계산내역" collapsible="true" collapsed="true">
+                <sc-grid id="dgProcDatas" data-provider="{{resultListMpro}}" editable="false" style="height:200px;"  class="flex" use-dummy="true" use-selection="false"
+                		 use-state="false" show-number-line="false" header-height="30" row-height="25">
+                    <cc-grid-toolbar></cc-grid-toolbar>
+                    <sc-grid-columns>
+                        <sc-data-column data-field="mpro_seq0" 		header-text="SEQ"	width="40"  editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column data-field="mpro_proc_name" header-text="공정명"	width="200" editable="false" text-align="left"></sc-data-column>
+                        <sc-data-column data-field="mpro_inds_clas" header-text="업종"	width="50"  editable="false" text-align="center"></sc-data-column>
+                        <sc-data-column data-field="mpro_net0_cytm" header-text="공수"	width="60"  editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mpro_prsn_cnt0" header-text="인원"	width="50"  editable="false" text-align="right"></sc-data-column>
+                        <sc-data-column data-field="mpro_pay0_pric" header-text="임율"	width="80"  editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mpro_mchh_cost" header-text="기계경비" width="80"  editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mpro_mach_name" header-text="기계명칭" width="200" editable="false" text-align="left"></sc-data-column>
+                        <sc-data-column data-field="mpro_ibr_cost"  header-text="노무비"	width="120" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mpro_expm_cost" header-text="경비"	width="120" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                        <sc-data-column data-field="mpro_proc_cost" header-text="가공비"	width="120" editable="false" text-align="right" format-type="number" input-cover="true"></sc-data-column>
+                    </sc-grid-columns>
+                </sc-grid>
+            </sc-panel>
+		</div>
+	</template>
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "es-cacm-05",
+			       
+	   		properties: {
+	   			searchParam	       : {type:	Object,	value: function() {return {};}},
+	   			initParam	       : {type:	Object,	value: function() {return {};}},
+	   			resultListMoldTotl : {type:	Array ,	value: function() {return [];}},
+	   			resultListMpro     : {type:	Array ,	value: function() {return [];}},
+	   			resultListMmat     : {type:	Array ,	value: function() {return [];}},
+	   			init_sign	       : {type:	String,	value: function() {return "";}},
+	   			mold_code	       : {type:	String,	value: function() {return "";}},
+	   			title	           : {type:	String,	value: function() {return "";}}
+			},
+
+			initialized: function() {
+            	var me= this;
+
+            	// 공법선택화면에서 결과조회 진입하는 경우
+            	if (!UT.isEmpty(this.params)) {
+	            	me.set("searchParam", this.params);
+	            	me.set("init_sign"   , "Y");
+	    	    	//me.set("title"       , this.params.come_name + "  원가계산 결과");
+	    	    	me.$.pageTitle.pageTitle = this.params.come_name + "  원가계산 결과";
+	    	    	me.$.close1.hidden = true;
+	    	    	me.$.close2.hidden = false;
+	    	    	me.$.getMoldTotlRPC.service();
+            	}
+			},
+
+			/**
+			 * 부모에서 호출
+			 */
+			load: function(obj) {
+    	    	var me = this;
+    	    	
+    	    	// 부모로 부터 전달된 파라미터 SET
+				me.set('searchParam' , obj);
+    	    	me.set("init_sign"   , "Y");
+    	    	//me.set("title"       , me.get("searchParam.meth_name") + "  원가계산 결과");
+    	    	me.$.pageTitle.pageTitle = me.searchParam.title + " 결과";
+
+    	    	me.$.ct_mmat.collapsed = true;
+				me.$.ct_mpro.collapsed = true;
+
+				me.showStat(me.searchParam.stat);
+    	    	
+    	    	me.$.getMoldTotlRPC.service();
+			},
+
+			/**
+			 * 조회
+			 */
+			onSearch : function() {
+		    	var me = this;
+		    	me.$.getMoldTotlRPC.service();
+		    },
+
+		    /**
+			 * 종합내역 조회 콜백함수
+			 */
+			afterTotl : function(e, res) {
+		    	var me = this;
+		    	data = res.response;
+
+		    	if (me.resultListMoldTotl.length > 0) {
+			    	if (UT.isNotEmpty(data.result)) {
+			    		var h1 = me.$.dgTotalDatas.headerHeight;
+		            	var h2 = me.$.dgTotalDatas.rowHeight;
+		            	var ht = h1 + (h2 * (data.result.length + 2));
+		            	
+		               	me.$.dgTotalDatas.style.height = ht + 'px';
+		            	me.$.dgTotalDatas.setDataProvider(data.result);
+			    	}
+			    	
+					me.$.ct_totl.collapsed = false;
+				} else {
+					me.$.ct_totl.collapsed = true;
+				}
+
+		    	if (me.resultListMmat.length > 0) {
+		    		var h1 = me.$.dgMatlDatas.headerHeight;
+	            	var h2 = me.$.dgMatlDatas.rowHeight;
+	            	var ht = h1 + (h2 * (data.resultCmat.length + 2));
+	            	
+	               	me.$.dgMatlDatas.style.height = ht + 'px';
+	            	me.$.dgMatlDatas.setDataProvider(data.resultCmat);
+					me.$.ct_mmat.collapsed = false;
+					
+				} else {
+					me.$.ct_mmat.collapsed = true;
+				}
+
+		    	if (me.resultListMpro.length > 0) {
+		    		var h1 = me.$.dgProcDatas.headerHeight;
+	            	var h2 = me.$.dgProcDatas.rowHeight;
+	            	var ht = h1 + (h2 * (data.resultCpro.length + 2));
+	            	me.$.dgProcDatas.style.height = ht + 'px';
+	            	me.$.dgProcDatas.setDataProvider(data.resultCpro);
+	            	
+					me.$.ct_mpro.collapsed = false;
+				} else {
+					me.$.ct_mpro.collapsed = true;
+				}
+
+		    	if (me.get("init_sign") == 'Y' && me.get("searchParam.cmms_come_code") != "MINP") {
+		    		// 재료비 계산내역, 가공비 계산내역 제목 변경
+					me.$.ct_mmat.title = "재료비 계산내역 ["+ me.get("initParam.mold_seq0") +" : "+ me.get("initParam.mold_code") +"]";
+		    		me.$.ct_mpro.title = "가공비 계산내역 ["+ me.get("initParam.mold_seq0") +" : "+ me.get("initParam.mold_code") +"]";
+				}
+				
+		    	me.set("init_sign", "N");
+			 },
+
+			 /**
+			  * 종합내뎍 그리드 클릭 이벤트
+			  */	 
+			 itemClickHandler : function(event) {
+		    	var me = this;
+		    	
+		    	var item = event.detail.data;
+		    	
+		    	if (me.get("searchParam.come_code") != "MINP") {
+		    		if (item["msum_mold_code"] != "합 계") {
+		    			me.set("searchParam.mold_code", item["msum_mold_code"]);
+		    			me.set("searchParam.mold_seq0", item["msum_mold_seq0"]);
+
+		    			me.$.getMoldMmatMpro.service();
+		    		}
+
+		    		// 재료비 계산내역, 가공비 계산내역 제목 변경
+		            me.$.ct_mmat.title = "재료비 계산내역 ["+item['msum_mold_seq0']+" : "+ item['msum_mold_code'] +"]";
+		            me.$.ct_mpro.title = "가공비 계산내역 ["+item['msum_mold_seq0']+" : "+ item['msum_mold_code'] +"]";
+		    	}
+			 },
+
+			 /**
+			  * 닫기
+			  */
+	    	 closeRes : function() {
+				var me = this;
+
+				if (me.get("searchParam.gubn") == "P") {
+					me.fire("close");
+				} else {
+					me.fire("close-res");
+				}
+		     },
+		     
+			 /**
+			  * 닫기
+			  */
+			closeTab : function(e) {
+				var me = this, winId;
+             	winId = UT.getMenuId(me.domHost);
+             	SCMdiManager.removeWindow(winId);
+		    },
+
+		    showStat: function(stat) {
+			    if(!UT.isEmpty(stat)) {
+				    this.$.SP10.innerHTML = stat;     
+				}
+			},
+			 
+		     /**
+			  * SUM Data(합계) 배경색 변경
+			  */	
+		     bgColor : function(data) {
+			     var me = this;
+
+			     if (data.msum_mold_code == "합  계") {
+			    	 return {
+	                      "background": "#FFFFCC"
+	                  }
+			     } else {
+			    	 return {
+	                      "background": "#FFFFFF"
+	                  }
+			     }
+		     }
+        });
+	</script>
+</dom-module>

@@ -1,0 +1,717 @@
+<sc-link rel="import" href="../../ci/ci01/ep-ci01-01.html"></sc-link>
+<sc-link rel="import" href="../../ci/ci01/ep-ci01-03.html"></sc-link>
+
+<dom-module id="es-cacm-03">
+    <!--
+        *****************************************************************************************************
+        ** @Program-name    : 재료단가 정보(공법 팝업)
+        ** @Description     :
+        ** @Author          : PJY
+        ** @Create Date     : 2019.12.04
+        ** @History         : 2019.12.04 최초작성
+        *****************************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+
+		<!--
+            ************************************************************************************************************
+            * Service Area
+            ************************************************************************************************************
+         -->
+		<!-- 공통 코드 조회-->
+		<sc-service-group id="codes" on-result="resultHandler">
+			<sc-code-provider code="CA_STNDGUBN" target="{{codes.stnd_gubn}}"></sc-code-provider> <!-- 표준구분 -->
+			<sc-code-provider code="CA_MATL_SRC" target="{{codes.matl_src}}" ></sc-code-provider> <!-- SRC -->
+			<sc-code-provider code="CA_MATLIMSI" target="{{codes.matl_imsi}}"></sc-code-provider> <!-- 단가구분 -->
+			<sc-code-provider code="CA_DEALTYPE" target="{{codes.deal_type}}"></sc-code-provider> <!-- 거래방식 -->
+			<sc-code-provider code="CA_MATLTYPE" target="{{codes.matl_type}}"></sc-code-provider> <!-- 재질종류 -->
+			<sc-code-provider code="CA_MATLGUBN" target="{{codes.matl_gubn}}"></sc-code-provider> <!-- 재질구분 -->
+			<sc-code-provider code="CA_MATLCLAS" target="{{codes.matl_clas}}"></sc-code-provider> <!-- 재질분류 -->
+			<sc-code-provider code="CA_UNIT"     target="{{codes.unit}}"     ></sc-code-provider> <!-- 단위 -->
+		</sc-service-group>
+
+		<!-- 재료단가 조회 -->
+	    <sc-service-provider id="getPagingListRPC" descriptor="bp/tcams/ci/ci01" service-id="get.matllist" on-response="getPagingListRPC_resultHandler">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_resultList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- 코드 조회 -->
+	    <sc-service-provider id="getcodeListRPC" descriptor="bp/tcams/ci/ci01" service-id="get.codelist" >
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_codeList}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+		
+		<!-- 공통코드 재료종류 조회 -->
+	    <sc-service-provider id="getMatlTypeRPC" descriptor="bp/tcams/cc/cc01" service-id="get.ca_matltype.list">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_matl_type}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- 공통코드 재질구분 조회 -->
+	    <sc-service-provider id="getMatlGubnRPC" descriptor="bp/tcams/cc/cc01" service-id="get.ca_matlgubn.list" on-response="getMatlGubnRPC_resultHandler">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_matl_gubn}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+		<!-- 엑셀업로드 시, 입력값 체크에 필요한 CODE 조회 -->
+	    <sc-service-provider id="getMatlCodeRPC" descriptor="bp/tcams/ci/ci01" service-id="get.matlCode">
+	        <inputs>
+	            <sc-service-input name="searchParam" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="resultCode" target="{{_resultCode}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+	    
+	    <sc-service-provider id="getMatlClasRPC" descriptor="bp/tcams/ca/common" service-id="get.MatlClas" on-response="setSearchParam">
+	        <inputs>
+	            <sc-service-input name="param" value="{{_headerParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="result" target="{{_result}}"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+
+		<sc-service-provider id="setConf" descriptor="bp/tcams/ci/ci01/conf" service-id="CI01.2209.001" on-response="afterSetConf"></sc-service-provider>
+		
+		<!--
+            ************************************************************************************************************
+            * UI Area
+            ************************************************************************************************************
+        -->
+		<cc-page-title-bar>
+			<sc-button text="조회" on-click="getList"></sc-button>
+			<sc-button text="닫기" on-click="onClose"></sc-button>
+		</cc-page-title-bar>
+		<cc-search-container search-button-hidden="true">
+			<table validation-group="searchParam">
+				<tr>
+					<th style="width:70px;"><sc-label text="표준구분"></sc-label></th>
+					<td style="width:100px;">
+                        <sc-combobox-field id="sb_stndgubn"
+                                display-field="label" value-field="data"
+                                items="{{codes.stnd_gubn}}" value="{{searchParam.matl_stnd_gubn}}" placeholder="전체" style="width:100%">
+                        </sc-combobox-field>
+					</td>
+					<th style="width:70px;"><sc-label text="SRC"></sc-label></th>
+					<td style="width:100px;">
+                        <sc-combobox-field id="sb_matl_src"
+                                display-field="label" value-field="data"
+                                items="{{codes.matl_src}}" value="{{searchParam.matl_gubn_src0}}" placeholder="전체" style="width:100%">
+                        </sc-combobox-field>
+					</td>
+					<th style="width:70px;"><sc-label text="단가구분" ></sc-label></th>
+					<td style="width:100px;">
+                        <sc-combobox-field id="sb_matlimsi"
+                                display-field="label" value-field="data"
+                                items="{{codes.matl_imsi}}" value="{{searchParam.matl_gubn_imsi}}" placeholder="전체" style="width:100%">
+                        </sc-combobox-field>
+					</td>
+					<th style="width:70px;"><sc-label text="거래방식"></sc-label></th>
+					<td style="width:100px;">
+                        <sc-combobox-field id="sb_dealtype"
+                                display-field="label" value-field="data"
+                                items="{{codes.deal_type}}" value="{{searchParam.matl_gubn_dltp}}" placeholder="전체" style="width:100%">
+                        </sc-combobox-field>
+					</td>
+					<th style="width:70px;"><sc-label text="현재적용"></sc-label></th>
+					<td style="width:20px;">
+                        <sc-checkbox-field id="cb_curr_appl" input-value="{{searchParam.curr_appl}}" checked-value="Y" un-checked-value="N" style="width:100%"></sc-checkbox-field>
+					</td>
+					<th style="width:80px;"><sc-label id="LB10" hidden="true"></sc-label></th>						
+                    <td style="width:70px;">
+                        <sc-text-field id="TF10" hidden="true"></sc-text-field>
+                    </td>
+				</tr>
+				<tr>
+					<th style="width:70px;" ><sc-label text="재료분류"></sc-label></th>
+					<td style="width:100px;">
+						<sc-text-field id="sb_matlclas" value="{{searchParam.matl_clas_code}}" on-enter="onEnterSearch" upper-case="true" style="width:80px"></sc-text-field>
+						<a><img id="ig_matlclas" src="../../../../assets/img/bull_choice.gif" on-click="codeButtonClickHandler" style="padding-left:5px; width:15px"/></a>
+					</td>
+					<th style="width:80px;"><sc-label text="재료종류"></sc-label></th>  
+					<td style="width:210px;">
+                        <sc-combobox-field  id="sb_matltype"
+                                display-field="label" value-field="data"
+                                items="{{codes.matl_type}}" value="{{searchParam.matl_mtjo_code}}" placeholder="전체" style="width:100%">
+                        </sc-combobox-field>
+					</td>
+					<th style="width:80px;"><sc-label text="재료코드"></sc-label></th>
+					<td style="width:120px;">
+						<sc-text-field id="matl_code" value="{{searchParam.matl_code}}" on-enter="onEnterSearch" upper-case="true" style="width:100%"></sc-text-field>
+					</td>
+					<th style="width:70px;"><sc-label text="재료명칭"></sc-label></th>
+					<td style="width:120px;">
+						<a><img src="../../../../assets/img/bull_reference.gif" on-click="searchRulePopup" style="width:15px"/></a>
+						<sc-text-field id="st_mtal_name" value="{{searchParam.matl_name}}" on-enter="onEnterSearch" style="padding-left:5px; width:103px;"></sc-text-field>
+					</td>
+					<th style="width:70px;"><sc-label text="문자열포함"></sc-label></th>
+					<td style="width:60px;">
+						<sc-checkbox-field id="cb_str_appl" input-value="{{searchParam.str_appl}}" checked-value="Y" un-checked-value="" style="width:100%"></sc-checkbox-field>
+					</td>
+					<th style="width:80px;"><sc-label text="대/소문자 구분"></sc-label></th>
+					<td style="width:70px;">
+						<sc-checkbox-field id="cb_updown_gubn" input-value="{{searchParam.updown_gubn}}" checked-value="Y" un-checked-value="" on-checkchange="updownChange" style="width:100%"></sc-checkbox-field>
+					</td>
+				</tr>					
+			</table>					
+				
+		</cc-search-container>
+
+		<sc-grid id="gridPanel" class="flex" editable="true" on-item-click="itemClickHandler" data-provider = "{{_resultList}}" show-number-line="false" use-selection="false" use-state="false">
+			<cc-grid-toolbar id="MAIN_BTN">
+			    <sc-button id="BT01" text="CONF" on-click="setConf" hidden="true"></sc-button>
+			</cc-grid-toolbar>
+			<sc-grid-paging id="pagingControl" scroll-append="on" scroll-auto-load="true"
+							scroll-page-size="5000" paging-function="search"  ajax-ref="getPagingListRPC" 
+							list-data="{{_resultList}}" scroll-paging="true"></sc-grid-paging>
+			<sc-grid-columns>
+				<sc-combobox-column data-field="comd_corp_code" header-text="법인코드"  width="80"  text-align="center"  editable="false" visible="false"></sc-combobox-column>
+				<sc-combobox-column data-field="comd_stnd_gubn" header-text="표준구분"  width="80"  text-align="center"  editable="false" required="true" items="{{codes.stnd_gubn}}" display-field="label" value-field="data" visible="false"></sc-combobox-column>
+				<sc-combobox-column data-field="comd_imsi_gubn" header-text="단가구분"  width="80"  text-align="center"  editable="false" required="true" items="{{codes.matl_imsi}}" display-field="label" value-field="data"></sc-combobox-column>
+				<sc-combobox-column data-field="comd_matl_gubn" header-text="재질구분"  width="60"  text-align="center"  editable="false" required="true" items="{{codes.matl_gubn}}" display-field="label" value-field="data"></sc-combobox-column>
+				<sc-combobox-column data-field="comd_clas_code" header-text="재료분류"  width="60"  text-align="center" editable="false" required="true" items="{{codes.matl_clas}}" display-field="data" value-field="data"></sc-combobox-column>
+				<sc-combobox-column data-field="comd_mtjo_code" header-text="재질종류"  width="60"  text-align="center" editable="false" required="true"></sc-combobox-column>
+				<sc-data-column     data-field="comd_matl_code" header-text="재료코드"  width="130" text-align="left"   editable="false"  required="true" max-length="16"></sc-data-column>
+				<sc-date-column	    data-field="comd_appl_date" header-text="적용일"    width="80" text-align="center" editable="false"  required="true" editor-maskre="[0-9]"></sc-date-column>
+				<sc-data-column     data-field="comd_matl_name" header-text="재료명칭"  width="240" text-align="left"   editable="false" required="true" max-length="80"></sc-data-column>
+				<sc-data-column     data-field="comd_matl_pric" header-text="재료단가"  width="70"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="20"></sc-data-column>
+				<sc-combobox-column data-field="comd_matl_unit" header-text="단위"      width="40"  text-align="center" editable="false" required="true" items="{{codes.unit}}" display-field="data" value-field="data"></sc-combobox-column>
+				<sc-data-column id="COL01" data-field="comd_clas1" header-text="분류1" visible="false"></sc-data-column>
+				<sc-data-column id="COL02" data-field="comd_clas2" header-text="분류1" visible="false" text-align="right"></sc-data-column>
+				<sc-data-column     data-field="comd_unus_pric" header-text="산폐단가"  width="60"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="20"></sc-data-column>
+				<sc-data-column     data-field="comd_scrp_pric" header-text="SCRAP단가" width="80"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="20"></sc-data-column>
+				<sc-data-column     data-field="comd_scrp_rate" header-text="S회수율"   width="60"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="6"></sc-data-column>
+				<sc-data-column     data-field="comd_spec_grav" header-text="비중"      width="60"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="7"></sc-data-column>
+				<sc-data-column     data-field="comd_impt_code" header-text="수입코드"  width="60"  text-align="center" editable="false" max-length="3"></sc-data-column>
+				<sc-data-column     data-field="comd_trif_rate" header-text="관세율"    width="60"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="6"></sc-data-column>
+				<sc-data-column     data-field="comd_impt_pric" header-text="수입단가"  width="80"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="20"></sc-data-column>
+				<sc-data-column     data-field="comd_thik_size" header-text="두께/외경" width="80"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="12"></sc-data-column>
+				<sc-data-column     data-field="comd_widt_size" header-text="가로/두께" width="80"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="12"></sc-data-column>
+				<sc-data-column     data-field="comd_leng_size" header-text="세로/길이" width="80"  text-align="right"  editable="false" data-type="number" format-type="amt" validator-type="number" max-length="12"></sc-data-column>
+				<sc-data-column     data-field="comd_remk_desc" header-text="REMARK"    width="240" text-align="left"   editable="false" max-length="80"></sc-data-column>
+				<sc-date-column	    data-field="comd_init_date" header-text="등록일"	width="80"  text-align="center" editable="false" format-type="date"></sc-date-column>
+			</sc-grid-columns>
+			<sc-grid-fields>
+				<sc-grid-field data-field="total_row" id="TOTAL_ROW"	 ></sc-grid-field>
+				<sc-grid-field data-field="cnt"        ></sc-grid-field>
+			</sc-grid-fields>	
+		</sc-grid>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+        Polymer({
+            is: "es-cacm-03",
+            properties: {
+            	codes: {
+                    type: Object,
+                    reset: false,
+                    value: function() {
+                        return {
+                        	stnd_gubn: [],
+                        	matl_src : [],
+                        	matl_imsi: [],
+                        	deal_type: [],
+                        	matl_type: [],
+                        	matl_gubn: [],
+                        	matl_clas: [],
+                        	unit     : []
+                        }
+                    }
+                },
+                
+                // 조회조건
+                searchParam 	 : {type: Object,value: function() {return {};}},
+                // 조회조건
+                searchParam 	 : {type: Object,value: function() {return {};}},
+                // 조회 결과 리스트
+                resultList  	 : {type: Array,value: function() {return [];}},
+                // 조회 결과 리스트
+                resultList1 	 : {type: Array,value: function() {return [];}},
+                //
+                _matl_gubn	 	 : {type: Object,value: function() {return {};}},
+                //재질구분1
+                matl_gubn_list1  : {type: Array,value: function() {return [];}},
+                //재질구분2
+                matl_gubn_list2  : {type: Array,value: function() {return [];}},
+                //엑셀아이템
+                excelItem   	 : {type: Array,value: function() {return [];}},
+                
+//                 iCheckedRow 	 : {type: Number},
+                //메세지 처리용 함수
+                isMessage    : {type: Object, /* Boolean */value: function() {return false;}},
+
+                //excel 검색조건
+                _excelParam  : {type: Object, value: function() {return {};}},
+                _headerParam : {type: Object, value: function() {return {};}},
+                _result 	 : {type: Object, value: function() {return {};}},
+
+                
+                gubnData	 : {type: String ,value: ""},
+                gubnData2	 : {type: String ,value: ""},
+                gubnData3	 : {type: String ,value: ""},
+                base_date	 : {type: String ,value: ""},
+                
+            },
+
+            /******************************
+             * 초기화 설정
+             ******************************/
+            // 초기화 완료 후 호출 함수
+            initialized: function() {
+                var me = this;
+				me.$.cb_curr_appl.value        = true;
+				me.$.cb_str_appl.value         = true;
+                me.searchParam.matl_type      = "CA_MATLTYPE";
+                me.searchParam.matl_stnd_gubn = "H";
+				UT.request(me.$.getMatlTypeRPC);
+				UT.request(me.$.getMatlGubnRPC);
+				me.$.codes.service();
+            },
+
+            load: function(param) {
+                var me = this;
+                me.$.cb_curr_appl.value        = true;
+				me.$.cb_str_appl.value         = true;
+				
+                me.base_date = param.defaultParam.base_date;
+				me.gubnData  = param.gubn;
+				me.gubnData2 = param.gubn2;
+				me.gubnData3 = param.gubn3;
+				me._headerParam = {};
+
+				if(param.gubn3 == "CL") {
+					me.$.LB10.text = "분류1";
+					me.$.LB10.hidden = false;
+					me.$.TF10.value = param.defaultParam.matl_clas1;
+					me.$.TF10.disabled = true;
+					me.$.TF10.hidden = false;
+					me.set("searchParam.matl_clas1", param.defaultParam.matl_clas1);
+				}
+				
+				// 수돟공법에서 재질코드 팝업 자동조회 막음.
+				if (param.defaultParam.cmms_come_code != "MANU") {
+					me.setParam(param.defaultParam);
+				}
+
+// 				if (UT.isNotEmpty(param.clasCode)) {
+// 					me.setMatlClasCode(param.clasCode);
+// 				}
+            },
+
+            getList: function(){
+            	var me = this;
+            	
+				me.$.pagingControl.pagingParam.matl_stnd_gubn = me.searchParam.matl_stnd_gubn;
+				me.$.pagingControl.pagingParam.matl_gubn_src0 = me.searchParam.matl_gubn_src0; // 재료구분을 씀 
+				me.$.pagingControl.pagingParam.matl_gubn_imsi = me.searchParam.matl_gubn_imsi; // 재료구분을 씀
+				me.$.pagingControl.pagingParam.matl_gubn_dltp = me.searchParam.matl_gubn_dltp; // 재료구분을 씀
+				me.$.pagingControl.pagingParam.matl_clas_code = me.searchParam.matl_clas_code;
+				me.$.pagingControl.pagingParam.matl_mtjo_code = me.searchParam.matl_mtjo_code;
+				me.$.pagingControl.pagingParam.matl_code      = me.searchParam.matl_code;
+				me.$.pagingControl.pagingParam.matl_name      = me.searchParam.matl_name;
+				me.$.pagingControl.pagingParam.curr_appl      = me.searchParam.curr_appl;
+				me.$.pagingControl.pagingParam.matl_appl_date = me.searchParam.matl_appl_date;
+				me.$.pagingControl.pagingParam.str_appl       = me.searchParam.str_appl;
+				me.$.pagingControl.pagingParam.matl_clas1     = me.searchParam.matl_clas1;
+				me.$.pagingControl.pagingParam.endRowNum 	  = 0;
+				
+				isMessage = false;
+ 				me.set('isMessage',false);
+ 				
+				me.search(me.$.pagingControl.pagingParam);
+            },
+
+			/**
+			 * 리스트 조회(서브)
+			 */
+			 search : function(param){
+				var me = this;
+				me.$.getPagingListRPC.addInput("param", param);
+				me.$.getPagingListRPC.service();
+
+			},
+            
+            itemClickHandler: function(event){
+                var me = this;
+                var item = event.detail.data;
+			    item['gubn'] = me.gubnData; 
+			    if(me.gubnData == 'matl'){
+			    	if(me.gubnData2 != null && me.gubnData2 != '') {
+			    		item['gubn2'] = me.gubnData2;
+			    	}
+			    	me.compareBaseDate(item);
+			    	
+			    } else {
+			    	if(me.gubnData == 'dros' || me.gubnData == 'tscr'){
+				    	if(
+				    		( item['comd_matl_pric'] == '' || item['comd_matl_pric'] == null || item['comd_matl_pric'] == '0' || item['comd_matl_pric'] == 0 )
+				    	    &&
+				    	    ( item['comd_impt_code'] == '' || item['comd_impt_code'] == null || item['comd_impt_code'] == '0' || item['comd_impt_code'] == 0 )
+				    	    &&
+				    	    ( item['comd_scrp_pric'] != '' && item['comd_scrp_pric'] != null && item['comd_scrp_pric'] != '0' && item['comd_scrp_pric'] != 0 )   
+						){
+				    		me.compareBaseDate(item);
+				    		me.fire("getMatlInfo", item);
+// 							this.dispatchEvent(new CloseEvent(CloseEvent.CLOSE, true, true));
+// 				    		this.dispatchEvent(new SCEvent("getMatlInfo", item));
+						} else {
+							UT.alert("선택기준과 일치하는 재료를 선택하여 주십시요.\r [선택기준 : 재료단가 / 수입코드가 없고,\r SCRAP단가만 존재하는 재료코드]");
+											
+						}
+			    	} else {
+			    		me.compareBaseDate(item);
+			    	}
+			    }
+			    
+            },
+
+			/**
+			 * 재료단가, DROSS 매각단가, 당구SCRAP단가 에 따른 조건 체크
+			 */
+            setCheckData : function(gubn){
+				var me = this;
+				me.gubnData = gubn;							
+				me._headerParam = {};
+			},
+
+			/**
+			 * RUBBER, SPRING, 금속환 재료단가에 따른 조건 체크
+			 */
+			setCheckData2 : function(gubn2){
+				var me = this;
+				me.gubnData2 = gubn2;
+			},
+
+			/**
+			 * 재료분류코드 조건 Set
+			 */
+			setMatlClasCode : function(gubn){
+				var me = this;
+				me.$.sb_matlclas.value = gubn;
+				me.gubnData3 = gubn;
+			},
+			
+            //닫기 버튼 클릭
+            onClose : function() {
+                var me = this;
+                me.reset();
+                me.fire("close");
+            },
+			
+            setParam: function(obj) {
+                var me = this;
+				me._headerParam = obj;
+				
+				if(UT.isNotEmpty(me._headerParam['curr_appl'])) {
+					me.set("searchParam.curr_appl", me.get("_headerParam.curr_appl"));
+				} else {
+					me.searchParam['curr_appl'] = 'Y';
+				}
+				me.set("searchParam.matl_stnd_gubn", "H");
+				me.set("searchParam.matl_code"     , "");
+				me.set("searchParam.matl_gubn_src0", "");
+				me.set("searchParam.matl_gubn_imsi", "");
+				me.set("searchParam.matl_gubn_dltp", "");
+				me.set("searchParam.matl_name"     , "");
+
+				if(UT.isNotEmpty(me._headerParam.matl_clas_code)) {
+					me.set("searchParam.matl_clas_code", me._headerParam.matl_clas_code);
+				}
+
+				// PIPE가공 공법에서 소재형태가 '각형강관'인 경우, 재료병칭 'STKR400'을 표시함.
+				// 재료병칭 'STKR400'은 공법화면에서 넘겨받음
+				if (me._headerParam['come_code'] == "PIWR") {
+					if (me._headerParam['matl_name'] != ""   &&
+						me._headerParam['matl_name'] != null &&
+						me._headerParam['matl_name'] != "undefined") {
+						me.set("searchParam.matl_name", me.get("_headerParam.matl_name"));
+					}
+				}
+
+				// PCB & CIRCUIT 공법에서 동박단가 or PREPREG단가 선택인 경우, 재료병칭을 표시함.
+				if (me._headerParam['come_code'] == "PCBD") {
+					if (me._headerParam['matl_name'] != ""   &&
+						me._headerParam['matl_name'] != null &&
+						me._headerParam['matl_name'] != "undefined") {
+						me.set("searchParam.matl_name", me.get("_headerParam.matl_name"));
+					}
+				}
+
+				// 일반PAD 공법에서 TAPE재료 선택인 경우, 재료병칭을 표시함.
+				if (me._headerParam['come_code'] == "PADD") {
+					if (me._headerParam['matl_name'] != ""   &&
+						me._headerParam['matl_name'] != null &&
+						me._headerParam['matl_name'] != "undefined") {
+						me.set("searchParam.matl_name", me.get("_headerParam.matl_name"));
+					}
+				}
+
+				// SEAT PAD 공법에서 재질단가 선택인 경우, 재료병칭(COLD)을 표시함.
+				if (me._headerParam['come_code'] == "STPA") {
+					if (me._headerParam['matl_name'] != ""   &&
+						me._headerParam['matl_name'] != null &&
+						me._headerParam['matl_name'] != "undefined") {
+						me.set("searchParam.matl_name", me.get("_headerParam.matl_name"));
+					}
+				}
+
+				// LAMINATING 공법에서 재료명칭 표시함.
+				if (me._headerParam['come_code'] == "LAMN") {
+					if (me._headerParam['matl_name'] != ""   &&
+						me._headerParam['matl_name'] != null &&
+						me._headerParam['matl_name'] != "undefined") {
+						me.set("searchParam.matl_name", me.get("_headerParam.matl_name"));
+					}
+				}
+
+				// 일반호스 일때 재료종류 석유화학 고무 setting
+				if (me.gubnData2 == "in" || me.gubnData2 == "mid" || me.gubnData2 == "ujik" || me.gubnData2 == "out") {
+					me.set("searchParam.matl_mtjo_code", "G");
+				}
+				if (me.gubnData2 == "weld_twb") {
+					me.set("searchParam.matl_mtjo_code", "A");
+				}
+
+                //[2022.10.19] 기계가공 절삭칩 처리
+				if(chkFromMchh(me._headerParam, me.gubnData2)) {
+					me.set("searchParam.matl_name", "CUT");
+				}
+				
+				// 20140711 기 등록된 재질 코드를 물고 자동 조회가 되도록 처리 
+				if (   me._headerParam['gubn'] != "" 
+					&& me._headerParam['gubn'] != null
+					&& me._headerParam['gubn'] != "undefined") {
+					if (me._headerParam['gubn'] == 'matl') {
+						if (   me._headerParam['matl_code'] != ""
+							&& me._headerParam['matl_code'] != null
+							&& me._headerParam['matl_code'] != "undefined") {
+							me.set("searchParam.matl_stnd_gubn", me.get("_headerParam.matl_stnd"));					
+							me.set("searchParam.matl_code"     , me.get("_headerParam.matl_code"));					
+							me.set("searchParam.matl_gubn_src0", me.get("_headerParam.matl_gubn").substring(0,1));					
+							me.set("searchParam.matl_gubn_imsi", me.get("_headerParam.matl_gubn").substring(1,2));					
+							me.set("searchParam.matl_gubn_dltp", me.get("_headerParam.matl_gubn").substring(2,3));					
+						}
+					} else if (me._headerParam['gubn'] == 'dros') {
+						if (   me._headerParam['matl_code3'] != ""
+						    && me._headerParam['matl_code3'] != null
+						    && me._headerParam['matl_code3'] != "undefined") {
+							me.set("searchParam.matl_stnd_gubn", me.get("_headerParam.matl_stnd3"));					
+							me.set("searchParam.matl_code"     , me.get("_headerParam.matl_code3"));					
+							me.set("searchParam.matl_gubn_src0", me.get("_headerParam.matl_gubn3").substring(0,1));					
+							me.set("searchParam.matl_gubn_imsi", me.get("_headerParam.matl_gubn3").substring(1,2));					
+							me.set("searchParam.matl_gubn_dltp", me.get("_headerParam.matl_gubn3").substring(2,3));							
+						}
+					} else if (me._headerParam['gubn'] == 'tscr' || me._headerParam['gubn'] == 'scrp') {
+						if (   me._headerParam['matl_code2'] != ""
+							&& me._headerParam['matl_code2'] != null
+							&& me._headerParam['matl_code2'] != "undefined") {
+							me.set("searchParam.matl_stnd_gubn", me.get("_headerParam.matl_stnd2"));					
+							me.set("searchParam.matl_code"     , me.get("_headerParam.matl_code2"));					
+							me.set("searchParam.matl_gubn_src0", me.get("_headerParam.matl_gubn2").substring(0,1));					
+							me.set("searchParam.matl_gubn_imsi", me.get("_headerParam.matl_gubn2").substring(1,2));					
+							me.set("searchParam.matl_gubn_dltp", me.get("_headerParam.matl_gubn2").substring(2,3));							
+						}
+					}	
+				} else {
+					/*
+					if (    gubnData == 'scrp' 
+						 && (   _headerParam['matl_code2'] == ""
+						     || _headerParam['matl_code2'] == null
+						     || _headerParam['matl_code2'] == "undefined")
+						) {
+						searchParam['matl_code'] = "PL_SCRAP";	 
+						
+					}
+					*/
+				}
+				
+				me.$.getMatlClasRPC.service();
+            },
+
+            setSearchParam : function(){
+                var me = this;
+				if(me.gubnData == 'chip'){
+					me.set("searchParam.matl_clas_code", 'CT');
+				}else{
+					if( me.gubnData3 == null
+					 || me.gubnData3 == ""
+					 || me.gubnData3 == 'undefined'
+                     ) {
+						me.gubnData3 = me._result['matl_clas'];
+					}
+
+					if(me._headerParam.come_code == "MCHH") {
+						me.set("searchParam.matl_clas_code", null);						
+					} else {
+						me.set("searchParam.matl_clas_code", me.gubnData3);
+					}
+				}
+				
+				me.getList();
+			},
+
+			 //재료명칭 팝업
+			 searchRulePopup: function(){
+				 var me = this;
+				 var param = {};
+		                me.rulePopup = UT.popup('ep-ci01-03', me, 625, 530, {
+	                		"selected-items" : function(popup, e) {
+	                            popup.close();
+	                		}
+		                }, {title : "재료명칭 검색 방법"});
+	                me.rulePopup.show();
+					me.rulePopup.getWindowContent().load(param);
+				
+			},
+			
+			matlSearch : function(){
+				var me = this;
+				me.searchParam['matl_clas'] = 'CHIP';				
+				me.getList();				
+			},
+			
+			setBaseDate : function(baseDate){
+				var me = this;
+				me.base_date = baseDate;				
+			},
+			
+			compareBaseDate : function(item){
+				var me = this;
+				if (me.base_date < item.comd_appl_date) {
+                    UT.confirm("선택하신 재료단가의 적용일이 원가계산 기준일보다 후일입니다.", function() {
+// 						dispatchEvent(new CloseEvent(CloseEvent.CLOSE, true, true));
+// 			    		dispatchEvent(new SCEvent("getMatlInfo", item));
+                    	me.fire("getMatlInfo", item);
+                    	me.fire("close");
+                    });
+				} else {
+                	me.fire("getMatlInfo", item);
+                	me.fire("close");
+				}
+			},
+			
+			getPagingListRPC_resultHandler: function(event){
+				var me = this;
+				me.setConf();
+			},
+			
+			/**
+			 * 재질구분 분류하기
+			 */
+			 getMatlGubnRPC_resultHandler : function(event){
+				var me = this;
+				me.matl_gubn_list1 = {};
+				me.matl_gubn_list2 = {};
+				me.set("matl_gubn_list1", commonAS.filterList(me._matl_gubn, "code_gubn", "F"));
+				me.set("matl_gubn_list2", commonAS.filterList(me._matl_gubn, "code_gubn", "I"));
+				//2018.07.03 BJM 엑셀업로드 시, 입력값 체크에 필요한 CODE 조회
+				UT.request(me.$.getMatlCodeRPC);
+			 },
+
+
+
+			//대/소문자 구분 체크 시, 재료명칭 소문자 입력 가능
+			updownChange : function(){
+				var me = this;
+				if (me.$.cb_updown_gubn.value == true) {
+					me.$.st_mtal_name.upperCase = false;
+				} else {
+					me.$.st_mtal_name.upperCase = true;
+				}
+			},
+			
+			
+            // 엔터키 조회
+            onEnterSearch: function(){
+                var me = this;
+
+                me.getList();
+            },
+
+
+            /**
+			 * 재료분류 버튼 클릭 핸들러 (조회조건 코드 팝업시 반드시 추가할 것)
+			 * 2010.07.06 KNK 공통팝업  -> 사용자정의 팝업으로 변경 
+			 */
+			 codeButtonClickHandler: function(){
+				 var me = this;
+				 var param = {};
+		            if(!me.matlclasPopup){
+		                me.matlclasPopup = UT.popup('ep-ci01-01', me, 800, 500, {
+	                		"selected-items" : function(popup, e) {
+	                			var result   = e.detail;
+	                			me.$.sb_matlclas.value = result.code;
+	                            popup.close();
+	                		}
+		                }, {title : "재료분류코드"});
+		            }
+	                me.matlclasPopup.show();
+					me.matlclasPopup.getWindowContent().load(param);
+				
+			},
+            
+			setConf: function() {
+				var me = this;
+				me.$.setConf.body = {
+					param : me.searchParam
+				}
+				me.$.setConf.service1();
+			},
+
+			afterSetConf: function(e, res) {
+				var me = this;
+				var data = res.response;
+
+				console.log(data);
+
+				var cols = data.cols;
+
+				me.$.BT01.hidden = cols[0].testing == "Y" ? false : true;
+				
+				for(var i = 0 ; i < cols.length ; i++) {
+					me.$$("#" + cols[i].id).visible = cols[i].visible == "Y" ? true : false;
+					me.$$("#" + cols[i].id).textAlign   = cols[i].align;
+					me.$$("#" + cols[i].id).headerText   = cols[i].header_text;
+					me.$$("#" + cols[i].id).width   = cols[i].width;
+				}
+				
+				me.$.gridPanel.refresh();	
+				me.$.gridPanel.reSize();
+			},
+        });  
+
+        const chkFromMchh = (param, gubn) => {
+            return (param.come_code === "MCHH") && (gubn.indexOf("chip") > -1)
+        }
+                      
+	</script>
+</dom-module>
