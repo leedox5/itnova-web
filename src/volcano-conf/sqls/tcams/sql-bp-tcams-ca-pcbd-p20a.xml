@@ -476,7 +476,7 @@
         FROM CATBCMPK
        WHERE CMPK_CORP_CODE    = 'K1'
          AND CMPK_STND_GUBN    = 'H'
-         AND CMPK_STND_DEGR    = '20-1'
+         AND CMPK_STND_DEGR    = #degr#
          AND CMPK_APPL_GUBN    = 'Y'
          AND CMPK_CODE         = #pcbi_flor_code#
          AND CMPK_GUBN_CODE LIKE 'PCBD%'
