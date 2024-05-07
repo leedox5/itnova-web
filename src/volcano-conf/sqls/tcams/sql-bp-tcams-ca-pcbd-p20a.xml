@@ -1,0 +1,485 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/pcbd/p20a" data-source="tcamsDS">
+
+	<sql id="get.StndPCBDInfo.select" comment="PCB AND CIRCUIT 표준정보 조회">
+		<![CDATA[
+
+            SELECT CMPK_GUBN_CODE     CMPK_GUBN_CODE
+                  ,CMPK_CODE          DATA
+                  ,CMPK_SORT_NUMB     CMPK_SORT_NUMB
+                  ,CMPK_CODE_NAME     LABEL
+                  ,CMPK_APPL_VALU
+                  ,CMPK_APPL_PRIC
+                  ,CMPK_APPL_RATE1
+                  ,CMPK_APPL_RATE2
+                  ,CMPK_APPL_RATE3
+                  ,CMPK_CODE_GRP1     CMPK_CODE_GRP1
+                  ,CMPK_CODE_GRP2     CMPK_CODE_GRP2
+                  ,CMPK_CODE_GRP3     CMPK_CODE_GRP3
+                  ,CMPK_CODE_GRP4     CMPK_CODE_GRP4
+                  ,CMPK_CODE_GRP5     CMPK_CODE_GRP5
+              FROM CATBCMPK
+             WHERE CMPK_CORP_CODE    = #corp_code#
+               AND CMPK_STND_GUBN    = #stnd_gubn#
+               AND CMPK_STND_DEGR    = #degr#
+               AND CMPK_APPL_GUBN    = 'Y'
+               AND CMPK_GUBN_CODE LIKE 'PCBD%'
+             ORDER BY CMPK_GUBN_CODE
+                     ,CMPK_SORT_NUMB
+
+		]]>
+	</sql>
+
+ <sql id="PCBDInfo.insert" comment="PCB AND CIRCUIT 입력데이터 저장">
+  <![CDATA[
+
+            -- PCB AND CIRCUIT INPUT TABLE 처리
+            BEGIN
+              DELETE
+                FROM CATBPCBI
+               WHERE PCBI_CORP_CODE = TO_CHAR(#corp_code#)
+                 AND PCBI_PART_NO   = #part_no#
+                 AND PCBI_EONO      = TO_CHAR(#eono#)
+                 AND PCBI_CUMT_NO   = TO_NUMBER(#cumt_no#);
+
+              INSERT INTO CATBPCBI
+                (
+                  PCBI_CORP_CODE
+                 ,PCBI_PART_NO
+                 ,PCBI_EONO
+                 ,PCBI_CUMT_NO
+                 ,PCBI_MATL_CORP
+                 ,PCBI_MATL_STND
+                 ,PCBI_MATL_CODE
+                 ,PCBI_MATL_APDT
+                 ,PCBI_MATL_GUBN
+                 ,PCBI_MATL_CORP2
+                 ,PCBI_MATL_STND2
+                 ,PCBI_MATL_CODE2
+                 ,PCBI_MATL_APDT2
+                 ,PCBI_MATL_GUBN2
+                 ,PCBI_MATL_CORP3
+                 ,PCBI_MATL_STND3
+                 ,PCBI_MATL_CODE3
+                 ,PCBI_MATL_APDT3
+                 ,PCBI_MATL_GUBN3
+                 ,PCBI_SHET_WIDE
+                 ,PCBI_SHET_LENG
+                 ,PCBI_COOP_CNT0
+                 ,PCBI_PREP_CNT0
+                 ,PCBI_KIND_GUBN
+                 ,PCBI_KIND_CODE
+                 ,PCBI_COAT_GUBN
+                 ,PCBI_COAT_CODE
+                 ,PCBI_FLOR_GUBN
+                 ,PCBI_FLOR_CODE
+                 ,PCBI_JUMP_YN
+                 ,PCBI_PROD_WIDE
+                 ,PCBI_PROD_LENG
+                 ,PCBI_SOLD_CODE
+                 ,PCBI_FLUX_CODE
+                 ,PCBI_CSOL_CODE
+                 ,PCBI_DIPP_CODE
+                 ,PCBI_MAPB_CODE
+                 ,PCBI_FLUX_AREA
+                 ,PCBI_CAVT_GUBN
+                 ,PCBI_APPL_CAVT
+                 ,PCBI_HOLE_CNT1
+                 ,PCBI_HOLE_CNT2
+                 ,PCBI_SMDT_CNT0
+                 ,PCBI_SMDB_CNT0
+                 ,PCBI_ARRA_CAVT
+                 ,PCBI_SEQN_CNT0
+                 ,PCBI_AXAL_CNT0
+                 ,PCBI_AXAL_PNT1
+                 ,PCBI_AXAL_PNT2
+                 ,PCBI_RADL_CNT0
+                 ,PCBI_RADL_PNT1
+                 ,PCBI_RADL_PNT2
+                 ,PCBI_MANI_CNT0
+                 ,PCBI_MANI_PNT1
+                 ,PCBI_MANI_PNT2
+                 ,PCBI_MNTS_CNT0
+                 ,PCBI_MAPB_TERM1
+                 ,PCBI_MAPB_TERM2
+                 ,PCBI_MAPB_TERM3
+                 ,PCBI_MAPB_TERM4
+                 ,PCBI_PAPB_YN
+                 ,PCBI_PAPB_CNT0
+                 ,PCBI_SCRP_PRIC1
+                 ,PCBI_SCRP_WEGT1
+                 ,PCBI_SCRP_RATE1
+                 ,PCBI_SCRP_PRIC2
+                 ,PCBI_SCRP_WEGT2
+                 ,PCBI_SCRP_RATE2
+                 ,PCBI_SCRP_PRIC3
+                 ,PCBI_SCRP_WEGT3
+                 ,PCBI_SCRP_RATE3
+                 ,PCBI_UPDT_CMAN
+                 ,PCBI_UPDT_DATE
+                 ,PCBI_INIT_CMAN
+                 ,PCBI_INIT_DATE
+	             ,PCBI_NET0_AREA              
+	             ,PCBI_CNT0_APPL 
+	             ,PCBI_PCBD_CNT0 
+	             ,PCBI_COAT_AREA 
+	             ,PCBI_FLOR_CNT0
+                ) VALUES (
+                           #corp_code#
+                          ,#part_no#
+                          ,#eono#
+                          ,TO_NUMBER(#cumt_no#)
+                          ,#pcbi_matl_corp#
+                          ,#pcbi_matl_stnd#
+                          ,#pcbi_matl_code#
+                          ,#pcbi_matl_apdt#
+                          ,#pcbi_matl_gubn#
+                          ,#pcbi_matl_corp2#
+                          ,#pcbi_matl_stnd2#
+                          ,#pcbi_matl_code2#
+                          ,#pcbi_matl_apdt2#
+                          ,#pcbi_matl_gubn2#
+                          ,#pcbi_matl_corp3#
+                          ,#pcbi_matl_stnd3#
+                          ,#pcbi_matl_code3#
+                          ,#pcbi_matl_apdt3#
+                          ,#pcbi_matl_gubn3#
+                          ,TO_NUMBER(#pcbi_shet_wide#)
+                          ,TO_NUMBER(#pcbi_shet_leng#)
+                          ,TO_NUMBER(#pcbi_coop_cnt0#)
+                          ,TO_NUMBER(#pcbi_prep_cnt0#)
+                          ,CASE WHEN #pcbi_kind_code# IS NOT NULL THEN 'PCBD01' ELSE NULL END
+                          ,#pcbi_kind_code#
+                          ,CASE WHEN #pcbi_coat_code# IS NOT NULL THEN 'PCBD02' ELSE NULL END
+                          ,#pcbi_coat_code#
+                          ,CASE WHEN #pcbi_flor_code# IS NOT NULL THEN 'PCBD03' ELSE NULL END
+                          ,#pcbi_flor_code#
+                          ,#pcbi_jump_yn#
+                          ,TO_NUMBER(#pcbi_prod_wide#)
+                          ,TO_NUMBER(#pcbi_prod_leng#)
+                          ,#pcbi_sold_code#
+                          ,#pcbi_flux_code#
+                          ,#pcbi_csol_code#
+                          ,#pcbi_dipp_code#
+                          ,#pcbi_mapb_code#
+                          ,TO_NUMBER(#pcbi_flux_area#)
+                          ,#pcbi_cavt_gubn#
+                          ,TO_NUMBER(#pcbi_appl_cavt#)
+                          ,TO_NUMBER(#pcbi_hole_cnt1#)
+                          ,TO_NUMBER(#pcbi_hole_cnt2#)
+                          ,TO_NUMBER(#pcbi_smdt_cnt0#)
+                          ,TO_NUMBER(#pcbi_smdb_cnt0#)
+                          ,TO_NUMBER(#pcbi_arra_cavt#)
+                          ,TO_NUMBER(#pcbi_seqn_cnt0#)
+                          ,TO_NUMBER(#pcbi_axal_cnt0#)
+                          ,TO_NUMBER(#pcbi_axal_pnt1#)
+                          ,TO_NUMBER(#pcbi_axal_pnt2#)
+                          ,TO_NUMBER(#pcbi_radl_cnt0#)
+                          ,TO_NUMBER(#pcbi_radl_pnt1#)
+                          ,TO_NUMBER(#pcbi_radl_pnt2#)
+                          ,TO_NUMBER(#pcbi_mani_cnt0#)
+                          ,TO_NUMBER(#pcbi_mani_pnt1#)
+                          ,TO_NUMBER(#pcbi_mani_pnt2#)
+                          ,TO_NUMBER(#pcbi_mnts_cnt0#)
+                          ,TO_NUMBER(#pcbi_mapb_term1#)
+                          ,TO_NUMBER(#pcbi_mapb_term2#)
+                          ,TO_NUMBER(#pcbi_mapb_term3#)
+                          ,TO_NUMBER(#pcbi_mapb_term4#)
+                          ,#pcbi_papb_yn#
+                          ,TO_NUMBER(#pcbi_papb_cnt0#)
+                          ,TO_NUMBER(#pcbi_scrp_pric1#)
+                          ,TO_NUMBER(#pcbi_scrp_wegt1#)
+                          ,TO_NUMBER(#pcbi_scrp_rate1#)
+                          ,TO_NUMBER(#pcbi_scrp_pric2#)
+                          ,TO_NUMBER(#pcbi_scrp_wegt2#)
+                          ,TO_NUMBER(#pcbi_scrp_rate2#)
+                          ,TO_NUMBER(#pcbi_scrp_pric3#)
+                          ,TO_NUMBER(#pcbi_scrp_wegt3#)
+                          ,TO_NUMBER(#pcbi_scrp_rate3#)
+                          ,#reg_id#
+                          ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                          ,#reg_id#
+                          ,TO_CHAR(SYSDATE,'YYYYMMDD')
+  	                      ,TO_NUMBER(#pcbi_net0_area#)              
+  	                      ,#pcbi_cnt0_appl# 
+  	                      ,TO_NUMBER(#pcbi_pcbd_cnt0#) 
+  	                      ,TO_NUMBER(#pcbi_coat_area#) 
+  	                      ,TO_NUMBER(#pcbi_flor_cnt0#)
+                         );
+            END;
+
+		]]>
+	</sql>
+
+	<sql id="PCBDInfo.delete" comment="PCB AND CIRCUIT 입력데이터, INSERT 데이터(ALL) 삭제">
+		<![CDATA[
+
+            DELETE
+              FROM CATBPCBI
+             WHERE PCBI_CORP_CODE = TO_CHAR(#corp_code#)
+               AND PCBI_PART_NO   = #part_no#
+               AND PCBI_EONO      = TO_CHAR(#eono#)
+               AND PCBI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+
+		]]>
+	</sql>
+
+	<sql id="get.PCBDInfo.count" comment="PCB AND CIRCUIT 입력데이터  Count">
+		<![CDATA[
+
+            SELECT COUNT(*) PCBI_COUNT
+              FROM CATBPCBI
+             WHERE PCBI_CORP_CODE = TO_CHAR(#corp_code#)
+               AND PCBI_PART_NO   = #part_no#
+               AND PCBI_EONO      = TO_CHAR(#eono#)
+               AND PCBI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+
+		]]>
+	</sql>
+
+ <sql id="get.PCBDInfo.select" comment="PCB AND CIRCUIT 기본조회">
+  <![CDATA[
+            SELECT A.PCBI_CORP_CODE     PCBI_CORP_CODE   -- 법인코드
+                  ,A.PCBI_PART_NO       PCBI_PART_NO     -- PARTNO
+                  ,A.PCBI_EONO          PCBI_EONO        -- EONO
+                  ,A.PCBI_CUMT_NO       PCBI_CUMT_NO     -- 계산번호
+                  ,A.PCBI_MATL_CORP     PCBI_MATL_CORP   -- 재료단가법인코드
+                  ,A.PCBI_MATL_STND     PCBI_MATL_STND   -- 재료단가표준구분
+                  ,A.PCBI_MATL_CODE     PCBI_MATL_CODE   -- 재료단가코드
+                  ,A.PCBI_MATL_APDT     PCBI_MATL_APDT   -- 재료단가적용일
+                  ,A.PCBI_MATL_GUBN     PCBI_MATL_GUBN   -- 재료단가재질구분
+                  ,A.PCBI_MATL_CORP2    PCBI_MATL_CORP2  -- 재료단가법인코드2
+                  ,A.PCBI_MATL_STND2    PCBI_MATL_STND2  -- 재료단가표준구분2
+                  ,A.PCBI_MATL_CODE2    PCBI_MATL_CODE2  -- 재료단가코드2
+                  ,A.PCBI_MATL_APDT2    PCBI_MATL_APDT2  -- 재료단가적용일2
+                  ,A.PCBI_MATL_GUBN2    PCBI_MATL_GUBN2  -- 재료단가재질구분2
+                  ,A.PCBI_MATL_CORP3    PCBI_MATL_CORP3  -- 재료단가법인코드3
+                  ,A.PCBI_MATL_STND3    PCBI_MATL_STND3  -- 재료단가표준구분3
+                  ,A.PCBI_MATL_CODE3    PCBI_MATL_CODE3  -- 재료단가코드3
+                  ,A.PCBI_MATL_APDT3    PCBI_MATL_APDT3  -- 재료단가적용일3
+                  ,A.PCBI_MATL_GUBN3    PCBI_MATL_GUBN3  -- 재료단가재질구분3
+                  ,A.PCBI_SHET_WIDE     PCBI_SHET_WIDE   -- SHEET가로
+                  ,A.PCBI_SHET_LENG     PCBI_SHET_LENG   -- SHEET세로
+                  ,A.PCBI_COOP_CNT0     PCBI_COOP_CNT0   -- 동박적용매수
+                  ,A.PCBI_PREP_CNT0     PCBI_PREP_CNT0   -- PREPREG적용매수
+                  ,A.PCBI_KIND_GUBN     PCBI_KIND_GUBN   -- PCB종류분류
+                  ,A.PCBI_KIND_CODE     PCBI_KIND_CODE   -- PCB종류코드
+                  ,A.PCBI_COAT_GUBN     PCBI_COAT_GUBN   -- PCB표면처리분류
+                  ,A.PCBI_COAT_CODE     PCBI_COAT_CODE   -- PCB표면처리코드
+                  ,A.PCBI_FLOR_GUBN     PCBI_FLOR_GUBN   -- PCB층수분류
+                  ,A.PCBI_FLOR_CODE     PCBI_FLOR_CODE   -- PCB층수코드
+                  ,A.PCBI_JUMP_YN       PCBI_JUMP_YN     -- JUMP인쇄여부
+                  ,A.PCBI_PROD_WIDE     PCBI_PROD_WIDE   -- 제품가로
+                  ,A.PCBI_PROD_LENG     PCBI_PROD_LENG   -- 제품세로
+                  ,A.PCBI_SOLD_CODE     PCBI_SOLD_CODE   -- 납땜구분
+                  ,A.PCBI_CAVT_GUBN     PCBI_CAVT_GUBN   -- 원판당적용수량적용
+                  ,A.PCBI_APPL_CAVT     PCBI_APPL_CAVT   -- 원판당적용수량
+                  ,A.PCBI_FLUX_CODE     PCBI_FLUX_CODE   -- FLUX
+                  ,A.PCBI_CSOL_CODE     PCBI_CSOL_CODE   -- SMDCREAMSOLDER
+                  ,A.PCBI_DIPP_CODE     PCBI_DIPP_CODE   -- DIPPING
+                  ,A.PCBI_MAPB_CODE     PCBI_MAPB_CODE   -- 수동납땜
+                  ,A.PCBI_FLUX_AREA     PCBI_FLUX_AREA   -- FLUX사용면적
+                  ,A.PCBI_SCRP_PRIC1    PCBI_SCRP_PRIC1  -- SCRAP단가1  
+                  ,A.PCBI_SCRP_WEGT1    PCBI_SCRP_WEGT1  -- SCRAP중량1  
+                  ,A.PCBI_SCRP_RATE1    PCBI_SCRP_RATE1  -- SCRAP회수율1
+                  ,A.PCBI_SCRP_PRIC2    PCBI_SCRP_PRIC2  -- SCRAP단가2
+                  ,A.PCBI_SCRP_WEGT2    PCBI_SCRP_WEGT2  -- SCRAP중량2
+                  ,A.PCBI_SCRP_RATE2    PCBI_SCRP_RATE2  -- SCRAP회수율2
+                  ,A.PCBI_SCRP_PRIC3    PCBI_SCRP_PRIC3  -- SCRAP단가3
+                  ,A.PCBI_SCRP_WEGT3    PCBI_SCRP_WEGT3  -- SCRAP중량3
+                  ,A.PCBI_SCRP_RATE3    PCBI_SCRP_RATE3  -- SCRAP회수율3
+	              ,A.PCBI_NET0_AREA     PCBI_NET0_AREA   -- PCB제품 NET면적        
+	              ,A.PCBI_CNT0_APPL     PCBI_CNT0_APPL   -- 매수적용구분
+	              ,A.PCBI_PCBD_CNT0     PCBI_PCBD_CNT0   -- 양면원판 매수
+	              ,A.PCBI_COAT_AREA     PCBI_COAT_AREA   -- PCB 표면처리면적
+                  ,A.PCBI_HOLE_CNT1     PCBI_HOLE_CNT1   -- 정HOLE수
+                  ,A.PCBI_HOLE_CNT2     PCBI_HOLE_CNT2   -- 장공HOLE수
+                  ,A.PCBI_FLOR_CNT0     PCBI_FLOR_CNT0   -- 층수
+                  ,B.MATL_NAME          PCBI_MATL_NAME   -- 재질명1
+                  ,B.MATL_CODE          PCBI_MATL_CODE   -- CODE1
+                  ,B.MATL_APPL_DATE     PCBI_MATL_APDT   -- 적용일1
+                  ,B.MATL_PRIC          PCBI_MATL_COST   -- 단가1
+                  ,B.MATL_UNIT          PCBI_MATL_UNIT   -- 단위1
+                  ,C.MATL_NAME          PCBI_MATL_NAME2  -- 재질명2
+                  ,C.MATL_CODE          PCBI_MATL_CODE2  -- CODE2
+                  ,C.MATL_APPL_DATE     PCBI_MATL_APDT2  -- 적용일2
+                  ,C.MATL_PRIC          PCBI_MATL_COST2  -- 단가2
+                  ,C.MATL_UNIT          PCBI_MATL_UNIT2  -- 단위2
+                  ,D.MATL_NAME          PCBI_MATL_NAME3  -- 재질명3
+                  ,D.MATL_CODE          PCBI_MATL_CODE3  -- CODE3
+                  ,D.MATL_APPL_DATE     PCBI_MATL_APDT3  -- 적용일3
+                  ,D.MATL_PRIC          PCBI_MATL_COST3  -- 단가3
+                  ,D.MATL_UNIT          PCBI_MATL_UNIT3   -- 단위3
+              FROM CATBPCBI A
+                  LEFT OUTER JOIN
+                   CITBMATL B
+                  ON    B.MATL_CORP_CODE = A.PCBI_CORP_CODE
+                    AND B.MATL_STND_GUBN = A.PCBI_MATL_STND
+                    AND B.MATL_CODE      = A.PCBI_MATL_CODE
+                    AND B.MATL_APPL_DATE = A.PCBI_MATL_APDT
+                  LEFT OUTER JOIN
+                   CITBMATL C
+                  ON    C.MATL_CORP_CODE = A.PCBI_CORP_CODE
+                    AND C.MATL_STND_GUBN = A.PCBI_MATL_STND2
+                    AND C.MATL_CODE      = A.PCBI_MATL_CODE2
+                    AND C.MATL_APPL_DATE = A.PCBI_MATL_APDT2
+                  LEFT OUTER JOIN
+                   CITBMATL D
+                  ON    D.MATL_CORP_CODE = A.PCBI_CORP_CODE
+                    AND D.MATL_STND_GUBN = A.PCBI_MATL_STND3
+                    AND D.MATL_CODE      = A.PCBI_MATL_CODE3
+                    AND D.MATL_APPL_DATE = A.PCBI_MATL_APDT3
+             WHERE A.PCBI_CORP_CODE = TO_CHAR(#corp_code#)
+               AND A.PCBI_PART_NO   = #part_no#
+               AND A.PCBI_EONO      = TO_CHAR(#eono#)
+               AND A.PCBI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+  ]]>
+ </sql>
+
+	<sql id="get.PCBDInfoPro.select" comment="PCB AND CIRCUIT 기본조회(가공비)">
+		<![CDATA[
+
+            SELECT A.PCBI_CORP_CODE     PCBI_CORP_CODE   -- 법인코드
+                  ,A.PCBI_PART_NO       PCBI_PART_NO     -- PARTNO
+                  ,A.PCBI_EONO          PCBI_EONO        -- EONO
+                  ,A.PCBI_CUMT_NO       PCBI_CUMT_NO     -- 계산번호
+                  ,A.PCBI_HOLE_CNT1     PCBI_HOLE_CNT1   -- 정HOLE수
+                  ,A.PCBI_HOLE_CNT2     PCBI_HOLE_CNT2   -- 장공HOLE수
+                  ,A.PCBI_SMDT_CNT0     PCBI_SMDT_CNT0   -- SMD(TOP)소자수
+                  ,A.PCBI_SMDB_CNT0     PCBI_SMDB_CNT0   -- SMD(BOTTOM)소자수
+                  ,A.PCBI_ARRA_CAVT     PCBI_ARRA_CAVT   -- ARRAYCVT
+                  ,A.PCBI_SEQN_CNT0     PCBI_SEQN_CNT0   -- SEQUENCE소자수
+                  ,A.PCBI_AXAL_CNT0     PCBI_AXAL_CNT0   -- AXIAL 소자수
+                  ,A.PCBI_AXAL_PNT1     PCBI_AXAL_PNT1   -- AXIAL 소자리드부 Point
+                  ,A.PCBI_AXAL_PNT2     PCBI_AXAL_PNT2   -- AXIAL 접점부 Point
+                  ,A.PCBI_RADL_CNT0     PCBI_RADL_CNT0   -- RADIAL 소자수
+                  ,A.PCBI_RADL_PNT1     PCBI_RADL_PNT1   -- RADIAL 소자리드부 Point
+                  ,A.PCBI_RADL_PNT2     PCBI_RADL_PNT2   -- RADIAL 접점부 Point
+                  ,A.PCBI_MANI_CNT0     PCBI_MANI_CNT0   -- 수동삽입 소자수
+                  ,A.PCBI_MANI_PNT1     PCBI_MANI_PNT1   -- 수동삽입 소자리드부 Point
+                  ,A.PCBI_MANI_PNT2     PCBI_MANI_PNT2   -- 수동삽입 접점부 Point
+                  ,A.PCBI_MNTS_CNT0     PCBI_MNTS_CNT0   -- MOUNTINGSCREW수
+                  ,A.PCBI_MAPB_TERM1    PCBI_MAPB_TERM1  -- 수납땜 소자수: 단자수=1
+                  ,A.PCBI_MAPB_TERM2    PCBI_MAPB_TERM2  -- 수납땜 소자수: 단자수=2
+                  ,A.PCBI_MAPB_TERM3    PCBI_MAPB_TERM3  -- 수납땜 소자수: 단자수=3
+                  ,A.PCBI_MAPB_TERM4    PCBI_MAPB_TERM4  -- 수납땜 소자수: 단자수=4
+                  ,A.PCBI_PAPB_YN       PCBI_PAPB_YN     -- 부분자동납땜여부
+                  ,A.PCBI_PAPB_CNT0     PCBI_PAPB_CNT0   -- 부분자동납땜 적용횟수
+                  ,B.MATL_NAME          PCBI_MATL_NAME   -- 재질명
+                  ,B.MATL_CODE          PCBI_MATL_CODE   -- CODE
+                  ,B.MATL_APPL_DATE     PCBI_MATL_APDT   -- 적용일
+                  ,B.MATL_PRIC          PCBI_MATL_COST   -- 단가
+                  ,B.MATL_UNIT          PCBI_MATL_UNIT   -- 단위
+              FROM CATBPCBI A
+                  LEFT OUTER JOIN
+                   CITBMATL B
+                  ON    B.MATL_CORP_CODE = A.PCBI_CORP_CODE
+                    AND B.MATL_STND_GUBN = A.PCBI_MATL_STND
+                    AND B.MATL_CODE      = A.PCBI_MATL_CODE
+                    AND B.MATL_APPL_DATE = A.PCBI_MATL_APDT
+             WHERE A.PCBI_CORP_CODE = TO_CHAR(#corp_code#)
+               AND A.PCBI_PART_NO   = #part_no#
+               AND A.PCBI_EONO      = TO_CHAR(#eono#)
+               AND A.PCBI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+
+		]]>
+	</sql>
+
+	<sql id="get.PCBDCalcRes.select" comment="PCB AND CIRCUIT 계산 (프로시저) " callable="true">
+		<![CDATA[
+
+            CALL CASPPCBD_P@degr_proc@(
+                               #corp_code:char:in#
+                              ,#part_no:varchar:in#
+                              ,#eono:varchar:in#
+                              ,#cumt_no:numeric:in#
+                              ,#reg_id:varchar:in#
+
+                              ,#MESG_CODE:varchar:out#
+                              ,#MESG:varchar:out#
+                              ,#SQL0_CODE:varchar:out#
+                              ,#PRGM_ID:varchar:out#
+                              ,#LINE_NO:varchar:out#
+                             )
+
+		]]>
+	</sql>
+
+ <sql id="get.PCBDApplCvtCalcRes.select" comment="원판당적용수량 계산 (프로시저)" callable="true"> 
+  <![CDATA[
+   CALL @proc_name_a@ (
+     #pcbi_corp_code:varchar:in#
+    ,#pcbi_stnd_gubn:char:in#
+    ,#pcbi_stnd_degr:varchar:in#
+    ,#pcbi_kind_code:varchar:in#
+    ,#pcbi_prod_wide:varchar:in#
+    ,#pcbi_prod_leng:varchar:in#
+    ,#pcbi_shet_wide:varchar:in#
+    ,#pcbi_shet_leng:varchar:in#
+
+    ,#4PRT_DATA:varchar:out#
+    ,#6PRT_DATA:varchar:out#
+    ,#9PRT_DATA:varchar:out#
+    ,#APPL_CVT0:varchar:out#
+    ,#MESG_CODE:varchar:out#
+    ,#MESG:varchar:out#
+    ,#SQL0_CODE:varchar:out#
+    ,#PRGM_ID:varchar:out#
+    ,#LINE_NO:varchar:out#
+   )
+  ]]>
+ </sql>
+
+ <sql id="get.PCBDScrpWegtCalcRes.select" callable="true">
+  <![CDATA[
+	  CALL @proc_name_b@ (
+          #pcbi_corp_code:varchar:in#
+         ,#pcbi_stnd_gubn:char:in#
+         ,#pcbi_stnd_degr:varchar:in#
+
+         ,#pcbi_kind_code:varchar:in# 
+         ,#pcbi_matl_corp:varchar:in# 
+         ,#pcbi_matl_stnd:varchar:in#
+         ,#pcbi_matl_code:varchar:in#
+         ,#pcbi_matl_apdt:varchar:in#
+         ,#pcbi_matl_gubn:varchar:in#
+         ,#pcbi_matl_corp2:varchar:in# 
+         ,#pcbi_matl_stnd2:varchar:in#
+         ,#pcbi_matl_code2:varchar:in#
+         ,#pcbi_matl_apdt2:varchar:in#
+         ,#pcbi_matl_gubn2:varchar:in#
+         ,#pcbi_matl_corp3:varchar:in#  
+         ,#pcbi_matl_stnd3:varchar:in#
+         ,#pcbi_matl_code3:varchar:in#
+         ,#pcbi_matl_apdt3:varchar:in#
+         ,#pcbi_matl_gubn3:varchar:in#
+         ,#pcbi_pcbd_cnt0:varchar:in# 
+         ,#pcbi_coop_cnt0:varchar:in# 
+         ,#pcbi_prep_cnt0:varchar:in# 
+         
+         ,#scrp_wegt:numeric:out#
+         ,#MESG_CODE:varchar:out#
+         ,#MESG:varchar:out#
+         ,#SQL0_CODE:varchar:out#
+         ,#PRGM_ID:varchar:out#
+         ,#LINE_NO:varchar:out#
+	  )
+  ]]>
+ </sql>
+	
+	<sql id="get.PCBDCnt0CalcRes.select">
+	 <![CDATA[
+      SELECT (CMPK_APPL_VALU  - 4) / 2 + 1  PCBI_PCBD_CNT0
+            ,CMPK_APPL_VALU                 PCBI_PREP_CNT0
+            ,2                              PCBI_COOP_CNT0
+        FROM CATBCMPK
+       WHERE CMPK_CORP_CODE    = 'K1'
+         AND CMPK_STND_GUBN    = 'H'
+         AND CMPK_STND_DEGR    = '20-1'
+         AND CMPK_APPL_GUBN    = 'Y'
+         AND CMPK_CODE         = #pcbi_flor_code#
+         AND CMPK_GUBN_CODE LIKE 'PCBD%'
+	 ]]>
+	</sql>
+</sql-descriptor>

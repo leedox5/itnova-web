@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/ca/pcbd/p20a">
+
+ <service id="get.AllInfo">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var combo_info = new List();
+    var ca_count = new Map();
+
+    try {
+    	combo_info = $jdbc.queryList("bp/tcams/ca/pcbd/p20a", "get.StndPCBDInfo.select", $data.param);
+    	
+    	if(combo_info.size() < 1) {
+			throw new Exception("표준정보[CMPK]가 존재하지 않습니다.<br> 관리자에게 문의하세요.");    	
+    	}
+
+    	ca_count = $jdbc.query("bp/tcams/ca/pcbd/p20a", "get.PCBDInfo.count", $data.param);
+    	
+    	result.MESG_CODE = "SA-001";
+    } catch(e) {
+        result.MESG_CODE = "SA-002";
+        result.MESG      = e.message;
+    }
+
+	$data.combo_info = combo_info;   
+	$data.ca_count   = ca_count;
+	 
+    $data.result     = result;
+   ]]>
+  </script>
+ </service>
+
+	<service id="get.StndPCBDInfo0" label="PCB AND CIRCUIT 표준정보 조회">
+		<select descriptor="bp/tcams/ca/pcbd/p20a" sql-id="get.StndPCBDInfo.select"
+			parameter-name="param" result-class="list" result-name="combo_info" />
+	</service>
+
+ <service id="get.StndPCBDInfo" label="PCB AND CIRCUIT 표준정보 조회">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var combo_info = new List();
+    
+    try {
+    	combo_info = $jdbc.queryList("bp/tcams/ca/pcbd/p20a", "get.StndPCBDInfo.select", $data.param);
+    	
+    	if(combo_info.size() < 1) {
+			throw new Exception("표준정보[CMPK]가 존재하지 않습니다.<br> 관리자에게 문의하세요.");    	
+    	}
+    	
+    	result.MESG_CODE = "SA-001";
+    } catch(e) {
+        result.MESG_CODE = "SA-002";
+        result.MESG      = e.message;
+    }
+
+	$data.combo_info = combo_info;    
+    $data.result     = result;
+   ]]>
+  </script>
+ </service>
+
+	<service id="get.PCBDInfoCount" label="PCB AND CIRCUIT 입력데이터  Count">
+		<select descriptor="bp/tcams/ca/pcbd/p20a" sql-id="get.PCBDInfo.count"
+			parameter-name="param" result-class="map" result-name="ca_count" />
+	</service>
+
+	<service id="get.PCBDInfo" label="PCB AND CIRCUIT 입력데이터 조회">
+		<select descriptor="bp/tcams/ca/pcbd/p20a" sql-id="get.PCBDInfo.select"
+			parameter-name="param" result-class="map" result-name="ca_info" />
+	</service>
+
+	<service id="get.PCBDInfoPro" label="PCB AND CIRCUIT 입력데이터 조회(가공비)">
+		<select descriptor="bp/tcams/ca/pcbd/p20a" sql-id="get.PCBDInfoPro.select"
+			parameter-name="param" result-class="map" result-name="ca_info_pro" />
+	</service>
+
+ <service id="save.PCBDInfo" label="PCB AND CIRCUIT 입력데이터 저장">
+  <script>
+   <![CDATA[
+			try{
+				$data.result = new Map();
+
+				$jdbc.update("bp/tcams/ca/pcbd/p20a", "PCBDInfo.insert", $data.params);
+
+				$data.result.MESG_CODE = "SA-001";
+
+			}catch(e){
+				var rollback = new Map();
+				var msg = e.message;
+				var index = msg.indexOf('JDBC');
+
+				$data.result.MESG_CODE = 'SA-002';
+
+				if ("JDBC-5111" == msg.substr(index, 9)) {
+					$data.result.MESG = "지정된 자릿수보다 초과한 값이 입력되었습니다. <br>자릿수를 확인하세요.";
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다.";
+				}
+
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+  ]]>
+ </script>
+</service>
+
+	<service id="delete.PCBDInfo" label="PCB AND CIRCUIT 입력데이터 삭제">
+		<delete descriptor="bp/tcams/ca/pcbd/p20a" sql-id="PCBDInfo.delete"
+			parameter-name="params" parameter-class="list" />
+	</service>
+
+ <service id="get.PCBDApplCvtCalcRes" label="PCB AND CIRCUIT 원판당적용수량 계산 (프로시저)">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+
+    var result = new Map();
+    var map = new Map();
+    
+    try {
+        $logger.info($data.param);
+        
+        if(StringUtil.isEmpty($data.param.cmms_corp_code)) {
+        	throw new Exception("Please check CMMS Param...");
+        }
+        map = $jdbc.query("bp/tcams/ca/common", "S.DEGR", $data.param);
+        $data.param.proc_name_a = map.proc_name_a;
+	    result = $jdbc.call("bp/tcams/ca/pcbd/p20a", "get.PCBDApplCvtCalcRes.select", $data.param);
+    } catch(e) {
+    	result.PRGM_ID = "get.PCBDApplCvtCalcRes";
+    	result.LINE_NO = "0000";
+    	result.MESG_CODE = "SA-002";
+    	result.MESG = e.message;
+    }
+    
+    $data.calc_Result = result;
+   ]]>
+  </script>
+ </service>
+
+ <service id="get.PCBDScrpWegtCalcRes">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+
+    var result = new Map();
+    var map = new Map();
+    
+    try {
+        $logger.info($data.param);
+        
+        if(StringUtil.isEmpty($data.param.cmms_corp_code)) {
+        	throw new Exception("Please check CMMS Param...");
+        }
+        map = $jdbc.query("bp/tcams/ca/common", "S.DEGR", $data.param);
+        $data.param.proc_name_b = map.proc_name_b;
+		result = $jdbc.call("bp/tcams/ca/pcbd/p20a", "get.PCBDScrpWegtCalcRes.select", $data.param);
+    } catch(e) {
+    	result.PRGM_ID = "get.PCBDScrpWegtCalcRes";
+    	result.LINE_NO = "0000";
+    	result.MESG_CODE = "SA-002";
+    	result.MESG = e.message;
+    }
+	
+	$data.result = result;
+   ]]>
+  </script>
+ </service>
+
+	<service id="get.PCBDCnt0CalcRes">
+	 <script>
+	  <![CDATA[
+	    var result = new Map();
+	    
+	    try {
+	    	result = $jdbc.query("bp/tcams/ca/pcbd/p20a", "get.PCBDCnt0CalcRes.select", $data.param);
+	    	
+	    	result.MESG_CODE = "SA-001";
+	    } catch(e) {
+	    	result.MESG_CODE = "SA-002";
+	    	result.MESG = e.message;
+	    }
+	    
+	    $data.result = result;
+	  ]]>
+	 </script>
+	</service>
+</service-descriptor>
