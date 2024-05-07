@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CASPMCHH_Q02" data-source="tcamsDS">
+
+ <sql id="drop" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPMCHH_Q02  
+  ]]>
+ </sql>
+
+ <sql id="error" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPMCHH_Q02'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPMCHH_Q02
+(
+    I_CORP_CODE  IN  CRTBCMMS.CMMS_CORP_CODE%TYPE,
+    I_STND_GUBN  IN  CRTBCMMS.CMMS_STND_GUBN%TYPE,
+    I_ATMO_GUBN  IN  CITBMCIF.MCIF_ATMO_GUBN%TYPE,  --A :자동 , M:금형
+    I_SHIF_CODE  IN  CITBMCIF.MCIF_SHIF_CODE%TYPE,  --20,10
+    I_COME_CODE  IN  CITBMCIF.MCIF_COME_CODE%TYPE,
+    I_STND_DEGR  IN  CRTBCMMS.CMMS_STND_DEGR%TYPE,
+    I_MCHH_CODE  IN  CITBMCIF.MCIF_MCHH_CODE%TYPE,
+
+    O_MCHH_NAME  OUT CITBMCIF.MCIF_MCHH_NAME%TYPE,  --기계명
+    O_DRCT_COST  OUT CITBMCIF.MCIF_DRCT_COST%TYPE,  --직접경비
+    O_APPL_DATE  OUT CITBMCIF.MCIF_APPL_DATE%TYPE,  --기계경비적용일
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] 설계원가산정 고도화
+ * [FUNCTION] 원가계산공통_기계경비추출
+ * [HISTORY ]
+ *  - 2023.03.15 [A.S.M] : 신규작성
+ *
+ * [COMMENT ]
+ *  - CASPMCHH_Q01 : SUB PART 원가계산일로 경비추출
+ *  - CASPMCHH_Q02 : 공법 차수별 적용일로  경비추출
+ *
+ * [참고]
+ *  - CRSPCMAT_P10 에서 CASPMCHH_Q01호출함. CRSPCMAT_P10은 현재 미사용하므로 처리대상에서 제외.
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_MCIF      CITBMCIF%ROWTYPE ; --기계경비정보
+
+    --WORKING VARIABLE
+    v_IN_TITLE    VARCHAR2(20) ;
+    v_APPL_CORP   CHAR(04)     ;
+    v_APPL_DATE   CHAR(08)     DEFAULT '00000000';
+
+    v_CHK         VARCHAR2(10) ;
+BEGIN
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'IQ-002';
+    O_MESG      := '조회를 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPMCHH_Q02';
+    O_LINE_NO   := 'ST-START';
+
+    v_CHK       := 'OK';
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'         ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_STND_GUBN) IS NULL THEN v_IN_TITLE := '표준구분'     ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_ATMO_GUBN) IS NULL THEN v_IN_TITLE := '자동/금형구분'; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_SHIF_CODE) IS NULL THEN v_IN_TITLE := 'SHIFT구분'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_COME_CODE) IS NULL THEN v_IN_TITLE := '공법코드'     ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_STND_DEGR) IS NULL THEN v_IN_TITLE := '공법차수'     ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_MCHH_CODE) IS NULL THEN v_IN_TITLE := '기계코드'     ; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --2.MAIN
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-21000';
+
+    BEGIN
+        SELECT NVL(MTDG_MCHH_DATE,'00010101')
+          INTO v_APPL_DATE
+          FROM CITBMTDG
+         WHERE MTDG_CORP_CODE = I_CORP_CODE
+           AND MTDG_METH_GUBN = I_ATMO_GUBN
+           AND MTDG_COME_CODE = I_COME_CODE
+           AND MTDG_STND_DEGR = I_STND_DEGR
+        ;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN O_MESG := '기본원가정보>공법차수정보에 해당 차수정보가 존재하지 않습니다.' || '<br>'
+                                       || '▶공법코드=' || I_COME_CODE || '<br>'
+                                       || '▶차수정보=' || I_STND_DEGR || '<br>';
+                                RAISE UD_EX_ERROR;
+    END;
+    
+    IF  v_APPL_DATE <= '00010101' THEN
+        O_MESG := '기계경비 적용일 정보가 등록되지 않았습니다.' || '<br>'
+               || '▶기본원가정보>공법차수정보에서 등록후 계산하시기 바랍니다.' || '<br>';
+        RAISE UD_EX_ERROR;
+    END IF;
+                
+    BEGIN
+        SELECT MCIF_MCHH_NAME
+              ,MCIF_DRCT_COST
+              ,MCIF_APPL_DATE
+              ,MCIF_APPL_YN
+              ,MCIF_DELT_YN
+          INTO rt_MCIF.MCIF_MCHH_NAME
+              ,rt_MCIF.MCIF_DRCT_COST
+              ,rt_MCIF.MCIF_APPL_DATE
+              ,rt_MCIF.MCIF_APPL_YN
+              ,rt_MCIF.MCIF_DELT_YN
+          FROM (
+                SELECT MCIF_MCHH_NAME
+                      ,MCIF_DRCT_COST
+                      ,MCIF_APPL_DATE
+                      ,MCIF_APPL_YN
+                      ,MCIF_DELT_YN
+                  FROM CITBMCIF
+                 WHERE MCIF_CORP_CODE  = I_CORP_CODE
+                   AND MCIF_STND_GUBN  = I_STND_GUBN
+                   AND MCIF_APPL_DATE <= v_APPL_DATE
+                   AND MCIF_ATMO_GUBN  = I_ATMO_GUBN
+                   AND MCIF_SHIF_CODE  IN ('10','20') -- I_SHIF_CODE
+                   AND MCIF_COME_CODE  = I_COME_CODE
+                   AND MCIF_MCHH_CODE  = I_MCHH_CODE
+                 --AND NVL(MCIF_APPL_YN,'Y') = 'Y'  --미적용건 제외
+                 --AND NVL(MCIF_DELT_YN,'N') = 'N'  --삭제건 제외
+                 ORDER BY MCIF_CORP_CODE
+                         ,MCIF_STND_GUBN
+                         ,MCIF_ATMO_GUBN
+                         ,MCIF_SHIF_CODE
+                         ,MCIF_COME_CODE
+                         ,MCIF_MCHH_CODE
+                         ,MCIF_APPL_DATE DESC
+               ) A
+         WHERE ROWNUM = 1
+        ;
+
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN O_MESG := '기계경비정보가 존재하지 않습니다.(기준정보확인요망)' || '<br>'
+                                       || '▶장비코드   =' || I_MCHH_CODE || '<br>'
+                                       || '▶차수 적용일=' || CASE WHEN v_APPL_DATE = '00000000' OR v_APPL_DATE IS NULL THEN '데이터미존재' ELSE v_APPL_DATE END;
+                                RAISE UD_EX_ERROR;
+    END;
+
+    ---------------------------------------------------------------------------
+    --Q01 모듈 : 시트부문에 적용일 만족데이터가 없으면, 이후 장비를 찾는 로직이 있음 
+    --Q02 모듈 : 미적용 ->  적용일 관리가 무의미 해짐. (발생시 고려항 사항임)
+    --           [참고] 이후 장비를 찾는 로직은 적용하지 않음 (2023.03 협의사항)
+    ---------------------------------------------------------------------------
+  --IF  v_CHK = 'NO_DATA' THEN
+  --    필요시 여기에 로직추가
+  --END IF;
+
+    IF  rt_MCIF.MCIF_DELT_YN = 'Y' THEN
+        O_MESG := '삭제된 장비를 선택하였습니다.(재선택요망)';
+        RAISE UD_EX_ERROR;
+    END IF;
+
+    IF  rt_MCIF.MCIF_APPL_YN = 'N' THEN
+        O_MESG := '미적용 장비를 선택하였습니다.(재선택요망)';
+        RAISE UD_EX_ERROR;
+    END IF;
+
+    O_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+    O_DRCT_COST := rt_MCIF.MCIF_DRCT_COST;
+    O_APPL_DATE := rt_MCIF.MCIF_APPL_DATE;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'IQ-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE; O_MESG := '경비추출오류 (운영자 문의요망):' || CHR(10) || SQLERRM;
+END;
+
+
+/**** 공법적용 (추가장비 존재시 처리주의)
+                     CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+-- TEST
+UPDATE CITBMTDG
+   SET MTDG_MCHH_DATE = '20240101'  --'19990101'
+ WHERE MTDG_COME_CODE = 'DIEC'
+   AND MTDG_STND_DEGR = '21-3'
+****/  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
