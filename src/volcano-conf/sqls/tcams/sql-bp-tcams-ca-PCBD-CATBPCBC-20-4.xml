@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/PCBD/CATBPCBC/20-4" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PCBC_CORP_CODE
+ ,PCBC_STND_GUBN
+ ,PCBC_STND_DEGR
+ ,PCBC_SEQ0
+ ,PCBC_KIND_CODE
+ ,PCBC_SIZE_MIN0
+ ,PCBC_SIZE_MAX0
+ ,PCBC_PANL_CNT0
+ ,PCBC_PCNT_WIDE
+ ,PCBC_PCNT_LENG
+ ,PCBC_SIZE_WIDE
+ ,PCBC_SIZE_LENG
+ ,PCBC_COMP_A
+ ,PCBC_COMP_B
+ ,PCBC_COMP_C
+ ,PCBC_COMP_D
+ ,PCBC_CORR_COEF1
+ ,PCBC_CORR_COEF2
+ ,PCBC_APPL_GUBN
+ ,PCBC_REMK
+ ,PCBC_UPDT_CMAN
+ ,PCBC_UPDT_DATE
+ ,PCBC_INIT_CMAN
+ ,PCBC_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'20-4' ,'1' ,'SINGLE' ,'0' ,'99999999' ,'4' ,'2' ,'2' ,'600' ,'500' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'2' ,'SINGLE' ,'0' ,'99999999' ,'6' ,'3' ,'2' ,'400' ,'500' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'3' ,'SINGLE' ,'0' ,'99999999' ,'9' ,'3' ,'3' ,'400' ,'333' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'4' ,'SINGLE_J' ,'0' ,'99999999' ,'4' ,'2' ,'2' ,'600' ,'500' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'5' ,'SINGLE_J' ,'0' ,'99999999' ,'6' ,'3' ,'2' ,'400' ,'500' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'6' ,'SINGLE_J' ,'0' ,'99999999' ,'9' ,'3' ,'3' ,'400' ,'333' ,'3' ,'9' ,'3' ,'0' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'7' ,'DOUBLE' ,'0' ,'50' ,'4' ,'2' ,'2' ,'600' ,'500' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'8' ,'DOUBLE' ,'0' ,'50' ,'6' ,'3' ,'2' ,'400' ,'500' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'9' ,'DOUBLE' ,'0' ,'50' ,'9' ,'3' ,'3' ,'400' ,'333' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'10' ,'DOUBLE' ,'50' ,'99999999' ,'4' ,'2' ,'2' ,'600' ,'500' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'11' ,'DOUBLE' ,'50' ,'99999999' ,'6' ,'3' ,'2' ,'400' ,'500' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'12' ,'DOUBLE' ,'50' ,'99999999' ,'9' ,'3' ,'3' ,'400' ,'333' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'13' ,'MULTI' ,'0' ,'50' ,'4' ,'2' ,'2' ,'600' ,'500' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'14' ,'MULTI' ,'0' ,'50' ,'6' ,'3' ,'2' ,'400' ,'500' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'15' ,'MULTI' ,'0' ,'50' ,'9' ,'3' ,'3' ,'400' ,'333' ,'30' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'16' ,'MULTI' ,'50' ,'99999999' ,'4' ,'2' ,'2' ,'600' ,'500' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'17' ,'MULTI' ,'50' ,'99999999' ,'6' ,'3' ,'2' ,'400' ,'500' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'18' ,'MULTI' ,'50' ,'99999999' ,'9' ,'3' ,'3' ,'400' ,'333' ,'25' ,'42' ,'3' ,'3' ,'22' ,'17' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.PCBC_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.PCBC_UPDT_DATE > B.PCBC_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBPCBC B                                          
+      ON    B.PCBC_CORP_CODE = A.PCBC_CORP_CODE
+        AND B.PCBC_STND_GUBN = A.PCBC_STND_GUBN
+        AND B.PCBC_STND_DEGR = A.PCBC_STND_DEGR
+        AND B.PCBC_SEQ0 = A.PCBC_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBPCBC (
+  PCBC_CORP_CODE
+ ,PCBC_STND_GUBN
+ ,PCBC_STND_DEGR
+ ,PCBC_SEQ0
+ ,PCBC_KIND_CODE
+ ,PCBC_SIZE_MIN0
+ ,PCBC_SIZE_MAX0
+ ,PCBC_PANL_CNT0
+ ,PCBC_PCNT_WIDE
+ ,PCBC_PCNT_LENG
+ ,PCBC_SIZE_WIDE
+ ,PCBC_SIZE_LENG
+ ,PCBC_COMP_A
+ ,PCBC_COMP_B
+ ,PCBC_COMP_C
+ ,PCBC_COMP_D
+ ,PCBC_CORR_COEF1
+ ,PCBC_CORR_COEF2
+ ,PCBC_APPL_GUBN
+ ,PCBC_REMK
+ ,PCBC_UPDT_CMAN
+ ,PCBC_UPDT_DATE
+ ,PCBC_INIT_CMAN
+ ,PCBC_INIT_DATE
+) VALUES (
+  #pcbc_corp_code#
+ ,#pcbc_stnd_gubn#
+ ,#pcbc_stnd_degr#
+ ,#pcbc_seq0#
+ ,#pcbc_kind_code#
+ ,#pcbc_size_min0#
+ ,#pcbc_size_max0#
+ ,#pcbc_panl_cnt0#
+ ,#pcbc_pcnt_wide#
+ ,#pcbc_pcnt_leng#
+ ,#pcbc_size_wide#
+ ,#pcbc_size_leng#
+ ,#pcbc_comp_a#
+ ,#pcbc_comp_b#
+ ,#pcbc_comp_c#
+ ,#pcbc_comp_d#
+ ,#pcbc_corr_coef1#
+ ,#pcbc_corr_coef2#
+ ,#pcbc_appl_gubn#
+ ,#pcbc_remk#
+ ,#pcbc_updt_cman#
+ ,#pcbc_updt_date#
+ ,#pcbc_init_cman#
+ ,#pcbc_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBPCBC
+   SET PCBC_KIND_CODE = #pcbc_kind_code#
+      ,PCBC_SIZE_MIN0 = #pcbc_size_min0#
+      ,PCBC_SIZE_MAX0 = #pcbc_size_max0#
+      ,PCBC_PANL_CNT0 = #pcbc_panl_cnt0#
+      ,PCBC_PCNT_WIDE = #pcbc_pcnt_wide#
+      ,PCBC_PCNT_LENG = #pcbc_pcnt_leng#
+      ,PCBC_SIZE_WIDE = #pcbc_size_wide#
+      ,PCBC_SIZE_LENG = #pcbc_size_leng#
+      ,PCBC_COMP_A = #pcbc_comp_a#
+      ,PCBC_COMP_B = #pcbc_comp_b#
+      ,PCBC_COMP_C = #pcbc_comp_c#
+      ,PCBC_COMP_D = #pcbc_comp_d#
+      ,PCBC_CORR_COEF1 = #pcbc_corr_coef1#
+      ,PCBC_CORR_COEF2 = #pcbc_corr_coef2#
+      ,PCBC_APPL_GUBN = #pcbc_appl_gubn#
+      ,PCBC_REMK = #pcbc_remk#
+      ,PCBC_UPDT_CMAN = #pcbc_updt_cman#
+      ,PCBC_UPDT_DATE = #pcbc_updt_date#
+ WHERE PCBC_CORP_CODE = #pcbc_corp_code#
+   AND PCBC_STND_GUBN = #pcbc_stnd_gubn#
+   AND PCBC_STND_DEGR = #pcbc_stnd_degr#
+   AND PCBC_SEQ0 = #pcbc_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 

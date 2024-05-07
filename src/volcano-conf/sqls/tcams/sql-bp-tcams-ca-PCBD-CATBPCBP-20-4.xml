@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/PCBD/CATBPCBP/20-4" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PCBP_CORP_CODE
+ ,PCBP_STND_GUBN
+ ,PCBP_STND_DEGR
+ ,PCBP_PROC_SEQ0
+ ,PCBP_PROC_GUBN
+ ,PCBP_KIND_CODE
+ ,PCBP_JUMP_YN
+ ,PCBP_TOPP_GROP
+ ,PCBP_BOTT_GROP
+ ,PCBP_PROC_NAME
+ ,PCBP_NET0_CYTM
+ ,PCBP_NET0_COEF1
+ ,PCBP_NET0_COEF2
+ ,PCBP_NET0_COEF3
+ ,PCBP_CAVT
+ ,PCBP_PREP_HOUR
+ ,PCBP_PRSN_CNT0
+ ,PCBP_MCHH_CODE
+ ,PCBP_APPL_GUBN
+ ,PCBP_REMK
+ ,PCBP_UPDT_CMAN
+ ,PCBP_UPDT_DATE
+ ,PCBP_INIT_CMAN
+ ,PCBP_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'20-4' ,'1' ,'PAT_S10' ,'SINGLE' ,'ALL' ,'ALL' ,'ALL' ,'단면' ,'0' ,'0.27' ,'0' ,'0' ,'1' ,'0' ,'23' ,'SINGLE-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'2' ,'PAT_S10' ,'SINGLE_J' ,'ALL' ,'ALL' ,'ALL' ,'단면' ,'0' ,'0.27' ,'0' ,'0' ,'1' ,'0' ,'23' ,'SINGLE-LINE' ,'Y' ,'JUMP는 단면, JUMP모두 처리함' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'3' ,'PAT_S20' ,'SINGLE_J' ,'ALL' ,'ALL' ,'ALL' ,'JUMP 인쇄' ,'0' ,'1.44' ,'0' ,'0' ,'1' ,'0' ,'6' ,'SINGLE-JUMP-LINE' ,'Y' ,'JUMP는 단면, JUMP모두 처리함' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'4' ,'PAT_D10' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'재단' ,'0' ,'0.28' ,'0' ,'0' ,'1' ,'0' ,'2' ,'DOUBLE-CUT-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'5' ,'PAT_D20' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'홀가공_정홀' ,'0' ,'0.042' ,'0' ,'0' ,'1' ,'0' ,'0.38' ,'DOUBLE-HOLE-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'6' ,'PAT_D30' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'홀가공_장공홀' ,'0' ,'0.3' ,'0' ,'0' ,'1' ,'0' ,'0.38' ,'DOUBLE-HOLE-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'7' ,'PAT_D40' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'무전해도금' ,'0' ,'0.43' ,'0' ,'0' ,'1' ,'0' ,'3' ,'DOUBLE-COAT1-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'8' ,'PAT_D50' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'전해도금' ,'0' ,'0.41' ,'0' ,'0' ,'1' ,'0' ,'4' ,'DOUBLE-COAT2-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'9' ,'PAT_D60' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'D/F' ,'0' ,'0.34' ,'0' ,'0' ,'1' ,'0' ,'4' ,'DOUBLE-DF-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'10' ,'PAT_D70' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'DES' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'DOUBLE-DES-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'11' ,'PAT_D80' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'AOI' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'5' ,'DOUBLE-AOI-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'12' ,'PAT_D90' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'PSR인쇄' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'7' ,'DOUBLE-PSR-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'13' ,'PAT_DA0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'마킹인쇄' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'4' ,'DOUBLE-MARK-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'14' ,'PAT_DB0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'외형가공' ,'0' ,'0.37' ,'0' ,'0' ,'1' ,'0' ,'4' ,'DOUBLE-ROUTING-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'15' ,'PAT_DC0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'휨교정' ,'0' ,'0.37' ,'0' ,'0' ,'1' ,'0' ,'0' ,'DOUBLE-CORRECT-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'16' ,'PAT_DD0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'BBT' ,'0' ,'0.43' ,'0' ,'0' ,'1' ,'0' ,'2' ,'DOUBLE-BBT-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'17' ,'PAT_DE0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'검사' ,'0' ,'0.22' ,'0' ,'0' ,'1' ,'0' ,'8' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'18' ,'PAT_DF0' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'포장' ,'0' ,'0.22' ,'0' ,'0' ,'1' ,'0' ,'3' ,'DOUBLE-PACK-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'19' ,'PAT_MI10' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(내층)_재단' ,'0' ,'0.28' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTII-CUT-LINE' ,'Y' ,'매수만큼 반복' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'20' ,'PAT_MI20' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(내층)_D/F' ,'0' ,'0.34' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTII-DF-LINE' ,'Y' ,'매수만큼 반복' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'21' ,'PAT_MI30' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(내층)_DES' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTII-DES-LINE' ,'Y' ,'매수만큼 반복' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'22' ,'PAT_MI40' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(내층)_AOI' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTII-AOI-LINE' ,'Y' ,'매수만큼 반복' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'23' ,'PAT_MI50' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(내층)_OXIDE' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTII-OXIDE-LINE' ,'Y' ,'매수만큼 반복' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'24' ,'PAT_MP10' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(적층)' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTI-LAYER-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'25' ,'PAT_MO10' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_홀가공_정홀' ,'0' ,'0.042' ,'0' ,'0' ,'1' ,'0' ,'0.38' ,'MULTIO-HOLE-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'26' ,'PAT_MO20' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_홀가공_장공홀' ,'0' ,'0.3' ,'0' ,'0' ,'1' ,'0' ,'0.38' ,'MULTIO-HOLE-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'27' ,'PAT_MO30' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_무전해도금' ,'0' ,'0.43' ,'0' ,'0' ,'1' ,'0' ,'3' ,'MULTIO-COAT1-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'28' ,'PAT_MO40' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_전해도금' ,'0' ,'0.41' ,'0' ,'0' ,'1' ,'0' ,'4' ,'MULTIO-COAT2-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'29' ,'PAT_MO50' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_D/F' ,'0' ,'0.34' ,'0' ,'0' ,'1' ,'0' ,'4' ,'MULTIO-DF-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'30' ,'PAT_MO60' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_DES' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTIO-DES-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'31' ,'PAT_MO70' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_AOI' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'5' ,'MULTIO-AOI-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'32' ,'PAT_MO80' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_PSR인쇄' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'7' ,'MULTIO-PSR-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'33' ,'PAT_MO90' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_마킹인쇄' ,'0' ,'0.39' ,'0' ,'0' ,'1' ,'0' ,'4' ,'MULTIO-MARK-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'34' ,'PAT_MOA0' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_외형가공' ,'0' ,'0.37' ,'0' ,'0' ,'1' ,'0' ,'4' ,'MULTIO-ROUTING-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'35' ,'PAT_MOB0' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_휨교정' ,'0' ,'0.37' ,'0' ,'0' ,'1' ,'0' ,'0' ,'MULTIO-CORR-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'36' ,'PAT_MOC0' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_BBT' ,'0' ,'0.43' ,'0' ,'0' ,'1' ,'0' ,'2' ,'MULTIO-BBT-LINE' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'37' ,'PAT_MOD0' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_검사' ,'0' ,'0.22' ,'0' ,'0' ,'1' ,'0' ,'8' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'38' ,'PAT_MOE0' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'(외층)_포장' ,'0' ,'0.22' ,'0' ,'0' ,'1' ,'0' ,'3' ,'MILTIO-PACK-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.PCBP_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.PCBP_UPDT_DATE > B.PCBP_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBPCBP B                                          
+      ON    B.PCBP_CORP_CODE = A.PCBP_CORP_CODE
+        AND B.PCBP_STND_GUBN = A.PCBP_STND_GUBN
+        AND B.PCBP_STND_DEGR = A.PCBP_STND_DEGR
+        AND B.PCBP_PROC_SEQ0 = A.PCBP_PROC_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBPCBP (
+  PCBP_CORP_CODE
+ ,PCBP_STND_GUBN
+ ,PCBP_STND_DEGR
+ ,PCBP_PROC_SEQ0
+ ,PCBP_PROC_GUBN
+ ,PCBP_KIND_CODE
+ ,PCBP_JUMP_YN
+ ,PCBP_TOPP_GROP
+ ,PCBP_BOTT_GROP
+ ,PCBP_PROC_NAME
+ ,PCBP_NET0_CYTM
+ ,PCBP_NET0_COEF1
+ ,PCBP_NET0_COEF2
+ ,PCBP_NET0_COEF3
+ ,PCBP_CAVT
+ ,PCBP_PREP_HOUR
+ ,PCBP_PRSN_CNT0
+ ,PCBP_MCHH_CODE
+ ,PCBP_APPL_GUBN
+ ,PCBP_REMK
+ ,PCBP_UPDT_CMAN
+ ,PCBP_UPDT_DATE
+ ,PCBP_INIT_CMAN
+ ,PCBP_INIT_DATE
+) VALUES (
+  #pcbp_corp_code#
+ ,#pcbp_stnd_gubn#
+ ,#pcbp_stnd_degr#
+ ,#pcbp_proc_seq0#
+ ,#pcbp_proc_gubn#
+ ,#pcbp_kind_code#
+ ,#pcbp_jump_yn#
+ ,#pcbp_topp_grop#
+ ,#pcbp_bott_grop#
+ ,#pcbp_proc_name#
+ ,#pcbp_net0_cytm#
+ ,#pcbp_net0_coef1#
+ ,#pcbp_net0_coef2#
+ ,#pcbp_net0_coef3#
+ ,#pcbp_cavt#
+ ,#pcbp_prep_hour#
+ ,#pcbp_prsn_cnt0#
+ ,#pcbp_mchh_code#
+ ,#pcbp_appl_gubn#
+ ,#pcbp_remk#
+ ,#pcbp_updt_cman#
+ ,#pcbp_updt_date#
+ ,#pcbp_init_cman#
+ ,#pcbp_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBPCBP
+   SET PCBP_PROC_GUBN = #pcbp_proc_gubn#
+      ,PCBP_KIND_CODE = #pcbp_kind_code#
+      ,PCBP_JUMP_YN = #pcbp_jump_yn#
+      ,PCBP_TOPP_GROP = #pcbp_topp_grop#
+      ,PCBP_BOTT_GROP = #pcbp_bott_grop#
+      ,PCBP_PROC_NAME = #pcbp_proc_name#
+      ,PCBP_NET0_CYTM = #pcbp_net0_cytm#
+      ,PCBP_NET0_COEF1 = #pcbp_net0_coef1#
+      ,PCBP_NET0_COEF2 = #pcbp_net0_coef2#
+      ,PCBP_NET0_COEF3 = #pcbp_net0_coef3#
+      ,PCBP_CAVT = #pcbp_cavt#
+      ,PCBP_PREP_HOUR = #pcbp_prep_hour#
+      ,PCBP_PRSN_CNT0 = #pcbp_prsn_cnt0#
+      ,PCBP_MCHH_CODE = #pcbp_mchh_code#
+      ,PCBP_APPL_GUBN = #pcbp_appl_gubn#
+      ,PCBP_REMK = #pcbp_remk#
+      ,PCBP_UPDT_CMAN = #pcbp_updt_cman#
+      ,PCBP_UPDT_DATE = #pcbp_updt_date#
+ WHERE PCBP_CORP_CODE = #pcbp_corp_code#
+   AND PCBP_STND_GUBN = #pcbp_stnd_gubn#
+   AND PCBP_STND_DEGR = #pcbp_stnd_degr#
+   AND PCBP_PROC_SEQ0 = #pcbp_proc_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 

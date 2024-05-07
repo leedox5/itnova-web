@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/PCBD/CATBPCBM/20-4" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PCBM_CORP_CODE
+ ,PCBM_STND_GUBN
+ ,PCBM_STND_DEGR
+ ,PCBM_MATL_SEQ0
+ ,PCBM_MATL_GUBN
+ ,PCBM_KIND_CODE
+ ,PCBM_JUMP_YN
+ ,PCBM_COAT_CODE
+ ,PCBM_FLUX_CODE
+ ,PCBM_CSOL_CODE
+ ,PCBM_DIPP_CODE
+ ,PCBM_MAPB_CODE
+ ,PCBM_MATL_NAME
+ ,PCBM_MATL_PRIC1
+ ,PCBM_MATL_PRIC2
+ ,PCBM_MATL_COEF1
+ ,PCBM_MATL_COEF2
+ ,PCBM_MATL_UNIT
+ ,PCBM_APPL_GUBN
+ ,PCBM_REMK
+ ,PCBM_UPDT_CMAN
+ ,PCBM_UPDT_DATE
+ ,PCBM_INIT_CMAN
+ ,PCBM_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'20-4' ,'1' ,'COPPER' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'다층PCB 동박' ,'0' ,'0' ,'0' ,'0' ,'SH' ,'Y' ,'입력단가,매수적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'2' ,'PREPREG' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'다층PCB PREPREG' ,'0' ,'0' ,'0' ,'0' ,'SH' ,'Y' ,'입력단가,매수적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'3' ,'PAT_MATL' ,'SINGLE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN 부재료비_단면(일반)' ,'20.09' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,'적용계수2=원판면적' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'4' ,'PAT_MATL' ,'SINGLE_J' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN 부재료비_단면(JUMP인쇄)' ,'167.36' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'5' ,'PAT_MATL' ,'DOUBLE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN 부재료비_양면' ,'134.8' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'6' ,'PAT_MATL' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN 부재료비_다층' ,'30.01' ,'134.14' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'7' ,'PAT_MATI' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN(내층) 부재료비' ,'30.01' ,'0' ,'0' ,'120' ,'DM2' ,'N' ,'미적용:1ROW 처리로 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'8' ,'PAT_MATO' ,'MULTI' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'PATTERN(외층) 부재료비' ,'134.14' ,'0' ,'0' ,'120' ,'DM2' ,'N' ,'미적용:1ROW 처리로 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'9' ,'PCB_SURF' ,'ALL' ,'ALL' ,'OSP' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'OSP(Pre Flux)' ,'15.2' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'10' ,'PCB_SURF' ,'ALL' ,'ALL' ,'HASL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'HASL(납)_유연' ,'38' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'11' ,'PCB_SURF' ,'ALL' ,'ALL' ,'HASL_UN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'HASL(납)_무연' ,'80' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'12' ,'PCB_SURF' ,'SINGLE' ,'ALL' ,'TIN0.5' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_0.5㎛이상' ,'34.2' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'13' ,'PCB_SURF' ,'SINGLE_J' ,'ALL' ,'TIN0.5' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_0.5㎛이상' ,'34.2' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'14' ,'PCB_SURF' ,'DOUBLE' ,'ALL' ,'TIN0.5' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_0.5㎛이상' ,'42.9' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'15' ,'PCB_SURF' ,'MULTI' ,'ALL' ,'TIN0.5' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_0.5㎛이상' ,'42.9' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'16' ,'PCB_SURF' ,'SINGLE' ,'ALL' ,'TIN1.0' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_1.0㎛이상' ,'56.5' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'17' ,'PCB_SURF' ,'SINGLE_J' ,'ALL' ,'TIN1.0' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_1.0㎛이상' ,'56.5' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'18' ,'PCB_SURF' ,'DOUBLE' ,'ALL' ,'TIN1.0' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_1.0㎛이상' ,'70.9' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'19' ,'PCB_SURF' ,'MULTI' ,'ALL' ,'TIN1.0' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Tin(주석)_1.0㎛이상' ,'70.9' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'20' ,'PCB_SURF' ,'ALL' ,'ALL' ,'ENIG0.03' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ENIG(니켈+금)_금 0.03㎛이상' ,'152.1' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'21' ,'PCB_SURF' ,'ALL' ,'ALL' ,'ENIG0.04' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ENIG(니켈+금)_금 0.04㎛이상' ,'160.9' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'20-4' ,'22' ,'PCB_SURF' ,'ALL' ,'ALL' ,'ENIG0.05' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ENIG(니켈+금)_금 0.05㎛이상' ,'165.3' ,'0' ,'0' ,'120' ,'DM2' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.PCBM_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.PCBM_UPDT_DATE > B.PCBM_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBPCBM B                                          
+      ON    B.PCBM_CORP_CODE = A.PCBM_CORP_CODE
+        AND B.PCBM_STND_GUBN = A.PCBM_STND_GUBN
+        AND B.PCBM_STND_DEGR = A.PCBM_STND_DEGR
+        AND B.PCBM_MATL_SEQ0 = A.PCBM_MATL_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBPCBM (
+  PCBM_CORP_CODE
+ ,PCBM_STND_GUBN
+ ,PCBM_STND_DEGR
+ ,PCBM_MATL_SEQ0
+ ,PCBM_MATL_GUBN
+ ,PCBM_KIND_CODE
+ ,PCBM_JUMP_YN
+ ,PCBM_COAT_CODE
+ ,PCBM_FLUX_CODE
+ ,PCBM_CSOL_CODE
+ ,PCBM_DIPP_CODE
+ ,PCBM_MAPB_CODE
+ ,PCBM_MATL_NAME
+ ,PCBM_MATL_PRIC1
+ ,PCBM_MATL_PRIC2
+ ,PCBM_MATL_COEF1
+ ,PCBM_MATL_COEF2
+ ,PCBM_MATL_UNIT
+ ,PCBM_APPL_GUBN
+ ,PCBM_REMK
+ ,PCBM_UPDT_CMAN
+ ,PCBM_UPDT_DATE
+ ,PCBM_INIT_CMAN
+ ,PCBM_INIT_DATE
+) VALUES (
+  #pcbm_corp_code#
+ ,#pcbm_stnd_gubn#
+ ,#pcbm_stnd_degr#
+ ,#pcbm_matl_seq0#
+ ,#pcbm_matl_gubn#
+ ,#pcbm_kind_code#
+ ,#pcbm_jump_yn#
+ ,#pcbm_coat_code#
+ ,#pcbm_flux_code#
+ ,#pcbm_csol_code#
+ ,#pcbm_dipp_code#
+ ,#pcbm_mapb_code#
+ ,#pcbm_matl_name#
+ ,#pcbm_matl_pric1#
+ ,#pcbm_matl_pric2#
+ ,#pcbm_matl_coef1#
+ ,#pcbm_matl_coef2#
+ ,#pcbm_matl_unit#
+ ,#pcbm_appl_gubn#
+ ,#pcbm_remk#
+ ,#pcbm_updt_cman#
+ ,#pcbm_updt_date#
+ ,#pcbm_init_cman#
+ ,#pcbm_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBPCBM
+   SET PCBM_MATL_GUBN = #pcbm_matl_gubn#
+      ,PCBM_KIND_CODE = #pcbm_kind_code#
+      ,PCBM_JUMP_YN = #pcbm_jump_yn#
+      ,PCBM_COAT_CODE = #pcbm_coat_code#
+      ,PCBM_FLUX_CODE = #pcbm_flux_code#
+      ,PCBM_CSOL_CODE = #pcbm_csol_code#
+      ,PCBM_DIPP_CODE = #pcbm_dipp_code#
+      ,PCBM_MAPB_CODE = #pcbm_mapb_code#
+      ,PCBM_MATL_NAME = #pcbm_matl_name#
+      ,PCBM_MATL_PRIC1 = #pcbm_matl_pric1#
+      ,PCBM_MATL_PRIC2 = #pcbm_matl_pric2#
+      ,PCBM_MATL_COEF1 = #pcbm_matl_coef1#
+      ,PCBM_MATL_COEF2 = #pcbm_matl_coef2#
+      ,PCBM_MATL_UNIT = #pcbm_matl_unit#
+      ,PCBM_APPL_GUBN = #pcbm_appl_gubn#
+      ,PCBM_REMK = #pcbm_remk#
+      ,PCBM_UPDT_CMAN = #pcbm_updt_cman#
+      ,PCBM_UPDT_DATE = #pcbm_updt_date#
+ WHERE PCBM_CORP_CODE = #pcbm_corp_code#
+   AND PCBM_STND_GUBN = #pcbm_stnd_gubn#
+   AND PCBM_STND_DEGR = #pcbm_stnd_degr#
+   AND PCBM_MATL_SEQ0 = #pcbm_matl_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
