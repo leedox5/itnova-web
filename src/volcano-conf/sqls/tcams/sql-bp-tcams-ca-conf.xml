@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/conf" data-source="tcamsDS">
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CATBCMPK (
+  CMPK_CORP_CODE
+ ,CMPK_STND_GUBN
+ ,CMPK_STND_DEGR
+ ,CMPK_GUBN_CODE
+ ,CMPK_CODE
+ ,CMPK_SORT_NUMB
+ ,CMPK_GUBN_NAME
+ ,CMPK_CODE_NAME
+ ,CMPK_APPL_VALU
+ ,CMPK_APPL_PRIC
+ ,CMPK_APPL_RATE1
+ ,CMPK_APPL_RATE2
+ ,CMPK_APPL_RATE3
+ ,CMPK_CODE_GRP1
+ ,CMPK_CODE_GRP2
+ ,CMPK_CODE_GRP3
+ ,CMPK_CODE_GRP4
+ ,CMPK_CODE_GRP5
+ ,CMPK_APPL_GUBN
+ ,CMPK_END0_DATE
+ ,CMPK_REMK
+ ,CMPK_UPDT_CMAN
+ ,CMPK_UPDT_DATE
+ ,CMPK_INIT_CMAN
+ ,CMPK_INIT_DATE
+) VALUES ( 
+  #cmpk_corp_code#
+ ,#cmpk_stnd_gubn#
+ ,#cmpk_stnd_degr#
+ ,#cmpk_gubn_code#
+ ,#cmpk_code#
+ ,#cmpk_sort_numb#
+ ,#cmpk_gubn_name#
+ ,#cmpk_code_name#
+ ,#cmpk_appl_valu#
+ ,#cmpk_appl_pric#
+ ,#cmpk_appl_rate1#
+ ,#cmpk_appl_rate2#
+ ,#cmpk_appl_rate3#
+ ,#cmpk_code_grp1#
+ ,#cmpk_code_grp2#
+ ,#cmpk_code_grp3#
+ ,#cmpk_code_grp4#
+ ,#cmpk_code_grp5#
+ ,#cmpk_appl_gubn#
+ ,#cmpk_end0_date#
+ ,#cmpk_remk#
+ ,#cmpk_updt_cman#
+ ,#cmpk_updt_date#
+ ,#cmpk_init_cman#
+ ,#cmpk_init_date#
+)
+  ]]>
+ </sql> 
+ 
+ <sql id="insert.MTDG" comment="저장">
+  <![CDATA[
+INSERT INTO CITBMTDG (
+  MTDG_CORP_CODE
+ ,MTDG_METH_GUBN
+ ,MTDG_COME_CODE
+ ,MTDG_STND_DEGR
+ ,MTDG_REGT_NO
+ ,MTDG_REVI_DATE
+ ,MTDG_APPL_DATE
+ ,MTDG_HKMC_DEGR
+ ,MTDG_DEGR_CONT
+ ,MTDG_STND_FILE
+ ,MTDG_STND_MAN1
+ ,MTDG_PHON_NO1
+ ,MTDG_STND_MAN2
+ ,MTDG_PHON_NO2
+ ,MTDG_MENU_ID
+ ,MTDG_MXML_PATH
+ ,MTDG_ATT_GRP_CD
+ ,MTDG_APPL_YN
+ ,MTDG_UPDT_DATE
+ ,MTDG_UPDT_CMAN
+ ,MTDG_INIT_DATE
+ ,MTDG_INIT_CMAN
+ ,MTDG_TRAN_DEGR
+) VALUES ( 
+  #mtdg_corp_code#
+ ,#mtdg_meth_gubn#
+ ,#mtdg_come_code#
+ ,#mtdg_stnd_degr#
+ ,#mtdg_regt_no#
+ ,#mtdg_revi_date#
+ ,#mtdg_appl_date#
+ ,#mtdg_hkmc_degr#
+ ,#mtdg_degr_cont#
+ ,#mtdg_stnd_file#
+ ,#mtdg_stnd_man1#
+ ,#mtdg_phon_no1#
+ ,#mtdg_stnd_man2#
+ ,#mtdg_phon_no2#
+ ,#mtdg_menu_id#
+ ,#mtdg_mxml_path#
+ ,#mtdg_att_grp_cd#
+ ,#mtdg_appl_yn#
+ ,#mtdg_updt_date#
+ ,#mtdg_updt_cman#
+ ,#mtdg_init_date#
+ ,#mtdg_init_cman#
+ ,#mtdg_tran_degr#
+)
+  ]]>
+ </sql> 
+ 
+ <sql id="update.MTDG" comment="저장">
+  <![CDATA[
+UPDATE CITBMTDG
+   SET MTDG_REVI_DATE = #mtdg_revi_date#
+      ,MTDG_APPL_DATE = #mtdg_appl_date#
+      ,MTDG_TRAN_DEGR = #mtdg_tran_degr#
+      ,MTDG_MENU_ID   = #mtdg_menu_id#
+      ,MTDG_MXML_PATH = #mtdg_mxml_path#
+      ,MTDG_APPL_YN   = #mtdg_appl_yn#
+      ,MTDG_UPDT_DATE = #mtdg_updt_date#
+      ,MTDG_UPDT_CMAN = #mtdg_updt_cman#
+ WHERE MTDG_CORP_CODE = #mtdg_corp_code#
+   AND MTDG_METH_GUBN = #mtdg_meth_gubn#
+   AND MTDG_COME_CODE = #mtdg_come_code#
+   AND MTDG_STND_DEGR = #mtdg_stnd_degr#      
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
