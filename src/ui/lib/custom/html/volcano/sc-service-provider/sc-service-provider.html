@@ -1,0 +1,330 @@
+<!-- 
+SCServiceProvider는 smartSuite 7.0 -> 9.1 UI로 전환 시에 사용하는 서비스 엘리먼트
+
+#### 기본 예제
+
+    <sc-code-provider id="codeP" code="C004" target="{{codes.code}}"></sc-code-provider>
+@demo demo/index.html
+-->
+<link rel="import" href="sc-service-input.html">
+<link rel="import" href="sc-service-output.html">
+<dom-module id="sc-service-provider"> <template>
+	<sc-ajax id="__serviceProvider__" url="[[url]]"
+			 on-response="_handleResponse" method="POST"
+			 content-type="application/json; charset=UTF-8" autoclear></sc-ajax> <content></content>
+</template> <script>
+    SCServiceProvider = Polymer({
+        is : 'sc-service-provider',
+        
+        __lazyRegister__ : true,
+        
+		require : 'SCRequest',
+		
+        properties : {
+            /**
+             * [필수] SCServiceProvider의 service 호출 시, 사용되는 Descriptor 필드 입니다.
+             *		 서버단에서 서비스 Controller를 찾는 기준입니다.
+             *
+             * @type {String}
+             */
+            descriptor : {
+                type : String,
+                value : ''
+            },
+
+            /**
+             * [필수] SCServiceProvider의 service 호출 시, 사용되는 Service ID 필드 입니다.
+             *		 서버단에서 서비스 Controller를 찾는 기준입니다.
+             *
+             * @type {String}
+             */
+            serviceId : {
+                type : String,
+                value : ''
+            },
+
+            bodyName : {
+                type : String,
+                value : null
+            },
+
+            /**
+             * SCServiceProvider의 service 호출에 대한 파라미터를 설정하는 필드 입니다.
+             *
+             * @type {Object}
+             */
+            body : {
+                type : Object,
+                value : null
+            },
+
+            /**
+             * SCServiceProvider의 service 호출 url 입니다.
+             *
+             * @type {String}
+             */
+            url : {
+                type : String
+            },
+
+            lastResponseName : {
+                type : String,
+                value : null
+            },
+
+            /**
+             * SCServiceProvider의 service 호출에 대한 결과값을 전달받는 필드 입니다.
+             *
+             * @type {Object}
+             */
+
+            target : {
+                type : Object,
+                notify : true
+            },
+            
+            lastResponse : {
+                type : Object,
+                notify : true
+            },
+
+            large : {
+                type : Boolean,
+                value : false
+            },
+
+            toArray : {
+                type : String,
+                value : null
+            },
+
+			inputs: {
+             	type: Array,
+				value: function () {
+             	    return [];
+                }
+			},
+
+            outputs: {
+                type: Array,
+                value: function () {
+                    return [];
+                }
+            },
+
+            //response 후 Object를 field component originalValue로 설정
+            resetValue : {
+                type : Object,
+                value : function () {
+                    return false;
+                }
+            },
+            
+            /**
+             * changeComparable이면 기존의 값을 oldObj로 캐싱한다.
+             *
+             * @type {Object}
+             */
+            changeComparable: Object
+        },
+
+        ready : function() {
+            if (this.large) {
+                this.url = "getLargeList.do";
+            } else {
+                this.url = this.serviceId + ".do";
+            }
+        },
+
+        generateRequest : function() {
+            this.service();
+        },
+
+        /**
+         * SCServiceProvider에서 조회 서비스를 호출하는 메소드 입니다.
+         * 등록된 값이 존재하지 않으면 SCAjax의 generateRequest 메소드를 호출합니다.
+         */
+        service : function() {
+            var me = this, params = me.inputStrategy();
+
+            me.$.__serviceProvider__.body = JSON.stringify({
+                "descriptor" : me.descriptor,
+                "service" : me.serviceId,
+                "data" : $.isEmptyObject(params) ? {} : params,
+                "arraytypelist" : me.toArray,
+                "isnonajaxrequest" : me.large
+            });
+            //me.$.__serviceProvider__.generateRequest();
+            UT.request(me.$.__serviceProvider__);
+        },
+
+        service1 : function() {
+            var me = this, params = me.inputStrategy();
+
+            me.$.__serviceProvider__.body = JSON.stringify({
+                "descriptor" : me.descriptor,
+                "service" : me.serviceId,
+                "data" : $.isEmptyObject(params) ? {} : params,
+                "arraytypelist" : me.toArray,
+                "isnonajaxrequest" : me.large
+            });
+            me.$.__serviceProvider__.generateRequest();
+            //UT.request(me.$.__serviceProvider__);
+        },
+        
+        /**
+         * SCAjax service로부터 response를 핸들링하는 메소드 입니다.
+         * 결과를 전달하는 메소드를 호출합니다.
+         *
+         */
+        _handleResponse : function(responseData) {
+            var me = this, result = responseData.detail.response;
+
+            var __result = this._processResult(result);
+            this.fire('response', responseData.detail);
+
+            me.set("target", __result);
+            if (!Polymer.$Util.isEmpty(me.lastResponseName)) {
+                me.set("lastResponse", result[me.lastResponseName]);
+            } else {
+                me.set("lastResponse", result);
+            }
+            return __result;
+        },
+
+        /**
+         * 파라메터로 전달된 Array를 this.target에 전달하고, 'result' 이벤트를 발생합니다.
+         *
+         * @param {Object} results
+         * @return {Object} target
+         */
+        _processResult : function(_result) {
+            this.target = _result;
+            this.outputStrategy(_result);
+            this.fire('result', this.target);
+            return this.target;
+        },
+
+        /** 파라미터 전략 */
+        inputStrategy : function() {
+            var me = this, params = {}, input, inputs;
+            inputs = me.querySelectorAll('inputs > sc-service-input');
+            inputs = Array.prototype.slice.call(inputs).concat(me.inputs || []);
+
+            if (inputs.length > 0) {
+                for ( var i = 0; i < inputs.length; i++) {
+                    input = inputs[i];
+                    params[input.name] = input.value;
+                }
+            } else {
+                if (!Polymer.$Util.isEmpty(me.bodyName)) {
+                    params[me.bodyName] = me.body;
+                } else {
+                    params = me.body;
+                }
+            }
+            return params;
+        },
+
+        /** 결과값 전략 (리턴된 결과값을 개별 객체에 나누어 담을 수 있도록 함) */
+        outputStrategy : function(_result) {
+            var output, outputs = this
+                .querySelectorAll('outputs > sc-service-output');
+            outputs = Array.prototype.slice.call(outputs).concat(this.outputs || []);
+            
+            for ( var i = 0; i < outputs.length; i++) {
+                output = outputs[i];
+                
+              	//프로퍼티만 업데이트
+                if(output.updateMode) {
+                    this.synchronizeOutput(_result[output.name], output);
+				}
+				//Target 객체를 변경
+				else {
+                    output.set("target", _result[output.name]);
+				}
+            }
+
+            if(this.resetValue) {
+                this.domHost.resetOriginalValue();  
+            }
+            
+            
+        },
+
+        synchronizeOutput: function(result, output) {
+            var target = output.target;
+            var targetBindedAttr = output.getAttribute("binded-target");
+            if (result instanceof Array) {
+                /*
+                var aResult = result;
+                if (target instanceof SCCollection) {
+                    var sTarget = target;
+                    sTarget.source = aResult.source || aResult;
+                    sTarget.changeComparable = output.changeComparable;
+                    if (aResult instanceof SCCollection) {
+                        sTarget.totalRowNum = SCCollection(aResult).totalRowNum;
+                    }
+                    
+                } else if (target instanceof ArrayCollection) {
+                    var aTarget = target;
+                    aTarget.source = aResult.source || aResult;
+                } else {
+                	output.set("target", result);
+				}
+                */
+                output.set("target", result);
+            } else {
+				for (var key in result) {
+					target[key] = result[key];
+					if(targetBindedAttr && this.dataHost) {
+                        this.dataHost.notifyPath(targetBindedAttr + "." + key);
+                    }
+				};
+            }
+        },
+
+        addInput: function(name, value){
+            this.inputs.push(new SCServiceInput(name, value));
+        },
+
+        addOutput: function(name, target){
+            this.outputs.push(new SCServiceOutput(name, target));
+        },
+
+        clearInputs: function(){
+            var me = this,
+                inputsEl = me.querySelector('inputs');
+
+            me.inputs = [];
+            if(inputsEl != null){
+	            Array.prototype.forEach.call(inputsEl.children, function(childEl){
+	                inputsEl.removeChild(childEl);
+	            });
+            }
+        },
+
+        clearOutputs: function(){
+            var me = this,
+                outputsEl = me.querySelector('outputs');
+
+            me.outputs = [];
+            if(outputsEl != null){
+	            Array.prototype.forEach.call(outputsEl.children, function(childEl){
+	                outputsEl.removeChild(childEl);
+	            });
+            }
+        },
+
+        _destroy : function() {
+            this.set('descriptor', null);
+            this.set('serviceId', null);
+            this.set('body', null);
+            this.set('url', null);
+            this.set('target', null);
+            this.set('inputs', null);
+            this.set('outputs', null);
+        }
+
+    });
+</script> </dom-module>
