@@ -1,0 +1,987 @@
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+<sc-link rel="import" href="es-capcbd-p20a-02-01.html"></sc-link>
+<sc-link rel="import" href="es-capcbd-p20a-02-02.html"></sc-link>
+<sc-link rel="import" href="/ui/bp/developer/grid/advanced/em-sp-group-panel.html"></sc-link>
+<sc-link rel="import" href="/ui/bp/developer/grid/column/em-sp-multi.html">
+<sc-link rel="import" href="/ui/bp/developer/grid/column/em-sp-merge.html">
+<dom-module id="es-capcbd-p20a-02">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : PCB & CIRCUIT(20-1)
+        ** @Description     :
+        ** @Author          : MHLEE
+        ** @Create Date     : 2020.01.29
+        ** @History         : 2020.01.29 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+		<sc-service-provider id="getPCBDScrpWegtCalcResRPC" descriptor="bp/tcams/ca/pcbd/p20a" service-id="get.PCBDScrpWegtCalcRes" on-response="afterScrpWegt"></sc-service-provider>
+		<sc-service-provider id="getPCBDCnt0CalcResRPC"     descriptor="bp/tcams/ca/pcbd/p20a" service-id="get.PCBDCnt0CalcRes"     on-response="afterCnt0"    ></sc-service-provider>
+	    <sc-label text="[ 재료비 정보 ]" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+	    <div id="matlDiv">
+		<sc-panel title-text="적용구분" collapsible="true">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+				<col style="width:150px"/>
+				<col style="width: 25px"/>
+				<col style="width:150px"/>
+				<col style="width: 30px"/>
+				<col style="width:150px"/>
+				<col style="width:150px"/>
+				<col/>
+				<tr>
+					<th>
+						<sc-label text="PCB종류"></sc-label>
+					</th>
+					<td>
+                        <a><img src="../../../../assets/img/bull_reference.gif" on-click="openPopup01"/></a>	                
+					</td>
+					<td>
+						<sc-combobox-field input-clear="false" display-field="label" value-field="data" items="{{pcbd01Codes}}" value="{{inputParam.pcbi_kind_code}}" placeholder="선택" on-change="onChangeKindCode"></sc-combobox-field>	                    
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+					<th>
+					</th>
+					<td>
+					</td>
+				</tr>
+				<tr hidden="{{formula('isHiddenFlorCode')}}">
+					<th>
+						<sc-label text="PCB층수"></sc-label>
+					</th>
+					<td>
+					</td>
+					<td>
+						<sc-combobox-field id="cb_pcbi_flor_code" input-clear="false" display-field="label" value-field="data"  
+										   items="{{pcbd03Codes}}" value="{{inputParam.pcbi_flor_code}}" placeholder="선택" on-change="calcPcbdCnt">
+						</sc-combobox-field>	                    
+					</td>
+					<th>
+					</th>
+					<td>
+						<sc-label id="lb_pcbi_flor_cnt0" text="층수"></sc-label>
+					</td>
+					<td>
+		                <sc-text-field id="tb_pcbi_flor_cnt0" class="align-right" value="{{inputParam.pcbi_flor_cnt0}}" mask-re="/[0-9]/" maxlength="10" format-type="number" on-change="onChangeFlorCnt0" editVal></sc-text-field>
+					</td>
+					<td>
+					</td>
+				</tr>
+			</table>
+		</sc-panel>	    
+
+		<sc-panel title-text="적용매수" collapsible="true" hidden="{{formula('isHiddenTbl01')}}">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+	            <colgroup>
+	                <col style="width:150px">
+	                <col style="width: 25px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col style="width:100px">
+	                <col style="width:150px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="매수적용구분"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+							<sc-combobox-field input-clear="false" display-field="label" value-field="data" items="{{cavtCodes}}" value="{{inputParam.pcbi_cnt0_appl}}" placeholder="선택" on-change="onChangeCnt0Appl" disabled="{{formula('isHiddenFlorCode')}}"></sc-combobox-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="양면원판"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field id="pcbi_pcbd_cnt0" class="align-right" value="{{inputParam.pcbi_pcbd_cnt0}}" disabled="{{formula('isDisabledByCnt0Appl')}}" mask-re="/[0-9.]/" maxlength="10" on-blur="substr2num" format-type="number" on-change="onChangeMatlCode" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="PREPREG"></sc-label>
+		                </th>
+		                <td>
+	                        <sc-text-field id="pcbi_prep_cnt0" class="align-right" value="{{inputParam.pcbi_prep_cnt0}}" disabled="{{formula('isDisabledByCnt0Appl')}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeMatlCode" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                    <sc-label text="동박"></sc-label>
+		                </td>
+		                <td>
+	                        <sc-text-field id="pcbi_coop_cnt0" class="align-right" value="{{inputParam.pcbi_coop_cnt0}}" disabled="{{formula('isDisabledByCnt0Appl')}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeMatlCode" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+		</sc-panel>
+		
+		<sc-panel title-text="재질" collapsible="true" style="border-bottom: 1px solid #1e5784">
+			<table class="come-form">
+	            <colgroup>
+	                <col style="width:150px">
+				    <col style="width: 25px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col style="width:100px">
+	                <col style="width: 40px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="[PCB원판]"></sc-label>
+		                </th>
+		                <td>
+		                    <a><img src="/ui/assets/img/bull_choice.gif" id="matl1" on-click="onSearchMatl"/></a>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_name" value="{{inputParam.pcbi_matl_name}}" disabled="true" validation-group="saveCheck"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="CODE"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="pcbi_matl_code" value="{{inputParam.pcbi_matl_code}}" disabled="true" on-change="onChangeMatlCode"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="단가"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_pric" class="align-right" style="width:95px" value="{{inputParam.pcbi_matl_cost}}" disabled="true" format-type="number" input-cover="true"></sc-text-field>
+		                    <sc-label text="/" style="padding-left:5px;padding-right:5px;"></sc-label>
+		                    <sc-label text="{{inputParam.pcbi_matl_unit}}"></sc-label>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="적용일"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-date-field id="tb_matl_apdt" value="{{inputParam.pcbi_matl_apdt}}" string-date="true" disabled="true" style="width:100%"></sc-date-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="SHEET가로"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field class="align-right" value="{{inputParam.pcbi_shet_wide}}" disabled="true" format-type="number" input-cover="true"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="SHEET세로"></sc-label>
+		                </th>
+		                <td>
+	                        <sc-text-field class="align-right" value="{{inputParam.pcbi_shet_leng}}" disabled="true" format-type="number" input-cover="true"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+			<table class="come-form" hidden="{{formula('isHiddenFlorCode')}}">
+	            <colgroup>
+	                <col style="width:150px">
+	                <col style="width: 25px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col style="width:100px">
+	                <col style="width: 40px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="[동박]"></sc-label>
+		                </th>
+		                <td>
+		                    <a><img src="/ui/assets/img/bull_choice.gif" id="matl2" on-click="onSearchMatl"/></a>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_name" value="{{inputParam.pcbi_matl_name2}}" disabled="true" validation-group="saveCheck"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="CODE"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_matl_code" value="{{inputParam.pcbi_matl_code2}}" disabled="true"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="단가"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_pric" class="align-right" style="width:95px" value="{{inputParam.pcbi_matl_cost2}}" disabled="true" format-type="number" input-cover="true"></sc-text-field>
+		                    <sc-label text="/" style="padding-left:5px;padding-right:5px;"></sc-label>
+		                    <sc-label text="{{inputParam.pcbi_matl_unit2}}"></sc-label>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="적용일"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-date-field id="tb_matl_apdt" value="{{inputParam.pcbi_matl_apdt2}}" string-date="true" disabled="true" style="width:100%"></sc-date-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+			<table class="come-form" hidden="{{formula('isHiddenFlorCode')}}">
+	            <colgroup>
+	                <col style="width:150px">
+	                <col style="width: 25px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col style="width:100px">
+	                <col style="width: 40px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="[PREPREG]"></sc-label>
+		                </th>
+		                <td>
+		                    <a><img src="/ui/assets/img/bull_choice.gif" id="matl3" on-click="onSearchMatl"/></a>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_name" value="{{inputParam.pcbi_matl_name3}}" disabled="true" validation-group="saveCheck"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="CODE"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_matl_code" value="{{inputParam.pcbi_matl_code3}}" disabled="true"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="단가"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field id="tb_pric" class="align-right" style="width:95px" value="{{inputParam.pcbi_matl_cost3}}" disabled="true" format-type="number" input-cover="true"></sc-text-field>
+		                    <sc-label text="/" style="padding-left:5px;padding-right:5px;"></sc-label>
+		                    <sc-label text="{{inputParam.pcbi_matl_unit3}}"></sc-label>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="적용일"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-date-field id="tb_matl_apdt" value="{{inputParam.pcbi_matl_apdt3}}" string-date="true" disabled="true" style="width:100%"></sc-date-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+			
+			<table class="come-form" style="border-bottom: 1px solid #1e5784" hidden="{{formula('isHiddenTbl01')}}">
+	            <colgroup>
+	                <col style="width:150px">
+	                <col style="width: 25px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col style="width:100px">
+	                <col style="width:150px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="[SCRAP]"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label text="SCRAP단가 (원/kg)"></sc-label>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-text-field id="pcbi_scrp_pric1" class="align-right" value="{{inputParam.pcbi_scrp_pric1}}" mask-re="/[0-9.]/" maxlength="10" on-blur="substr2num" format-type="number" on-change="onChangeScrpPric1" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                    <sc-label text="합산중량(g/dm2)"></sc-label><a><img src="/ui/assets/img/bull_calculation.gif" id="wegt1" on-click="onScrpWegt" style="padding-left:5px;padding-right:5px"/></a>
+		                </td>
+		                <td>
+		                    <sc-text-field id="pcbi_scrp_wegt1" class="align-right" value="{{inputParam.pcbi_scrp_wegt1}}" mask-re="/[0-9.]/" maxlength="10" format-type="number" calcVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+			
+			
+	    </sc-panel>
+
+		<sc-panel title-text="제품SIZE(mm)" collapsible="true">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+                <col style="width:150px">
+                <col style="width: 25px">
+                <col style="width: 60px">
+                <col style="width: 30px">
+                <col style="width: 60px">
+                <col style="width: 30px">
+                <col style="width:150px">
+                <col style="width:150px">
+                <col style="width:100px">
+                <col>
+				<tr>
+					<th>
+						<sc-label text="가로 X 세로" hidden="{{formula('isHiddenRubbOdia')}}"></sc-label>
+					</th>
+					<td>
+					</td>
+					<td>
+	                    <sc-text-field id="pcbi_prod_wide" class="align-right" value="{{inputParam.pcbi_prod_wide}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+					</td>
+					<th>
+	                    <sc-label text="X"></sc-label>
+					</th>
+					<td>
+	                    <sc-text-field id="pcbi_prod_leng" class="align-right" value="{{inputParam.pcbi_prod_leng}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+					</td>
+					<td>
+					</td>
+					<td>
+						<sc-label text="원판당 적용수량"></sc-label>
+					</td>
+					<td>
+						<sc-combobox-field id="cb_pcbi_cavt_gubn" style="width:52px" display-field="label" value-field="data" items="{{cavtCodes}}" value="{{inputParam.pcbi_cavt_gubn}}" placeholder="선택" on-change="onChangeCavtGubn">	</sc-combobox-field>	                    
+                        <a hidden="{{formula('isHiddenCalcCvt')}}"><img src="/ui/assets/img/bull_calculation.gif" on-click="onCalcCvt" style="padding-left:5px;padding-right:5px"/></a>
+	                    <sc-text-field style="width:52px" id="pcbi_appl_cavt" class="align-right" value="{{inputParam.pcbi_appl_cavt}}" disabled="{{!formula('isHiddenCalcCvt')}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<sc-label text="제품NET면적(dm2/EA)"></sc-label>
+					</th>
+					<td>
+					</td>
+					<td colspan="3">
+	                    <sc-text-field id="pcbi_net0_area" class="align-right" value="{{inputParam.pcbi_net0_area}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr4num" editVal></sc-text-field>
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+					<td>
+					</td>
+				</tr>
+			</table>
+		</sc-panel>	    
+
+		<sc-panel title-text="표면처리" collapsible="true">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+                <col style="width:150px">
+                <col style="width: 25px">
+                <col style="width:200px">
+                <col style="width: 30px">
+                <col style="width:150px">
+                <col style="width:150px">
+                <col>
+	            <tr>
+	            	<th>
+	            		<sc-label text="PCB표면처리"></sc-label>
+	            	</th>
+	            	<td>
+	            	</td>
+	            	<td>
+						<sc-combobox-field input-clear="false" display-field="label" value-field="data"  
+										   items="{{pcbd02Codes}}" value="{{inputParam.pcbi_coat_code}}" placeholder="선택" >
+						</sc-combobox-field>	                    
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<td>
+	            		<sc-label text="적용면적(dm2)"></sc-label>
+	            	</td>
+	            	<td>
+	                    <sc-text-field id="pcbi_coat_area" class="align-right" value="{{inputParam.pcbi_coat_area}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+			</table>
+		</sc-panel>
+		</div>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capcbd-p20a-02",
+
+            properties: {
+             	// 표준정보 ComboList 데이터
+             	standInfoList : {type: Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam     : {type: Object , value: function() { return {}; } },		
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+		    	// 초기 진입 구분값
+		    	initFlag      : {type: Boolean, value: true },
+
+		    	// 화면에서 사용할 콤보 구성 들....
+		    	// 구분
+		    	pcbd01Codes : {type : Array  , value : function() { return [];} },
+		    	pcbd02Codes : {type : Array  , value : function() { return [];} },
+		    	pcbd03Codes : {type : Array  , value : function() { return [];} },
+		    	
+		    	itemCodes : {type : Array  , value : function() { return [];} },
+		    	matcCodes : {type : Array  , value : function() { return [];} },
+		    	shapCodes : {type : Array  , value : function() { return [];} },
+		    	injtCodes : {type : Array  , value : function() { return [];} },
+		    	isHidden  : { type : Object,	value : function() { return false; } },
+		    	
+            	applYns : {
+            		type : Array,
+            		value : function() {
+            			return [
+            			    {data : "N", label : "미적용"}
+           				   ,{data : "Y", label : "적용"  }
+            			]	
+            		}
+            	},
+            	cavtCodes : {
+            		type : Array,
+            		value : function() {
+            			return [
+            			    {data : "S", label : "표준"}
+           				   ,{data : "R", label : "실사"  }
+            			]	
+            		}
+            	},
+
+            },
+            
+	    	observers : [
+	    		            'itemCodeChanged(inputParam.oili_item_code)',
+	    		            'matcCodeChanged(inputParam.oili_matc_code)'
+	    		 		],
+            
+
+			itemCodeChanged : function(item_code) {
+				var me = this;
+				me.applyFormula("isHiddenByItemCode");
+				me.applyFormula("isHiddenRubbHght");
+				me.applyFormula("isHiddenRubbIdia");
+				me.applyFormula("isHiddenShapCode");
+				me.applyFormula("isHiddenRubbOdia");
+				me.applyFormula("isHiddenRingFdia");
+				me.set("searchParam.oili_item_code", item_code);
+			},	    		 		
+	    		
+			formulas : {
+				isHiddenFlorCode : function() {
+					return !(this.inputParam.pcbi_kind_code == "MULTI");
+				},
+				
+				isDisabledByCnt0Appl : function() {
+					return this.inputParam.pcbi_cnt0_appl == "S";	
+				},
+				
+				isHiddenTbl01 : function() {
+					return (this.inputParam.pcbi_kind_code == "SINGLE" || this.inputParam.pcbi_kind_code == "SINGLE_J");
+				},
+
+				isHiddenCalcCvt : function() {
+					return this.inputParam.pcbi_cavt_gubn == "R" ;
+				},
+				
+				isHiddenByItemCode : function() {
+					return !(this.inputParam.oili_item_code == "VALVE");
+				},
+				
+				isHiddenRubbIdia : function() {
+					var me = this;
+					var codes = ["VALVE", "WASH", "BPSCS", "DRING", "ORING", "PACK"];
+					
+					if(UT.isEmpty(me.inputParam.oili_item_code)) {
+						return false;
+					}
+
+					var filCodes = codes.filter(function(e) {
+						return e == me.inputParam.oili_item_code;
+					});
+					
+					return (filCodes.length > 0);
+				},
+				isHiddenInjtCode : function() {
+					return !(this.inputParam.oili_matc_code == "FKM");
+				},
+				isHiddenRubbOdia : function() {
+					return (this.inputParam.oili_item_code == "BPSCS");
+				},
+				isHiddenRingFdia : function() {
+					return !(this.inputParam.oili_item_code == "DRING");
+				}
+			},
+            
+            /**
+             * 부모에서 호출
+             **/            
+            load : function(obj) {
+                var me = this;
+                
+                me.set('initFlag'    , true);
+                me.initParam = {};
+				// 부모로 부터 전달된 파라미터 SET				
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+
+                // 조회된 값이 존재하는 경우만 별도 저장
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	//me.set('initParam'    , obj.inputParam);
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+                me.set('initFlag'    , false);
+            },            
+            
+            comboInit : function() {
+		    	var me = this;
+
+		    	//PCB종류
+		    	var filteredInfos = me.standInfoList.filter(function(e) {
+            		return e.cmpk_gubn_code == "PCBD01";
+            	});
+  				me.set("pcbd01Codes", filteredInfos);
+		    	
+				//PCB층수
+		    	var filteredInfos = me.standInfoList.filter(function(e) {
+            		return e.cmpk_gubn_code == "PCBD03";
+            	});
+  				me.set("pcbd03Codes", filteredInfos);
+
+  				//제품 형태
+		    	var filteredInfos = me.standInfoList.filter(function(e) {
+            		return e.cmpk_gubn_code == "PCBD02";
+            	});
+  				me.set("pcbd02Codes", filteredInfos);
+
+			    if(me.get("initParam.iCount") != "0" && me.get("initFlag") == true) { 
+			    	// 기존 데이터가 존재하는 경우
+
+			    } else {
+			    	me.set("inputParam.pcbi_kind_code" ,"SINGLE");
+			    	me.set("inputParam.pcbi_flor_code" ,"4F");
+			    	me.set("inputParam.pcbi_coat_code" ,"OSP");
+			    	me.set("inputParam.pcbi_cnt0_appl" ,"S");
+			    	me.set("inputParam.pcbi_scrp_pric1","745");
+			    	me.$.cb_pcbi_cavt_gubn.selectedIndex = 0;
+			    }
+            },
+            
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                var id = e.target.id;
+
+                var nstr = commonAS.substr2num(me.inputParam[id]);
+                
+                me.set("inputParam." + id, nstr);
+            },
+
+            substr4num: function(e) {
+                var me = this;
+                var id = e.target.id;
+
+                var nstr = commonAS.substr4num(me.inputParam[id]);
+                
+                me.set("inputParam." + id, nstr);
+            },
+
+            //------------------------------
+            
+			openPopup01: function() {
+				var me = this;
+               	if (!me.helpPopup) {
+   					me.helpPopup = UT.popup("es-capcbd-p20a-02-01", me, 770, 800, {
+   						"selected-items" : function(popup, e) {
+   							var selected = e.detail;
+   							
+   							popup.close();
+   						}
+   		            }, {title: me.translate("도움말")});
+   				}
+            	me.helpPopup.show();
+			},
+			
+			onCalcCvt : function() {
+				var me = this;
+				
+				var param = me.get("inputParam");
+
+				param['cmms_corp_code'] = me.searchParam['cmms_corp_code'];
+				param['cmms_meth_gubn'] = me.searchParam['cmms_meth_gubn'];
+				param['come_code']      = me.searchParam['come_code'];
+				param['degr']           = me.searchParam['degr'];
+				
+				param['pcbi_corp_code'] = me.searchParam['corp_code'];
+				param['pcbi_stnd_gubn'] = me.searchParam['stnd_gubn'];
+				param['pcbi_stnd_degr'] = me.searchParam['degr'];
+
+				if(!me.calcPopup) {
+					me.calcPopup = UT.popup("es-capcbd-p20a-02-02", me, 950, 960, {
+						"getApplCavt" : function(popup, e) {
+							var selected = e.detail;
+							
+							me.set("inputParam.pcbi_appl_cavt", selected.appl_cvt0);
+							
+							popup.close();
+						}
+					}, {title: me.translate("원판당적용수량 산출")});
+				}
+				me.calcPopup.show();
+				me.calcPopup.getWindowContent().load(param);
+			},
+			
+            onSearchMatl : function(e){
+            	var me = this;
+            	var targetId = e.target.id;
+
+            	if(targetId == "matl1") {
+            		me.set("searchParam.popGubn", "S");
+            		me.set("searchParam.matl_name", null);
+            	} else if(targetId == "matl2") {
+            		me.set("searchParam.popGubn", "C");
+            		me.set("searchParam.matl_name", "동박");
+            	} else {
+            		me.set("searchParam.popGubn", "P");
+            		me.set("searchParam.matl_name", "PREPREG");
+            	}
+            	
+   				if (!me.PopupMatl) {
+   					me.PopupMatl = UT.popup("es-cacm-03", me, 1400, 550, {
+   						"getMatlInfo" : function(popup, e) {
+   							var selected = e.detail;
+
+   			    			me.onPopupSelectedItems("es-cacm-03", selected);
+   							popup.close();
+   						}
+   		            }, {title: me.translate("재료단가 정보")});
+   				}
+
+				me.PopupMatl.show();
+				me.PopupMatl.getWindowContent().load( { singleSelect : true, defaultParam : me.searchParam } );
+            },
+
+            onPopupSelectedItems : function(sPopupID, matlParam) {
+            	var me = this;
+
+                if (sPopupID == "es-cacm-03") {
+                	if(me.searchParam.popGubn == "S") {
+						me.set("inputParam.pcbi_matl_corp", matlParam.comd_corp_code);
+						me.set("inputParam.pcbi_matl_stnd", matlParam.comd_stnd_gubn);
+						me.set("inputParam.pcbi_matl_gubn", matlParam.comd_matl_gubn);
+						me.set("inputParam.pcbi_matl_name", matlParam.comd_matl_name);
+						me.set("inputParam.pcbi_matl_code", matlParam.comd_matl_code);
+						me.set("inputParam.pcbi_matl_cost", matlParam.comd_matl_pric);
+						me.set("inputParam.pcbi_matl_unit", matlParam.comd_matl_unit);
+						me.set("inputParam.pcbi_matl_apdt", matlParam.comd_appl_date);
+						me.set("inputParam.pcbi_shet_wide", matlParam.comd_widt_size);
+						me.set("inputParam.pcbi_shet_leng", matlParam.comd_leng_size);
+                	} else if(me.searchParam.popGubn == "C") {
+						me.set("inputParam.pcbi_matl_corp2", matlParam.comd_corp_code);
+						me.set("inputParam.pcbi_matl_stnd2", matlParam.comd_stnd_gubn);
+						me.set("inputParam.pcbi_matl_gubn2", matlParam.comd_matl_gubn);
+						me.set("inputParam.pcbi_matl_name2", matlParam.comd_matl_name);
+						me.set("inputParam.pcbi_matl_code2", matlParam.comd_matl_code);
+						me.set("inputParam.pcbi_matl_cost2", matlParam.comd_matl_pric);
+						me.set("inputParam.pcbi_matl_unit2", matlParam.comd_matl_unit);
+						me.set("inputParam.pcbi_matl_apdt2", matlParam.comd_appl_date);
+                	} else if(me.searchParam.popGubn == "P") {
+						me.set("inputParam.pcbi_matl_corp3", matlParam.comd_corp_code);
+						me.set("inputParam.pcbi_matl_stnd3", matlParam.comd_stnd_gubn);
+						me.set("inputParam.pcbi_matl_gubn3", matlParam.comd_matl_gubn);
+						me.set("inputParam.pcbi_matl_name3", matlParam.comd_matl_name);
+						me.set("inputParam.pcbi_matl_code3", matlParam.comd_matl_code);
+						me.set("inputParam.pcbi_matl_cost3", matlParam.comd_matl_pric);
+						me.set("inputParam.pcbi_matl_unit3", matlParam.comd_matl_unit);
+						me.set("inputParam.pcbi_matl_apdt3", matlParam.comd_appl_date);
+                	}
+    				me.set("inputParam.pcbi_scrp_wegt1", null);
+                }
+            },
+
+            onChangeKindCode : function() {
+            	var me = this;
+
+            	if(!me.initFlag) {
+    				me.set("inputParam.pcbi_cnt0_appl", "S");
+    				me.set("inputParam.pcbi_scrp_wegt1", null);
+            	}
+
+            	me.applyFormula("isHiddenFlorCode");
+            	me.applyFormula("isHiddenTbl01");
+				
+            	me.calcPcbdCnt();
+            	
+            	me.fire("set-hidden");
+            },
+            
+            onChangeMatlCode : function() {
+            	var me = this;
+            	
+				me.set("inputParam.pcbi_scrp_wegt1", null);
+            },
+            
+            onRef : function() {
+				var me = this;
+				if(!me.refPopup) {
+					me.refPopup = UT.popup("em-sp-merge", me, 1000, 905, {
+						
+					}, {title: me.translate("참고")});
+				}
+				me.refPopup.show();
+            },
+            
+            onScrpWegt : function() {
+            	var me = this;
+            	
+            	if(UT.isEmpty(me.inputParam.pcbi_scrp_pric1) || me.inputParam.pcbi_scrp_pric1 == "0.00") {
+            		UT.alert("SCRAP단가를 확인하세요.");
+            		return;
+            	}
+            	
+            	me.set("inputParam.cmms_corp_code", me.searchParam.cmms_corp_code);
+            	me.set("inputParam.cmms_meth_gubn", me.searchParam.cmms_meth_gubn);
+            	me.set("inputParam.come_code"     , me.searchParam.come_code);
+            	me.set("inputParam.degr"          , me.searchParam.degr);
+
+				me.set("inputParam.pcbi_corp_code", me.searchParam.corp_code);
+				me.set("inputParam.pcbi_stnd_gubn", me.searchParam.stnd_gubn);
+				me.set("inputParam.pcbi_stnd_degr", me.searchParam.degr);
+            	
+            	me.$.getPCBDScrpWegtCalcResRPC.body = {
+            		param : me.inputParam	
+            	};
+            	
+            	me.$.getPCBDScrpWegtCalcResRPC.service();
+            },
+            
+            afterScrpWegt : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+
+                console.log(data);
+            	
+            	var result = data.result;
+            	
+            	if(result.MESG_CODE == "SA-001") {
+            		me.set("inputParam.pcbi_scrp_wegt1", result.scrp_wegt);
+            	} else {
+            		UT.alert(result.MESG);
+            	}
+            },
+            
+            calcPcbdCnt : function() {
+            	var me = this;
+            
+            	if(!me.initFlag) {
+            		me.set("inputParam.pcbi_scrp_wegt1", null);
+            	}
+            	
+            	if(me.inputParam.pcbi_flor_code == "ETC") {
+            		me.$.lb_pcbi_flor_cnt0.hidden = false;
+            		me.$.tb_pcbi_flor_cnt0.hidden = false;
+            	} else {
+            		me.$.lb_pcbi_flor_cnt0.hidden = true;
+            		me.$.tb_pcbi_flor_cnt0.hidden = true;
+            	}
+            	
+				if(me.inputParam.pcbi_kind_code == "DOUBLE") {
+            		me.set("inputParam.pcbi_pcbd_cnt0", "1");
+            		me.set("inputParam.pcbi_prep_cnt0", "0");
+            		me.set("inputParam.pcbi_coop_cnt0", "0");
+				} else {
+					if(me.inputParam.pcbi_flor_code != "ETC") {
+						if(UT.isNotEmpty(me.inputParam.pcbi_flor_code)) {
+							me.set("inputParam.degr", me.searchParam.degr);
+			            	me.$.getPCBDCnt0CalcResRPC.body = {
+				               	param : me.inputParam	
+			                };
+		               	    me.$.getPCBDCnt0CalcResRPC.service();
+						}
+					}
+				}            	
+            },
+            
+            afterCnt0 : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	var result = data.result;
+            	
+            	if(result.MESG_CODE == "SA-001") {
+            		me.set("inputParam.pcbi_pcbd_cnt0", result.pcbi_pcbd_cnt0);
+            		me.set("inputParam.pcbi_prep_cnt0", result.pcbi_prep_cnt0);
+            		me.set("inputParam.pcbi_coop_cnt0", result.pcbi_coop_cnt0);
+            	} else {
+            		UT.alert(result.MESG);
+            	}
+            },
+            
+            onChangeCnt0Appl : function() {
+            	var me = this;
+            	me.applyFormula("isDisabledByCnt0Appl");
+            },
+            
+            onChangeCavtGubn : function() {
+            	var me = this;
+            	me.applyFormula("isHiddenCalcCvt");
+            },
+            
+            onChangeFlorCnt0 : function() {
+            	var me = this;
+            	var flor_cnt0 = parseInt(me.inputParam.pcbi_flor_cnt0); 
+            	if( (flor_cnt0 < 16) || (flor_cnt0 % 2 == 1)) {
+            		UT.alert("16이상 짝수만 입력 가능합니다.")
+            		me.set("inputParam.pcbi_flor_cnt0", null);
+            		me.set("inputParam.pcbi_pcbd_cnt0", null);
+            		me.set("inputParam.pcbi_prep_cnt0", null);
+            		me.set("inputParam.pcbi_coop_cnt0", null);
+            		return;
+            	}
+        		var pcbd_cnt0 = (flor_cnt0 / 2) - 1 ;
+        		var prep_cnt0 = flor_cnt0;
+        		var coop_cnt0 = 2 ;
+            	
+        		me.set("inputParam.pcbi_pcbd_cnt0", pcbd_cnt0.toString());
+        		me.set("inputParam.pcbi_prep_cnt0", prep_cnt0.toString());
+        		me.set("inputParam.pcbi_coop_cnt0", coop_cnt0.toString());
+            },
+            
+            onChangeScrpPric1 : function() {
+            	var me = this;
+            	me.set("inputParam.pcbi_scrp_wegt1", null);
+            },
+        });
+	</script>
+
+</dom-module>

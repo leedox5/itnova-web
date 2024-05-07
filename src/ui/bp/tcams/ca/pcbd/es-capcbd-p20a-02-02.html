@@ -1,0 +1,338 @@
+<dom-module id="es-capcbd-p20a-02-02">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+		<sc-service-provider id="getPCBDApplCvtCalcResRPC" descriptor="bp/tcams/ca/pcbd/p20a" service-id="get.PCBDApplCvtCalcRes" on-response="afterApplCvt" ></sc-service-provider>
+
+		<sc-ajax id="setData"
+				 url="json/data.json"
+				 on-response="completeSetData">
+	    </sc-ajax>
+		<sc-ajax id="setData1"
+				 url="json/data1.json"
+				 on-response="completeSetData1">
+	    </sc-ajax>
+        <cc-page-title-bar page-title="NET SIZE : [ {{inputParam.pcbi_prod_wide}} ] * [ {{inputParam.pcbi_prod_leng}} ]">
+			<sc-button text="적용"         on-click="onSelect"  ></sc-button>
+        </cc-page-title-bar>
+		<sc-panel title-text="방법1" collapsible="true" hidden="true">
+		<table class="tb-form">
+			<tr>
+				<th rowspan="2" style="text-align:center">NO</th>
+				<th rowspan="2" colspan="2">구분</th>
+				<th colspan="3">등분</th>
+				<th rowspan="2">비고</th>
+			</tr>
+			<tr>
+				<th>4</th>
+				<th>5</th>
+				<th>6</th>
+			</tr>
+			<tr>
+				<td rowspan="2">1</td>
+				<td rowspan="2">SHEET SIZE(mm)</td>
+				<td>가로</td>
+				<td>1200</td>
+				<td>1200</td>
+				<td>1200</td>
+				<td></td>
+			</tr>
+			<tr>
+				<td>세로</td>
+				<td>1000</td>
+				<td>1000</td>
+				<td>1000</td>
+				<td></td>
+			</tr>
+		</table>
+		</sc-panel>
+      	<sc-grid id="grid1" style="height:860px;" on-item-click="onItemClick" use-state="false"
+      	    show-number-line="false" no-draw-cell-border="true"
+      	    use-selection="false" 
+      	    use-dummy="false" 
+      	    editable="false" row-style-function="onRowStyle">
+      		<sc-grid-columns>
+      			<sc-data-column     data-field="col1"   header-text="NO"    text-align="center"     width="60"      mergeable="true" sortable="false"></sc-data-column>
+      			<sc-group-column  header-text="구분"  display-header="true"  width="500" hide-child-headers="true">
+	      			<sc-data-column     data-field="gubn1"  header-text="구분1" text-align="left" width="150" mergeable="true" sortable="false"></sc-data-column>
+	      			<sc-data-column     data-field="gubn2"  header-text="구분2" display-header="false" text-align="left" width="100" mergeable="true" sortable="false" item-label-function="onItemLabel"></sc-data-column>
+	      			<sc-data-column     data-field="gubn3"  header-text="구분3" text-align="left" width="90" mergeable="true"  sortable="false" item-label-function="onItemLabel"></sc-data-column>
+	      			<sc-data-column     data-field="gubn4"  header-text="구분4" text-align="left" width="90" mergeable="true"  sortable="false" item-label-function="onItemLabel"></sc-data-column>
+	      			<sc-data-column     data-field="gubn5"  header-text="구분5" text-align="left" width="90" mergeable="true"  sortable="false" item-label-function="onItemLabel"></sc-data-column>
+	      			<sc-data-column     data-field="gubn6"  header-text="구분6" text-align="left" width="90" mergeable="false" sortable="false" item-label-function="onItemLabel"></sc-data-column>
+      			</sc-group-column>
+            	<sc-group-column header-text="등분"  width="210">
+            		<sc-data-column data-field="col4"  header-text="4" text-align="right" width="70" data-type="number" format-type="number" sortable="false"></sc-data-column>
+            		<sc-data-column data-field="col5"  header-text="6" text-align="right" width="70" data-type="number" format-type="number" sortable="false"></sc-data-column>
+            		<sc-data-column data-field="col6"  header-text="9" text-align="right" width="70" data-type="number" format-type="number" sortable="false" ></sc-data-column>
+            	</sc-group-column>
+      			<sc-data-column     data-field="col7"  header-text="비고"  width="140"      text-align="left" sortable="false"></sc-data-column>
+      		</sc-grid-columns>
+      	</sc-grid>
+      	<sc-grid id="grid10" style="height:80px;" use-state="false" header-visible="false"
+      	    show-number-line="false"
+      	    use-selection="false" 
+      	    use-dummy="false" 
+      	    editable="false" row-style-function="onRowStyle1">
+      		<sc-grid-columns>
+      			<sc-data-column     data-field="col1"   header-text="NO"    text-align="center"     width="60"     mergeable="true" sortable="false"></sc-data-column>
+      			<sc-group-column  header-text="구분"  display-header="true"  width="500" hide-child-headers="true">
+	      			<sc-data-column     data-field="gubn1"  header-text="구분1" text-align="left" sortable="false"></sc-data-column>
+      			</sc-group-column>
+            	<sc-group-column header-text="등분"  width="210">
+            		<sc-data-column data-field="col4"  header-text="4" text-align="right" width="70" data-type="number" format-type="number" sortable="false"></sc-data-column>
+            		<sc-data-column data-field="col5"  header-text="6" text-align="right" width="70" data-type="number" format-type="number" sortable="false"></sc-data-column>
+            		<sc-data-column data-field="col6"  header-text="9" text-align="right" width="70" data-type="number" format-type="number" sortable="false" ></sc-data-column>
+            	</sc-group-column>
+      			<sc-data-column     data-field="col7"  header-text="비고"  width="140"      text-align="left" sortable="false"></sc-data-column>
+      		</sc-grid-columns>
+      	</sc-grid>
+      	<sc-grid id="grid11" style="height:50px;" use-state="false" header-visible="false"
+      	    show-number-line="false"
+      	    use-selection="false" 
+      	    use-dummy="false" 
+      	    editable="false" row-style-function="onRowStyle1">
+      		<sc-grid-columns>
+      			<sc-data-column     data-field="col1"   header-text="NO"    text-align="center"     width="60"      sortable="false"></sc-data-column>
+      			<sc-group-column  header-text="구분"  display-header="true"  width="500" hide-child-headers="true">
+	      			<sc-data-column     data-field="gubn1"  header-text="구분1" text-align="left" sortable="false"></sc-data-column>
+      			</sc-group-column>
+            	<sc-group-column header-text="등분"  width="210">
+            		<sc-data-column data-field="col4"  header-text="4" text-align="right" data-type="number" format-type="number" sortable="false"></sc-data-column>
+            	</sc-group-column>
+      			<sc-data-column     data-field="col7"  header-text="비고"  width="140"      text-align="left" sortable="false"></sc-data-column>
+      		</sc-grid-columns>
+      	</sc-grid>
+		<sc-panel title-text="방법3" collapsible="true" hidden="true">
+      	<sc-grid id="grid2" style="height:200px;" on-item-click="onItemClick" use-state="false" 
+      	    show-number-line="false"
+      	    use-selection="true" 
+      	    use-dummy="false" 
+      	    editable="false">
+      		<sc-grid-columns>
+      			<sc-data-column     data-field="col1"   header-text="NO"    text-align="center"    mergeable="true"       sortable="false"></sc-data-column>
+            	<sc-group-column    header-text="구분"  display-header="true"  width="500" hide-child-headers="true">
+	      			<sc-data-column     data-field="gubn1"  header-text="구분1" text-align="left" width="100" mergeable="true" sortable="false"></sc-data-column>
+	      			<sc-data-column     data-field="gubn2"  header-text="구분2" text-align="left" width="100" mergeable="true" sortable="false" item-label-function="onItemLabel"></sc-data-column>
+	                <sc-group-column header-text="구분" display-header="true" orientation="vertical" hide-child-headers="true">
+	                    <sc-group-column>
+	                    	<sc-data-column data-field="gubn30"  header-text="구분3" text-align="left" width="100" mergeable="true" sortable="false"></sc-data-column>
+	                    	<sc-group-column header-text="구분31" orientation="vertical">
+			                    <sc-data-column data-field="gubn50"   header-text="구분50"  width="150" text-align="left"   editable="false" ></sc-data-column>
+			                    <sc-group-column header-text="group_2" display-header="true" orientation="vertical">
+			                        <sc-data-column data-field="gubn51"   header-text="구분51"   display-header="false" width="150" text-align="left"   editable="false" ></sc-data-column>
+			                    </sc-group-column>
+		                    </sc-group-column>
+	                    </sc-group-column>
+	                </sc-group-column>
+	            </sc-group-column>
+            	<sc-group-column header-text="등분"  display-header="true"  width="250">
+                    <sc-group-column header-text="4" display-header="true" orientation="vertical" hide-child-headers="true">
+            		    <sc-data-column data-field="col40"  header-text="등분4" text-align="right" width="70"  data-type="number" format-type="number" sortable="false"></sc-data-column>
+                        <sc-data-column data-field="col41"  header-text="4"     text-align="right" width="150" data-type="number" format-type="number" sortable="false"></sc-data-column>
+                    </sc-group-column>
+                    <sc-group-column header-text="5" display-header="true" orientation="vertical" hide-child-headers="true">
+            		    <sc-data-column data-field="col50"  header-text="등분5" text-align="right" width="70"  data-type="number" format-type="number" sortable="false"></sc-data-column>
+                        <sc-data-column data-field="col51"  header-text="5"     text-align="right" width="150" data-type="number" format-type="number" sortable="false"></sc-data-column>
+                    </sc-group-column>
+                    <sc-group-column header-text="6" display-header="true" orientation="vertical" hide-child-headers="true">
+            		    <sc-data-column data-field="col60"  header-text="등분6" text-align="right" width="70"  data-type="number" format-type="number" sortable="false"></sc-data-column>
+                        <sc-data-column data-field="col61"  header-text="6"     text-align="right" width="150" data-type="number" format-type="number" sortable="false"></sc-data-column>
+                    </sc-group-column>
+            	</sc-group-column>
+      			<sc-data-column     data-field="col7"  header-text="비고"        text-align="left" sortable="false"></sc-data-column>
+      		</sc-grid-columns>
+      	</sc-grid>
+		</sc-panel>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capcbd-p20a-02-02",
+            
+            properties: {
+	    	    inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+	    	    prt4_data : {type: Array  , value : function() { return [];} },
+	    	    prt6_data : {type: Array  , value : function() { return [];} },
+	    	    prt9_data : {type: Array  , value : function() { return [];} },
+            },
+
+            load : function(param) {
+            	var me = this;
+            	
+				me.set("inputParam", param);            	
+            	
+	            me.$.getPCBDApplCvtCalcResRPC.body = {
+	                param : me.get("inputParam")
+	            };
+	                 
+	            me.$.getPCBDApplCvtCalcResRPC.service();
+            	//UT.request(me.$.setData);
+            },   
+
+            afterApplCvt : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	console.log(data);
+
+            	var calcResult = data.calc_Result ;
+
+             	if(calcResult.MESG_CODE == "SA-001") {
+                   	me.set("prt4_data", calcResult["4PRT_DATA"].split("@"));
+                   	me.set("prt6_data", calcResult["6PRT_DATA"].split("@"));
+                   	me.set("prt9_data", calcResult["9PRT_DATA"].split("@"));
+                   	
+                   	me.set("inputParam.appl_cvt0", calcResult.APPL_CVT0);
+            		//UT.alert(calcResult.MESG);
+             		UT.request(me.$.setData);
+            	} else {
+            		commonAS.comeAlert(calcResult);
+            	}            	            	
+            },
+            
+            completeSetData : function(el, res) {
+            	var me = this;
+				var result = res.response;
+
+				var prt4_data = me.get("prt4_data");
+				var prt6_data = me.get("prt6_data");
+				var prt9_data = me.get("prt9_data");
+				
+				var data = result.data;
+				
+				for(var i = 0 ; i < data.length ; i++) {
+					data[i].col4 = prt4_data[i];
+					data[i].col5 = prt6_data[i];
+					data[i].col6 = prt9_data[i];
+				}
+				
+				var data0 = result.data0;
+				
+				data0[0].col4 = prt4_data[38];
+				data0[1].col4 = prt4_data[39];
+				
+				data0[0].col5 = prt6_data[38];
+				data0[1].col5 = prt6_data[39];
+
+				data0[0].col6 = prt9_data[38];
+				data0[1].col6 = prt9_data[39];
+
+				var data1 = result.data1;
+				
+				data1[0].col4 = me.get("inputParam.appl_cvt0");
+				
+            	me.$.grid1.setDataProvider(data);
+            	me.$.grid10.setDataProvider(data0);
+            	me.$.grid11.setDataProvider(data1);
+            },
+
+            completeSetData1 : function(el, res) {
+            	var me = this;
+				var result = res.response;
+
+            	me.$.grid2.setDataProvider(result.data);
+            },
+
+            onSelect : function() {
+            	var me = this;
+            	//UT.request(me.$.setData);
+            	me.fire("getApplCavt", me.get("inputParam"));
+            },
+
+            onSelect1 : function() {
+            	var me = this;
+            	UT.request(me.$.setData1);
+            },
+
+            onItemLabel: function(data, item){
+				if(item.dataField == "gubn2") {
+	            	if(data["gubn2"] == data["gubn1"]) {
+	            		return null;	
+	            	} else {
+	            		return data["gubn2"];
+	            	}
+				}
+				if(item.dataField == "gubn3") {
+	            	if(data["gubn3"] == data["gubn2"]) {
+	            		return null;	
+	            	} else {
+	            		return data["gubn3"];
+	            	}
+				}
+				if(item.dataField == "gubn4") {
+	            	if(data["gubn4"] == data["gubn3"]) {
+	            		return null;	
+	            	} else {
+	            		return data["gubn4"];
+	            	}
+				}
+				if(item.dataField == "gubn5") {
+	            	if(data["gubn5"] == data["gubn4"]) {
+	            		return null;	
+	            	} else {
+	            		return data["gubn5"];
+	            	}
+				}
+				if(item.dataField == "gubn6") {
+	            	if(data["gubn6"] == "TOT") {
+	            		return null;	
+	            	} else {
+	            		return data["gubn6"];
+	            	}
+				}
+            }, 
+            
+    		onItemStyleFn : function(data, item) {
+    			var me = this, styleObj = {};
+   
+    			styleObj.borderLeft = "3";
+				styleObj.backgroud  = "#cccccc";
+				styleObj.fontColor  = "#E30000";
+				styleObj.fontWeight = 'bold';
+				styleObj.color = "#E30000";
+    			/*
+    			if(data["data_2"] > 100 && data[item.dataField] === "A") {
+    				styleObj.fontSize   = "12"; 
+    				styleObj.fontWeight = "bold";
+    				styleObj.fontFamily = "Arial";
+    				styleObj.fontStyle  = "italic";
+    				styleObj.fontColor  = "#ff111111";
+    				styleObj.backgroud  = "#cccccc";
+    				styleObj.align      = "center";
+    			} else {
+    				styleObj.iconUrl      = "ui/assets/img/btn_tabclose.png";
+    				styleObj.iconLocation = "right";
+    				styleObj.iconPadding  = "5";
+    				styleObj.align        = "center";
+    			}
+    			*/
+    			return styleObj;
+    		},
+
+            onRowStyle : function(data){
+                if(UT.isEmpty(data["gubn5"])){
+                    return {
+                                "background": "#F0F5FA" 
+                            }
+                }
+                
+                if(data["gubn6"] == "TOT") {
+                    return {
+                        "background": "#F0F5FA" 
+                    }
+                }
+            },
+
+            onRowStyle1 : function(data){
+                return { "background": "#F0F5FA" }
+            },
+
+        });
+	</script>
+
+</dom-module>

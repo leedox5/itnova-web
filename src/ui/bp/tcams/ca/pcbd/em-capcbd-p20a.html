@@ -1,0 +1,161 @@
+<sc-link rel="import" href="es-capcbd-p20a-01.html"></sc-link>
+<sc-link rel="import" href="../common/es-cacm-02.html"></sc-link>
+<dom-module id="em-capcbd-p20a">
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+    <template>
+		<!-- 계산 진행상태 유무 조회 -->
+        <sc-service-provider id="getPassStatRPC" descriptor="bp/tcams/ca/common" service-id="get.pass_stat" on-response="resultHandler" >
+            <inputs>
+                <sc-service-input name="searchParam" value="{{headerParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{passCnt}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+    
+        <sc-pages  id="pages" selected-index="0" class="fit">
+        	<es-capcbd-p20a-01 id="main" on-show-detail="onShowResult"></es-capcbd-p20a-01>
+        	<template>
+        	    <es-cacm-02 id="result" on-close="onClose"></es-cacm-02>
+        	</template>
+        </sc-pages>  
+    </template>
+    <script>
+    	Polymer({
+    		is : "em-capcbd-p20a",
+    		
+    		properties : {
+				headerParam   : {type  : Object, value : function(){return {}; }}
+	           ,paramInfo     : {type  : Object, value : function(){return {}; }}
+	           ,searchParam   : {type  : Object, value : function(){return {}; }}
+	           ,passCnt       : {type  : Object, value : function(){return {}; }}
+	           
+	            //for test
+    		   ,paramTest : {
+    				type : Object,
+    				value : function() {
+    					return {
+						    cmms_corp_code : "K1"
+						   ,cmms_part_no   : "0000001" 
+						   ,cmms_eono      : "5820001"
+						   ,cmms_cumt_no   : "10010" 
+						   ,cmms_cumt_gubn : ""
+						   ,cmms_meth_gubn : "A" 
+						   ,cmms_meth_name : ""
+						   ,cmms_come_code : "PCBD"
+						   ,cmms_stnd_degr : "20-1"  
+						   ,cmms_degr_desc : "20-1"
+						   ,cmms_stnd_man1 : ""
+						   ,cmms_degr_cont : ""
+						   ,cmms_stnd_gubn : "H"
+						   ,cmms_base_date : "20191101"
+						   ,cmms_inds_code : "PL"
+						   ,cmms_init_cman : "ADMIN"
+						   ,cmms_cars_code : ""
+						   ,cmms_vend_code : ""
+						   ,cmms_usg0      : ""
+						   ,cmms_seq0      : ""
+						   ,cmms_vehl_gubn : "P"
+						   ,cmms_cost_gubn : "R1"
+						   ,cmms_pass_stat : ""
+						   ,cmms_part_name : "TEST용"    						
+    					}
+	  				}
+    			}
+    		},
+    		
+            initialized: function() {
+            	var me = this;
+				
+            	// Sub Part에서 넘어오는 Key 정보 get
+				if (UT.isEmpty(me.params.cmms_corp_code)) {
+					me.paramInfo = me.paramTest;
+				} else {
+					me.paramInfo = this.params;
+				}
+				
+				headerParam = {
+	       				 corp_code :  me.paramInfo['cmms_corp_code']
+	       				,part_no   :  me.paramInfo['cmms_part_no'  ]
+	       				,eono      :  me.paramInfo['cmms_eono'     ]
+	       				,degr      :  me.paramInfo['cmms_stnd_degr']
+	       				,mach_gubn :  me.paramInfo['cmms_mach_gubn']
+	       				,vehl_gubn :  me.paramInfo['cmms_vehl_gubn']
+	       				,stnd_gubn :  me.paramInfo['cmms_stnd_gubn']
+	       				,come_code :  me.paramInfo['cmms_come_code']
+	       				,cumt_gubn :  me.paramInfo['cmms_cumt_gubn']
+	       				,cost_gubn :  me.paramInfo['cmms_cost_gubn']
+	       				,mold_seq0 :  me.paramInfo['cmms_mold_seq0']
+	       				,cumt_no   :  me.paramInfo['cmms_cumt_no'  ]  
+	       				,base_date :  me.paramInfo['cmms_base_date']
+	       				,degr_desc :  me.paramInfo['cmms_degr_desc']
+	       				,stnd_man1 :  me.paramInfo['cmms_stnd_man1']
+	       				,meth_gubn :  me.paramInfo['cmms_meth_gubn']
+	       				,meth_name :  me.paramInfo['cmms_meth_name']
+	       				,inds_code :  me.paramInfo['cmms_inds_code']
+	       				,pass_stat :  me.paramInfo['cmms_pass_stat']
+	            }
+            	me.set("headerParam", headerParam);
+
+				me.$.getPassStatRPC.service();
+            },
+    		
+         	// 계산 진행상태 결과 후처리 로직
+            resultHandler : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 계산 진행상태 결과 체크 및 SET
+            	me.set('passCnt', data.result);
+   				if(me.get("passCnt.flag") == "Y"){
+   					me.set("paramInfo.pass_cnt"      , me.get("passCnt.pass_cnt"));
+   					me.set("paramInfo.cmms_pass_stat", me.get("passCnt.pass_stat"));
+
+   					// 금형공법 사용 시 주석 해제
+   					/* me.set("paramInfo.new0_stat", me.get("passCnt.new0_stat"));
+   					me.set("paramInfo.rpay_code", me.get("passCnt.rpay_code"));
+   					me.set("paramInfo.mold_stat", me.get("passCnt.mold_stat")); */
+   					
+   					me.set("searchParam", commonAS.mergeObj(me.get("paramInfo"), me.get("headerParam")));
+   					me.$.main.load(me.get("searchParam"));
+   				} else {
+   					//me.$.getPassStatRPC.service();
+   					UT.alert("END 정보가 없습니다. 관리자에게 문의바랍니다.");
+   				}
+            },
+            
+            /******
+             *버튼 이벤트 처리
+             ******/
+            onShowResult: function(e, data) {
+				var me = this;
+				me.$.pages.selectItem(me.$.result);
+				me.$.result.load(me.get("searchParam"));
+		    },
+
+		    onClose: function(e) {
+				var me = this;
+		    	me.$.pages.selectItem(me.$.main);
+		    	me.$.main.load(me.get("searchParam"));
+		    },
+		    
+            onCheckData : function() {
+            	var me = this;
+            	
+            	me.$.dialog.show();
+            	me.$.paramViewer.value = JSON.stringify(me.paramInfo, null, "\t");
+            },
+            onCloseDialog : function() {
+            	var me = this;
+            	
+            	me.$.dialog.close();
+            	me.$.paramView.value = "";
+            }
+    	});
+    </script>
+</dom-module>

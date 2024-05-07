@@ -1,0 +1,139 @@
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+<sc-link rel="import" href="es-capcbd-p20a-03-01.html"></sc-link>
+<dom-module id="es-capcbd-p20a-03">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <sc-label text="[ 가공비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+        <div id="cproDiv">    
+			<sc-panel title-text="PATTERN 가공" collapsible="true" hidden="{{formula('isHiddenPanel1')}}">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+	            <colgroup>
+	                <col style="width:175px">
+	                <col style="width:150px">
+	                <col style="width: 30px">
+	                <col style="width:150px">
+	                <col style="width:150px">
+	                <col>
+	            </colgroup>
+		            <tr>
+		                <th>
+		                    <sc-label text="정HOLE수(EA)"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field value="{{inputParam.pcbi_hole_cnt1}}" class="align-right" maxlength="13" mask-re="/[0-9.]/" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="장공HOLE수(EA)"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_matl_code" value="{{inputParam.pcbi_hole_cnt2}}" class="align-right" maxlength="13" mask-re="/[0-9.]/" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+
+			</table>
+	        </sc-panel>
+        </div>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capcbd-p20a-03",
+            
+            properties: {
+             	// 표준정보 ComboList 데이터
+             	standInfoList : {type: Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam     : {type: Object , value: function() { return {}; } },		
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+		    	// 초기 진입 구분값
+		    	initFlag      : {type: Boolean, value: true },
+
+            },
+            
+			formulas : {
+				isHiddenPanel1 : function() {
+					return (this.inputParam.pcbi_kind_code == "SINGLE" || this.inputParam.pcbi_kind_code == "SINGLE_J");
+				}
+			},
+            
+            load : function(obj) {
+                var me = this;
+
+                me.set('initFlag'    , true);
+                me.initParam = {};
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+                me.set('initFlag'    , false);
+            },
+            
+		    comboInit : function() {
+		    	var me = this;
+
+		    	// 제품구분
+		    	var filteredInfos = me.standInfoList.filter(function(e) {
+            		return e.oilk_gubn_code == "PRES02";
+            	});
+  				me.set("presGubns", filteredInfos);
+
+			    // 콤보 변경 후 기존 값 처리
+			    if (me.get('initParam.iCount') != "0" && me.get('initFlag')) { 
+			    	// 기존 데이터가 존재하는 경우
+			    	me.set("inputParam", UT.copy(me.get("initParam")));
+			    	
+				} else { 
+					// 기존 데이터가 존재하지 않는 경우
+				}
+		    },
+
+			getInputData : function() {
+				var me = this;
+				if(me.inputParam.oili_item_code != "BPSCS") {
+					if(UT.isEmpty(me.inputParam.oili_matl_code2)) {
+						UT.alert("금속환 재질을 선택하세요.");
+						return false;
+					}
+				}
+				return true;
+			},
+            
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                var id = e.target.id;
+
+                var nstr = commonAS.substr2num(me.inputParam[id]);
+                
+                me.set("inputParam." + id, nstr);
+            },
+			
+        });
+	</script>
+
+</dom-module>
