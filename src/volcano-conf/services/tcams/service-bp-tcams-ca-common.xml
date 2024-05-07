@@ -1,0 +1,936 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service-descriptor id="bp/tcams/ca/common">
+
+    <service id="get.matl.list" label="재료비 계산결과  조회">
+        <script>
+            <![CDATA[
+                var result = new Map();
+                var resultListMatl = new List();
+
+                checkListCmat = $jdbc.queryList("bp/tcams/ca/common", "select.list.checkMatl", null);
+
+                //resultListMatl = $jdbc.queryList("bp/tcams/ca/common", "select.list.matl", $data.searchParam);
+
+                /*
+                if (resultListMatl.size() == 0 && $data.searchParam.cumt_gubn == 'R') {
+                    System.out.println("#### 재료비 : 실사 조회 시 데이터가 없으면 표준 데이터를 깔아준다.");
+                    System.out.println("#### 재료비 : 변경됨 데이터 없으면 Alert Message 로 대체.");
+                    //$jdbc.update("bp/tcams/ca/common", "insert.list.cmat.real", $data.searchParam);
+                }
+                */
+                try {
+                    resultListMatl = $jdbc.queryList("bp/tcams/ca/common", "select.list.matl", $data.searchParam);
+                } catch(e) {
+                    result.MESG_CODE = "SA-002";
+                    result.MESG      = e.message;
+                }
+
+                $data.result = result;
+                $data.checkListCmat = checkListCmat;
+                $data.put("resultListMatl", resultListMatl);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.cpro.list" label="가공비 계산결과 조회">
+        <script>
+            <![CDATA[
+                var resultListCpro = new List();
+                //resultListCpro = $jdbc.queryList("bp/tcams/ca/common", "select.list.cpro", $data.searchParam);
+
+                /*
+                if (resultListCpro.size() == 0 && $data.searchParam.cumt_gubn == 'R') {
+                    System.out.println("#### 가공비 : 실사 조회 시 데이터가 없으면 표준 데이터를 깔아준다.");
+                    System.out.println("#### 가공비 : 변경됨 데이터 없으면 Alert Message 로 대체.");
+                    //$jdbc.update("bp/tcams/ca/common", "insert.list.cpro.real", $data.searchParam );
+                }
+                */
+                resultListCpro = $jdbc.queryList("bp/tcams/ca/common", "select.list.cpro", $data.searchParam);
+                $data.put("resultListCpro", resultListCpro);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.totl.list">
+        <script>
+            <![CDATA[
+            var list   = new List();
+
+            try {
+               result = $jdbc.call("bp/tcams/ca/common", "totl.data.select", $data.searchParam);
+
+               if(result.MESG_CODE == "SA-001") {
+                   list.add(result);
+               }
+
+            } catch(e) {
+               ret.MESG_CODE = 'SA-002' ;
+               ret.MESG      = 'System Error: <br> ' + e.message ;
+            }
+
+            $data.result = list;
+            $data.ret    = result;
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.totl.list0" label="종합내역 얻어오기">
+        <script>
+            <![CDATA[
+                var result = $jdbc.call("bp/tcams/ca/common", "totl.data.select", $data.searchParam);
+                $data.result = result;
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="update.CMMSRpay" label="공법마스터 상각구분 업데이트(금형전용)">
+        <insert descriptor="bp/tcams/ca/common" sql-id="CMMSRpay.update"
+            parameter-name="params" parameter-class="map" />
+    </service>
+
+    <service id="get.CMMSRpay" label="공법마스터 상각구분 조회">
+        <select descriptor="bp/tcams/ca/common" sql-id="get.CMMSRpay.select"
+            parameter-name="param" result-class="map" result-name="cmms_rpay" />
+    </service>
+
+    <service id="update.CMMSInfo" label="공법마스터 년간생산갯수, LOT량 업데이트">
+        <insert descriptor="bp/tcams/ca/common" sql-id="CMMSInfo.update"
+            parameter-name="params" parameter-class="map" />
+    </service>
+
+    <service id="update.MCHIInfo" label="기계가공 메인테이블 년간생산갯수, LOT량 업데이트">
+        <insert descriptor="bp/tcams/ca/common" sql-id="MCHIInfo.update"
+            parameter-name="params" parameter-class="map" />
+    </service>
+
+    <service id="get.CMMSInfo0" label="공법마스터 년간생산갯수, LOT량 조회">
+        <select descriptor="bp/tcams/ca/common" sql-id="get.CMMSInfo.select"
+            parameter-name="param" result-class="map" result-name="cmms_info" />
+    </service>
+
+    <service id="get.CMMSInfo" label="공법마스터 년간생산갯수, LOT량 조회">
+      <script>
+        <![CDATA[
+            var result = new Map();
+            var cmms_info = new Map();
+
+            try {
+                cmms_info = $jdbc.query("bp/tcams/ca/common", "get.CMMSInfo.select", $data.param);
+                if(cmms_info == null) {
+                    throw new Exception("공법마스터(CMMS) 정보가 없습니다.");
+                }
+                result.MESG_CODE = "SA-001" ;
+            } catch(e) {
+                $logger.info("Error: " + e.message)
+                result.MESG_CODE = "SA-002" ;
+                result.MESG      = e.message;
+            }
+
+            $data.cmms_info = cmms_info;
+            $data.result = result;
+        ]]>
+      </script>
+    </service>
+
+    <service id="get.MCHIInfo" label="공법마스터 년간생산갯수, LOT량 조회">
+     <script>
+      <![CDATA[
+       var result = new Map();
+       var mchi_info = new Map();
+
+       try {
+           mchi_info = $jdbc.query("bp/tcams/ca/common", "get.MCHIInfo.select", $data.param);
+           if(mchi_info == null) {
+               throw new Exception("MCHI 정보가 없습니다.");
+           }
+              result.MESG_CODE = "SA-001" ;
+       } catch(e) {
+           result.MESG_CODE = "SA-002" ;
+           result.MESG      = e.message;
+       }
+
+       $data.mchi_info = mchi_info;
+       $data.result    = result;
+      ]]>
+     </script>
+    </service>
+
+    <service id="get.MCHHdegrContInfo" label="기계가공 개정내용 조회">
+        <select descriptor="bp/tcams/ca/common" sql-id="get.MCHHdegrContInfo.select"
+            parameter-name="param" result-class="map" result-name="cont_info" />
+    </service>
+
+    <service id="get.capl.list" label="임률/경영비율">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.queryList("bp/tcams/ca/common", "capl.data.select", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <!-- 공법 계산결과 화면 : 재료비 저장 -->
+    <service id="save.cmatlist" label="재료비 저장">
+        <script>
+            <![CDATA[
+                try {
+
+                    $data.result = new Map();
+                    var cnt      = new Map();
+
+
+                    // update
+                    for (var i=0; i < $data.updates.size(); i++) {
+
+
+                        cnt = $jdbc.query("bp/tcams/ca/common", "cmatlist.unit.check", $data.updates[i]);
+                        if(cnt.cnt == '0') {
+                            $data.result.TYPE = 'UNIT';
+                            //$data.result.MATL_NAME = $data.updates[i].cmat_matl_name;
+                            $data.result.MESG_CODE = 'SA-002';
+                            $data.result.MESG = '유효하지 않은 단위 입니다.';
+                            throw e;
+                        }
+
+                        $jdbc.update("bp/tcams/ca/common", "cmatlist.update", $data.updates[i]);
+                    }
+
+                    // insert
+                    for (var j=0; j < $data.inserts.size(); j++) {
+                        $data.result.MATL_NAME = $data.inserts[j].cmat_matl_name;
+                        cnt = $jdbc.query("bp/tcams/ca/common", "cmatlist.insert.check", $data.inserts[j]);
+
+                        if(cnt.cnt != '0') {
+                            $data.result.TYPE = 'DUP';
+                            //$data.result.MATL_NAME = $data.inserts[j].cmat_matl_name;
+                            $data.result.MESG_CODE = 'SA-002';
+                            $data.result.MESG = '중복된 공정명이 존재합니다.';
+                            throw e;
+                        }
+
+                        cnt = $jdbc.query("bp/tcams/ca/common", "cmatlist.unit.check", $data.inserts[j]);
+
+                        if(cnt.cnt == '0') {
+                            $data.result.TYPE = 'UNIT';
+                            $data.result.MATL_NAME = $data.inserts[j].cmat_matl_name;
+                            $data.result.MESG_CODE = 'SA-002';
+                            $data.result.MESG = '유효하지 않은 단위 입니다.';
+                            throw e;
+                        }
+
+                        $jdbc.update("bp/tcams/ca/common", "cmatlist.insert", $data.inserts[j]);
+                    }
+
+                    // delete
+                    for (var k=0; k < $data.deletes.size(); k++) {
+                        //$data.result.MATL_NAME = $data.deletes[k].cmat_matl_name;
+                        $jdbc.update("bp/tcams/ca/common", "cmatlist.delete", $data.deletes[k]);
+                    }
+
+                    $data.result.MESG_CODE = 'SA-001';
+                } catch (e) {
+
+
+                    var msg = e.message;
+                    var index = msg.indexOf('JDBC');
+
+                    $data.result.MESG_CODE = 'SA-002';
+
+                    System.out.println("##########################################");
+                    System.out.println("## ERROR CODE : " + msg.substr(index, 10));
+                    System.out.println("##########################################");
+
+                    if ("JDBC-10007" == msg.substr(index, 10)) {
+                        $data.result.MESG = "중복된 데이터가 존재합니다.";
+                    } else if ("JDBC-11048" == msg.substr(index, 10)) {
+                        $data.result.MESG = "허용된 자리수를 초과하였습니다.";
+                    } else if ("JDBC-8030" == msg.substr(index, 9)) {
+                        $data.result.MESG = "값의 수가 충분하지 않습니다.";
+                    } else if ("JDBC-10005" == msg.substr(index, 10)) {
+                        $data.result.MESG = "NULL을 입력할 수 없습니다.";
+                    } else {
+                        if($data.result.TYPE == 'DUP') {
+                            $data.result.MESG = "중복된 재질명이 존재합니다.";
+                        } else if($data.result.TYPE == 'UNIT') {
+                            $data.result.MESG = "유효하지 않은 단위 입니다.";
+                        } else {
+                            $data.result.MESG = "재료비 저장 시 문제가 발생하였습니다.";
+                        }
+                    }
+
+                    System.out.println("## ERROR CODE : " + $data.result.MESG + $data.result.TYPE);
+
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+
+            ]]>
+        </script>
+
+    </service>
+
+    <!-- 공법 계산결과 화면 : 가공비 저장 -->
+    <service id="save.cprolist" label="가공비 저장">
+        <script>
+            <![CDATA[
+                try {
+                    var cnt = new Map();
+                    cnt.cnt = "0";
+
+                    $logger.info($data.inserts);
+
+                    $data.result = new Map();
+
+                    // update
+                    for (var i=0; i < $data.updates.size(); i++) {
+                        $data.result.PROC_NAME = $data.updates[i].cpro_proc_name;
+                        $jdbc.update("bp/tcams/ca/common", "cprolist.update", $data.updates[i]);
+                    }
+
+                    // insert
+                    for (var j=0; j < $data.inserts.size(); j++) {
+                        $data.result.PROC_NAME = $data.inserts[j].cpro_proc_name;
+                        var cnt = $jdbc.query("bp/tcams/ca/common", "cprolist.insert.check", $data.inserts[j]);
+
+                        if(cnt.cnt != '0') {
+                            $data.result.MESG_CODE = 'SA-002';
+                            $data.result.MESG = '중복된 공정명이 존재합니다.';
+                            throw e;
+                        }
+                        $jdbc.update("bp/tcams/ca/common", "cprolist.insert", $data.inserts[j]);
+                    }
+
+                    // delete
+                    for (var k=0; k < $data.deletes.size(); k++) {
+                        $jdbc.update("bp/tcams/ca/common", "cprolist.delete", $data.deletes[k]);
+                    }
+                    //가공비 추가만하고 저장하지않고 기계경비만 저장한경우 등등 쓰레기 데이터 추출 및 삭제
+                    $data.param.cmms_corp_code = $data.param.corp_code;
+                    $data.param.cmms_part_no   = $data.param.part_no  ;
+                    $data.param.cmms_eono      = $data.param.eono     ;
+                    $data.param.cmms_cumt_no   = $data.param.cumt_no  ;
+                    $data.param.cmms_come_code = $data.param.come_code;
+                    $data.param.cmms_cumt_gubn = $data.param.cumt_gubn;
+                    //$jdbc.update("bp/tcams/ca/manu/p01", "Mach.garbage.del", $data.param);
+                    $data.result.MESG_CODE = 'SA-001';
+                } catch (e) {
+
+
+                    var msg = e.message;
+                    var index = msg.indexOf('JDBC');
+
+                    $data.result.MESG_CODE = 'SA-002';
+
+                    System.out.println("##########################################");
+                    System.out.println("## ERROR CODE : " + msg.substr(index, 10));
+                    System.out.println("##########################################");
+
+                    $logger.info("Error--> " + msg);
+
+                    if ("JDBC-10007" == msg.substr(index, 10)) {
+                        $data.result.MESG = "중복된 데이터가 존재합니다.";
+                    } else if ("JDBC-11048" == msg.substr(index, 10)) {
+                        $data.result.MESG = "허용된 자리수를 초과하였습니다.";
+                    } else if ("JDBC-8030" == msg.substr(index, 9)) {
+                        $data.result.MESG = "값의 수가 충분하지 않습니다.";
+                    } else if ("JDBC-10005" == msg.substr(index, 10)) {
+                        $data.result.MESG = "NULL을 입력할 수 없습니다.";
+                    } else {
+                        if(cnt.cnt != '0') {
+                            $data.result.MESG = '중복된 공정명이 존재합니다.';
+                        } else {
+                            $data.result.MESG = "가공비 저장 시 문제가 발생하였습니다." + msg;
+                        }
+                    }
+
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+
+            ]]>
+        </script>
+
+    </service>
+
+    <!-- 공법 계산실행 -->
+    <service id="exec.calc.start" label="계산실행">
+        <script>
+            <![CDATA[
+
+                    // 공통율, 계산구분 저장
+                try {
+                    var result = new Map();
+
+                    for (var i=0; i < $data.saveParam.size(); i) {
+                        $jdbc.update("bp/tcams/ca/common", "capl.update1", $data.saveParam[i]);
+                        $jdbc.update("bp/tcams/ca/common", "capl.update2", $data.saveParam[i+1]);
+
+                        i = i+2;
+                    }
+
+                    $jdbc.update("bp/tcams/ca/common", "cmms.update", $data.param);
+
+
+                    // 형 복사를 위해 대입
+
+                    result.MESG_CODE = 'SA-001';
+                    result.MESG = '정상적으로 처리되었습니다.';
+
+                    $data.result = result;
+                } catch (e) {
+                    $data.result = result;
+
+                    var msg = e.message;
+                    var index = msg.indexOf('JDBC');
+
+                    $data.result.MESG_CODE = 'SA-002';
+
+                    System.out.println("##########################################");
+                    System.out.println("## ERROR CODE : " + msg.substr(index, 10));
+                    System.out.println("##########################################");
+
+                    if ("JDBC-10007" == msg.substr(index, 10)) {
+                        $data.result.MESG = "중복된 데이터가 존재합니다.";
+                    } else if ("JDBC-11048" == msg.substr(index, 10)) {
+                        $data.result.MESG = "허용된 자리수를 초과하였습니다.";
+                    } else if ("JDBC-8030" == msg.substr(index, 9)) {
+                        $data.result.MESG = "값의 수가 충분하지 않습니다.";
+                    } else if ("JDBC-10005" == msg.substr(index, 10)) {
+                        $data.result.MESG = "NULL을 입력할 수 없습니다.";
+                    } else {
+                        $data.result.MESG = "저장 시 문제가 발생하였습니다.";
+                    }
+
+                    System.out.println("#### : " + result.ERROR);
+                    System.out.println("#### : " + e);
+                    $jdbc.update("bp/tcams/ca/common", "rollback", $data.param);
+                }
+            ]]>
+        </script>
+    </service>
+
+    <!-- 공법 계산실행 -->
+    <service id="exec.calc.start2" label="계산실행">
+        <script>
+            <![CDATA[
+                try {
+                    var result = null;
+
+                    if ( $data.param.cumt_gubn == 'R') {
+                        result = $jdbc.call("bp/tcams/ca/common", "exec.recalc.start", $data.param);
+
+                        $data.result = result;
+
+
+                        // 집계
+                        if (result.MESG_CODE == 'SA-001') {
+                            result = $jdbc.call("bp/tcams/ca/common", "exec.sum.start", $data.param);
+
+                            if (result.MESG_CODE == 'SA-001') {
+                                $data.result = result;
+                            } else {
+                                throw e;
+                            }
+
+                        } else {
+                            throw e;
+                        }
+
+                    } else if ( $data.param.cumt_gubn == 'S') {
+                        result = $jdbc.call("bp/tcams/ca/common", "exec.recalc.start", $data.param);
+
+                        $data.result = result;
+
+                        // 집계
+                        if (result.MESG_CODE == 'SA-001') {
+                            result = $jdbc.call("bp/tcams/ca/common", "exec.sum.start", $data.param);
+
+                            if (result.MESG_CODE == 'SA-001') {
+                                $data.result = result;
+                            } else {
+                                throw e;
+                            }
+
+                        } else {
+                            throw e;
+                        }
+                    }
+
+                } catch (e) {
+                    $logger.info(result);
+
+                    System.out.println("#### : " + result.LINE_NO);
+                    System.out.println("#### : " + result.MESG);
+
+                    $jdbc.update("bp/tcams/ca/common", "rollback", $data.param);
+                }
+
+            ]]>
+        </script>
+    </service>
+
+    <!-- 계산구분 구하기 -->
+    <service id="get.cumt" label="계산실행">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.query("bp/tcams/ca/common", "get.cumt", $data.param);
+            ]]>
+        </script>
+    </service>
+
+    <!-- 수동공법 전환 -->
+    <service id="change.to.manual" label="수동공법 전환">
+        <script>
+            <![CDATA[
+                try {
+                    var result = new Map();
+                    result.MESG_CODE = 'SA-002';
+
+                    result = $jdbc.call("bp/tcams/ca/common", "change.to.manual", $data.searchParam);
+
+
+                    if (result.MESG == 'SA-002') {
+                        throw e;
+                    }
+
+                } catch (e) {
+                    result.MESG = e.message;
+
+                    System.out.println("#### : " + result.PRGM_ID);
+                    System.out.println("#### : " + result.LINE_NO);
+                    System.out.println("#### : " + result.MESG_CODE);
+                    System.out.println("#### : " + result.MESG);
+
+                    $jdbc.update("bp/tcams/ca/common", "rollback", null);
+                }
+                $data.result = result;
+            ]]>
+        </script>
+    </service>
+
+    <!-- 금형 공법용 -->
+    <!-- 금형 공법용 -->
+    <service id="get.mold.totl" label="종합내역 얻기">
+        <script>
+            <![CDATA[
+                $data.result     = $jdbc.queryList("bp/tcams/ca/common", "get.mold.totl", $data.param);
+                // 단순 형복사...
+                $data.initParam = $data.param;
+
+                var mold_code = '';
+                var mold_seq0 = '';
+
+                //System.out.println("##########################################");
+                //System.out.println("##########################################");
+                //System.out.println("##########################################");
+                //System.out.println("#### : " + $data.param.mold_seq0);
+                if($data.result.size() > 0){
+                    for(var i=0; i < $data.result.size(); i++) {
+                        //System.out.println("####1 : " + $data.result[i].msum_mold_code);
+                        //System.out.println("####2 : " + $data.param.mold_code);
+
+                        // 기본 첫번째 값을 셋팅
+                        if (i == 1) {
+                            mold_code = $data.result[1].msum_mold_code;
+                            mold_seq0 = $data.result[1].msum_mold_seq0;
+                        }
+
+                        // 같은 값이 있으면 그 값으로 셋팅
+                        if($data.result[i].msum_mold_code == $data.param.mold_code) {
+                            mold_code = $data.result[i].msum_mold_code;
+                            mold_seq0 = $data.result[i].msum_mold_seq0;
+                        }
+                    }
+
+                    // 데이터가 없는경우(합계row만 존재하는 경우) 계산 flag값 초기화
+                    if ($data.result.size() == 1) {
+                        $data.param.calc_flag = "N";
+                    }
+                }
+
+
+
+                if($data.param.mold_code == '' || $data.param.mold_code == null) {
+                    $data.param.mold_code = mold_code;
+                } else {
+                    $data.param.mold_seq0 = $data.param.mold_seq0;
+                }
+
+                if($data.param.mold_seq0 == '' || $data.param.mold_seq0 == null) {
+                    $data.param.mold_seq0 = mold_seq0;
+                } else {
+                    $data.param.mold_seq0 = $data.param.mold_seq0;
+                }
+
+                //System.out.println("#### FLAG : " + $data.param.calc_flag);
+
+                if($data.param.calc_flag == 'Y') {
+                    $data.param.mold_code = $data.result[1].msum_mold_code;
+                    $data.param.mold_seq0 = $data.result[1].msum_mold_seq0;
+                }
+                if($data.param.mold_code == 'null') $data.param.mold_code='';
+                if($data.param.mold_seq0 == 'null') $data.param.mold_seq0='';
+
+                if ($data.param.come_code != "MINP") {
+                    $data.resultCmat = $jdbc.queryList("bp/tcams/ca/common", "get.mold.mmat", $data.param);
+                    $data.resultCpro = $jdbc.queryList("bp/tcams/ca/common", "get.mold.mpro", $data.param);
+                }
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.mmat.mpro" label="재료비, 가공비 별도 조회">
+        <script>
+            <![CDATA[
+                $data.resultCmat = $jdbc.queryList("bp/tcams/ca/common", "get.mold.mmat", $data.param);
+                $data.resultCpro = $jdbc.queryList("bp/tcams/ca/common", "get.mold.mpro", $data.param);
+            ]]>
+        </script>
+    </service>
+
+
+    <!-- 수정 금형 -->
+    <service id="get.moldupdt.totl" label="종합내역 얻기">
+        <script>
+            <![CDATA[
+                $data.result     = $jdbc.queryList("bp/tcams/ca/common", "get.moldupdt.totl", $data.param);
+                // 단순 형복사...
+                $data.initParam = $data.param;
+
+                var mold_code = '';
+                var mold_seq0 = '';
+
+                //System.out.println("##########################################");
+                //System.out.println("##########################################");
+                //System.out.println("##########################################");
+                //System.out.println("#### : " + $data.param.mold_seq0);
+
+                for(var i=0; i < $data.result.size(); i++) {
+                    //System.out.println("####1 : " + $data.result[i].msum_mold_code);
+                    //System.out.println("####2 : " + $data.param.mold_code);
+
+                    // 기본 첫번째 값을 셋팅
+                    if (i == 1) {
+                        mold_code = $data.result[1].msum_mold_code;
+                        mold_seq0 = $data.result[1].msum_mold_seq0;
+                    }
+
+                    // 같은 값이 있으면 그 값으로 셋팅
+                    if($data.result[i].msum_mold_code == $data.param.mold_code) {
+                        mold_code = $data.result[i].msum_mold_code;
+                        mold_seq0 = $data.result[i].msum_mold_seq0;
+                    }
+
+                    // 데이터가 없는경우(합계row만 존재하는 경우) 계산 flag값 초기화
+                    if ($data.result.size() == 1) {
+                        $data.param.calc_flag = "N";
+                    }
+                }
+
+
+
+
+                if($data.param.mold_code == '' || $data.param.mold_code == null) {
+                    $data.param.mold_code = mold_code;
+                } else {
+                    $data.param.mold_seq0 = $data.param.mold_seq0;
+                }
+
+                if($data.param.mold_seq0 == '' || $data.param.mold_seq0 == null) {
+                    $data.param.mold_seq0 = mold_seq0;
+                } else {
+                    $data.param.mold_seq0 = $data.param.mold_seq0;
+                }
+
+                //System.out.println("#### FLAG : " + $data.param.calc_flag);
+
+                if($data.param.calc_flag == 'Y') {
+                    $data.param.mold_code = $data.result[1].msum_mold_code;
+                    $data.param.mold_seq0 = $data.result[1].msum_mold_seq0;
+                }
+                if($data.param.mold_code == 'null') $data.param.mold_code='';
+                if($data.param.mold_seq0 == 'null') $data.param.mold_seq0='';
+
+                if ($data.param.come_code != "MINP") {
+                    $data.resultCmat = $jdbc.queryList("bp/tcams/ca/common", "get.moldupdt.mmat", $data.param);
+                    $data.resultCpro = $jdbc.queryList("bp/tcams/ca/common", "get.moldupdt.mpro", $data.param);
+                }
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.mmatupdt.mpro" label="재료비, 가공비 별도 조회">
+        <script>
+            <![CDATA[
+                $data.resultCmat = $jdbc.queryList("bp/tcams/ca/common", "get.moldupdt.mmat", $data.param);
+                $data.resultCpro = $jdbc.queryList("bp/tcams/ca/common", "get.moldupdt.mpro", $data.param);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.lotqList" label="LOT량 팝업 조회">
+        <script>
+            <![CDATA[
+                $data.list = $jdbc.queryList("bp/tcams/ca/common", "get.lotqList.select", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.lotqComboData" label="LOT량 COMBO 조회">
+        <script>
+            <![CDATA[
+                $data.list = $jdbc.queryList("bp/tcams/ca/common", "get.lotqComboData.select", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.lotqComboDetailData" label="LOT량 COMBO Detail 조회">
+        <script>
+            <![CDATA[
+                $data.list = $jdbc.queryList("bp/tcams/ca/common", "get.lotqComboDetailData.select", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.BoltlotqList" label="LOT량 팝업 조회(BOLT 전용)">
+        <script>
+            <![CDATA[
+                $data.list = $jdbc.queryList("bp/tcams/ca/common", "get.BoltlotqList.select", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.MatlClas" label="재료단가 재질구분 조회">
+        <select descriptor="bp/tcams/ca/common" sql-id="get.MatlClas.select"
+            parameter-name="param" result-class="map" result-name="result" />
+    </service>
+
+    <service id="get.come.menu.id" label="전 공법 MENU ID 얻어오기">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.queryList("bp/tcams/ca/common", "get.come.menu.id", null);
+
+            ]]>
+        </script>
+    </service>
+
+    <service id="select.matlinfo" label="재료선택">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.queryList("bp/tcams/ca/common", "select.matlinfo", $data.param);
+            ]]>
+        </script>
+    </service>
+
+    <service id="save.matlinfo" label="재료선택">
+        <script>
+        <![CDATA[
+            $data.result = new Map();
+            try {
+
+                var result = $jdbc.update("bp/tcams/ca/common", "del.matlinfo", $data.param1);
+                // INSERT
+                for (var i=0; $data.param.size() > i ; i++) {
+                    var result = $jdbc.update("bp/tcams/ca/common", "save.matlinfo", $data.param[i]);
+
+                    $data.result = result;
+                    if(result.MESG_CODE == 'SA-002') throw e;
+                }
+
+
+            } catch (e) {
+            System.out.println(e);
+
+
+
+            }
+        ]]>
+        </script>
+    </service>
+
+    <service id="get.end_pass_stat" label="결재코드">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.query("bp/tcams/ca/common", "get.end_pass_stat", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <!-- 20151222 UKKIM 고도화2차 조회조건을 서브아이템 정보로 조회 -->
+    <service id="get.end_pass_statBySub" label="결재코드">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.query("bp/tcams/ca/common", "get.end_pass_statBySub", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+
+    <service id="get.pass_stat" label="결재코드">
+        <script>
+            <![CDATA[
+                $data.result = $jdbc.query("bp/tcams/ca/common", "get.pass_stat", $data.searchParam);
+
+            ]]>
+        </script>
+    </service>
+
+    <!-- 복사 대상 조회(팝업) -->
+    <service id="getCopyInputData" label="복사 대상 조회">
+        <script>
+            <![CDATA[
+                var cost_gubn_sql = "AND EMST_COST_GUBN = ''";
+
+                if ($data.searchParam.cost_gubn == "RD") {
+                    cost_gubn_sql = "AND EMST_COST_GUBN = 'RD'";
+                } else if ($data.searchParam.cost_gubn == "R1" ||
+                           $data.searchParam.cost_gubn == "R2" ||
+                           $data.searchParam.cost_gubn == "R3") {
+                    cost_gubn_sql = "AND EMST_COST_GUBN IN ('R0','R1', 'R2', 'R3')";
+                }
+
+                $data.searchParam.put("cost_gubn_sql", cost_gubn_sql);
+                $data.resultList = $jdbc.queryList("bp/tcams/ca/common", "getCopyInputData", $data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.comm.codes" label="공통코드 제공">
+        <script>
+            <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/ca/common","get.comm.codes",$data.param);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.ComeCodeData" label="공법 코드 조회">
+        <script>
+            <![CDATA[
+            $data.list = $jdbc.queryList("bp/tcams/ca/common","get.resultAllCome",$data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.lotIndsCodeData" label="LOT 업종 구분 코드 조회">
+        <script>
+            <![CDATA[
+            $data.list = $jdbc.queryList("bp/tcams/ca/common","get.lotIndsCodeData",$data.searchParam);
+            ]]>
+        </script>
+    </service>
+
+    <service id="get.stndInfo" label="표준정보 조회">
+        <select descriptor="bp/tcams/ca/common" sql-id="get.stndInfo.select"
+            parameter-name="param" result-class="list" result-name="combo_info" />
+    </service>
+
+    <service id="get.CalcRes" label="계산 프로시저 호출">
+        <script>
+        <![CDATA[
+            var result = $jdbc.call("bp/tcams/ca/common", "get.CalcRes", $data.param);
+            $data.calc_Result = result;
+        ]]>
+        </script>
+    </service>
+
+ <service id="CALL.PROC" label="계산 프로시저 호출">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.CalendarUtil);
+
+    var result = new Map();
+    var map = new Map();
+
+    try {
+        map = $jdbc.query("bp/tcams/ca/common", "S.DEGR", $data.param);
+        $data.param.proc_name = map.proc_name;
+
+        // [2024.02.13] 특정 프로시저 호출이 필요한 경우 처리
+        if(map.src_name == null) {
+            result = $jdbc.call("bp/tcams/ca/common", "C.CALC", $data.param);
+        } else {
+            result = $jdbc.call(map.src_name, map.src_id, $data.param);
+        }
+
+        var auth = $jdbc.query("bp/tcams/ci/ci03/conf/USER", "select", null);
+
+        result.STAT = "▶ 호출된 프로시저 : " + map.proc_name + " [" + CalendarUtil.formatNow("HH:mm:ss") + "]";
+        result.AUTH = auth.degr_yn;
+        /* ---
+        if(auth.degr_yn == "Y") {
+            result.MESG += "<br><br>";
+            result.MESG += result.STAT;
+        }
+        --- */
+    } catch(e) {
+        result.PRGM_ID = "CALL.PROC";
+        result.LINE_NO = "0000";
+        result.MESG_CODE = "SA-002";
+        result.MESG = e.message;
+    }
+
+    $data.calc_Result = result;
+    ]]>
+  </script>
+ </service>
+
+ <service id="CALL.PROC.A" label="A,B 프로시저 호출">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.StringUtil);
+    importClass(Packages.emro.util.CalendarUtil);
+
+    var result = new Map();
+    var map = new Map();
+
+    try {
+        if(StringUtil.isEmpty($data.cmms_param)) {
+            throw new Exception("Please check CMMS Param...");
+        }
+        map = $jdbc.query("bp/tcams/ca/common", "S.DEGR.A", $data.cmms_param);
+        $data.param.proc_name_a = map.proc_name_a;
+        $data.param.proc_name_b = map.proc_name_b;
+        
+        // [2024.02.13] src_name 이 없을수 있다
+        if (map.src_name == null) {
+            result = $jdbc.call("bp/tcams/ca/common", "C.CALC", $data.param);        
+        } else {
+            result = $jdbc.call(map.src_name, map.src_id, $data.param);
+        }
+
+        var auth = $jdbc.query("bp/tcams/ci/ci03/conf/USER", "select", null);
+
+        /* ---
+        result.MESG_CODE = "SA-001";
+        result.MESG = "OK";
+        --- */
+        
+        result.STAT = "PROC CALL(" + CalendarUtil.formatNow("HH:mm:ss") + "):" + map.proc_name_a;
+        result.AUTH = auth.degr_yn;
+        
+        /* ---
+        if(auth.degr_yn == "Y") {
+            result.MESG += "<br><br>";
+            result.MESG += result.STAT;
+        }
+        --- */
+    } catch(e) {
+        $logger.info(e.message);
+        result.PRGM_ID = "CALL.PROC.A";
+        result.LINE_NO = "0000";
+        result.MESG_CODE = "SA-002";
+        result.MESG = e.message;
+    }
+
+    $data.calc_Result = result;
+   ]]>
+  </script>
+ </service>
+
+</service-descriptor>
