@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CITBMATL" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE CITBMATL (
+	MATL_CORP_CODE VARCHAR(4) NOT NULL,
+	MATL_STND_GUBN CHAR(1) NOT NULL,
+	MATL_CODE VARCHAR(16) NOT NULL,
+	MATL_APPL_DATE CHAR(8) NOT NULL,
+	MATL_GUBN CHAR(3) NOT NULL,
+	MATL_CLAS_CODE CHAR(2),
+	MATL_MTJO_CODE CHAR(1),
+	MATL_NAME VARCHAR(256),
+	MATL_PRIC NUMBER(14,6),
+	MATL_UNIT VARCHAR(8),
+	MATL_SCRP_PRIC NUMBER(14,6),
+	MATL_SCRP_RATE NUMBER(5,2),
+	MATL_SPEC_GRAV NUMBER(5,2),
+	MATL_UNUS_PRIC NUMBER(14,6),
+	MATL_THIK_SIZE NUMBER(10,2),
+	MATL_WIDT_SIZE NUMBER(10,2),
+	MATL_LENG_SIZE NUMBER(10,2),
+	MATL_IMPT_CODE CHAR(3),
+	MATL_IMPT_PRIC NUMBER(14,6),
+	MATL_TRIF_RATE NUMBER(6,2),
+	MATL_TRIF_COST NUMBER(14,6),
+	MATL_REMK_DESC VARCHAR(80),
+	MATL_DELE_DATE CHAR(8),
+	MATL_DELE_CMAN VARCHAR(8),
+	MATL_UPDT_DATE CHAR(8),
+	MATL_UPDT_CMAN VARCHAR(8),
+	MATL_INIT_DATE CHAR(8),
+	MATL_INIT_CMAN VARCHAR(8),
+	MATL_CLAS1 VARCHAR(20),
+	MATL_CLAS2 VARCHAR(20),
+	MATL_CLAS3 VARCHAR(20),
+	MATL_CLAS4 VARCHAR(20),
+	MATL_CLAS5 VARCHAR(20),
+	EAI_STATUS CHAR(1) DEFAULT 'N',
+	EAI_MESSAGE VARCHAR(500),
+	CONSTRAINT CITBMATL_PK PRIMARY KEY (
+    	MATL_CORP_CODE,
+    	MATL_STND_GUBN,
+    	MATL_CODE,
+    	MATL_APPL_DATE,
+    	MATL_GUBN
+    )
+)
+  ]]>
+ </sql>
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  MATL_CORP_CODE
+ ,MATL_STND_GUBN
+ ,MATL_CODE
+ ,MATL_APPL_DATE
+ ,MATL_GUBN
+ ,MATL_CLAS_CODE
+ ,MATL_MTJO_CODE
+ ,MATL_NAME
+ ,MATL_PRIC
+ ,MATL_UNIT
+ ,MATL_SCRP_PRIC
+ ,MATL_SCRP_RATE
+ ,MATL_SPEC_GRAV
+ ,MATL_UNUS_PRIC
+ ,MATL_THIK_SIZE
+ ,MATL_WIDT_SIZE
+ ,MATL_LENG_SIZE
+ ,MATL_IMPT_CODE
+ ,MATL_IMPT_PRIC
+ ,MATL_TRIF_RATE
+ ,MATL_TRIF_COST
+ ,MATL_REMK_DESC
+ ,MATL_DELE_DATE
+ ,MATL_DELE_CMAN
+ ,MATL_UPDT_DATE
+ ,MATL_UPDT_CMAN
+ ,MATL_INIT_DATE
+ ,MATL_INIT_CMAN
+ ,MATL_CLAS1
+ ,MATL_CLAS2
+ ,MATL_CLAS3
+ ,MATL_CLAS4
+ ,MATL_CLAS5
+ ,EAI_STATUS
+ ,EAI_MESSAGE
+) AS (
+
+)
+SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBMATL B
+      ON    B.MATL_CORP_CODE = A.MATL_CORP_CODE
+    	AND B.MATL_STND_GUBN = A.MATL_STND_GUBN
+    	AND B.MATL_CODE      = A.MATL_CODE     
+    	AND B.MATL_APPL_DATE = A.MATL_APPL_DATE
+    	AND B.MATL_GUBN      = A.MATL_GUBN     
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBMATL (
+  MATL_CORP_CODE
+ ,MATL_STND_GUBN
+ ,MATL_CODE
+ ,MATL_APPL_DATE
+ ,MATL_GUBN
+ ,MATL_CLAS_CODE
+ ,MATL_MTJO_CODE
+ ,MATL_NAME
+ ,MATL_PRIC
+ ,MATL_UNIT
+ ,MATL_SCRP_PRIC
+ ,MATL_SCRP_RATE
+ ,MATL_SPEC_GRAV
+ ,MATL_UNUS_PRIC
+ ,MATL_THIK_SIZE
+ ,MATL_WIDT_SIZE
+ ,MATL_LENG_SIZE
+ ,MATL_IMPT_CODE
+ ,MATL_IMPT_PRIC
+ ,MATL_TRIF_RATE
+ ,MATL_TRIF_COST
+ ,MATL_REMK_DESC
+ ,MATL_DELE_DATE
+ ,MATL_DELE_CMAN
+ ,MATL_UPDT_DATE
+ ,MATL_UPDT_CMAN
+ ,MATL_INIT_DATE
+ ,MATL_INIT_CMAN
+ ,MATL_CLAS1
+ ,MATL_CLAS2
+ ,MATL_CLAS3
+ ,MATL_CLAS4
+ ,MATL_CLAS5
+ ,EAI_STATUS
+ ,EAI_MESSAGE
+) VALUES ( 
+  #matl_corp_code#
+ ,#matl_stnd_gubn#
+ ,#matl_code#
+ ,#matl_appl_date#
+ ,#matl_gubn#
+ ,#matl_clas_code#
+ ,#matl_mtjo_code#
+ ,#matl_name#
+ ,#matl_pric#
+ ,#matl_unit#
+ ,#matl_scrp_pric#
+ ,#matl_scrp_rate#
+ ,#matl_spec_grav#
+ ,#matl_unus_pric#
+ ,#matl_thik_size#
+ ,#matl_widt_size#
+ ,#matl_leng_size#
+ ,#matl_impt_code#
+ ,#matl_impt_pric#
+ ,#matl_trif_rate#
+ ,#matl_trif_cost#
+ ,#matl_remk_desc#
+ ,#matl_dele_date#
+ ,#matl_dele_cman#
+ ,#matl_updt_date#
+ ,#matl_updt_cman#
+ ,#matl_init_date#
+ ,#matl_init_cman#
+ ,#matl_clas1#
+ ,#matl_clas2#
+ ,#matl_clas3#
+ ,#matl_clas4#
+ ,#matl_clas5#
+ ,#eai_status#
+ ,#eai_message#
+)
+  ]]>
+ </sql> 
+ 
+</sql-descriptor>
