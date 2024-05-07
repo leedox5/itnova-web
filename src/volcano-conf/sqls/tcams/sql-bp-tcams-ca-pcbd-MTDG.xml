@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/pcbd/MTDG" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  MTDG_CORP_CODE
+ ,MTDG_METH_GUBN
+ ,MTDG_COME_CODE
+ ,MTDG_STND_DEGR
+ ,MTDG_REGT_NO
+ ,MTDG_REVI_DATE
+ ,MTDG_APPL_DATE
+ ,MTDG_HKMC_DEGR
+ ,MTDG_DEGR_CONT
+ ,MTDG_STND_FILE
+ ,MTDG_STND_MAN1
+ ,MTDG_PHON_NO1
+ ,MTDG_STND_MAN2
+ ,MTDG_PHON_NO2
+ ,MTDG_MENU_ID
+ ,MTDG_MXML_PATH
+ ,MTDG_ATT_GRP_CD
+ ,MTDG_APPL_YN
+ ,MTDG_UPDT_DATE
+ ,MTDG_UPDT_CMAN
+ ,MTDG_INIT_DATE
+ ,MTDG_INIT_CMAN
+ ,MTDG_TRAN_DEGR
+) AS ( 
+           SELECT 'K1', 'A', 'PCBD', '18', NULL, '20140101', '20140101', '18', '원가계산기준 일원화', NULL, '우한섭', '5295', '한창선', '5272', 'PCF40030', 'ui/bp/tcams/ca/pcbd/em-capcbd-p20a.html', NULL, 'Y', '20180510', 'ADMIN', '20180510', 'ADMIN', '1' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PCBD', '20-1', NULL, '20221102', '20221102', '20-1', '주재료비 계산식 변경 및 스크랩비 산출 기준 추가', NULL, '소순철', '5297', '정동오', '5272', 'PCF40030', 'ui/bp/tcams/ca/pcbd/em-capcbd-p20a.html', '1586734839911', 'Y', '20180510', 'ADMIN', '20180510', 'ADMIN', '2' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PCBD', '20-2', NULL, '20230601', '20230501', '20-2', '전력단가 변경', NULL, '소순철', '5297', '정동오', '5272', 'PCF40030', 'ui/bp/tcams/ca/pcbd/em-capcbd-p20a.html', NULL, 'Y', '20230501', 'ADMIN', '20230501', 'ADMIN', '4' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PCBD', '20-4', NULL, '20240215', '20240215', '20-4', '전력단가변경', NULL, '소순철', '5297', '정동오', '5272', 'PCF40030', 'ui/bp/tcams/ca/pcbd/em-capcbd-p20a.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '5' FROM DUAL
+)
+SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,CASE WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'N' ELSE 'Y' END UPDATED_YN
+      ,CASE
+        WHEN B.MTDG_CORP_CODE IS NULL            THEN 'I'
+        WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'U'  
+        ELSE 'X'
+       END MG_MODE
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBMTDG B
+      ON    B.MTDG_CORP_CODE = A.MTDG_CORP_CODE
+        AND B.MTDG_METH_GUBN = A.MTDG_METH_GUBN
+        AND B.MTDG_COME_CODE = A.MTDG_COME_CODE
+        AND B.MTDG_STND_DEGR = A.MTDG_STND_DEGR
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
