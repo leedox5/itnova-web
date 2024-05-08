@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CITBMTCD" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE CITBMTCD (
+	MTCD_CORP_CODE VARCHAR(4) NOT NULL,
+	MTCD_METH_GUBN CHAR(1) NOT NULL,
+	MTCD_COME_CODE CHAR(4) NOT NULL,
+	MTCD_METH_NAME VARCHAR(50),
+	MTCD_INDS_CODE CHAR(2),
+	MTCD_MATL_CLAS CHAR(2),
+	MTCD_SORT_KEY0 NUMBER(3),
+	MTCD_UPDT_DATE CHAR(8),
+	MTCD_UPDT_CMAN VARCHAR(8),
+	MTCD_INIT_DATE CHAR(8),
+	MTCD_INIT_CMAN VARCHAR(8),
+	MTCD_DOCU_NUMB VARCHAR(50),
+	CONSTRAINT CITBMTCD_PK PRIMARY KEY (
+	  MTCD_CORP_CODE,
+	  MTCD_METH_GUBN,
+	  MTCD_COME_CODE
+    )
+)
+  ]]>
+ </sql>
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  MTCD_CORP_CODE
+ ,MTCD_METH_GUBN
+ ,MTCD_COME_CODE
+ ,MTCD_METH_NAME
+ ,MTCD_INDS_CODE
+ ,MTCD_MATL_CLAS
+ ,MTCD_SORT_KEY0
+ ,MTCD_UPDT_DATE
+ ,MTCD_UPDT_CMAN
+ ,MTCD_INIT_DATE
+ ,MTCD_INIT_CMAN
+ ,MTCD_DOCU_NUMB
+) AS ( 
+       SELECT 'K1','A','HOSE','일반HOSE'   ,'RB','RB',49,'20151207','ADMIN'   ,'20151207','ADMIN'     ,'TRANSYS-G-RB-01' FROM DUAL
+ UNION SELECT 'K1','A','PCBD','PCB ＆ CIRCUIT','LE','LE',18,'20180510','ADMIN','20180510','ADMIN','TRANSYS-G-LE-01' FROM DUAL
+)
+SELECT CASE WHEN B.MTCD_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,CASE 
+        WHEN A.MTCD_UPDT_DATE = '00000000' THEN 'D'
+        WHEN B.MTCD_CORP_CODE IS NULL THEN 'I'
+        ELSE 'X'
+       END  MG_MODE
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBMTCD B
+      ON    B.MTCD_CORP_CODE = A.MTCD_CORP_CODE
+        AND B.MTCD_METH_GUBN = A.MTCD_METH_GUBN
+        AND B.MTCD_COME_CODE = A.MTCD_COME_CODE
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBMTCD (
+  MTCD_CORP_CODE
+ ,MTCD_METH_GUBN
+ ,MTCD_COME_CODE
+ ,MTCD_METH_NAME
+ ,MTCD_INDS_CODE
+ ,MTCD_MATL_CLAS
+ ,MTCD_SORT_KEY0
+ ,MTCD_UPDT_DATE
+ ,MTCD_UPDT_CMAN
+ ,MTCD_INIT_DATE
+ ,MTCD_INIT_CMAN
+ ,MTCD_DOCU_NUMB
+) VALUES ( 
+  #mtcd_corp_code#
+ ,#mtcd_meth_gubn#
+ ,#mtcd_come_code#
+ ,#mtcd_meth_name#
+ ,#mtcd_inds_code#
+ ,#mtcd_matl_clas#
+ ,#mtcd_sort_key0#
+ ,#mtcd_updt_date#
+ ,#mtcd_updt_cman#
+ ,#mtcd_init_date#
+ ,#mtcd_init_cman#
+ ,#mtcd_docu_numb#
+)
+  ]]>
+ </sql> 
+ 
+</sql-descriptor>
