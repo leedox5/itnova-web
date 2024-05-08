@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/ca/braz">
+
+	<service id="get.StndBRAZInfo" label="BRAZING 표준정보 조회">
+		<select descriptor="bp/tcams/ca/braz" sql-id="get.StndBRAZInfo.select"
+			parameter-name="param" result-class="list" result-name="combo_info" />
+	</service>
+
+	<service id="get.BRAZInfoCount" label="BRAZING입력데이터  Count">
+		<select descriptor="bp/tcams/ca/braz" sql-id="get.BRAZInfo.count"
+			parameter-name="param" result-class="map" result-name="ca_count" />
+	</service>
+
+	<service id="get.BRAZInfo" label="BRAZING 입력데이터 조회">
+		<select descriptor="bp/tcams/ca/braz" sql-id="get.BRAZInfo.select"
+			parameter-name="param" result-class="list" result-name="ca_info" />
+	</service>
+	
+	<service id="get.MatlInfo" label="BRAZING 입력데이터 조회">
+		<script>
+			<![CDATA[
+				try{
+					var count = 0;
+					
+					count = $jdbc.query("bp/tcams/ca/braz", "matllist.count", $data.param);
+					
+					if(count.cnt == 0){
+						$data.resultList = $jdbc.queryList("bp/tcams/ca/braz", "get.MatlInfo.select", $data.param);
+					} else {
+						$data.resultList = $jdbc.queryList("bp/tcams/ca/braz", "matllist.info", $data.param);
+					}
+					
+				}catch(e){
+					
+					System.out.println("##########################################");
+					System.out.println("## ERROR CODE : " + msg);
+					System.out.println("##########################################");
+					
+					$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+				}
+			]]>
+		</script>
+	</service>
+
+ <service id="get.BRAZCalcRes" label="BRAZING 계산 (프로시저)">
+  <script>
+   <![CDATA[
+	var result = new Map();
+
+	try {
+	    $logger.info($data.param);
+	    $data.param.degr = $data.param.degr.replace("-", "_");
+	    result = $jdbc.call("bp/tcams/ca/braz", "get.BRAZCalcRes.select", $data.param);
+	} catch(e) {
+		result.MESG_CODE = "SA-002" ;
+		result.MESG      = "System Error: <br>" + e.message;	
+	}
+	
+	$data.calc_Result = result;
+   ]]>
+  </script>
+ </service>
+
+	<service id="save.BRAZInfo" label="BRAZING 입력데이터 저장">
+		<insert descriptor="bp/tcams/ca/braz" sql-id="BRAZInfo.insert"
+			parameter-name="params" parameter-class="list" />
+	</service>
+
+	<service id="save.BRAZInfo1" label="BRAZING 입력데이터 저장">
+		<script>
+		<![CDATA[
+
+			$logger.info("params  --> " + $data.params);
+
+			/*			
+			try{
+				$data.result = new Map();
+				
+				$jdbc.update("bp/tcams/ca/anod/p12a", "ANODInfo.insert", $data.params);
+				
+				$data.result.MESG_CODE = "SA-001";
+				
+			}catch(e){
+				var rollback = new Map();
+				var msg = e.message;
+				var index = msg.indexOf('JDBC');
+				
+				$logger.info(msg);
+				
+				$data.result.MESG_CODE = 'SA-002';
+				
+				if ("JDBC-5111" == msg.substr(index, 9)) {
+					$data.result.MESG = "지정된 자릿수보다 초과한 값이 입력되었습니다. <br> 자릿수를 확인하세요.";
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다.";
+				}
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+			$logger.info($data);
+			*/
+		]]>
+		</script>
+	</service>
+
+	<service id="delete.BRAZInfo" label="BRAZING 입력데이터 삭제(초기화)">
+		<delete descriptor="bp/tcams/ca/braz" sql-id="BRAZInfo.delete"
+			parameter-name="params" parameter-class="list" />
+	</service>
+	
+	
+	<service id="delete.BRAZmatlInfo" label="부재료비 삭제/저장">
+		<script>
+			<![CDATA[
+			try {
+				var count = 0;
+				
+				count = $jdbc.query("bp/tcams/ca/braz", "matllist.count", $data.matlList[0]);
+
+				if(count.cnt == 0){
+					$jdbc.update("bp/tcams/ca/braz", "matllist.insert", $data.matlList[0]);
+				}else{
+					$jdbc.update("bp/tcams/ca/braz", "matllist.delete", $data.matlList[0]);
+					$jdbc.update("bp/tcams/ca/braz", "matllist.insert", $data.matlList[0]);
+				}
+				
+				
+				
+			} catch (e) {
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+			]]>
+		</script>
+	</service>
+	
+	
+	<service id="delete.BRAZmatl" label="부재료비 삭제">
+		<delete descriptor="bp/tcams/ca/braz" sql-id="matllist.delete"
+			parameter-name="params" parameter-class="list" />
+	</service>
+	
+	
+</service-descriptor>

@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/braz" data-source="tcamsDS">
+
+	<sql id="get.StndBRAZInfo.select" comment="BRAZING 표준정보 조회">
+        <![CDATA[
+		    SELECT CMPK_GUBN_CODE     CMPK_GUBN_CODE
+		          ,CMPK_CODE          DATA
+		          ,CMPK_SORT_NUMB     CMPK_SORT_NUMB
+		          ,CMPK_CODE_NAME     LABEL
+		          ,CMPK_CODE_GRP1     CMPK_CODE_GRP1
+		          ,CMPK_CODE_GRP2     CMPK_CODE_GRP2
+		          ,CMPK_CODE_GRP3     CMPK_CODE_GRP3
+		          ,CMPK_CODE_GRP4     CMPK_CODE_GRP4
+		          ,CMPK_CODE_GRP5     CMPK_CODE_GRP5                              
+		      FROM CATBCMPK
+		     WHERE CMPK_CORP_CODE = #corp_code# 
+		       AND CMPK_STND_GUBN = #stnd_gubn# 
+		       AND CMPK_STND_DEGR = #degr#
+		       AND CMPK_APPL_GUBN = 'Y'
+		       AND CMPK_GUBN_CODE LIKE 'BRAZ%'
+		    ORDER BY CMPK_GUBN_CODE
+		            ,CMPK_SORT_NUMB
+
+        ]]>
+	</sql>
+
+	<sql id="BRAZInfo.insert" comment="BRAZING입력데이터 저장">
+        <![CDATA[
+		BEGIN    
+            DELETE
+              FROM CATBBRAI
+             WHERE BRAI_CORP_CODE = #corp_code#
+               AND BRAI_PART_NO   = #part_no#
+               AND BRAI_EONO      = #eono#
+               AND BRAI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+            ;
+		           
+			INSERT INTO CATBBRAI
+			      (
+			       BRAI_CORP_CODE
+			      ,BRAI_PART_NO
+			      ,BRAI_EONO
+			      ,BRAI_CUMT_NO
+			      ,BRAI_WELD_SEQ0
+			      ,BRAI_KIND_GUBN
+			      ,BRAI_KIND_CODE
+			      ,BRAI_WLDR_GUBN
+			      ,BRAI_WLDR_CODE
+			      ,BRAI_ITEM_WDTH
+			      ,BRAI_ITEM_HEGT
+			      ,BRAI_WELD_THIK
+			      ,BRAI_WELD_LENG
+			      ,BRAI_PART_CNT0
+			      ,BRAI_EXTN_LENG
+			      ,BRAI_INTN_LENG
+			      ,BRAI_VANI_CAVT
+			      ,BRAI_FOIL_QNTY
+			      ,BRAI_LOSS_GUBN
+			      ,BRAI_LOSS_RATE
+			      ,BRAI_SCRP_WEGT
+			      ,BRAI_SCRP_PRIC
+			      ,BRAI_UPDT_CMAN
+			      ,BRAI_UPDT_DATE
+			      ,BRAI_INIT_CMAN
+			      ,BRAI_INIT_DATE
+			) VALUES (
+			       #corp_code#
+			      ,#part_no#
+			      ,#eono#
+			      ,TO_NUMBER(#cumt_no#)
+			      ,TO_NUMBER(#brai_weld_seq0#)
+			      ,#brai_kind_gubn#
+			      ,#brai_kind_code#
+			      ,#brai_wldr_gubn#
+			      ,#brai_wldr_code#
+			      ,TO_NUMBER(#brai_item_wdth#)
+			      ,TO_NUMBER(#brai_item_hegt#)
+			      ,TO_NUMBER(#brai_weld_thik#)
+			      ,TO_NUMBER(#brai_weld_leng#)
+			      ,TO_NUMBER(#brai_part_cnt0#)
+			      ,TO_NUMBER(#brai_extn_leng#)
+			      ,TO_NUMBER(#brai_intn_leng#)
+			      ,TO_NUMBER(#brai_vani_cavt#)
+			      ,TO_NUMBER(#brai_foil_qnty#)
+			      ,#brai_loss_gubn#
+			      ,#brai_loss_rate#
+			      ,TO_NUMBER(#brai_scrp_wegt#)
+			      ,TO_NUMBER(#brai_scrp_pric#)
+			      ,#reg_id#
+			      ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			      ,#reg_id#
+			      ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			      );
+		END;
+        ]]>
+	</sql>
+
+	<sql id="BRAZInfo.delete" comment="BRAZING 입력데이터 삭제">
+        <![CDATA[
+        
+            DELETE
+              FROM CATBBRAI
+             WHERE BRAI_CORP_CODE = #corp_code#
+               AND BRAI_PART_NO   = #part_no#
+               AND BRAI_EONO      = #eono#
+               AND BRAI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+               
+        ]]>
+	</sql>
+
+	<sql id="get.BRAZInfo.count" comment="BRAZING 입력데이터  Count">
+        <![CDATA[
+            SELECT COUNT(*)       BRAZ_COUNT
+              FROM CATBBRAI
+             WHERE BRAI_CORP_CODE = #corp_code#
+               AND BRAI_PART_NO   = #part_no#
+               AND BRAI_EONO      = #eono#
+               AND BRAI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+        	
+        ]]>
+	</sql>
+	
+	<sql id="get.MatlInfo.select" comment="BRAZING 부재료비 조회">
+        <![CDATA[
+
+			SELECT BRAM_CORP_CODE                                              BRAI_CORP_CODE
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_STND_GUBN,NULL)) BRAI_STND_GUBN1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_STND_DEGR,NULL)) BRAI_STND_DEGR1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_NAME,NULL)) BRAI_MATL_NAME1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_CODE,NULL)) BRAI_MATL_CODE1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_IMPT_CODE,NULL)) BRAI_IMPT_CODE1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_PRIC,NULL)) BRAI_IMPT_COST1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_UNIT,NULL)) BRAI_MATL_UNIT1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_UNT0,NULL)) BRAI_MATL_UNT01
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_USE0,NULL)) BRAI_MATL_USE01
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_APLY,NULL)) BRAI_MATL_APLY1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_APPL_GUBN,NULL)) BRAI_APPL_GUBN1 
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_UPDT_CMAN,NULL)) BRAI_UPDT_CMAN1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_UPDT_DATE,NULL)) BRAI_UPDT_DATE1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_INIT_CMAN,NULL)) BRAI_INIT_CMAN1
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_INIT_DATE,NULL)) BRAI_INIT_DATE1
+			      ,MAX(DECODE(BRAM_IMPT_CODE, '' , '', 'assets/images/bull_calculation.gif'))  IMG_CAL1
+			
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_STND_GUBN,NULL)) BRAI_STND_GUBN2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_STND_DEGR,NULL)) BRAI_STND_DEGR2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_NAME,NULL)) BRAI_MATL_NAME2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_CODE,NULL)) BRAI_MATL_CODE2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_IMPT_CODE,NULL)) BRAI_IMPT_CODE2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_PRIC,NULL)) BRAI_IMPT_COST2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_UNIT,NULL)) BRAI_MATL_UNIT2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_UNT0,NULL)) BRAI_MATL_UNT02
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_USE0,NULL)) BRAI_MATL_USE02
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_APLY,NULL)) BRAI_MATL_APLY2
+			      ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_APPL_GUBN,NULL)) BRAI_APPL_GUBN2
+			      ,MAX(DECODE(BRAM_IMPT_CODE, '' , '', 'assets/images/bull_calculation.gif'))  IMG_CAL2 
+			FROM
+			(
+			SELECT *
+			  FROM CATBBRAM
+			 WHERE BRAM_IMPT_CODE IS NOT NULL
+			) 
+			 GROUP BY BRAM_CORP_CODE
+
+        ]]>
+	</sql>
+
+
+	<sql id="get.BRAZInfo.select" comment="BRAZING 기본조회">
+        <![CDATA[
+			SELECT BRAI_CORP_CODE		CORP_CODE     
+			      ,BRAI_PART_NO  		PART_NO       
+			      ,BRAI_EONO     		EONO          
+			      ,BRAI_CUMT_NO  		CUMT_NO       
+			      ,BRAI_WELD_SEQ0		BRAI_WELD_SEQ0
+			      ,BRAI_KIND_GUBN		BRAI_KIND_GUBN
+			      ,BRAI_KIND_CODE		BRAI_KIND_CODE
+			      ,BRAI_WLDR_GUBN		BRAI_WLDR_GUBN
+			      ,BRAI_WLDR_CODE		BRAI_WLDR_CODE
+			      ,BRAI_ITEM_WDTH		BRAI_ITEM_WDTH
+			      ,BRAI_ITEM_HEGT		BRAI_ITEM_HEGT
+			      ,BRAI_WELD_THIK		BRAI_WELD_THIK
+			      ,BRAI_WELD_LENG		BRAI_WELD_LENG
+			      ,BRAI_PART_CNT0		BRAI_PART_CNT0
+			      ,BRAI_EXTN_LENG		BRAI_EXTN_LENG
+			      ,BRAI_INTN_LENG		BRAI_INTN_LENG
+			      ,BRAI_VANI_CAVT		BRAI_VANI_CAVT
+			      ,BRAI_FOIL_QNTY		BRAI_FOIL_QNTY
+			      ,BRAI_LOSS_GUBN		BRAI_LOSS_GUBN
+			      ,BRAI_LOSS_RATE		BRAI_LOSS_RATE
+			      ,BRAI_SCRP_WEGT		BRAI_SCRP_WEGT
+			      ,BRAI_SCRP_PRIC		BRAI_SCRP_PRIC
+			  FROM CATBBRAI
+			 WHERE BRAI_CORP_CODE  = TO_CHAR(#corp_code#)
+			   AND BRAI_PART_NO    = #part_no#
+			   AND BRAI_EONO       = TO_CHAR(#eono#)
+			   AND BRAI_CUMT_NO    = TO_NUMBER(#cumt_no#)
+			 ORDER BY BRAI_WELD_SEQ0
+        ]]>
+	</sql>
+
+	<sql id="get.BRAZCalcRes.select" comment="BRAZING 계산 (프로시저) " callable="true"> 
+         <![CDATA[ 
+         	CALL CASPBRAZ_P@degr@(#corp_code:char:in#,#part_no:varchar:in#,#eono:varchar:in#,#cumt_no:numeric:in#,#reg_id:varchar:in#,#MESG_CODE:varchar:out#,#MESG:varchar:out#,#SQL0_CODE:varchar:out#,#PRGM_ID:varchar:out#,#LINE_NO:varchar:out#) 
+         ]]>
+	</sql>
+	
+	<sql id="matllist.count" comment="CRTBIMPT테이블 COUNT">
+        <![CDATA[
+          SELECT COUNT(*)    CNT
+            FROM CRTBIMPT
+           WHERE IMPT_CORP_CODE = TO_CHAR(#corp_code#)
+             AND IMPT_COST_GUBN = 'S'
+             AND IMPT_PART_NO   = #part_no#
+             AND IMPT_EONO      = TO_CHAR(#eono#)
+             AND IMPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+             AND IMPT_COME_CODE = 'BRAZ'
+        ]]>
+	</sql>
+	
+	<sql id="matllist.info" comment="CRTBIMPT테이블 조회">
+        <![CDATA[
+            SELECT IMPT_CORP_CODE                                              BRAI_CORP_CODE
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_CORP_CODE,NULL)) BRAI_CORP_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_COST_GUBN,NULL)) BRAI_COST_GUBN1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_PART_NO  ,NULL)) BRAI_PART_NO1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EONO     ,NULL)) BRAI_EONO1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_CUMT_NO  ,NULL)) BRAI_CUMT_NO1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_COME_CODE,NULL)) BRAI_COME_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_MATL_SEQ0,NULL)) BRAI_MATL_SEQ01
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_MATL_CODE,NULL)) BRAI_MATL_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_STND_GUBN,NULL)) BRAI_STND_GUBN1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_IMPT_APDT,NULL)) BRAI_IMPT_APDT1 
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_IMPT_COST,NULL)) BRAI_IMPT_COST1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_NATI_CODE,NULL)) BRAI_NATI_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_STND,NULL)) BRAI_EXCH_STND1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_GUBN,NULL)) BRAI_EXCH_GUBN1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_PROJ,NULL)) BRAI_EXCH_PROJ1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_MOGB,NULL)) BRAI_IMPT_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_APDT,NULL)) BRAI_EXCH_APDT1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_MONY,NULL)) BRAI_EXCH_MONY1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_USER,NULL)) BRAI_EXCH_USER1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_APPL,NULL)) BRAI_EXCH_APPL1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_STND,NULL)) BRAI_LDCR_STND1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_CODE,NULL)) BRAI_LDCR_CODE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_APDT,NULL)) BRAI_LDCR_APDT1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_RATE,NULL)) BRAI_LDCR_RATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_USER,NULL)) BRAI_LDCR_USER1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_LDCR_APPL,NULL)) BRAI_LDCR_APPL1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_MATL_PRIC,NULL)) BRAI_KRW0_PRIC1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_TRIF_RATE,NULL)) BRAI_TRIF_RATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_TRIF_INPT,NULL)) BRAI_TRIF_INPT1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_TRIF_APPL,NULL)) BRAI_TRIF_APPL1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_CARR_RATE,NULL)) BRAI_CARR_RATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_CARR_INPT,NULL)) BRAI_CARR_INPT1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_CARR_APPL,NULL)) BRAI_CARR_APPL1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_INSU_RATE,NULL)) BRAI_INSU_RATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_INSU_INPT,NULL)) BRAI_INSU_INPT1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_INSU_APPL,NULL)) BRAI_INSU_APPL1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_TRIF_PRIC,NULL)) BRAI_TRIF_PRIC1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_EXCH_LINK,NULL)) BRAI_EXCH_LINK1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_UPDT_DATE,NULL)) BRAI_UPDT_DATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_UPDT_CMAN,NULL)) BRAI_UPDT_CMAN1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_INIT_DATE,NULL)) BRAI_INIT_DATE1
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_INIT_CMAN,NULL)) BRAI_INIT_CMAN1
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_UNIT,NULL)) BRAI_MATL_UNIT1
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_UNT0,NULL)) BRAI_MATL_UNT01
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_5',BRAM_MATL_USE0,NULL)) BRAI_MATL_USE01
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_5',IMPT_IMPT_CODE,NULL)) BRAI_EXCH_MOGB1
+                  ,'assets/images/bull_calculation.gif'  IMG_CAL1
+                  
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_CORP_CODE,NULL)) BRAI_CORP_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_COST_GUBN,NULL)) BRAI_COST_GUBN2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_PART_NO  ,NULL)) BRAI_PART_NO2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EONO     ,NULL)) BRAI_EONO2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_CUMT_NO  ,NULL)) BRAI_CUMT_NO2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_COME_CODE,NULL)) BRAI_COME_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_MATL_SEQ0,NULL)) BRAI_MATL_SEQ02
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_MATL_CODE,NULL)) BRAI_MATL_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_STND_GUBN,NULL)) BRAI_STND_GUBN2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_IMPT_APDT,NULL)) BRAI_IMPT_APDT2 
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_IMPT_COST,NULL)) BRAI_IMPT_COST2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_NATI_CODE,NULL)) BRAI_NATI_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_STND,NULL)) BRAI_EXCH_STND2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_GUBN,NULL)) BRAI_EXCH_GUBN2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_PROJ,NULL)) BRAI_EXCH_PROJ2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_MOGB,NULL)) BRAI_IMPT_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_APDT,NULL)) BRAI_EXCH_APDT2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_MONY,NULL)) BRAI_EXCH_MONY2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_USER,NULL)) BRAI_EXCH_USER2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_APPL,NULL)) BRAI_EXCH_APPL2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_STND,NULL)) BRAI_LDCR_STND2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_CODE,NULL)) BRAI_LDCR_CODE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_APDT,NULL)) BRAI_LDCR_APDT2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_RATE,NULL)) BRAI_LDCR_RATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_USER,NULL)) BRAI_LDCR_USER2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_LDCR_APPL,NULL)) BRAI_LDCR_APPL2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_MATL_PRIC,NULL)) BRAI_KRW0_PRIC2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_TRIF_RATE,NULL)) BRAI_TRIF_RATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_TRIF_INPT,NULL)) BRAI_TRIF_INPT2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_TRIF_APPL,NULL)) BRAI_TRIF_APPL2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_CARR_RATE,NULL)) BRAI_CARR_RATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_CARR_INPT,NULL)) BRAI_CARR_INPT2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_CARR_APPL,NULL)) BRAI_CARR_APPL2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_INSU_RATE,NULL)) BRAI_INSU_RATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_INSU_INPT,NULL)) BRAI_INSU_INPT2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_INSU_APPL,NULL)) BRAI_INSU_APPL2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_TRIF_PRIC,NULL)) BRAI_TRIF_PRIC2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_EXCH_LINK,NULL)) BRAI_EXCH_LINK2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_UPDT_DATE,NULL)) BRAI_UPDT_DATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_UPDT_CMAN,NULL)) BRAI_UPDT_CMAN2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_INIT_DATE,NULL)) BRAI_INIT_DATE2
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_INIT_CMAN,NULL)) BRAI_INIT_CMAN2
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_UNIT,NULL)) BRAI_MATL_UNIT2
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_UNT0,NULL)) BRAI_MATL_UNT02
+                  ,MAX(DECODE(BRAM_MATL_CODE ,'IN_BNI_2',BRAM_MATL_USE0,NULL)) BRAI_MATL_USE02
+                  ,MAX(DECODE(IMPT_MATL_CODE ,'IN_BNI_2',IMPT_IMPT_CODE,NULL)) BRAI_EXCH_MOGB2
+                  ,'assets/images/bull_calculation.gif'  IMG_CAL2
+            FROM
+            (
+            SELECT *
+              FROM CRTBIMPT B
+              LEFT OUTER JOIN
+                   CATBBRAM A
+                ON A.BRAM_CORP_CODE = B.IMPT_CORP_CODE
+               AND A.BRAM_IMPT_CODE = B.IMPT_EXCH_MOGB
+           WHERE IMPT_CORP_CODE = #corp_code#
+             AND IMPT_COST_GUBN = 'S'
+             AND IMPT_PART_NO   = #part_no#
+             AND IMPT_EONO      = #eono#
+             AND IMPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+             AND IMPT_COME_CODE = 'BRAZ'
+            ) 
+             GROUP BY IMPT_CORP_CODE
+        ]]>
+	</sql>
+	
+	<sql id="matllist.delete" comment="부재료비 delete">
+        <![CDATA[
+          DELETE
+            FROM CRTBIMPT  
+           WHERE IMPT_CORP_CODE = #corp_code#
+             AND IMPT_COST_GUBN = 'S'
+             AND IMPT_PART_NO   = #part_no#
+             AND IMPT_EONO      = #eono#
+             AND IMPT_CUMT_NO   = TO_NUMBER(#cumt_no#)
+             AND IMPT_COME_CODE = 'BRAZ'
+
+        ]]>
+	</sql>
+	
+		<sql id="matllist.insert" comment="부재료비 insert">
+        <![CDATA[
+        BEGIN
+        
+          INSERT INTO CRTBIMPT
+                     (
+                      IMPT_CORP_CODE           --법인코드                 END or SUB or 공법
+                     ,IMPT_COST_GUBN           --계산구분                 END : NULL허용
+                     ,IMPT_PART_NO             --PART NO                  END or SUB or 공법
+                     ,IMPT_EONO                --EO NO                    END or SUB or 공법
+                     ,IMPT_CUMT_NO             --계산번호                 END or SUB or 공법
+                     ,IMPT_COME_CODE           --공법                     공법 : NULL허용
+                     ,IMPT_MATL_SEQ0           --재료SEQ                  공법 : NULL허용
+                     ,IMPT_MATL_CODE           --재료코드                 공법 : NULL허용
+                     ,IMPT_STND_GUBN           --표준구분
+                     ,IMPT_IMPT_CODE           --수입코드
+                     ,IMPT_IMPT_APDT           --수입단가 적용일
+                     ,IMPT_IMPT_COST           --수입단가
+                     ,IMPT_NATI_CODE           --국가코드
+                     ,IMPT_EXCH_STND           --환율정보_표준구분
+                     ,IMPT_EXCH_GUBN           --환율구분                 S:고정환율 C:변동환율
+                     ,IMPT_EXCH_PROJ           --환율정보_차종
+                     ,IMPT_EXCH_MOGB           --환율정보_화폐구분        적용환율입력시 쓰인 화페구분
+                     ,IMPT_EXCH_APDT           --환율정보_환율적용일
+                     ,IMPT_EXCH_MONY           --환율정보_환율            계산시 환율정보로 구한 환율
+                     ,IMPT_EXCH_USER           --환율_직접입력            계산시 유저 입력값
+                     ,IMPT_EXCH_APPL           --환율_적용환율            계산시 적용된 환율
+                     ,IMPT_LDCR_STND           --LDC율정보_표준구분
+                     ,IMPT_LDCR_CODE           --LDC율정보_LDC율코드      적용LDC율 입력시 쓰인 LDC코드
+                     ,IMPT_LDCR_APDT           --LDC율정보_LDC율적용일
+                     ,IMPT_LDCR_RATE           --LDC율정보_LDC율          계산시 LDC율정보로 구한 LDC율
+                     ,IMPT_LDCR_USER           --LDC율_직접입력           사용자 입력값
+                     ,IMPT_LDCR_APPL           --LDC율_적용LDC율          계산적용 LDC율
+                     ,IMPT_MATL_PRIC           --환산단가(=재료단가)      현지화폐 환산단가 (원화)
+                     ,IMPT_TRIF_RATE           --관세율_표준              재료단가에서 가져온 관세율
+                     ,IMPT_TRIF_INPT           --관세율_직접입력          사용자가 직접입력한 관세율
+                     ,IMPT_TRIF_APPL           --관세율_적용관세율        계산시 적용된 관세율
+                     ,IMPT_CARR_RATE           --선임율_표준              LDC율 정보 선임율
+                     ,IMPT_CARR_INPT           --선임율_직접              사용자입력 선임율
+                     ,IMPT_CARR_APPL           --선임율_적용              계산적용   선임율
+                     ,IMPT_INSU_RATE           --보험율_표준              LDC율 정보 보험율
+                     ,IMPT_INSU_INPT           --보험율_직접              사용자입력 보험율
+                     ,IMPT_INSU_APPL           --보험율_적용              계산적용   보험율
+                     ,IMPT_TRIF_PRIC           --관세단가                 계산된 관세
+                     ,IMPT_EXCH_LINK           --환율연동 적용여부        미사용
+                     ,IMPT_UPDT_DATE           --수정일
+                     ,IMPT_UPDT_CMAN           --수정자
+                     ,IMPT_INIT_DATE           --등록일
+                     ,IMPT_INIT_CMAN           --등록자
+                     )
+              VALUES (
+                      #corp_code#                                -- IMPT_CORP_CODE           --법인코드                 END or SUB or 공법
+                     ,'S'                                        -- IMPT_COST_GUBN           --계산구분                 END : NULL허용
+                     ,#part_no#                                  -- IMPT_PART_NO             --PART NO                  END or SUB or 공법
+                     ,#eono#                                     -- IMPT_EONO                --EO NO                    END or SUB or 공법
+                     ,TO_NUMBER(#cumt_no#)                       -- IMPT_CUMT_NO             --계산번호                 END or SUB or 공법
+                     ,'BRAZ'                                     -- IMPT_COME_CODE           --공법                     공법 : NULL허용
+                     ,'1'                                        -- IMPT_MATL_SEQ0           --재료SEQ                  공법 : NULL허용
+                     ,#brai_matl_code1#                           -- IMPT_MATL_CODE           --재료코드                 공법 : NULL허용
+                     ,#brai_stnd_gubn1#                           -- IMPT_STND_GUBN           --표준구분
+                     ,#brai_exch_mogb1#                           -- IMPT_IMPT_CODE           --수입코드
+                     ,NULL                                       -- IMPT_IMPT_APDT           --수입단가 적용일
+                     ,#brai_impt_cost1#                           -- IMPT_IMPT_COST           --수입단가
+                     ,#brai_nati_code1#                           --* IMPT_NATI_CODE          --국가코드
+                     ,TRIM(#brai_exch_gubn1#)                     -- IMPT_EXCH_STND           --환율정보_표준구분
+                     ,NULL                                       -- IMPT_EXCH_GUBN           --환율구분                 S:고정환율 C:변동환율
+                     ,NULL                                       -- IMPT_EXCH_PROJ           --환율정보_차종
+                     ,#brai_impt_code1#                           --* IMPT_EXCH_MOGB           --환율정보_화폐구분        적용환율입력시 쓰인 화페구분
+                     ,#brai_exch_date1#                           -- IMPT_EXCH_APDT           --환율정보_환율적용일
+                     ,#brai_exch_rate_grid1#                      -- IMPT_EXCH_MONY           --환율정보_환율            계산시 환율정보로 구한 환율
+                     ,#brai_exch_user1#                           --* IMPT_EXCH_USER           --환율_직접입력            계산시 유저 입력값
+                     ,NVL(#brai_exch_rate_m1#, #brai_exch_rate1#)  -- IMPT_EXCH_APPL           --환율_적용환율            계산시 적용된 환율
+                     ,NULL                                       -- IMPT_LDCR_STND           --LDC율정보_표준구분
+                     ,TRIM(#brai_ldcr_gubn1#)                     -- IMPT_LDCR_CODE           --LDC율정보_LDC율코드      적용LDC율 입력시 쓰인 LDC코드
+                     ,#brai_stnd_date1#                           --* IMPT_LDCR_APDT           --LDC율정보_LDC율적용일
+                     ,#brai_ldc0_rate_grid1#                      -- IMPT_LDCR_RATE           --LDC율정보_LDC율          계산시 LDC율정보로 구한 LDC율
+                     ,#brai_ldc0_user1#                           --* IMPT_LDCR_USER           --LDC율_직접입력           사용자 입력값
+                     ,NVL(#brai_ldc0_user1#, #brai_ldc0_rate1#)    -- IMPT_LDCR_APPL           --LDC율_적용LDC율          계산적용 LDC율
+                     ,#brai_krw0_pric1#                           -- IMPT_MATL_PRIC           --환산단가(=재료단가)      현지화폐 환산단가 (원화)
+                     ,#brai_trif_rate1#                           -- IMPT_TRIF_RATE           --관세율_표준              재료단가에서 가져온 관세율
+                     ,#brai_trif_user1#                           -- IMPT_TRIF_INPT           --관세율_직접입력          사용자가 직접입력한 관세율
+                     ,NVL(#brai_trif_user1#, #brai_trif_rate1#)    --* IMPT_TRIF_APPL           --관세율_적용관세율        계산시 적용된 관세율
+                     ,#brai_carr_rate1#                           -- IMPT_CARR_RATE           --선임율_표준              LDC율 정보 선임율
+                     ,#brai_carr_inpt1#                           -- IMPT_CARR_INPT           --선임율_직접              사용자입력 선임율
+                     ,NVL(#brai_carr_inpt1#, #brai_carr_rate1#)    -- IMPT_CARR_APPL           --선임율_적용              계산적용   선임율
+                     ,#brai_insu_rate1#                           -- IMPT_INSU_RATE           --보험율_표준              LDC율 정보 보험율
+                     ,#brai_insu_inpt1#                           -- IMPT_INSU_INPT           --보험율_직접              사용자입력 보험율
+                     ,NVL(#brai_insu_inpt#, #brai_insu_rate1#)    -- IMPT_INSU_APPL           --보험율_적용              계산적용   보험율
+                     ,NULL                                       -- IMPT_TRIF_PRIC           --관세단가                 계산된 관세
+                     ,NULL                                       -- IMPT_EXCH_LINK           --환율연동 적용여부        미사용
+                     ,#reg_id#                                   -- IMPT_UPDT_DATE           --수정일
+                     ,TO_CHAR(SYSDATE,'YYYYMMDD')                -- IMPT_UPDT_CMAN           --수정자
+                     ,#reg_id#                                   -- IMPT_INIT_DATE           --등록일
+                     ,TO_CHAR(SYSDATE,'YYYYMMDD')                -- IMPT_INIT_CMAN           --등록자
+                    );
+                    
+          INSERT INTO CRTBIMPT
+                     (
+                      IMPT_CORP_CODE           --법인코드                 END or SUB or 공법
+                     ,IMPT_COST_GUBN           --계산구분                 END : NULL허용
+                     ,IMPT_PART_NO             --PART NO                  END or SUB or 공법
+                     ,IMPT_EONO                --EO NO                    END or SUB or 공법
+                     ,IMPT_CUMT_NO             --계산번호                 END or SUB or 공법
+                     ,IMPT_COME_CODE           --공법                     공법 : NULL허용
+                     ,IMPT_MATL_SEQ0           --재료SEQ                  공법 : NULL허용
+                     ,IMPT_MATL_CODE           --재료코드                 공법 : NULL허용
+                     ,IMPT_STND_GUBN           --표준구분
+                     ,IMPT_IMPT_CODE           --수입코드
+                     ,IMPT_IMPT_APDT           --수입단가 적용일
+                     ,IMPT_IMPT_COST           --수입단가
+                     ,IMPT_NATI_CODE           --국가코드
+                     ,IMPT_EXCH_STND           --환율정보_표준구분
+                     ,IMPT_EXCH_GUBN           --환율구분                 S:고정환율 C:변동환율
+                     ,IMPT_EXCH_PROJ           --환율정보_차종
+                     ,IMPT_EXCH_MOGB           --환율정보_화폐구분        적용환율입력시 쓰인 화페구분
+                     ,IMPT_EXCH_APDT           --환율정보_환율적용일
+                     ,IMPT_EXCH_MONY           --환율정보_환율            계산시 환율정보로 구한 환율
+                     ,IMPT_EXCH_USER           --환율_직접입력            계산시 유저 입력값
+                     ,IMPT_EXCH_APPL           --환율_적용환율            계산시 적용된 환율
+                     ,IMPT_LDCR_STND           --LDC율정보_표준구분
+                     ,IMPT_LDCR_CODE           --LDC율정보_LDC율코드      적용LDC율 입력시 쓰인 LDC코드
+                     ,IMPT_LDCR_APDT           --LDC율정보_LDC율적용일
+                     ,IMPT_LDCR_RATE           --LDC율정보_LDC율          계산시 LDC율정보로 구한 LDC율
+                     ,IMPT_LDCR_USER           --LDC율_직접입력           사용자 입력값
+                     ,IMPT_LDCR_APPL           --LDC율_적용LDC율          계산적용 LDC율
+                     ,IMPT_MATL_PRIC           --환산단가(=재료단가)      현지화폐 환산단가 (원화)
+                     ,IMPT_TRIF_RATE           --관세율_표준              재료단가에서 가져온 관세율
+                     ,IMPT_TRIF_INPT           --관세율_직접입력          사용자가 직접입력한 관세율
+                     ,IMPT_TRIF_APPL           --관세율_적용관세율        계산시 적용된 관세율
+                     ,IMPT_CARR_RATE           --선임율_표준              LDC율 정보 선임율
+                     ,IMPT_CARR_INPT           --선임율_직접              사용자입력 선임율
+                     ,IMPT_CARR_APPL           --선임율_적용              계산적용   선임율
+                     ,IMPT_INSU_RATE           --보험율_표준              LDC율 정보 보험율
+                     ,IMPT_INSU_INPT           --보험율_직접              사용자입력 보험율
+                     ,IMPT_INSU_APPL           --보험율_적용              계산적용   보험율
+                     ,IMPT_TRIF_PRIC           --관세단가                 계산된 관세
+                     ,IMPT_EXCH_LINK           --환율연동 적용여부        미사용
+                     ,IMPT_UPDT_DATE           --수정일
+                     ,IMPT_UPDT_CMAN           --수정자
+                     ,IMPT_INIT_DATE           --등록일
+                     ,IMPT_INIT_CMAN           --등록자
+                     )
+              VALUES (
+                      #corp_code#                                -- IMPT_CORP_CODE           --법인코드                 END or SUB or 공법
+                     ,'S'                                        -- IMPT_COST_GUBN           --계산구분                 END : NULL허용
+                     ,#part_no#                                  -- IMPT_PART_NO             --PART NO                  END or SUB or 공법
+                     ,#eono#                                     -- IMPT_EONO                --EO NO                    END or SUB or 공법
+                     ,TO_NUMBER(#cumt_no#)                       -- IMPT_CUMT_NO             --계산번호                 END or SUB or 공법
+                     ,'BRAZ'                                     -- IMPT_COME_CODE           --공법                     공법 : NULL허용
+                     ,'2'                                        -- IMPT_MATL_SEQ0           --재료SEQ                  공법 : NULL허용
+                     ,#brai_matl_code2#                           -- IMPT_MATL_CODE           --재료코드                 공법 : NULL허용
+                     ,#brai_stnd_gubn2#                           -- IMPT_STND_GUBN           --표준구분
+                     ,#brai_exch_mogb2#                           -- IMPT_IMPT_CODE           --수입코드
+                     ,NULL                                       -- IMPT_IMPT_APDT           --수입단가 적용일
+                     ,#brai_impt_cost2#                           -- IMPT_IMPT_COST           --수입단가
+                     ,#brai_nati_code2#                           --* IMPT_NATI_CODE          --국가코드
+                     ,TRIM(#brai_exch_gubn2#)                     -- IMPT_EXCH_STND           --환율정보_표준구분
+                     ,NULL                                       -- IMPT_EXCH_GUBN           --환율구분                 S:고정환율 C:변동환율
+                     ,NULL                                       -- IMPT_EXCH_PROJ           --환율정보_차종
+                     ,#brai_impt_code2#                           --* IMPT_EXCH_MOGB           --환율정보_화폐구분        적용환율입력시 쓰인 화페구분
+                     ,#brai_exch_date2#                           -- IMPT_EXCH_APDT           --환율정보_환율적용일
+                     ,#brai_exch_rate_grid2#                      -- IMPT_EXCH_MONY           --환율정보_환율            계산시 환율정보로 구한 환율
+                     ,#brai_exch_user2#                           --* IMPT_EXCH_USER           --환율_직접입력            계산시 유저 입력값
+                     ,NVL(#brai_exch_rate_m2#, #brai_exch_rate2#)  -- IMPT_EXCH_APPL           --환율_적용환율            계산시 적용된 환율
+                     ,NULL                                       -- IMPT_LDCR_STND           --LDC율정보_표준구분
+                     ,TRIM(#brai_ldcr_gubn2#)                     -- IMPT_LDCR_CODE           --LDC율정보_LDC율코드      적용LDC율 입력시 쓰인 LDC코드
+                     ,#brai_stnd_date2#                           --* IMPT_LDCR_APDT           --LDC율정보_LDC율적용일
+                     ,#brai_ldc0_rate_grid2#                      -- IMPT_LDCR_RATE           --LDC율정보_LDC율          계산시 LDC율정보로 구한 LDC율
+                     ,#brai_ldc0_user2#                           --* IMPT_LDCR_USER           --LDC율_직접입력           사용자 입력값
+                     ,NVL(#brai_ldc0_user2#, #brai_ldc0_rate2#)    -- IMPT_LDCR_APPL           --LDC율_적용LDC율          계산적용 LDC율
+                     ,#brai_krw0_pric2#                           -- IMPT_MATL_PRIC           --환산단가(=재료단가)      현지화폐 환산단가 (원화)
+                     ,#brai_trif_rate2#                           -- IMPT_TRIF_RATE           --관세율_표준              재료단가에서 가져온 관세율
+                     ,#brai_trif_user2#                           -- IMPT_TRIF_INPT           --관세율_직접입력          사용자가 직접입력한 관세율
+                     ,NVL(#brai_trif_user2#, #brai_trif_rate2#)    --* IMPT_TRIF_APPL           --관세율_적용관세율        계산시 적용된 관세율
+                     ,#brai_carr_rate2#                           -- IMPT_CARR_RATE           --선임율_표준              LDC율 정보 선임율
+                     ,#brai_carr_inpt2#                           -- IMPT_CARR_INPT           --선임율_직접              사용자입력 선임율
+                     ,NVL(#brai_carr_inpt2#, #brai_carr_rate2#)    -- IMPT_CARR_APPL           --선임율_적용              계산적용   선임율
+                     ,#brai_insu_rate2#                           -- IMPT_INSU_RATE           --보험율_표준              LDC율 정보 보험율
+                     ,#brai_insu_inpt2#                           -- IMPT_INSU_INPT           --보험율_직접              사용자입력 보험율
+                     ,NVL(#brai_insu_inpt2#, #brai_insu_rate2#)    -- IMPT_INSU_APPL           --보험율_적용              계산적용   보험율
+                     ,NULL                                       -- IMPT_TRIF_PRIC           --관세단가                 계산된 관세
+                     ,NULL                                       -- IMPT_EXCH_LINK           --환율연동 적용여부        미사용
+                     ,#reg_id#                                   -- IMPT_UPDT_DATE           --수정일
+                     ,TO_CHAR(SYSDATE,'YYYYMMDD')                -- IMPT_UPDT_CMAN           --수정자
+                     ,#reg_id#                                   -- IMPT_INIT_DATE           --등록일
+                     ,TO_CHAR(SYSDATE,'YYYYMMDD')                -- IMPT_INIT_CMAN           --등록자
+                    );
+                    
+        END;
+        ]]>
+	</sql>
+	
+</sql-descriptor> 
