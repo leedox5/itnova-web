@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ci/ci01/conf" data-source="tcamsDS">
+
+ <sql id="CI01.2209.001" comment="조회">
+  <![CDATA[
+WITH T1 (
+  ID
+ ,CLAS
+ ,ALIGN
+ ,HEADER_TEXT
+ ,WIDTH
+) AS (
+           SELECT 'COL01' ,'LEATHER,PUPVC' ,'left'  ,'분류1'   ,80 FROM DUAL
+ UNION ALL SELECT 'COL02' ,'LEATHER'       ,'right' ,'LOSS율' ,80 FROM DUAL
+), T2 (
+  TESTING
+) AS (
+ SELECT 'N' FROM DUAL
+)
+SELECT CASE WHEN INSTR(CLAS, #matl_clas1#) > 0 THEN 'Y' ELSE 'N' END VISIBLE
+      ,A.*
+      ,B.*
+  FROM T1 A, T2 B
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
