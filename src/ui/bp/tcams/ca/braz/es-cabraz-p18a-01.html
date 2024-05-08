@@ -1,0 +1,384 @@
+<sc-link rel="import" href="../common/es-cacm-01.html"></sc-link>
+<sc-link rel="import" href="es-cabraz-p18a-02.html"></sc-link>
+<sc-link rel="import" href="es-cabraz-p18a-03.html"></sc-link>
+<dom-module id="es-cabraz-p18a-01">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+		<!-- 코드 조회 -->
+        <sc-service-provider id="getStndInfoRPC" descriptor="bp/tcams/ca/common" service-id="get.stndInfo" on-response="resultStndInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="combo_info" target="{{standInfoList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 COUNT 조회 -->
+        <sc-service-provider id="getInfoCountRPC" descriptor="bp/tcams/ca/braz" service-id="get.BRAZInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 조회 -->
+        <sc-service-provider id="getInfoRPC" descriptor="bp/tcams/ca/braz" service-id="get.BRAZInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 입력factor 저장 -->
+        <sc-service-provider id="saveInfo1RPC" descriptor="bp/tcams/ca/braz" service-id="save.BRAZInfo" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="params" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider> 
+
+        <sc-service-provider id="saveInfoRPC" descriptor="bp/tcams/ca/braz"  service-id="save.BRAZInfo" on-response="goCalc"></sc-service-provider>
+
+		<!-- 공법 계산 & 결과 조회 -->
+        <sc-service-provider id="getCalcResRPC" descriptor="bp/tcams/ca/common" service-id="CALL.PROC" on-response="calcComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<div class="vbox flex">
+			<es-cacm-01 class="flex" id="es_cacm_01" on-init-data="initData" on-get-info="getInfo"  on-result-calc="onResultCalc" on-show-result="onShowResult" on-calculate="onCalculate"></es-cacm-01>
+		</div>
+		<div class="vbox flex-7">
+			<div class="vbox flex">
+			    <es-cabraz-p18a-02 id="es_cabraz_p18a_02" class="flex-7"></es-cabraz-p18a-02>
+			</div>
+		</div>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-cabraz-p18a-01",
+            
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object , value: function() { return {}; } ,notify : true},
+                // 조회 결과 
+                resultMap     : {type: Object , value: function() { return {}; } }, 
+				// 표준 패키지 정보 조회
+				standInfoList : {type : Array , value : function() { return [];}},
+				// 조회 결과용
+		    	result        : {type: Object , value: function() { return {}; } },
+				// Input 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } },
+				// copy 대상 정보
+		    	copyParam     : {type: Object , value: function() { return {}; } },	
+				// save 대상 정보
+		    	saveParam     : {type: Object , value: function() { return {}; } },	
+				// 계산번호 저장용
+		    	orgCumtNo     : { type : String , value : function() { return '';} }	    	                
+
+		    },
+            
+            initialized : function() {
+            	console.log("initialized--> " + this.id);
+            },
+            
+            load : function(obj) {
+                var me = this;
+
+				// 부모로 부터 전달된 파라미터 SET				
+                me.set('searchParam'  , obj);
+				me.set('orgCumtNo', UT.copy(obj.cmms_cumt_no));
+                
+                // 상태체크
+                me.checkPassStat();
+				
+				// 공통 타이틀 명 SET
+                me.set('searchParam.title', "BRAZING 원가계산");
+
+				// 공통 영역(TOP FRAME) 조회조건 전달
+                me.$.es_cacm_01.load(me.get("searchParam"));
+                
+                // 표준 정보 조회
+                me.$.getStndInfoRPC.service();
+            },
+
+            /**
+             * 표준 패키지 정보 조회 후처리 로직
+             **/
+            resultStndInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(data.combo_info.length > 0) {
+	               	// 공법 계산 내역 count 조회
+	                me.$.getInfoCountRPC.service();
+				} else {
+	        		UT.alert("표준정보[CMPK]가 존재하지 않습니다.\r관리자에게 문의하세요.");
+				}            	
+            },
+            
+            
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultCountInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id
+            	me.set("inputParam", {});
+            	
+            	if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+				if(me.get("result.braz_count") == 0 || me.get("result.braz_count") == '0'){
+					me.set('inputParam.iCount', "0");
+					
+					var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam")};
+					// 값 초기화 후 정보 전달
+					me.set('inputParam.iCount', me.get("result.braz_count")); 
+	            	me.$.es_cabraz_p18a_02.load(obj);
+										
+				} else {
+					
+					// service-provider id 로 분기처리
+					if (target == "getCopyInfoRPC") {
+						getCopyInfoRPC.bind();
+					} else {
+						me.$.getInfoRPC.service();
+					}
+				} 
+            },
+            
+            /**
+             * 공법 계산 내역 조회 후처리 로직
+             **/            
+            resultInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 공법 Input Factor 정보
+            	me.set('inputParam', data.ca_info);
+            	me.set('inputParam.iCount', "1");
+
+            	var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam")};
+            	
+            	me.$.es_cabraz_p18a_02.load(obj);
+            },            
+            
+            /**
+             * 상태 체크
+             **/            
+			checkPassStat : function () {
+				var me = this;
+				
+				if (me.get("searchParam.pass_cnt") != "0") {
+					me.$.es_cabraz_p18a_02.$.matlDiv.setAttribute("disabled", true);
+				} else {
+					me.$.es_cabraz_p18a_02.$.matlDiv.removeAttribute("disabled");
+				}
+			},
+			
+			onCalculate : function() {
+	          	var me = this;
+	          	
+	          	/*
+            	if(!me.$.es_caanod_p12a_02.check()) {
+            		return;
+            	}
+            	console.log(me.get("param"));
+            	
+            	//_cmatParam = me.$.es_caanod_p11_02.getInputData();
+            	//var anoiData = me.$.es_caanod_p11_02.get("anoiData");
+            	
+            	me.$.saveANODInfoRPC.body = {
+					params : me.param,
+					anoiData : me.$.es_caanod_p12a_02.get("anoiData")
+            	};
+            	
+            	me.$.saveANODInfoRPC.service();
+            	
+            	//UT.request(me.$.saveANODInfoRPC);
+            	*/
+            	
+            	
+				//공통로직 by kyd
+                //var matlInfo = me.$.matlMain.getInputData();
+            	
+            	//me.set("saveParam", commonAS.mergeObj(matlInfo, me.searchParam));
+            	
+            	//console.log(me.saveParam);
+            	
+            	me.$.saveInfoRPC.body = {
+            		params : me.$.es_cabraz_p18a_02.getInputData()
+            	};	
+            	
+            	
+            	me.$.saveInfoRPC.service();
+				/*
+                //me.$.cproMain.getInputData();
+
+                me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+
+                console.log(me.saveParam);
+                
+                // 공법 factor 저장 호출
+                //me.$.saveInfoRPC.service();
+                */
+            },
+            
+            /**
+             * 입력 factor 저장 후 계산 호출
+             **/            
+            goCalc : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+                me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+            	
+				me.$.getCalcResRPC.service();
+            	
+            	/*
+				if(me.get("result.MESG_CODE") == 'SA-001'){
+					// 계산 procedure 호출
+					me.$.getCalcResRPC.service();
+				} else {
+					UT.alert(me.get("result.MESG"));
+					return;
+				}
+            	*/
+            },
+            
+            /**
+             * 계산 처리 후 로직
+             **/
+            calcComplete: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+               	var calcResult = data.calc_Result ;
+               	
+            	if(calcResult.MESG_CODE == "SA-001") {
+            		UT.alert(calcResult.MESG);
+            		me.$.getInfoRPC.service();
+            		me.$.es_cacm_01.getResult();
+            		me.moduleCall();
+            	} else {
+            		commonAS.comeAlert(calcResult);
+            	}            	
+            },
+
+         	/**
+         	 * 모듈간 통신 END ITEM MASTER/CHAIN/공법선택 마스터 화면 재조회
+         	 */
+         	moduleCall: function() {
+                var me = this;
+                
+				// END ITEM MASTER
+				if ( me.searchParam['cmms_cost_gubn'] == 'R1'
+					  || me.searchParam['cmms_cost_gubn'] == 'R2'
+					  || me.searchParam['cmms_cost_gubn'] == 'R3') {
+					var target1 = document.querySelector("sc-pages").children.PCA00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00020;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 개발
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RD') {
+					var target1 = document.querySelector("sc-pages").children.PCB00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00030;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 임시
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RC') {
+					var target1 = document.querySelector("sc-pages").children.PCK00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00010;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				}
+				
+				// 공법선택
+				/*
+				var target3 = document.querySelector("sc-pages").children.PCF00020;
+				if (UT.isNotEmpty(target3)) {
+
+					if (UT.isNotEmpty(target3.module.$.autoCome)) {
+						target3.module.$.autoCome.getSelectedList();
+					} else if (UT.isNotEmpty(target3.module.$.moldCome)) {
+						target3.module.$.moldCome.getSelectedList();
+					}
+				}
+				*/
+            },             
+            
+            /**
+             * 초기화 버튼 이벤트
+             **/
+            initData: function(e, data) {
+                var me = this;
+
+				// 입력 값 초기화
+                me.set("inputParam", {});
+                me.set("searchParam.cumt_no"  , "-1");
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 조회 버튼 이벤트
+             **/
+            getInfo: function() {
+                var me = this;
+
+                if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+            
+            onResultCalc: function(e, data) {
+            	var me = this;
+            	me.fire("show-detail");
+            },
+        });
+	</script>
+
+</dom-module>

@@ -1,0 +1,51 @@
+<dom-module id="es-cabraz-p18a-03">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+		<sc-panel title="전공니켈 FURNACE BRAZING 상세" collapsible="true" style="padding-top:20px">
+	   		<sc-grid id="gridPanel" data-provider="{{resultList}}" editable="true" class="flex" validation-group="save" style="height:200px;" on-item-edit-end="onItemEditEnd" on-item-click="onGridItemClick">
+				<cc-grid-toolbar>
+					<sc-button text="추가" on-click="onAddRow"     auth-s></sc-button>
+					<sc-button text="삭제" on-click="onDeleteList" auth-s></sc-button>
+				</cc-grid-toolbar>            
+	            
+	            <sc-grid-columns>
+	            	<sc-group-column header-text="용접길이(cm)" column-name="len">
+	            		<sc-data-column data-field="data01" header-text="내부"></sc-data-column>
+	            		<sc-data-column data-field="data02" header-text="외부"></sc-data-column>
+	            	</sc-group-column>
+	                <sc-combobox-column data-field="cvt"         header-text="CVT"       width="70"   text-align="center" editable="true" required="true" items="{{codes.cvtCodeList}}"  display-field="label" value-field="data"></sc-combobox-column>
+	                <sc-combobox-column data-field="proc_code"   header-text="B/FOIL사용량(kg)"    width="120"  text-align="left"   editable="true" required="true" items="{{codes.procCodeList}}" display-field="label" value-field="data"></sc-combobox-column>
+	                <sc-combobox-column data-field="mchh_code"   header-text="스크랩중량\n(g)"  width="200"  text-align="left"   editable="true" required="true" items="{{codes.mchh_code_g}}"  display-field="label"  value-field="data"></sc-combobox-column>
+	                <sc-data-column data-field="data03" header-text="SCR단가(원/kg)"></sc-data-column>
+	                <sc-grid-fields>
+		                <sc-data-column data-field="proc_gubn"></sc-data-column>
+		                <sc-data-column data-field="mchh_gubn"></sc-data-column>
+		            </sc-grid-fields>    
+	            </sc-grid-columns>
+	        </sc-grid>
+        </sc-panel>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-cabraz-p18a-03",
+            /******************************
+             * 초기화 설정
+             ******************************/
+            initialized: function() {
+                var me = this;
+				console.log('initialized --> es-cabraz-p18a-03');
+            },
+
+            load:function(data) {
+
+            }
+        });
+	</script>
+
+</dom-module>

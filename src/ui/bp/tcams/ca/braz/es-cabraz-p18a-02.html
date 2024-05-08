@@ -1,0 +1,489 @@
+<sc-link rel="import" href="es-cabraz-p18a-02-02.html"></sc-link>
+<dom-module id="es-cabraz-p18a-02">
+    <style>
+        :host {
+            @apply(--vbox-layout);
+        }
+    </style>
+
+    <template>
+        <div id="matlDiv">
+            <sc-grid id="gridPanel" data-provider="{{resultListCost}}" class="flex" editable="true" use-state="false"
+                     use-selection="true"
+                     style="height:200px;"
+                     show-number-line="true"
+                     on-item-click="onItemClick"
+                     on-item-edit-end="onItemEditEnd">
+                <sc-toolbar>
+                    <sc-label id="lb_vehl_gubn" text="BRAZING 정보" style="text-align:right; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+                    <a><img src="../../../../assets/img/bull_reference.gif" id="img_line_gubn" on-click="PopupHandler" style="padding-left:5px;"/></a>
+                    <sc-spacer></sc-spacer>
+                    <sc-button text="추가" on-click="onAddRow"     ></sc-button>
+                    <sc-button text="삭제" on-click="onDeleteList" ></sc-button>
+                </sc-toolbar>
+                <sc-grid-columns>
+                    <sc-combobox-column data-field="brai_kind_code"  header-text="용접구분"     width="200" text-readonly="true" text-align="left" editable="true" items="{{braiKindCodes}}" display-field="label" value-field="data"></sc-combobox-column>
+                    <sc-combobox-column data-field="brai_wldr_code"  header-text="용접로"       width="170" text-readonly="true" text-align="left" item-editable-function="onItemEditableFn1" items-function="onItemsFn"></sc-combobox-column>
+                    <sc-data-column     data-field="brai_item_wdth"  header-text="제품가로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn1" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-data-column     data-field="brai_item_hegt"  header-text="제품세로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn1" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-data-column     data-field="brai_weld_thik"  header-text="용접두께(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-data-column     data-field="brai_weld_leng"  header-text="용접길이(cm)" width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-data-column     data-field="brai_part_cnt0"  header-text="부품수(EA)"   width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9]/"  max-length="13" format-type="number"></sc-data-column>
+                    <sc-group-column header-text="용접길이(cm)" column-name="len" width="240">
+                        <sc-data-column data-field="brai_intn_leng"  header-text="내부" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                        <sc-data-column data-field="brai_extn_leng"  header-text="외부" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    </sc-group-column>
+                    <sc-data-column     data-field="brai_vani_cavt"  header-text="CVT"                 width= "80" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number" ></sc-data-column>
+                    <sc-data-column     data-field="brai_foil_qnty"  header-text="B/FOIL사용량(kg)"    width="110" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number" ></sc-data-column>
+                    <sc-data-column     data-field="brai_scrp_wegt"  header-text="스크랩중량&#xa;(g)"  width="120" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number" ></sc-data-column>
+                    <sc-data-column     data-field="brai_scrp_pric"  header-text="SCR단가&#xa;(원/kg)" width= "70" item-editable-function="onItemEditableFn2" text-align="right" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number" ></sc-data-column>
+                </sc-grid-columns>
+                <sc-grid-fields>
+                    <sc-grid-field data-field="corp_code" data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="part_no"   data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="eono"      data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="cumt_no"   data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="brai_weld_seq0"      data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="brai_kind_gubn"      data-type="text"></sc-grid-field>
+                    <sc-grid-field data-field="brai_wldr_gubn"      data-type="text"></sc-grid-field>
+                </sc-grid-fields>
+            </sc-grid>
+            <sc-grid id="gridPanel1" data-provider="{{resultListCost}}" class="flex" editable="true" use-state="false"
+                     use-selection="true"
+                     style="height:200px;"
+                     show-number-line="true"
+                     on-item-click="onItemClick"
+                     on-item-edit-end="onItemEditEnd"
+                     hidden="true">
+                <sc-grid-columns>
+                    <sc-combobox-column data-field="brai_kind_code"   header-text="용접구분"    width="120"  text-align="left"   editable="true" required="true" items="{{items}}" display-field="label" value-field="data"></sc-combobox-column>
+                    <sc-data-column     data-field="col02"       header-text="용접로"         editable="true" text-align="center"></sc-data-column>
+                    <sc-data-column header-text="제품가로(mm)"   data-field="col03" text-align="center"></sc-data-column>
+                    <sc-data-column header-text="제품세로(mm)"   data-field="col03" text-align="center"></sc-data-column>
+                    <sc-data-column header-text="용접두께(mm)"   data-field="brai_weld_thik" text-align="right" item-editable-function="onItemEditableFn"></sc-data-column>
+                    <sc-data-column data-field="brai_weld_leng" header-text="용접길이(mm)" text-align="right" editable="[[tochEditable]]"></sc-data-column>
+                    <sc-data-column data-field="brai_part_cnt0" header-text="부품수(mm)"   text-align="right" editable="[[tochEditable]]"></sc-data-column>
+                </sc-grid-columns>
+            </sc-grid>
+        <sc-panel title="전공니켈 FURNACE BRAZING 상세" collapsible="true" style="padding-top:20px" hidden="{{detailHidden}}">
+               <sc-grid id="gridPanel2" data-provider="{{resultList}}" editable="true" class="flex" validation-group="save" style="height:200px;" on-item-edit-end="onItemEditEnd" on-item-click="onGridItemClick">
+                <sc-grid-columns>
+                    <sc-group-column header-text="용접길이(cm)" column-name="len">
+                        <sc-data-column data-field="brai_intn_leng" header-text="내부"></sc-data-column>
+                        <sc-data-column data-field="brai_extn_leng" header-text="외부"></sc-data-column>
+                    </sc-group-column>
+                    <sc-data-column data-field="cvt"         header-text="CVT"       width="70"   text-align="center" editable="true" required="true" items="{{codes.cvtCodeList}}"  display-field="label" value-field="data"></sc-data-column>
+                    <sc-data-column data-field="proc_code"   header-text="B/FOIL사용량(kg)"    width="120"  text-align="left"   editable="true" required="true" items="{{codes.procCodeList}}" display-field="label" value-field="data"></sc-data-column>
+                    <sc-data-column data-field="mchh_code"   header-text="스크랩중량\n(g)"  width="200"  text-align="left"   editable="true" required="true" items="{{codes.mchh_code_g}}"  display-field="label"  value-field="data"></sc-data-column>
+                    <sc-data-column data-field="data03" header-text="SCR단가(원/kg)"></sc-data-column>
+                </sc-grid-columns>
+            </sc-grid>
+        </sc-panel>
+        </div>
+    </template>
+
+    <script>
+        Polymer({
+            is: "es-cabraz-p18a-02",
+
+            properties: {
+                 // 표준정보 ComboList 데이터
+                 standInfoList : {type: Array  , value : function() { return [];} },
+                // 재료비 및 가공비 I 테이블 정보
+                inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+                // 재료비 및 가공비 I 테이블 정보
+                initParam     : {type: Object , value: function() { return {}; } },
+                // 재료비 및 가공비 I 테이블 정보
+                searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+                //초기 진입 구분값
+                initFlag      : {type: Boolean, value: true },
+
+                // 화면에서 사용할 콤보 구성 들....
+                // 용접구분
+                braiKindCodes : {type : Array  , value : function() { return [];} },
+                // 부품구분
+                braiWldrCodes : {type : Array  , value : function() { return [];} },
+
+                // 조회 결과
+                resultMap      : {type: Object , value: function() { return {}; } },
+
+                // for TEST
+                items : {
+                    type : Array,
+                    value : function() {
+                        return [
+                            { data  : "TOCH"    ,    label : "수동 TORCH"        }
+                           ,{ data  : "HF_TOCH" ,    label : "반자동 TORCH"      }
+                           ,{ data  : "FNAC"    ,    label : "FURNACE"           }
+                           ,{ data  : "VNI_FNAC",    label : "진공 니켈 FURNACE" }
+                        ]
+                    }
+                },
+                resultList : {
+                    type : Array,
+                    value : function() {
+                        return [
+                           {
+                               brai_kind_code : "HF_TOCH"
+                              ,data2 : "Test2"
+                           }
+                        ]
+                    }
+                },
+                tochEditable : {
+                    type : Boolean,
+                    value : function() {
+                        return false;
+                    }
+                },
+                detailHidden : {
+                    type : Boolean,
+                    value : function() {
+                        return true;
+                    }
+                }
+
+            },
+
+            initialized: function() {
+                var me = this;
+            },
+
+            onSearch : function() {
+                var me = this;
+                me.$.gridPanel.setDataProvider(UT.copy(me.resultList));
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load : function(obj) {
+                var me = this;
+
+                me.set('initFlag'    , true);
+                me.initParam = {};
+                // 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+
+                // 조회된 값이 존재하는 경우만 별도 저장
+                if (obj.inputParam.iCount != "0") {
+                    me.set('initParam'    , UT.copy(obj.inputParam));
+                    me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                    //me.set('initParam'    , obj.inputParam);
+                    me.set('inputParam'      , obj.inputParam);
+                    me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+                me.set('initFlag'    , false);
+
+                if(me.inputParam.iCount == "0") {
+                    var provider = me.$.gridPanel.getDataProvider();
+
+                    provider.removeAll();
+                } else {
+                    me.$.gridPanel.setDataProvider(me.inputParam);
+                }
+            },
+
+
+            getInputData : function() {
+                var me = this;
+
+                var prData = me.get("prData");
+                var provider = me.$.gridPanel.getDataProvider();
+
+                var matlInfo = provider.getUpdateItems();
+                var allItems = provider.getItems();
+
+                for(var i = 0 ; i < allItems.length ; i++) {
+                    allItems[i].brai_weld_seq0 = i;
+                    if(!UT.isEmpty(allItems[i].brai_kind_code)) {
+                        allItems[i].brai_kind_gubn = "BRAZ01";
+                    }
+                    if(!UT.isEmpty(allItems[i].brai_wldr_code)) {
+                        allItems[i].brai_wldr_gubn = "BRAZ02";
+                    } else {
+                        allItems[i].brai_wldr_gubn = "";
+                    }
+                }
+
+                /*
+                var saveParam = {
+                    "prData"        : prData,
+                    "insertPrItems" : provider.getNewItems(),
+                    "updatePrItems" : provider.getUpdateItems(),
+                    "deletePrItems" : prData.removePrItems
+                };
+
+                me.$.dialog_saveParam.show();
+                me.$.paramViewer.value = JSON.stringify(saveParam, null, "\t");
+                */
+                return allItems;
+            },
+
+            /**
+             * 콤보박스 초기화
+             **/
+            comboInit : function() {
+                var me = this;
+
+                // 콤보 변경 후 기존 값 처리
+                me.set("braiKindCodes", commonAS.makeComoboList(me.get("standInfoList"),"BRAZ01"));
+
+                if (me.get("initParam.iCount") != "0" && me.get("initFlag") == true) { // 기존 데이터가 존재하는 경우
+                    console.log(me.inputParam);
+                    //콤보 구성 후 기존 값 SET
+                    //me.$.sb_matt_gubn.value = me.initParam.gmti_matt_code;
+
+                    /*
+                    // 소재구분에 값에 따른 부품구분 콤보 동적 구성
+                    me.set("item_gubn_list", commonAS.makeComoboList(me.get("standInfoList"),"GMTF02",me.initParam.gmti_matt_code));
+
+                    // 작업 완료 후 조회된 기 등록 내역으로 ALL SET
+                    me.set("inputParam", UT.copy(me.get("initParam")));
+                    */
+                } else { // 기존 데이터가 존재하지 않는 경우
+                    console.log(me.braiKindCodes);
+                    //me.set("braiKindCodes", commonAS.makeComoboList(me.get("standInfoList"),"BRAZ02",me.inputParam.gmti_matt_code));
+                    //me.$.sb_matt_gubn.selectedIndex = 0;
+                    //me.$.sb_item_gubn.selectedIndex = 0;
+                }
+            },
+
+            onItemEditableFn1 : function(data,item){
+                var me = this;
+                /*
+                var provider = me.$.dgCodeType.getDataProvider();
+                if(provider.getItemState(item.rowIndex) === "created"){
+                    return true;
+                }else{
+                    return false;
+                }
+                */
+                //console.log(item);
+
+                if(data["brai_kind_code"] == "FNAC") {
+                    return true;
+                }
+                return false;
+            },
+
+            onItemEditableFn : function(data,item){
+                var me = this;
+                /*
+                var provider = me.$.dgCodeType.getDataProvider();
+                if(provider.getItemState(item.rowIndex) === "created"){
+                    return true;
+                }else{
+                    return false;
+                }
+                */
+
+                //console.log(item);
+
+                if(item.dataField == "brai_weld_leng") {
+                    if(data["brai_kind_code"] == "FNAC") {
+                        return true;
+                    }
+                }
+
+                if(item.dataField == "brai_intn_leng") {
+                    if(data["brai_kind_code"] == "VNI_FNAC") {
+                        return true;
+                    }
+                }
+
+                if(data["brai_kind_code"] == "TOCH") {
+                    return true;
+                }
+                return false;
+            },
+
+
+            onItemEditableFn2 : function(data,item){
+                var me = this;
+
+                if(data["brai_kind_code"] == "VNI_FNAC") {
+                    return true;
+                }
+
+                return false;
+            },
+
+
+            /**************************************************
+             * [sc-combobox-column > items-function]
+             *
+             *  combobox의 list를 동적으로 구성한다.
+             **************************************************/
+            onItemsFn : function(data, item) {
+                if(item.dataField === "brai_wldr_code") {
+                    var items = UT.arrayFilterChange(this.get("standInfoList"), {key : "cmpk_code_grp1", value : data["brai_kind_code"]});
+                    return items;
+                }
+            },
+
+            onItemClick : function(event) {
+                var me = this, e = event.detail,
+                    data = e.data,
+                    item = e.item,
+                    provider = e.provider;
+                if(item.dataField == "brai_kind_code") {
+                    //UT.alert("value--> " + data["brai_kind_code"]);
+                }
+            },
+
+            onItemEditEnd : function(event) {
+                var me = this, e = event.detail,
+                    data = e.data,
+                    item = e.item,
+                    provider = e.provider,
+                    oldValue = e.oldValue,
+                    newValue = e.newValue,
+                    grid     = e.grid;
+                if(item.dataField == "brai_kind_code") {
+                    if(newValue == "TOCH") {
+                        provider.setItemAt(item.rowIndex, {"brai_wldr_code" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_wdth" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_hegt" : null});
+
+                        provider.setItemAt(item.rowIndex, {"brai_intn_leng" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_extn_leng" : null});
+
+                        provider.setItemAt(item.rowIndex, {"brai_vani_cavt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_foil_qnty" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_wegt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_pric" : null});
+                    } else if(newValue == "HF_TOCH") {
+                        provider.setItemAt(item.rowIndex, {"brai_wldr_code" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_wdth" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_hegt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_weld_thik" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_weld_leng" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_part_cnt0" : null});
+
+                        provider.setItemAt(item.rowIndex, {"brai_intn_leng" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_extn_leng" : null});
+                        // [2024.04.22] added
+                        provider.setItemAt(item.rowIndex, {"brai_vani_cavt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_foil_qnty" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_wegt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_pric" : null});
+                    } else if(newValue == "FNAC") {
+                        provider.setItemAt(item.rowIndex, {"brai_weld_thik" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_part_cnt0" : null});
+
+                        provider.setItemAt(item.rowIndex, {"brai_intn_leng" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_extn_leng" : null});
+
+                        provider.setItemAt(item.rowIndex, {"brai_vani_cavt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_foil_qnty" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_wegt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_scrp_pric" : null});
+                    } else if(newValue == "VNI_FNAC") {
+                        provider.setItemAt(item.rowIndex, {"brai_wldr_code" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_wdth" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_item_hegt" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_weld_thik" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_weld_leng" : null});
+                        provider.setItemAt(item.rowIndex, {"brai_part_cnt0" : null});
+                    }
+
+
+                    /*
+                    if(newValue == "VNI_FNAC") {
+                        me.set("detailHidden", false);
+                    } else {
+                        provider.setItemAt(item.rowIndex, {"brai_intn_leng" : null});
+
+                        var allRows = provider.getItems();
+                        var yn = true;
+                        for(var i=0;i<allRows.length - 1;i++) {
+                            if(allRows[i].brai_kind_code == "VNI_FNAC") {
+                                yn = false;
+                            }
+                        }
+                        me.set("detailHidden", yn);
+                    }
+                    */
+                 }
+            },
+            onAddRow: function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+
+                // 가공비 공정은 6개까지만 추가 가능
+                if (provider.getItemSize() > 5) {
+                     UT.alert("STD.GCA1025"); // 공정은 6개까지만 추가할 수 있습니다.
+                     return;
+                }
+
+                // 그리드 신규행 추가
+                var row = {};
+
+                //provider.addItemAt(provider.getItemSize(), row);
+
+
+                /*
+                if(me._searchInfo.comp_cls_yn) {
+                    sComp_cd = selectedItem.comp_cd;
+                    sComp_nm = selectedItem.comp_nm;
+                }else {
+                    sComp_cd = 'N';
+                    sComp_nm = '공통';
+                }
+                */
+                var seq = provider.getItemSize();
+
+                var item = {
+                    corp_code : me.searchParam.corp_code
+                   ,part_no   : me.searchParam.part_no
+                   ,eono      : me.searchParam.eono
+                   ,cumt_no   : me.searchParam.cumt_no
+                   ,brai_weld_seq0 : seq
+                };
+                provider.addItem(item);
+            },
+            onDeleteList : function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+                var checked = provider.selectionCheckedIndexes();
+
+                var removeItems = provider.removeItems(true);
+
+                /*
+                var allRows = provider.getItems();
+                var yn = true;
+                for(var i=0;i<allRows.length - 1;i++) {
+                    if(allRows[i].brai_kind_code == "VNI_FNAC") {
+                        yn = false;
+                    }
+                }
+                me.set("detailHidden", yn);
+                */
+            },
+
+             /**
+             * 도움말 팝업
+             **/
+            PopupHandler : function(e){
+                 var me = this;
+                 var targetId = e.target.id;
+
+                    if (!me.PopupCict) {
+                        me.PopupCict = UT.popup("es-cabraz-p18a-02-02", me, 730, 500, {
+                        }, {title: me.translate("도움말")});
+                    }
+
+                me.PopupCict.show();
+                me.PopupCict.getWindowContent().load({singleSelect : true, defaultParam : targetId});
+            },
+
+        });
+    </script>
+
+</dom-module>
