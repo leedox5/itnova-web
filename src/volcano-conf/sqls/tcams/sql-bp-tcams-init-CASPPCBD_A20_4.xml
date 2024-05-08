@@ -1,0 +1,904 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CASPPCBD_A20_4" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPPCBD_A20_4  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPPCBD_A20_4'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPPCBD_A20_4
+(
+    I_CORP_CODE  IN  CATBPCBC.PCBC_CORP_CODE%TYPE,
+    I_STND_GUBN  IN  CATBPCBC.PCBC_STND_GUBN%TYPE,
+    I_STND_DEGR  IN  CATBPCBC.PCBC_STND_DEGR%TYPE,
+    I_KIND_CODE  IN  CATBPCBI.PCBI_KIND_CODE%TYPE, --PCB종류
+    I_PROD_WIDE  IN  CATBPCBI.PCBI_PROD_WIDE%TYPE, --제품가로
+    I_PROD_LENG  IN  CATBPCBI.PCBI_PROD_LENG%TYPE, --제품세로
+    I_SHET_WIDE  IN  CATBPCBI.PCBI_SHET_WIDE%TYPE, --SHEET SIZE가로
+    I_SHET_LENG  IN  CATBPCBI.PCBI_SHET_LENG%TYPE, --SHEET SIZE세로
+
+    O_4PRT_DATA  OUT VARCHAR2, --4등분 계산내역
+    O_6PRT_DATA  OUT VARCHAR2, --6등분 계산내역
+    O_9PRT_DATA  OUT VARCHAR2, --9등분 계산내역
+    O_APPL_CVT0  OUT NUMBER  ,  --적용CVT
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_PCB : PCB 원판당 적용수량계산
+ * [HISTORY ]
+ *  - 2018.06.01 [A.S.M] : 신규작성
+ *  - 2020.01.01 [A.S.M] : 개정    (20-1차) : 이전내용유지
+ *  - 2023.05.01 [A.S.M] : 개정    (20-2차) : 이전내용유지
+ *  - 2024.02.05 [A.S.M] : 개정    (20-4차) : 특이사항없음 (전력단가 변경) 
+ *
+ * [COMMENT ]
+ *  - 중간계산내역을 담아서 POP-UP 화면에서 제공 (필드구분값 '@')
+ *  - 보정수량 소수부분 : 수량계산시에는 소수단위 풀린것으로 처리(화면상에만 소수 한자리표시)
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --WORKING VARIABLE
+    v_APPL_CORP         CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_IN_TITLE          VARCHAR2(20) ;
+    trCo                NUMBER := 2  ; --원가TRUNC처리소수점단위
+
+    v_PCBC_PANL_CNT0    NUMBER := 0  ;
+    v_PCBC_COMP_A       NUMBER := 0  ; --정배열처리 상수
+    v_PCBC_COMP_B       NUMBER := 0  ;
+    v_PCBC_COMP_C       NUMBER := 0  ;
+    v_PCBC_COMP_D       NUMBER := 0  ;
+    v_PCBC_REVE_A       NUMBER := 0  ; --역배열처리 상수
+    v_PCBC_REVE_B       NUMBER := 0  ;
+    v_PCBC_REVE_C       NUMBER := 0  ;
+    v_PCBC_REVE_D       NUMBER := 0  ;
+
+    v_COMP_WIDT_CVT0    NUMBER := 0  ;
+    v_COMP_LENG_CVT0    NUMBER := 0  ;
+
+    --[적용수량관련항목]
+    --기본수량(정배열)
+    v_BASE_RIGH_WCNT    NUMBER := 0  ; --기본_정배열_가로수량
+    v_BASE_RIGH_LCNT    NUMBER := 0  ; --기본_정배열_세로수량
+    v_BASE_RIGH_ACNT    NUMBER := 0  ; --기본_정배열_적용수량
+
+    --기본수량(역배열)
+    v_BASE_OPPO_WCNT    NUMBER := 0  ; --기본_역배열_가로수량
+    v_BASE_OPPO_LCNT    NUMBER := 0  ; --기본_역배열_세로수량
+    v_BASE_OPPO_ACNT    NUMBER := 0  ; --기본_역배열_적용수량
+
+    --보정수량(정배열)
+    v_CORR_RIGH_WDBL    NUMBER := 0  ; --보정_정배열_가로소수
+    v_CORR_RIGH_LDBL    NUMBER := 0  ; --보정_정배열_세로소수
+    v_CORR_RIGW_WCNT    NUMBER := 0  ; --보정_정배열_가로방향_가로수량
+    v_CORR_RIGW_LCNT    NUMBER := 0  ; --보정_정배열_가로방향_세로수량
+    v_CORR_RIGW_TCNT    NUMBER := 0  ; --보정_정배열_가로방향_계
+    v_CORR_RIGL_WCNT    NUMBER := 0  ; --보정_정배열_세로방향_가로수량
+    v_CORR_RIGL_LCNT    NUMBER := 0  ; --보정_정배열_세로방향_세로수량
+    v_CORR_RIGL_TCNT    NUMBER := 0  ; --보정_정배열_세로방향_계
+    v_CORR_RIGH_TOTT    NUMBER := 0  ; --보정_정배열_적용계
+
+    --보정수량(역배열)
+    v_CORR_OPPO_WDBL    NUMBER := 0  ; --보정_역배열_가로소수
+    v_CORR_OPPO_LDBL    NUMBER := 0  ; --보정_역배열_세로소수
+    v_CORR_OPPW_WCNT    NUMBER := 0  ; --보정_역배열_가로방향_가로수량
+    v_CORR_OPPW_LCNT    NUMBER := 0  ; --보정_역배열_가로방향_세로수량
+    v_CORR_OPPW_TCNT    NUMBER := 0  ; --보정_역배열_가로방향_계
+    v_CORR_OPPL_WCNT    NUMBER := 0  ; --보정_역배열_세로방향_가로수량
+    v_CORR_OPPL_LCNT    NUMBER := 0  ; --보정_역배열_세로방향_세로수량
+    v_CORR_OPPL_TCNT    NUMBER := 0  ; --보정_역배열_세로방향_계
+    v_CORR_OPPO_TOTT    NUMBER := 0  ; --보정_역배열_적용계
+
+    v_APPL_CNT1_4       NUMBER := 0  ; --4등분:기본수량
+    v_APPL_CNT2_4       NUMBER := 0  ; --4등분:기본+보정수량
+    v_APPL_CNT1_6       NUMBER := 0  ; --6등분:기본수량
+    v_APPL_CNT2_6       NUMBER := 0  ; --6등분:기본+보정수량
+    v_APPL_CNT1_9       NUMBER := 0  ; --9등분:기본수량
+    v_APPL_CNT2_9       NUMBER := 0  ; --9등분:기본+보정수량
+
+BEGIN
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPPCBD_A20_4';
+    O_LINE_NO   := 'ST-START';
+
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'           ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_STND_GUBN) IS NULL THEN v_IN_TITLE := '표준구분'       ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_STND_DEGR) IS NULL THEN v_IN_TITLE := '개정차수'       ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_KIND_CODE) IS NULL THEN v_IN_TITLE := 'PCB종류'        ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_PROD_WIDE,0) <= 0   THEN v_IN_TITLE := '제품가로'       ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_PROD_LENG,0) <= 0   THEN v_IN_TITLE := '제품세로'       ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_SHET_WIDE,0) <= 0   THEN v_IN_TITLE := 'SHEET SIZE가로' ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_SHET_LENG,0) <= 0   THEN v_IN_TITLE := 'SHEET SIZE세로' ; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --2. MAIN
+    ---------------------------------------------------------------------------
+    -- STEP-1. 기본수량계산
+    -- STEP-2. 보정수량계산
+    -- STEP-3. 기본+보정    : 정배열간, 역배열간 4,6,9 등분 합계의 MAX
+    -- STEP-4. 적용값계산   : 4,6,9등분 계산값 중 MAX
+    ---------------------------------------------------------------------------
+    -- 중간계산내역을 담아서 POP-UP 화면에서 제공 (필드구분값 '@')
+    --1. SHEET SIZE 가로
+    --2. SHEET SIZE 세로
+    --3 .PANEL 등분수_가로
+    --4 .PANEL 등분수_세로
+    --5 .PANEL SIZE_가로
+    --6 .PANEL SIZE_세로
+    --7 .기본_정_상수_가로
+    --8 .기본_정_상수_세로
+    --9 .기본_정_수량_가로
+    --10.기본_정_수량_세로
+    --11.기본_정_계
+    --12.기본_역_상수_가로
+    --13.기본_역_상수_세로
+    --14.기본_역_수량_가로
+    --15.기본_역_수량_세로
+    --16.기본_역_계
+    --17.보정_정_소수_가로
+    --18.보정_정_소수_세로
+    --19.보정_정_수량_가로방향가로
+    --20.보정_정_수량_가로방향세로
+    --21.보정_정_수량_가로방향계
+    --22.보정_정_수량_세로방향가로
+    --23.보정_정_수량_세로방향세로
+    --24.보정_정_수량_세로방향계
+    --25.보정_정_수량_계
+    --26.보정_역_소수_가로
+    --27.보정_역_소수_세로
+    --28.보정_역_수량_가로방향가로
+    --29.보정_역_수량_가로방향세로
+    --30.보정_역_수량_가로방향계
+    --31.보정_역_수량_세로방향가로
+    --32.보정_역_수량_세로방향세로
+    --33.보정_역_수량_세로방향계
+    --34.보정_역_수량_계
+    --35.기본수량
+    --36.기본+보정수량
+    ---------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
+
+    --1. SHEET SIZE 가로
+    O_4PRT_DATA := TO_CHAR(I_SHET_WIDE);
+    O_6PRT_DATA := TO_CHAR(I_SHET_WIDE);
+    O_9PRT_DATA := TO_CHAR(I_SHET_WIDE);
+    --2. SHEET SIZE 세로
+    O_4PRT_DATA := O_4PRT_DATA || '@' || TO_CHAR(I_SHET_LENG);
+    O_6PRT_DATA := O_6PRT_DATA || '@' || TO_CHAR(I_SHET_LENG);
+    O_9PRT_DATA := O_9PRT_DATA || '@' || TO_CHAR(I_SHET_LENG);
+
+    FOR PCBC_R IN (
+        --정배열가로는 제품가로 길이 기준의 값임(A,C)
+        SELECT NVL(PCBC_PANL_CNT0 ,0) PCBC_PANL_CNT0   --PANEL 수량
+              ,NVL(PCBC_PCNT_WIDE ,0) PCBC_PCNT_WIDE   --PANEL 수량_가로
+              ,NVL(PCBC_PCNT_LENG ,0) PCBC_PCNT_LENG   --PANEL 수량_세로
+              ,NVL(PCBC_SIZE_WIDE ,0) PCBC_SIZE_WIDE   --PANEL SIZE_가로
+              ,NVL(PCBC_SIZE_LENG ,0) PCBC_SIZE_LENG   --PANEL SIZE_세로
+              ,NVL(PCBC_COMP_A    ,0) PCBC_COMP_A      --계산상수_A
+              ,NVL(PCBC_COMP_C    ,0) PCBC_COMP_C      --계산상수_C
+              ,NVL(PCBC_CORR_COEF1,0) PCBC_CORR_COEF1   --보정수량 계산상수_1
+              ,NVL(PCBC_CORR_COEF2,0) PCBC_CORR_COEF2   --보정수량 계산상수_2
+          FROM CATBPCBC
+         WHERE PCBC_CORP_CODE =  I_CORP_CODE
+           AND PCBC_STND_GUBN =  I_STND_GUBN
+           AND PCBC_STND_DEGR =  I_STND_DEGR
+           AND PCBC_KIND_CODE =  I_KIND_CODE
+           AND PCBC_SIZE_MIN0 <= I_PROD_WIDE  --가로길이기준:이상
+           AND PCBC_SIZE_MAX0 >  I_PROD_WIDE  --가로길이기준:미만
+           AND PCBC_APPL_GUBN = 'Y'
+         ORDER BY PCBC_PANL_CNT0
+        )
+
+    LOOP
+        v_PCBC_PANL_CNT0   := PCBC_R.PCBC_PANL_CNT0;
+        v_PCBC_COMP_A      := PCBC_R.PCBC_COMP_A;
+        v_PCBC_COMP_C      := PCBC_R.PCBC_COMP_C;
+
+        --정배열세로는 제품세로 길이 기준의 값임(B,D)
+        SELECT NVL(PCBC_COMP_B,0) PCBC_COMP_B  --계산상수_B
+              ,NVL(PCBC_COMP_D,0) PCBC_COMP_D  --계산상수_D
+          INTO v_PCBC_COMP_B
+              ,v_PCBC_COMP_D
+          FROM CATBPCBC
+         WHERE PCBC_CORP_CODE =  I_CORP_CODE
+           AND PCBC_STND_GUBN =  I_STND_GUBN
+           AND PCBC_STND_DEGR =  I_STND_DEGR
+           AND PCBC_KIND_CODE =  I_KIND_CODE
+           AND PCBC_SIZE_MIN0 <= I_PROD_LENG  --세로길이기준:이상
+           AND PCBC_SIZE_MAX0 >  I_PROD_LENG  --세로길이기준:미만
+           AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+           AND PCBC_APPL_GUBN = 'Y'
+        ;
+
+        CASE PCBC_R.PCBC_PANL_CNT0
+             WHEN 4 THEN
+                    O_LINE_NO := 'ST-24030';
+                    --3.4.PANEL 등분수_가로,세로
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_WIDE);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_LENG);
+
+                    --5.6.PANEL SIZE_가로,세로
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_WIDE);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_LENG);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-24070';
+                    --7.8.기본_정_상수_가로,세로
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_A);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_B);
+                    
+                    -- 가로(C), 세로(D)
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_C);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_D);
+
+                    --9.10.기본_정_수량_가로,세로 : 정수처리
+                    v_BASE_RIGH_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_BASE_RIGH_WCNT := TRUNC(v_BASE_RIGH_WCNT,0);
+                    v_BASE_RIGH_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_BASE_RIGH_LCNT := TRUNC(v_BASE_RIGH_LCNT,0);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_LCNT);
+
+                    --11.기본_정_계
+                    v_BASE_RIGH_ACNT := (v_BASE_RIGH_WCNT * v_BASE_RIGH_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_RIGH_ACNT < 0 THEN v_BASE_RIGH_ACNT := 1; END IF;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-24120';
+
+                    --역배열가로 : 세로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_A,0)
+                          ,NVL(PCBC_COMP_C,0)
+                      INTO v_PCBC_REVE_A
+                          ,v_PCBC_REVE_C
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --역배열세로 : 가로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_B,0)
+                          ,NVL(PCBC_COMP_D,0)
+                      INTO v_PCBC_REVE_B
+                          ,v_PCBC_REVE_D
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --12.13.기본_역_상수_가로,세로
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_A);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_B);
+                    
+                    -- 기본_역_상수_가로(C), 세로(D)
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_C);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_D);
+
+                    --14.15.기본_역_수량_가로,세로
+                    v_BASE_OPPO_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_REVE_A) / (I_PROD_LENG + v_PCBC_REVE_C);
+                    v_BASE_OPPO_WCNT := TRUNC(v_BASE_OPPO_WCNT,0);
+                    v_BASE_OPPO_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_REVE_B) / (I_PROD_WIDE + v_PCBC_REVE_D);
+                    v_BASE_OPPO_LCNT := TRUNC(v_BASE_OPPO_LCNT,0);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_LCNT);
+
+                    --16.기본_역_계
+                    v_BASE_OPPO_ACNT := (v_BASE_OPPO_WCNT * v_BASE_OPPO_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_OPPO_ACNT < 0 THEN v_BASE_OPPO_ACNT := 1; END IF;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-24170';
+                    --17.18.보정_정_소수_가로,세로
+                    v_CORR_RIGH_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGH_WDBL := ROUND(v_CORR_RIGH_WDBL,4);
+
+                    --[2020-04-06]엑셀수식기준으로 수정 (요청사항 468번)
+                    --v_PCBC_COMP_D := 3;
+                    
+                    v_CORR_RIGH_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_RIGH_LDBL := ROUND(v_CORR_RIGH_LDBL,4);
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_WDBL,1));
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_LDBL,1));
+
+                    --19.20.보정_정_수량_가로방향가로,세로
+                    v_CORR_RIGW_WCNT := v_BASE_RIGH_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGW_LCNT := (I_PROD_LENG * v_CORR_RIGH_LDBL - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_CORR_RIGW_LCNT := TRUNC(v_CORR_RIGW_LCNT,0);
+                    IF  v_CORR_RIGW_LCNT < 0 THEN v_CORR_RIGW_LCNT := 0; END IF;
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_LCNT);
+
+                    --21.보정_정_수량_가로방향계
+                    v_CORR_RIGW_TCNT := v_CORR_RIGW_WCNT * v_CORR_RIGW_LCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_TCNT);
+
+                    --22.23.보정_정_수량_세로방향가로,세로
+                    v_CORR_RIGL_WCNT := (I_PROD_WIDE * v_CORR_RIGH_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_CORR_RIGL_WCNT := TRUNC(v_CORR_RIGL_WCNT,0);
+                    IF  v_CORR_RIGL_WCNT < 1 THEN v_CORR_RIGL_WCNT := 0; END IF;
+                    v_CORR_RIGL_LCNT := v_BASE_RIGH_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_LCNT);
+
+                    --24.보정_정_수량_세로방향계
+                    v_CORR_RIGL_TCNT := v_CORR_RIGL_WCNT * v_CORR_RIGL_LCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_TCNT);
+
+                    --25.보정_정_수량_계
+                    v_CORR_RIGH_TOTT := v_CORR_RIGW_TCNT + v_CORR_RIGL_TCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_RIGH_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-24260';
+                    --26.27.보정_역_소수_가로,세로
+                    --[참고] 계산에 필요한 상수 A,B,C,D는 제품SIZE를 역으로 배열하여 추출한 값이 아닌 처음 그대로의 값을 반영함
+                    --       v_PCBC_REVE_A -> v_PCBC_COMP_A (기준서의 수식에 따름)
+                    v_CORR_OPPO_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_OPPO_WDBL := ROUND(v_CORR_OPPO_WDBL,4);
+
+                    v_CORR_OPPO_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_OPPO_LDBL := ROUND(v_CORR_OPPO_LDBL,4);
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_WDBL,1));
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_LDBL,1));
+
+                    --28.29.보정_역_수량_가로방향가로,세로
+                    v_CORR_OPPW_WCNT := v_BASE_OPPO_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+
+                    v_CORR_OPPW_LCNT := (v_CORR_OPPO_LDBL * I_PROD_WIDE - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_WIDE + 3);
+                    v_CORR_OPPW_LCNT := TRUNC(v_CORR_OPPW_LCNT,0);
+                    IF  v_CORR_OPPW_LCNT < 0 THEN v_CORR_OPPW_LCNT := 0; END IF;
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_LCNT);
+
+                    --30.보정_역_수량_가로방향계
+                    v_CORR_OPPW_TCNT := v_CORR_OPPW_WCNT * v_CORR_OPPW_LCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_TCNT);
+
+                    --31.32.보정_역_수량_세로방향가로,세로
+                    v_CORR_OPPL_WCNT := (I_PROD_LENG * v_CORR_OPPO_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_LENG + 3);
+                    v_CORR_OPPL_WCNT := TRUNC(v_CORR_OPPL_WCNT,0);
+                    IF  v_CORR_OPPL_WCNT < 0 THEN v_CORR_OPPL_WCNT := 0; END IF;
+
+                    v_CORR_OPPL_LCNT := v_BASE_OPPO_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_WCNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_LCNT);
+
+                    --33.보정_역_수량_세로방향계
+                    v_CORR_OPPL_TCNT := v_CORR_OPPL_WCNT * v_CORR_OPPL_LCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_TCNT);
+
+                    --34.보정_역_수량_계
+                    v_CORR_OPPO_TOTT := v_CORR_OPPW_TCNT + v_CORR_OPPL_TCNT;
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_CORR_OPPO_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-24350';
+                    --35.기본수량
+                    v_APPL_CNT1_4 := GREATEST(v_BASE_RIGH_ACNT,v_BASE_OPPO_ACNT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_APPL_CNT1_4);
+
+                    --36.기본+보정수량
+                    v_APPL_CNT2_4 := GREATEST(v_BASE_RIGH_ACNT + v_CORR_RIGH_TOTT,
+                                              v_BASE_OPPO_ACNT + v_CORR_OPPO_TOTT);
+                    O_4PRT_DATA  := O_4PRT_DATA || '@' || TO_CHAR(v_APPL_CNT2_4);
+
+             WHEN 6 THEN
+                    O_LINE_NO := 'ST-26030';
+                    --3.4.PANEL 등분수_가로,세로
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_WIDE);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_LENG);
+
+                    --5.6.PANEL SIZE_가로,세로
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_WIDE);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_LENG);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-26070';
+                    --7.8.기본_정_상수_가로,세로
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_A);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_B);
+                    
+                    --가로(C), 세로(D)
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_C);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_D);
+
+                    --9.10.기본_정_수량_가로,세로 : 정수처리
+                    v_BASE_RIGH_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_BASE_RIGH_WCNT := TRUNC(v_BASE_RIGH_WCNT,0);
+                    v_BASE_RIGH_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_BASE_RIGH_LCNT := TRUNC(v_BASE_RIGH_LCNT,0);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_LCNT);
+
+                    --11.기본_정_계
+                    v_BASE_RIGH_ACNT := (v_BASE_RIGH_WCNT * v_BASE_RIGH_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_RIGH_ACNT < 0 THEN v_BASE_RIGH_ACNT := 1; END IF;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-26120';
+
+                    --역배열가로 : 세로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_A,0)
+                          ,NVL(PCBC_COMP_C,0)
+                      INTO v_PCBC_REVE_A
+                          ,v_PCBC_REVE_C
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --역배열세로 : 가로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_B,0)
+                          ,NVL(PCBC_COMP_D,0)
+                      INTO v_PCBC_REVE_B
+                          ,v_PCBC_REVE_D
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --12.13.기본_역_상수_가로,세로
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_A);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_B);
+
+                    --기본_역_상수_가로(C),세로(D)
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_C);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_D);
+
+                    --14.15.기본_역_수량_가로,세로
+                    v_BASE_OPPO_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_REVE_A) / (I_PROD_LENG + v_PCBC_REVE_C);
+                    v_BASE_OPPO_WCNT := TRUNC(v_BASE_OPPO_WCNT,0);
+                    v_BASE_OPPO_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_REVE_B) / (I_PROD_WIDE + v_PCBC_REVE_D);
+                    v_BASE_OPPO_LCNT := TRUNC(v_BASE_OPPO_LCNT,0);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_LCNT);
+
+                    --16.기본_역_계
+                    v_BASE_OPPO_ACNT := (v_BASE_OPPO_WCNT * v_BASE_OPPO_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_OPPO_ACNT < 0 THEN v_BASE_OPPO_ACNT := 1; END IF;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-26170';
+                    --17.18.보정_정_소수_가로,세로
+                    v_CORR_RIGH_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGH_WDBL := ROUND(v_CORR_RIGH_WDBL,4);
+
+                    --[2020-04-06]엑셀수식기준으로 수정 (요청사항 468번)
+                    --v_PCBC_COMP_D := 3;
+
+                    v_CORR_RIGH_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_RIGH_LDBL := ROUND(v_CORR_RIGH_LDBL,4);
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_WDBL,1));
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_LDBL,1));
+
+                    --19.20.보정_정_수량_가로방향가로,세로
+                    v_CORR_RIGW_WCNT := v_BASE_RIGH_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGW_LCNT := (I_PROD_LENG * v_CORR_RIGH_LDBL - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_CORR_RIGW_LCNT := TRUNC(v_CORR_RIGW_LCNT,0);
+                    IF  v_CORR_RIGW_LCNT < 0 THEN v_CORR_RIGW_LCNT := 0; END IF;
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_LCNT);
+
+                    --21.보정_정_수량_가로방향계
+                    v_CORR_RIGW_TCNT := v_CORR_RIGW_WCNT * v_CORR_RIGW_LCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_TCNT);
+
+                    --22.23.보정_정_수량_세로방향가로,세로
+                    v_CORR_RIGL_WCNT := (I_PROD_WIDE * v_CORR_RIGH_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_CORR_RIGL_WCNT := TRUNC(v_CORR_RIGL_WCNT,0);
+                    IF  v_CORR_RIGL_WCNT < 1 THEN v_CORR_RIGL_WCNT := 0; END IF;
+                    v_CORR_RIGL_LCNT := v_BASE_RIGH_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_LCNT);
+
+                    --24.보정_정_수량_세로방향계
+                    v_CORR_RIGL_TCNT := v_CORR_RIGL_WCNT * v_CORR_RIGL_LCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_TCNT);
+
+                    --25.보정_정_수량_계
+                    v_CORR_RIGH_TOTT := v_CORR_RIGW_TCNT + v_CORR_RIGL_TCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_RIGH_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-26260';
+                    --26.27.보정_역_소수_가로,세로
+                    --[참고] 계산에 필요한 상수 A,B,C,D는 제품SIZE를 역으로 배열하여 추출한 값이 아닌 처음 그대로의 값을 반영함
+                    --       v_PCBC_REVE_A -> v_PCBC_COMP_A (기준서의 수식에 따름)
+                    v_CORR_OPPO_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_OPPO_WDBL := ROUND(v_CORR_OPPO_WDBL,4);
+
+                    v_CORR_OPPO_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_OPPO_LDBL := ROUND(v_CORR_OPPO_LDBL,4);
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_WDBL,1));
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_LDBL,1));
+
+                    --28.29.보정_역_수량_가로방향가로,세로
+                    v_CORR_OPPW_WCNT := v_BASE_OPPO_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+
+                    v_CORR_OPPW_LCNT := (v_CORR_OPPO_LDBL * I_PROD_WIDE - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_WIDE + 3);
+                    v_CORR_OPPW_LCNT := TRUNC(v_CORR_OPPW_LCNT,0);
+                    IF  v_CORR_OPPW_LCNT < 0 THEN v_CORR_OPPW_LCNT := 0; END IF;
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_LCNT);
+
+                    --30.보정_역_수량_가로방향계
+                    v_CORR_OPPW_TCNT := v_CORR_OPPW_WCNT * v_CORR_OPPW_LCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_TCNT);
+
+                    --31.32.보정_역_수량_세로방향가로,세로
+                    v_CORR_OPPL_WCNT := (I_PROD_LENG * v_CORR_OPPO_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_LENG + 3);
+                    v_CORR_OPPL_WCNT := TRUNC(v_CORR_OPPL_WCNT,0);
+                    IF  v_CORR_OPPL_WCNT < 0 THEN v_CORR_OPPL_WCNT := 0; END IF;
+
+                    v_CORR_OPPL_LCNT := v_BASE_OPPO_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_WCNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_LCNT);
+
+                    --33.보정_역_수량_세로방향계
+                    v_CORR_OPPL_TCNT := v_CORR_OPPL_WCNT * v_CORR_OPPL_LCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_TCNT);
+
+                    --34.보정_역_수량_계
+                    v_CORR_OPPO_TOTT := v_CORR_OPPW_TCNT + v_CORR_OPPL_TCNT;
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_CORR_OPPO_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-26350';
+                    --35.기본수량
+                    v_APPL_CNT1_6 := GREATEST(v_BASE_RIGH_ACNT,v_BASE_OPPO_ACNT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_APPL_CNT1_6);
+
+                    --36.기본+보정수량
+                    v_APPL_CNT2_6 := GREATEST(v_BASE_RIGH_ACNT + v_CORR_RIGH_TOTT,
+                                              v_BASE_OPPO_ACNT + v_CORR_OPPO_TOTT);
+                    O_6PRT_DATA  := O_6PRT_DATA || '@' || TO_CHAR(v_APPL_CNT2_6);
+
+             WHEN 9 THEN
+                    O_LINE_NO := 'ST-29030';
+                    --3.4.PANEL 등분수_가로,세로
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_WIDE);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_PCNT_LENG);
+
+                    --5.6.PANEL SIZE_가로,세로
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_WIDE);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(PCBC_R.PCBC_SIZE_LENG);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-29070';
+                    --7.8.기본_정_상수_가로,세로
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_A);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_B);
+                    
+                    --가로(C), 세로(D)
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_C);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_COMP_D);
+
+                    --9.10.기본_정_수량_가로,세로 : 정수처리
+                    v_BASE_RIGH_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_BASE_RIGH_WCNT := TRUNC(v_BASE_RIGH_WCNT,0);
+                    v_BASE_RIGH_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_BASE_RIGH_LCNT := TRUNC(v_BASE_RIGH_LCNT,0);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_LCNT);
+
+                    --11.기본_정_계
+                    v_BASE_RIGH_ACNT := (v_BASE_RIGH_WCNT * v_BASE_RIGH_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_RIGH_ACNT < 0 THEN v_BASE_RIGH_ACNT := 1; END IF;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_RIGH_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-29120';
+
+                    --역배열가로 : 세로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_A,0)
+                          ,NVL(PCBC_COMP_C,0)
+                      INTO v_PCBC_REVE_A
+                          ,v_PCBC_REVE_C
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_LENG  --역배열 가로는 세로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --역배열세로 : 가로길이 기준으로 처리
+                    SELECT NVL(PCBC_COMP_B,0)
+                          ,NVL(PCBC_COMP_D,0)
+                      INTO v_PCBC_REVE_B
+                          ,v_PCBC_REVE_D
+                      FROM CATBPCBC
+                     WHERE PCBC_CORP_CODE =  I_CORP_CODE
+                       AND PCBC_STND_GUBN =  I_STND_GUBN
+                       AND PCBC_STND_DEGR =  I_STND_DEGR
+                       AND PCBC_KIND_CODE =  I_KIND_CODE
+                       AND PCBC_SIZE_MIN0 <= I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_SIZE_MAX0 >  I_PROD_WIDE  --역배열 세로는 가로길이기준
+                       AND PCBC_PANL_CNT0 =  v_PCBC_PANL_CNT0
+                       AND PCBC_APPL_GUBN = 'Y'
+                    ;
+
+                    --12.13.기본_역_상수_가로,세로
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_A);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_B);
+
+                    --기본_역_상수_가로(C),세로(D)                    
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_C);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_PCBC_REVE_D);
+
+                    --14.15.기본_역_수량_가로,세로
+                    v_BASE_OPPO_WCNT := (PCBC_R.PCBC_SIZE_WIDE - v_PCBC_REVE_A) / (I_PROD_LENG + v_PCBC_REVE_C);
+                    v_BASE_OPPO_WCNT := TRUNC(v_BASE_OPPO_WCNT,0);
+                    v_BASE_OPPO_LCNT := (PCBC_R.PCBC_SIZE_LENG - v_PCBC_REVE_B) / (I_PROD_WIDE + v_PCBC_REVE_D);
+                    v_BASE_OPPO_LCNT := TRUNC(v_BASE_OPPO_LCNT,0);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_LCNT);
+
+                    --16.기본_역_계
+                    v_BASE_OPPO_ACNT := (v_BASE_OPPO_WCNT * v_BASE_OPPO_LCNT) * (PCBC_R.PCBC_PCNT_WIDE * PCBC_R.PCBC_PCNT_LENG);
+                    IF  v_BASE_OPPO_ACNT < 0 THEN v_BASE_OPPO_ACNT := 1; END IF;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_BASE_OPPO_ACNT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-29170';
+                    --17.18.보정_정_소수_가로,세로
+                    v_CORR_RIGH_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_WIDE + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGH_WDBL := ROUND(v_CORR_RIGH_WDBL,4);
+
+                    --[2020-04-06]엑셀수식기준으로 수정 (요청사항 468번)
+                    --v_PCBC_COMP_D := 3;
+
+                    v_CORR_RIGH_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_LENG + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_RIGH_LDBL := ROUND(v_CORR_RIGH_LDBL,4);
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_WDBL,1));
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_RIGH_LDBL,1));
+
+                    --19.20.보정_정_수량_가로방향가로,세로
+                    v_CORR_RIGW_WCNT := v_BASE_RIGH_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_RIGW_LCNT := (I_PROD_LENG * v_CORR_RIGH_LDBL - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_LENG + v_PCBC_COMP_D);
+                    v_CORR_RIGW_LCNT := TRUNC(v_CORR_RIGW_LCNT,0);
+                    IF  v_CORR_RIGW_LCNT < 0 THEN v_CORR_RIGW_LCNT := 0; END IF;
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_LCNT);
+
+                    --21.보정_정_수량_가로방향계
+                    v_CORR_RIGW_TCNT := v_CORR_RIGW_WCNT * v_CORR_RIGW_LCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGW_TCNT);
+
+                    --22.23.보정_정_수량_세로방향가로,세로
+                    v_CORR_RIGL_WCNT := (I_PROD_WIDE * v_CORR_RIGH_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_WIDE + v_PCBC_COMP_C);
+                    v_CORR_RIGL_WCNT := TRUNC(v_CORR_RIGL_WCNT,0);
+                    IF  v_CORR_RIGL_WCNT < 1 THEN v_CORR_RIGL_WCNT := 0; END IF;
+                    v_CORR_RIGL_LCNT := v_BASE_RIGH_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_LCNT);
+
+                    --24.보정_정_수량_세로방향계
+                    v_CORR_RIGL_TCNT := v_CORR_RIGL_WCNT * v_CORR_RIGL_LCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGL_TCNT);
+
+                    --25.보정_정_수량_계
+                    v_CORR_RIGH_TOTT := v_CORR_RIGW_TCNT + v_CORR_RIGL_TCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_RIGH_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-29260';
+                    --26.27.보정_역_소수_가로,세로
+                    --[참고] 계산에 필요한 상수 A,B,C,D는 제품SIZE를 역으로 배열하여 추출한 값이 아닌 처음 그대로의 값을 반영함
+                    --       v_PCBC_REVE_A -> v_PCBC_COMP_A (기준서의 수식에 따름)
+                    v_CORR_OPPO_WDBL := (
+                                              ((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_WIDE - v_PCBC_COMP_A) / (I_PROD_LENG + v_PCBC_COMP_C),0)
+                                        ) * PCBC_R.PCBC_PCNT_WIDE;
+                    v_CORR_OPPO_WDBL := ROUND(v_CORR_OPPO_WDBL,4);
+
+                    v_CORR_OPPO_LDBL := (
+                                              ((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D))
+                                         -
+                                         TRUNC((PCBC_R.PCBC_SIZE_LENG - v_PCBC_COMP_B) / (I_PROD_WIDE + v_PCBC_COMP_D),0)
+                                        ) * PCBC_R.PCBC_PCNT_LENG;
+                    v_CORR_OPPO_LDBL := ROUND(v_CORR_OPPO_LDBL,4);
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_WDBL,1));
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(ROUND(v_CORR_OPPO_LDBL,1));
+
+                    --28.29.보정_역_수량_가로방향가로,세로
+                    v_CORR_OPPW_WCNT := v_BASE_OPPO_WCNT * PCBC_R.PCBC_PCNT_WIDE;
+
+                    v_CORR_OPPW_LCNT := (v_CORR_OPPO_LDBL * I_PROD_WIDE - PCBC_R.PCBC_CORR_COEF1) / (I_PROD_WIDE + 3);
+                    v_CORR_OPPW_LCNT := TRUNC(v_CORR_OPPW_LCNT,0);
+                    IF  v_CORR_OPPW_LCNT < 0 THEN v_CORR_OPPW_LCNT := 0; END IF;
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_LCNT);
+
+                    --30.보정_역_수량_가로방향계
+                    v_CORR_OPPW_TCNT := v_CORR_OPPW_WCNT * v_CORR_OPPW_LCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPW_TCNT);
+
+                    --31.32.보정_역_수량_세로방향가로,세로
+                    v_CORR_OPPL_WCNT := (I_PROD_LENG * v_CORR_OPPO_WDBL - PCBC_R.PCBC_CORR_COEF2) / (I_PROD_LENG + 3);
+                    v_CORR_OPPL_WCNT := TRUNC(v_CORR_OPPL_WCNT,0);
+                    IF  v_CORR_OPPL_WCNT < 0 THEN v_CORR_OPPL_WCNT := 0; END IF;
+
+                    v_CORR_OPPL_LCNT := v_BASE_OPPO_LCNT * PCBC_R.PCBC_PCNT_LENG;
+
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_WCNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_LCNT);
+
+                    --33.보정_역_수량_세로방향계
+                    v_CORR_OPPL_TCNT := v_CORR_OPPL_WCNT * v_CORR_OPPL_LCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPL_TCNT);
+
+                    --34.보정_역_수량_계
+                    v_CORR_OPPO_TOTT := v_CORR_OPPW_TCNT + v_CORR_OPPL_TCNT;
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_CORR_OPPO_TOTT);
+
+                    ------------------------------
+                    O_LINE_NO := 'ST-29350';
+                    --35.기본수량
+                    v_APPL_CNT1_9 := GREATEST(v_BASE_RIGH_ACNT,v_BASE_OPPO_ACNT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_APPL_CNT1_9);
+
+                    --36.기본+보정수량
+                    v_APPL_CNT2_9 := GREATEST(v_BASE_RIGH_ACNT + v_CORR_RIGH_TOTT,
+                                              v_BASE_OPPO_ACNT + v_CORR_OPPO_TOTT);
+                    O_9PRT_DATA  := O_9PRT_DATA || '@' || TO_CHAR(v_APPL_CNT2_9);
+
+             ELSE
+                    NULL;
+        END  CASE;
+
+    END LOOP;
+
+    --최종CVT선정 (0인 경우 최소값1로 처리)
+    O_APPL_CVT0 := GREATEST(v_APPL_CNT2_4,v_APPL_CNT2_6,v_APPL_CNT2_9);
+
+    IF  O_APPL_CVT0 <= 0 THEN
+        O_APPL_CVT0 := 1;
+    END IF;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || CHR(10) || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 

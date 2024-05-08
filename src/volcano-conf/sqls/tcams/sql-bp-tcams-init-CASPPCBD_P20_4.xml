@@ -1,0 +1,1770 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CASPPCBD_P20_4" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPPCBD_P20_4  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPPCBD_P20_4'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPPCBD_P20_4
+(
+    I_CORP_CODE  IN  CATBPCBI.PCBI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CATBPCBI.PCBI_PART_NO%TYPE  ,
+    I_EONO       IN  CATBPCBI.PCBI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CATBPCBI.PCBI_CUMT_NO%TYPE  ,
+    I_INIT_CMAN  IN  CATBPCBI.PCBI_INIT_CMAN%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_PCB & CIRCUIT
+ * [HISTORY ]
+ *  - 2018.06.01 [A.S.M] : 신규작성(18차  )
+ *  - 2020.01.01 [A.S.M] : 개정    (20-1차) : SCRAP처리 변경/UNIT 이관 내역은 REMARK처리함
+ *  - 2023.03.20 [A.S.M] : 기계경비추출기준 변경에 따른 수정 (CASPMCHH_Q01 -> CASPMCHH_Q02 변경)
+ *  - 2023.05.01 [A.S.M] : 개정    (20-2차) : 기계경비 변경외 특이사항없음
+ *  - 2024.02.05 [A.S.M] : 개정    (20-4차) : 특이사항없음 (전력단가 변경) 
+ *
+ * [COMMENT ]
+ * -
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_CMPK      CATBCMPK%ROWTYPE;
+    rt_PCBI      CATBPCBI%ROWTYPE;
+    rt_PCBM      CATBPCBM%ROWTYPE;
+    rt_PCBP      CATBPCBP%ROWTYPE;
+    rt_CORT      CITBCORT%ROWTYPE;
+    rt_MTCD      CITBMTCD%ROWTYPE;
+    rt_CAYR      CITBCAYR%ROWTYPE;
+    rt_CMAT      CRTBCMAT%ROWTYPE;
+    rt_CPRO      CRTBCPRO%ROWTYPE;
+    rt_SPMS      CRTBSPMS%ROWTYPE;
+    rt_CMMS      CRTBCMMS%ROWTYPE;
+    rt_CMCT      CRTBCMCT%ROWTYPE;
+    rt_MCIF      CITBMCIF%ROWTYPE ; --기계경비정보
+
+    --WORKING VARIABLE
+    v_COME_CODE       CRTBCMMS.CMMS_COME_CODE%TYPE;
+    v_APPL_CORP       CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_IN_TITLE        VARCHAR2(20) ;
+    trCo              NUMBER := 2  ; --원가TRUNC처리소수점단위
+    v_SORT_KEY        NUMBER := 0  ; --SORT KEY
+    v_CMAT_PROC_YN    CHAR(01)     ; --재료비처리여부
+    v_CPRO_PROC_YN    CHAR(01)     ; --가공비처리여부
+    v_GUBN_CODE       CATBCMPK.CMPK_GUBN_CODE%TYPE;
+    v_CODE            CATBCMPK.CMPK_CODE%TYPE     ;
+    v_PCBD_CNT0       NUMBER := 0  ; --양면원판 매수
+
+    v_NET0_CYTM       NUMBER(20,6) ; --NET CT
+    v_4PRT_DATA       VARCHAR(1000); --4등분 계산내역
+    v_6PRT_DATA       VARCHAR(1000); --6등분 계산내역
+    v_9PRT_DATA       VARCHAR(1000); --9등분 계산내역
+    v_APPL_CVT0       NUMBER := 0  ; --적용CVT
+
+    ------------------------------------------------------
+    --입력CURSOR
+    ------------------------------------------------------
+    CURSOR cs_PCBI IS
+        SELECT PCBI_MATL_CORP
+              ,PCBI_MATL_STND
+              ,PCBI_MATL_CODE
+              ,PCBI_MATL_APDT
+              ,PCBI_MATL_GUBN
+              ,PCBI_MATL_CORP2
+              ,PCBI_MATL_STND2
+              ,PCBI_MATL_CODE2
+              ,PCBI_MATL_APDT2
+              ,PCBI_MATL_GUBN2
+              ,PCBI_MATL_CORP3
+              ,PCBI_MATL_STND3
+              ,PCBI_MATL_CODE3
+              ,PCBI_MATL_APDT3
+              ,PCBI_MATL_GUBN3
+              --재료정보(주재료)
+              ,M.MATL_CLAS_CODE         MATL_CLAS_CODE  --재료분류코드
+              ,M.MATL_MTJO_CODE         MATL_MTJO_CODE  --재료종류코드
+              ,M.MATL_NAME              MATL_NAME       --재질명칭
+              ,NVL(M.MATL_PRIC,0)       MATL_PRIC       --재료단가
+              ,M.MATL_UNIT              MATL_UNIT       --재료단위
+              ,NVL(M.MATL_SCRP_PRIC,0)  MATL_SCRP_PRIC  --SCRAP단가
+              ,CASE WHEN NVL(M.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M.MATL_SCRP_RATE
+               END                      MATL_SCRP_RATE  --SCRAP율
+              ,NVL(M.MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV  --비중
+              ,NVL(M.MATL_UNUS_PRIC,0)  MATL_UNUS_PRIC  --산폐단가
+              ,NVL(M.MATL_THIK_SIZE,0)  MATL_THIK_SIZE  --두께_외경
+              ,NVL(M.MATL_WIDT_SIZE,0)  MATL_WIDT_SIZE  --가로_두께
+              ,NVL(M.MATL_LENG_SIZE,0)  MATL_LENG_SIZE  --세로_길이
+              ,M.MATL_IMPT_CODE         MATL_IMPT_CODE  --수입코드
+              ,NVL(M.MATL_IMPT_PRIC,0)  MATL_IMPT_PRIC  --수입단가
+              ,NVL(M.MATL_TRIF_RATE,0)  MATL_TRIF_RATE  --관세율
+              ,NVL(M.MATL_TRIF_COST,0)  MATL_TRIF_COST  --관세
+              --재료정보(동박재료)
+              ,M2.MATL_CLAS_CODE        MATL_CLAS_CODE2 --재료분류코드
+              ,M2.MATL_MTJO_CODE        MATL_MTJO_CODE2 --재료종류코드
+              ,M2.MATL_NAME             MATL_NAME2      --재질명칭
+              ,NVL(M2.MATL_PRIC,0)      MATL_PRIC2      --재료단가
+              ,M2.MATL_UNIT             MATL_UNIT2      --재료단위
+              ,NVL(M2.MATL_SCRP_PRIC,0) MATL_SCRP_PRIC2 --SCRAP단가
+              ,CASE WHEN NVL(M2.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M2.MATL_SCRP_RATE
+               END                      MATL_SCRP_RATE2 --SCRAP율
+              ,NVL(M2.MATL_SPEC_GRAV,0) MATL_SPEC_GRAV2 --비중
+              ,NVL(M2.MATL_UNUS_PRIC,0) MATL_UNUS_PRIC2 --산폐단가
+              ,NVL(M2.MATL_THIK_SIZE,0) MATL_THIK_SIZE2 --두께_외경
+              ,NVL(M2.MATL_WIDT_SIZE,0) MATL_WIDT_SIZE2 --가로_두께
+              ,NVL(M2.MATL_LENG_SIZE,0) MATL_LENG_SIZE2 --세로_길이
+              ,M2.MATL_IMPT_CODE        MATL_IMPT_CODE2 --수입코드
+              ,NVL(M2.MATL_IMPT_PRIC,0) MATL_IMPT_PRIC2 --수입단가
+              ,NVL(M2.MATL_TRIF_RATE,0) MATL_TRIF_RATE2 --관세율
+              ,NVL(M2.MATL_TRIF_COST,0) MATL_TRIF_COST2 --관세
+              --재료정보(PREPREG재료)
+              ,M3.MATL_CLAS_CODE        MATL_CLAS_CODE3 --재료분류코드
+              ,M3.MATL_MTJO_CODE        MATL_MTJO_CODE3 --재료종류코드
+              ,M3.MATL_NAME             MATL_NAME3      --재질명칭
+              ,NVL(M3.MATL_PRIC,0)      MATL_PRIC3      --재료단가
+              ,M3.MATL_UNIT             MATL_UNIT3      --재료단위
+              ,NVL(M3.MATL_SCRP_PRIC,0) MATL_SCRP_PRIC3 --SCRAP단가
+              ,CASE WHEN NVL(M3.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M3.MATL_SCRP_RATE
+               END                      MATL_SCRP_RATE3 --SCRAP율
+              ,NVL(M3.MATL_SPEC_GRAV,0) MATL_SPEC_GRAV3 --비중
+              ,NVL(M3.MATL_UNUS_PRIC,0) MATL_UNUS_PRIC3 --산폐단가
+              ,NVL(M3.MATL_THIK_SIZE,0) MATL_THIK_SIZE3 --두께_외경
+              ,NVL(M3.MATL_WIDT_SIZE,0) MATL_WIDT_SIZE3 --가로_두께
+              ,NVL(M3.MATL_LENG_SIZE,0) MATL_LENG_SIZE3 --세로_길이
+              ,M3.MATL_IMPT_CODE        MATL_IMPT_CODE3 --수입코드
+              ,NVL(M3.MATL_IMPT_PRIC,0) MATL_IMPT_PRIC3 --수입단가
+              ,NVL(M3.MATL_TRIF_RATE,0) MATL_TRIF_RATE3 --관세율
+              ,NVL(M3.MATL_TRIF_COST,0) MATL_TRIF_COST3 --관세
+              --입력정보
+              ,NVL(PCBI_SHET_WIDE   ,0) PCBI_SHET_WIDE  --SHEET가로
+              ,NVL(PCBI_SHET_LENG   ,0) PCBI_SHET_LENG  --SHEET세로
+              ,NVL(PCBI_COOP_CNT0   ,0) PCBI_COOP_CNT0  --동박적용 매수
+              ,NVL(PCBI_PREP_CNT0   ,0) PCBI_PREP_CNT0  --PREPREG적용 매수
+              ,PCBI_KIND_GUBN                           --PCB종류 분류
+              ,PCBI_KIND_CODE                           --PCB종류 코드
+              ,PCBI_COAT_GUBN                           --PCB표면처리 분류
+              ,PCBI_COAT_CODE                           --PCB표면처리 코드
+              ,PCBI_FLOR_GUBN                           --PCB층수 분류
+              ,PCBI_FLOR_CODE                           --PCB층수 코드
+              ,PCBI_JUMP_YN                             --JUMP인쇄 여부
+              ,NVL(PCBI_PROD_WIDE   ,0) PCBI_PROD_WIDE  --제품가로
+              ,NVL(PCBI_PROD_LENG   ,0) PCBI_PROD_LENG  --제품세로
+              ,PCBI_SOLD_CODE                           --납땜종류 (L:유연, U:무연)
+              ,PCBI_FLUX_CODE                           --FLUX (미사용)
+              ,PCBI_CSOL_CODE                           --SMD CREAM SOLDER (미사용)
+              ,PCBI_DIPP_CODE                           --DIPPING (미사용)
+              ,PCBI_MAPB_CODE                           --수동납땜 (미사용)
+              ,NVL(PCBI_FLUX_AREA   ,0) PCBI_FLUX_AREA  --FLUX사용면적
+              ,PCBI_CAVT_GUBN                           --원판당 적용수량 적용
+              ,NVL(PCBI_APPL_CAVT   ,0) PCBI_APPL_CAVT  --원판당 적용수량
+              ,NVL(PCBI_HOLE_CNT1   ,0) PCBI_HOLE_CNT1  --정HOLE수
+              ,NVL(PCBI_HOLE_CNT2   ,0) PCBI_HOLE_CNT2  --장공HOLE수
+              ,NVL(PCBI_SMDT_CNT0   ,0) PCBI_SMDT_CNT0  --SMD(TOP) 소자수
+              ,NVL(PCBI_SMDB_CNT0   ,0) PCBI_SMDB_CNT0  --SMD(BOTTOM) 소자수
+              ,NVL(PCBI_ARRA_CAVT   ,0) PCBI_ARRA_CAVT  --ARRAY CVT
+              ,NVL(PCBI_SEQN_CNT0   ,0) PCBI_SEQN_CNT0  --SEQUENCE 소자수
+              ,NVL(PCBI_AXAL_CNT0   ,0) PCBI_AXAL_CNT0  --AXIAL 소자수
+              ,NVL(PCBI_AXAL_PNT1   ,0) PCBI_AXAL_PNT1  --AXIAL 소자리드부 POINT
+              ,NVL(PCBI_AXAL_PNT2   ,0) PCBI_AXAL_PNT2  --AXIAL 접점부 POINT
+              ,NVL(PCBI_RADL_CNT0   ,0) PCBI_RADL_CNT0  --RADIAL 소자수
+              ,NVL(PCBI_RADL_PNT1   ,0) PCBI_RADL_PNT1  --RADIAL 소자리드부 POINT
+              ,NVL(PCBI_RADL_PNT2   ,0) PCBI_RADL_PNT2  --RADIAL 접점부 POINT
+              ,NVL(PCBI_MANI_CNT0   ,0) PCBI_MANI_CNT0  --수동삽입 소자수
+              ,NVL(PCBI_MANI_PNT1   ,0) PCBI_MANI_PNT1  --수동삽입 소자리드부 POINT
+              ,NVL(PCBI_MANI_PNT2   ,0) PCBI_MANI_PNT2  --수동삽입 접점부 POINT
+              ,NVL(PCBI_MNTS_CNT0   ,0) PCBI_MNTS_CNT0  --MOUNTING SCREW 수
+              ,NVL(PCBI_MAPB_TERM1  ,0) PCBI_MAPB_TERM1 --수납땜 소자수: 단자수=1
+              ,NVL(PCBI_MAPB_TERM2  ,0) PCBI_MAPB_TERM2 --수납땜 소자수: 단자수=2
+              ,NVL(PCBI_MAPB_TERM3  ,0) PCBI_MAPB_TERM3 --수납땜 소자수: 단자수=3
+              ,NVL(PCBI_MAPB_TERM4  ,0) PCBI_MAPB_TERM4 --수납땜 소자수: 단자수=4
+              ,PCBI_PAPB_YN                             --부분자동납땜 여부
+              ,NVL(PCBI_PAPB_CNT0   ,0) PCBI_PAPB_CNT0  --부분자동납땜 적용횟수
+              --SCRAP정보
+              ,NVL(PCBI_SCRP_PRIC1  ,0) PCBI_SCRP_PRIC1
+              ,NVL(PCBI_SCRP_WEGT1  ,0) PCBI_SCRP_WEGT1
+              ,NVL(PCBI_SCRP_RATE1  ,0) PCBI_SCRP_RATE1
+              ,NVL(PCBI_SCRP_PRIC2  ,0) PCBI_SCRP_PRIC2
+              ,NVL(PCBI_SCRP_WEGT2  ,0) PCBI_SCRP_WEGT2
+              ,NVL(PCBI_SCRP_RATE2  ,0) PCBI_SCRP_RATE2
+              ,NVL(PCBI_SCRP_PRIC3  ,0) PCBI_SCRP_PRIC3
+              ,NVL(PCBI_SCRP_WEGT3  ,0) PCBI_SCRP_WEGT3
+              ,NVL(PCBI_SCRP_RATE3  ,0) PCBI_SCRP_RATE3
+              --20-1차 ADD
+              ,NVL(PCBI_NET0_AREA   ,0) PCBI_NET0_AREA  --PCB NET면적
+              ,PCBI_CNT0_APPL                           --매수적용구분
+              ,NVL(PCBI_PCBD_CNT0   ,0) PCBI_PCBD_CNT0  --양면원판매수
+              ,NVL(PCBI_COAT_AREA   ,0) PCBI_COAT_AREA  --PCB 표면처리면적
+              ,NVL(PCBI_FLOR_CNT0   ,0) PCBI_FLOR_CNT0  --PCB층수(입력값) - 16초과인 경우 입력
+              --표준정보
+            --20-1차 : 층수입력값처리
+            --,NVL(C03.CMPK_APPL_VALU,0) CMPK_FLOR_CNT0 --층수
+              ,CASE WHEN PCBI_FLOR_CODE = 'ETC' THEN
+                         NVL(PCBI_FLOR_CNT0,0)
+                    ELSE NVL(C03.CMPK_APPL_VALU,0)
+               END                     CMPK_FLOR_CNT0 --층수
+          FROM CATBPCBI
+
+            LEFT OUTER JOIN
+               CITBMATL M
+            ON     PCBI_MATL_CORP = M.MATL_CORP_CODE
+               AND PCBI_MATL_STND = M.MATL_STND_GUBN
+               AND PCBI_MATL_CODE = M.MATL_CODE
+               AND PCBI_MATL_APDT = M.MATL_APPL_DATE
+               AND PCBI_MATL_GUBN = M.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M2         --동박재료
+            ON     PCBI_MATL_CORP2 = M2.MATL_CORP_CODE
+               AND PCBI_MATL_STND2 = M2.MATL_STND_GUBN
+               AND PCBI_MATL_CODE2 = M2.MATL_CODE
+               AND PCBI_MATL_APDT2 = M2.MATL_APPL_DATE
+               AND PCBI_MATL_GUBN2 = M2.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CITBMATL M3         --PREPREG재료
+            ON     PCBI_MATL_CORP3 = M3.MATL_CORP_CODE
+               AND PCBI_MATL_STND3 = M3.MATL_STND_GUBN
+               AND PCBI_MATL_CODE3 = M3.MATL_CODE
+               AND PCBI_MATL_APDT3 = M3.MATL_APPL_DATE
+               AND PCBI_MATL_GUBN3 = M3.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CATBCMPK C03         --층수
+            ON     v_APPL_CORP      = C03.CMPK_CORP_CODE
+               AND rt_CMMS.CMMS_STND_GUBN = C03.CMPK_STND_GUBN
+               AND rt_CMMS.CMMS_STND_DEGR = C03.CMPK_STND_DEGR
+               AND PCBI_FLOR_GUBN   = C03.CMPK_GUBN_CODE
+               AND PCBI_FLOR_CODE   = C03.CMPK_CODE
+               AND 'Y'              = C03.CMPK_APPL_GUBN
+
+         WHERE PCBI_CORP_CODE = I_CORP_CODE
+           AND PCBI_PART_NO   = I_PART_NO
+           AND PCBI_EONO      = I_EONO
+           AND PCBI_CUMT_NO   = I_CUMT_NO
+        ;
+
+    ------------------------------------------------------
+    --부재료CURSOR
+    ------------------------------------------------------
+    CURSOR cs_SMAT IS
+        SELECT PCBM_MATL_SEQ0
+              ,PCBM_MATL_GUBN
+              ,PCBM_MATL_NAME
+              ,PCBM_MATL_UNIT
+              ,NVL(PCBM_MATL_PRIC1,0)  PCBM_MATL_PRIC1
+              ,NVL(PCBM_MATL_PRIC2,0)  PCBM_MATL_PRIC2
+              ,NVL(PCBM_MATL_COEF1,0)  PCBM_MATL_COEF1
+              ,NVL(PCBM_MATL_COEF2,0)  PCBM_MATL_COEF2
+              ,PCBM_FLUX_CODE
+              ,PCBM_CSOL_CODE
+              ,PCBM_DIPP_CODE
+              ,PCBM_MAPB_CODE
+          FROM CATBPCBM
+         WHERE PCBM_CORP_CODE = v_APPL_CORP
+           AND PCBM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PCBM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PCBM_KIND_CODE IN ('ALL',rt_PCBM.PCBM_KIND_CODE)
+           AND PCBM_JUMP_YN   IN ('ALL',rt_PCBM.PCBM_JUMP_YN  )
+           AND PCBM_COAT_CODE IN ('ALL',rt_PCBM.PCBM_COAT_CODE)
+           AND PCBM_FLUX_CODE IN ('ALL',rt_PCBM.PCBM_FLUX_CODE)
+           AND PCBM_CSOL_CODE IN ('ALL',rt_PCBM.PCBM_CSOL_CODE)
+           AND PCBM_DIPP_CODE IN ('ALL',rt_PCBM.PCBM_DIPP_CODE)
+           AND PCBM_MAPB_CODE IN ('ALL',rt_PCBM.PCBM_MAPB_CODE)
+           AND PCBM_APPL_GUBN = 'Y'
+         ORDER BY PCBM_MATL_SEQ0
+        ;
+
+    ------------------------------------------------------
+    --가공비CURSOR
+    ------------------------------------------------------
+    -- 다층(내층)은 매수만큼 반복 처리함
+    ------------------------------------------------------
+    CURSOR cs_SPRO IS
+        -- 반복하는 공정 : 양면원판 매수만큼 반복
+        SELECT PCBP_PROC_GUBN
+              ,(RN * 1000) + PCBP_PROC_SEQ0    PCBP_PROC_SEQ0 --공정순서처리용
+              ,RN                     --공정명 처리용
+              ,PCBP_PROC_NAME
+              ,NVL(PCBP_NET0_CYTM ,0) PCBP_NET0_CYTM
+              ,NVL(PCBP_NET0_COEF1,0) PCBP_NET0_COEF1
+              ,NVL(PCBP_NET0_COEF2,0) PCBP_NET0_COEF2
+              ,NVL(PCBP_NET0_COEF3,0) PCBP_NET0_COEF3
+              ,NVL(PCBP_CAVT      ,0) PCBP_CAVT
+              ,NVL(PCBP_PREP_HOUR ,0) PCBP_PREP_HOUR
+              ,NVL(PCBP_PRSN_CNT0 ,0) PCBP_PRSN_CNT0
+              ,PCBP_MCHH_CODE
+          FROM CATBPCBP
+             ,(SELECT ROWNUM RN FROM CATBPCBP WHERE ROWNUM <= v_PCBD_CNT0) --강제PRODUCTION일으킴
+         WHERE PCBP_CORP_CODE = v_APPL_CORP
+           AND PCBP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PCBP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PCBP_KIND_CODE IN ('ALL',rt_PCBP.PCBP_KIND_CODE)
+           AND PCBP_JUMP_YN   IN ('ALL',rt_PCBP.PCBP_JUMP_YN  )
+           AND PCBP_TOPP_GROP IN ('ALL',rt_PCBP.PCBP_TOPP_GROP)
+           AND PCBP_BOTT_GROP IN ('ALL',rt_PCBP.PCBP_BOTT_GROP)
+           AND PCBP_APPL_GUBN = 'Y'
+           AND PCBP_PROC_GUBN     LIKE 'PAT_MI%'  -- 다층(내층) : 반복공정
+           AND PCBP_PROC_GUBN NOT LIKE 'SOLD_AT'  -- 재료비에 표시하는 공정 제외 : 자동납땜가공비
+
+        UNION ALL
+
+        -- 반복하지 않는 공정
+        SELECT PCBP_PROC_GUBN
+              ,PCBP_PROC_SEQ0 * 100000  -- *100000은 순서 조정용
+              ,0    RN                  --공정명 처리용
+              ,PCBP_PROC_NAME
+              ,NVL(PCBP_NET0_CYTM ,0) PCBP_NET0_CYTM
+              ,NVL(PCBP_NET0_COEF1,0) PCBP_NET0_COEF1
+              ,NVL(PCBP_NET0_COEF2,0) PCBP_NET0_COEF2
+              ,NVL(PCBP_NET0_COEF3,0) PCBP_NET0_COEF3
+              ,NVL(PCBP_CAVT      ,0) PCBP_CAVT
+              ,NVL(PCBP_PREP_HOUR ,0) PCBP_PREP_HOUR
+              ,NVL(PCBP_PRSN_CNT0 ,0) PCBP_PRSN_CNT0
+              ,PCBP_MCHH_CODE
+          FROM CATBPCBP
+         WHERE PCBP_CORP_CODE = v_APPL_CORP
+           AND PCBP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PCBP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PCBP_KIND_CODE IN ('ALL',rt_PCBP.PCBP_KIND_CODE)
+           AND PCBP_JUMP_YN   IN ('ALL',rt_PCBP.PCBP_JUMP_YN  )
+           AND PCBP_TOPP_GROP IN ('ALL',rt_PCBP.PCBP_TOPP_GROP)
+           AND PCBP_BOTT_GROP IN ('ALL',rt_PCBP.PCBP_BOTT_GROP)
+           AND PCBP_APPL_GUBN = 'Y'
+           AND PCBP_PROC_GUBN NOT LIKE 'PAT_MI%'  -- 다층(내층)제외한 나머지
+           AND PCBP_PROC_GUBN NOT LIKE 'SOLD_AT'  -- 재료비에 표시하는 공정 제외 : 자동납땜가공비
+         ORDER BY PCBP_PROC_SEQ0
+        ;
+
+    ------------------------------------------------------
+    --가공비CURSOR : 재료비에 표시하는 항목 (자동납땜)
+    ------------------------------------------------------
+    CURSOR cs_MAPR IS
+        SELECT PCBP_PROC_GUBN
+              ,PCBP_PROC_SEQ0
+              ,PCBP_PROC_NAME
+              ,NVL(PCBP_NET0_CYTM ,0) PCBP_NET0_CYTM
+              ,NVL(PCBP_NET0_COEF1,0) PCBP_NET0_COEF1
+              ,NVL(PCBP_NET0_COEF2,0) PCBP_NET0_COEF2
+              ,NVL(PCBP_NET0_COEF3,0) PCBP_NET0_COEF3
+              ,NVL(PCBP_CAVT      ,0) PCBP_CAVT
+              ,NVL(PCBP_PREP_HOUR ,0) PCBP_PREP_HOUR
+              ,NVL(PCBP_PRSN_CNT0 ,0) PCBP_PRSN_CNT0
+              ,PCBP_MCHH_CODE
+          FROM CATBPCBP
+         WHERE PCBP_CORP_CODE = v_APPL_CORP
+           AND PCBP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PCBP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PCBP_KIND_CODE IN ('ALL',rt_PCBP.PCBP_KIND_CODE)
+           AND PCBP_JUMP_YN   IN ('ALL',rt_PCBP.PCBP_JUMP_YN  )
+           AND PCBP_APPL_GUBN = 'Y'
+           AND PCBP_PROC_GUBN = 'SOLD_AT'
+         ORDER BY PCBP_PROC_SEQ0
+        ;
+
+BEGIN
+    DBMS_OUTPUT.ENABLE(100000);
+  --DBMS_OUTPUT.DISABLE;
+
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPPCBD_P20_4';
+    O_LINE_NO   := 'ST-START';
+
+    v_COME_CODE := 'PCBD';
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_INIT_CMAN) IS NULL THEN v_IN_TITLE := '사번'    ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --MAIN
+    ---------------------------------------------------------------------------
+    --3.기준정보추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-30000';
+
+    --공통율정보 추출 (A->자동공법)
+    CRSPCORT_Q01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,'A',
+                 rt_SPMS.SPMS_BASE_DATE, --원가계산기준일
+                 rt_SPMS.SPMS_VEND_CODE, --업체_코드
+                 rt_SPMS.SPMS_VEND_APFR, --업체_적용일
+                 rt_MTCD.MTCD_INDS_CODE, --업종코드
+                 rt_CAYR.CAYR_VEHL_GUBN, --승상구분
+                 rt_CMMS.CMMS_STND_GUBN, --표준 구분
+                 rt_CMMS.CMMS_STND_DEGR, --개정차수
+                 rt_CMMS.CMMS_LOTQ_QTY0, --LOT량
+                 rt_CMMS.CMMS_PROD_CNT0, --총생산개수
+                 rt_CORT.CORT_PAY0_RATE, --임율
+                 rt_CORT.CORT_IDRT_RATE, --간접경비율
+                 rt_CORT.CORT_GME0_RATE, --일반관리비율
+                 rt_CORT.CORT_MATL_RATE, --재료관리비율
+                 rt_CORT.CORT_MAPT_RATE, --재료관리비율_부품
+                 rt_CORT.CORT_PROF_RATE, --이익율
+                 rt_CORT.CORT_ET00_RATE, --ET율
+                 rt_CORT.CORT_APPL_DATE, --적용일
+                 O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'IQ-001' THEN
+        O_MESG := O_MESG; --오류메세지를 그대로 넘김
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPCBD_P20_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ---------------------------------------------------------------------------
+    --4.기 생성 결과삭제
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-40000';
+
+    CRSPSUM0_D01(I_CORP_CODE,I_PART_NO,I_EONO     ,I_CUMT_NO,v_COME_CODE,
+                 O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+    IF  O_MESG_CODE != 'DE-001' THEN
+        O_MESG := '이미 생성된 결과자료 삭제시 오류가 발생하였습니다.';
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPCBD_P20_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    FOR PCBI_R IN cs_PCBI LOOP
+        O_LINE_NO  := 'ST-50000';
+        ---------------------------------------------------------------------------
+        --표준데이터 검증:콤보추가될 경우 추가필요함(입력값 오류체크용)
+        ---------------------------------------------------------------------------
+        FOR i IN 1..3 LOOP
+            CASE i WHEN 1 THEN v_GUBN_CODE := PCBI_R.PCBI_KIND_GUBN ; v_CODE := PCBI_R.PCBI_KIND_CODE;
+                   WHEN 2 THEN v_GUBN_CODE := PCBI_R.PCBI_COAT_GUBN ; v_CODE := PCBI_R.PCBI_COAT_CODE;
+                   WHEN 3 THEN v_GUBN_CODE := PCBI_R.PCBI_FLOR_GUBN ; v_CODE := PCBI_R.PCBI_FLOR_CODE;
+                   ELSE        v_GUBN_CODE := ''                    ; v_CODE := ''                   ;
+            END CASE;
+
+            IF  TRIM(v_GUBN_CODE) > ' ' OR TRIM(v_CODE) > ' ' THEN
+                BEGIN
+                    SELECT CMPK_CORP_CODE
+                      INTO rt_CMPK.CMPK_CORP_CODE
+                      FROM CATBCMPK
+                     WHERE CMPK_CORP_CODE = v_APPL_CORP
+                       AND CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                       AND CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                       AND CMPK_GUBN_CODE = v_GUBN_CODE
+                       AND CMPK_CODE      = v_CODE
+                       AND CMPK_APPL_GUBN = 'Y'
+                    ;
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN O_MESG := '저장표준값 오류(운영자에 연락요망).' || CHR(10)
+                                                   || '  구분=' || v_GUBN_CODE || CHR(10)
+                                                   || '  코드=' || v_CODE ;
+                                            RAISE UD_EX_ERROR;
+                END;
+            END IF;
+        END LOOP;
+
+        ----------------
+        --입력값 체크
+        ----------------
+        IF  PCBI_R.PCBI_SHET_WIDE <= 0 OR
+            PCBI_R.PCBI_SHET_LENG <= 0 THEN
+            O_MESG := 'SHEET가로, 세로를 확인하시기 바랍니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF  PCBI_R.PCBI_PROD_WIDE <= 0 OR
+            PCBI_R.PCBI_PROD_LENG <= 0 THEN
+            O_MESG := '제품가로, 세로를 확인하시기 바랍니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+      --2018.07.02 : 무연/유연 중 선택입력이 아닌 2개 모두 가능한 구조로 변경하여 체크 막음
+      --IF  PCBI_R.PCBI_CSOL_CODE IN ('L','U') THEN
+      --    IF  PCBI_R.PCBI_SMDT_CNT0 + PCBI_R.PCBI_SMDB_CNT0 <= 0 THEN
+      --        O_MESG := 'SMD(CREAM SOLDER) 적용시, SMD(TOP 또는 BOTTOM)의 소자수를 입력하시기 바랍니다.';
+      --        RAISE UD_EX_ERROR;
+      --    END IF;
+      --END IF;
+      --
+      --IF  PCBI_R.PCBI_DIPP_CODE IN ('L','U') THEN
+      --    IF  PCBI_R.PCBI_DIPP_CNT1 + PCBI_R.PCBI_DIPP_CNT2 <= 0 THEN
+      --        O_MESG := 'DIPPING 적용시, 소자리드부 또는 접점부의 POINT수를 입력하시기 바랍니다.';
+      --        RAISE UD_EX_ERROR;
+      --    END IF;
+      --END IF;
+      --
+      --IF  PCBI_R.PCBI_MAPB_CODE IN ('L','U') THEN
+      --    IF  PCBI_R.PCBI_MAPB_CNT1 + PCBI_R.PCBI_MAPB_CNT2 <= 0 THEN
+      --        O_MESG := '수동납땜 적용시, 소자리드부 또는 접점부의 POINT수를 입력하시기 바랍니다.';
+      --        RAISE UD_EX_ERROR;
+      --    END IF;
+      --END IF;
+
+        IF  PCBI_R.PCBI_PAPB_YN = 'Y' AND
+            PCBI_R.PCBI_PAPB_CNT0 <= 0 THEN
+            O_MESG := '부분자동납땜 적용시, 횟수를 입력하시기 바랍니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        --20-1차 :기타 층수
+        IF  PCBI_R.PCBI_FLOR_CODE = 'ETC' THEN
+            O_MESG := '16층 이상 반영중입니다. 적용 완료후 진행부탁드립니다.';
+            RAISE UD_EX_ERROR;
+
+            IF  PCBI_R.PCBI_FLOR_CNT0 < 16 THEN
+                O_MESG := '기타층수는 16 이상의 짝수를 입력하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            IF  MOD(PCBI_R.PCBI_FLOR_CNT0, 2) <> 0 THEN
+                O_MESG := '기타층수는 16 이상의 짝수를 입력하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+        END IF;
+        
+        -- 가공비 반복처리를 위해 양면원판매수 SET
+        v_PCBD_CNT0 := PCBI_R.PCBI_PCBD_CNT0;
+
+        ---------------------------------------------------------------------------
+        --주재료비
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-51000';
+        v_SORT_KEY := v_SORT_KEY + 1;
+
+        --원판당적용수량계산 : 만약을 위해 다시 한번 계산하여 저장값과 체크함 (표준인 경우만 체크)
+        IF  PCBI_R.PCBI_CAVT_GUBN = 'S' THEN
+            CASPPCBD_A20_4(I_CORP_CODE
+                          ,rt_CMMS.CMMS_STND_GUBN
+                          ,rt_CMMS.CMMS_STND_DEGR
+                          ,PCBI_R.PCBI_KIND_CODE
+                          ,PCBI_R.PCBI_PROD_WIDE
+                          ,PCBI_R.PCBI_PROD_LENG
+                          ,PCBI_R.PCBI_SHET_WIDE
+                          ,PCBI_R.PCBI_SHET_LENG
+
+                          ,v_4PRT_DATA  --4등분 계산내역
+                          ,v_6PRT_DATA  --6등분 계산내역
+                          ,v_9PRT_DATA  --9등분 계산내역
+                          ,v_APPL_CVT0  --적용CVT
+                          ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+            IF  O_MESG_CODE != 'SA-001' THEN
+                O_MESG := '원판당 적용수량 계산오류입니다. (운영자에 문의요망)'  || CHR(10)
+                       || O_MESG;
+                RAISE UD_EX_ERROR;
+            ELSE
+                O_PRGM_ID   := 'CASPPCBD_P20_4';
+                O_MESG_CODE := 'SA-002';
+            END IF;
+
+            IF  v_APPL_CVT0 <> PCBI_R.PCBI_APPL_CAVT OR
+                PCBI_R.PCBI_APPL_CAVT <= 0 THEN
+                O_MESG := '원판당 적용수량을 재계산후, 원가계산 하시기 바랍니다..' || CHR(10)
+                       || '☞ 재계산후 동일 메세지 발생시 운영자에 문의요망.' || CHR(10)
+                       || '   화면   계산 적용수량=' || PCBI_R.PCBI_APPL_CAVT    || CHR(10)
+                       || '   시스템 계산 적용수량=' || v_APPL_CVT0;
+                RAISE UD_EX_ERROR;
+            END IF;
+        END IF;
+
+        --초기화 AND 값SET
+        v_CMAT_PROC_YN := 'Y';
+        rt_CMAT.CMAT_INPT_WEGT := 0.0;
+        rt_CMAT.CMAT_NET0_WEGT := 0.0;
+
+        --사용량=다층인경우 ((층수-2) / 2)
+        IF  PCBI_R.PCBI_KIND_CODE LIKE 'MULTI%' THEN
+          --20-1차 : 실사적용하는 경우가 있으므로, 매수 저장값으로 처리함
+          --rt_CMAT.CMAT_USE0_WEGT := (PCBI_R.CMPK_FLOR_CNT0 - 2) / 2;
+            rt_CMAT.CMAT_USE0_WEGT := PCBI_R.PCBI_PCBD_CNT0;
+        ELSE
+            rt_CMAT.CMAT_USE0_WEGT := 1;
+        END IF;
+
+        --적용량=원판당 적용수량
+        rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+        rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+        rt_CMAT.CMAT_LOSS_RATE := 0.0;
+        rt_CMAT.CMAT_PDAB_RATE := 0.0;
+        rt_CMAT.CMAT_MRGN_RATE := 0.0;
+        rt_CMAT.CMAT_SCRP_RATE := 0.0;
+        rt_CMAT.CMAT_MATL_PRIC := TRUNC(PCBI_R.MATL_PRIC,trCo);
+        rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+        rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+        rt_CMAT.CMAT_UNUS_COST := 0.0;
+        rt_CMAT.CMAT_SCRP_COST := 0.0;
+        rt_CMAT.CMAT_MATL_COST := 0.0;
+        rt_CMAT.CMAT_MATL_MACT := 0.0;
+        rt_CMAT.CMAT_ADD0_COST := 0.0;
+
+        rt_CMAT.CMAT_MATL_NAME := PCBI_R.MATL_NAME;
+        rt_CMAT.CMAT_MATL_UNIT := PCBI_R.MATL_UNIT;
+        rt_CMAT.CMAT_MATL_CONS := 0.0;
+        rt_CMAT.CMAT_SCRP_CONS := 0.0;
+
+        -----------------------------------------------------------
+        --20-1차 :단면은 SCRAP계산하지 않음.
+        --        저장된 SCRAP중량은 합산중량이므로 환산처리 필요
+        --        (120 - PCB면적(dm2/EA) * 원판당CVT * 면적당중량(g/dm2))
+        -----------------------------------------------------------
+        IF  PCBI_R.PCBI_KIND_CODE NOT IN ('SINGLE','SINGLE_J') THEN
+            IF  PCBI_R.PCBI_SCRP_PRIC1 > 0 AND
+                PCBI_R.PCBI_SCRP_WEGT1 > 0 THEN
+                --원판당 SCRAP중량
+                rt_CMAT.CMAT_SCRP_WEGT := (120 - (PCBI_R.PCBI_NET0_AREA * PCBI_R.PCBI_APPL_CAVT)) * PCBI_R.PCBI_SCRP_WEGT1;
+                IF  rt_CMAT.CMAT_SCRP_WEGT < 0 THEN
+                    O_MESG := '원판당 SCRAP중량이 음수가 발생했습니다. (입력값 확인요망)'  || CHR(10)
+                           || '원판당 SCRAP중량=' || TRUNC(rt_CMAT.CMAT_SCRP_WEGT,2);
+                    RAISE UD_EX_ERROR;
+                END IF;
+                --개당환산
+                rt_CMAT.CMAT_SCRP_WEGT := TRUNC(rt_CMAT.CMAT_SCRP_WEGT / PCBI_R.PCBI_APPL_CAVT, 2);
+                rt_CMAT.CMAT_SCRP_PRIC := PCBI_R.PCBI_SCRP_PRIC1;
+                rt_CMAT.CMAT_SCRP_RATE := 100.0;
+            END IF;
+        END IF;
+        -----------------------------------------------------------
+
+        rt_CMAT.CMAT_SCRP_COST := rt_CMAT.CMAT_SCRP_WEGT * 0.001 * rt_CMAT.CMAT_SCRP_RATE * 0.01 * rt_CMAT.CMAT_SCRP_PRIC;
+        rt_CMAT.CMAT_SCRP_COST := TRUNC(rt_CMAT.CMAT_SCRP_COST,trCo);
+
+        rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_USE0_WEGT / rt_CMAT.CMAT_APPL_WEGT * rt_CMAT.CMAT_MATL_PRIC;
+        rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+        rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_COST - rt_CMAT.CMAT_SCRP_COST + rt_CMAT.CMAT_UNUS_COST;
+        rt_CMAT.CMAT_MATL_CONS := rt_CMAT.CMAT_USE0_WEGT / rt_CMAT.CMAT_APPL_WEGT;
+
+        IF  v_CMAT_PROC_YN = 'Y' THEN
+            rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+            rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+            INSERT INTO CRTBCMAT
+                  (CMAT_CORP_CODE
+                  ,CMAT_PART_NO
+                  ,CMAT_EONO
+                  ,CMAT_CUMT_NO
+                  ,CMAT_COME_CODE
+                  ,CMAT_CUMT_GUBN
+                  ,CMAT_MATL_SEQ0
+                  ,CMAT_SORT_KEY0
+                  ,CMAT_INDS_CODE
+                  ,CMAT_MATL_CORP
+                  ,CMAT_MATL_STND
+                  ,CMAT_MATL_CODE
+                  ,CMAT_MATL_APDT
+                  ,CMAT_MATL_GUBN
+                  ,CMAT_MATL_CLAS
+                  ,CMAT_MATL_MTJO
+                  ,CMAT_MATL_LKGB
+                  ,CMAT_MATL_NAME
+                  ,CMAT_MATL_UNIT
+                  ,CMAT_MATL_PRIC
+                  ,CMAT_SCRP_PRIC
+                  ,CMAT_SCRP_RATE
+                  ,CMAT_UNUS_PRIC
+                  ,CMAT_IMPT_CODE
+                  ,CMAT_IMPT_PRIC
+                  ,CMAT_IMPT_APDT
+                  ,CMAT_TRIF_RATE
+                  ,CMAT_INPT_WEGT
+                  ,CMAT_NET0_WEGT
+                  ,CMAT_USE0_WEGT
+                  ,CMAT_APPL_WEGT
+                  ,CMAT_SCRP_WEGT
+                  ,CMAT_LOSS_RATE
+                  ,CMAT_PDAB_RATE
+                  ,CMAT_MRGN_RATE
+                  ,CMAT_MATL_RATE
+                  ,CMAT_ADD0_COST
+                  ,CMAT_UNUS_COST
+                  ,CMAT_SCRP_COST
+                  ,CMAT_MATL_COST
+                  ,CMAT_MATL_MACT
+                  ,CMAT_MATL_CONS
+                  ,CMAT_SCRP_CONS
+                  ,CMAT_APPL_GUBN
+                  ,CMAT_ADD0_GUBN
+                  ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                  ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                  )
+            VALUES
+                  (I_CORP_CODE
+                  ,I_PART_NO
+                  ,I_EONO
+                  ,I_CUMT_NO
+                  ,v_COME_CODE
+                  ,'S'
+                  ,v_SORT_KEY
+                  ,v_SORT_KEY
+                  ,rt_MTCD.MTCD_INDS_CODE
+                  ,PCBI_R.PCBI_MATL_CORP
+                  ,PCBI_R.PCBI_MATL_STND
+                  ,PCBI_R.PCBI_MATL_CODE
+                  ,PCBI_R.PCBI_MATL_APDT
+                  ,PCBI_R.PCBI_MATL_GUBN
+                  ,PCBI_R.MATL_CLAS_CODE
+                  ,PCBI_R.MATL_MTJO_CODE
+                  ,CASE WHEN TRIM(PCBI_R.MATL_IMPT_CODE) > ' '
+                         AND PCBI_R.MATL_IMPT_PRIC > 0 THEN 'K' ELSE 'L' END
+                  ,rt_CMAT.CMAT_MATL_NAME
+                  ,rt_CMAT.CMAT_MATL_UNIT
+                  ,rt_CMAT.CMAT_MATL_PRIC
+                  ,rt_CMAT.CMAT_SCRP_PRIC
+                  ,rt_CMAT.CMAT_SCRP_RATE
+                  ,rt_CMAT.CMAT_UNUS_PRIC
+                  ,PCBI_R.MATL_IMPT_CODE
+                  ,PCBI_R.MATL_IMPT_PRIC
+                  ,NULL
+                  ,PCBI_R.MATL_TRIF_RATE
+                  ,rt_CMAT.CMAT_INPT_WEGT
+                  ,rt_CMAT.CMAT_NET0_WEGT
+                  ,rt_CMAT.CMAT_USE0_WEGT
+                  ,rt_CMAT.CMAT_APPL_WEGT
+                  ,rt_CMAT.CMAT_SCRP_WEGT
+                  ,rt_CMAT.CMAT_LOSS_RATE
+                  ,rt_CMAT.CMAT_PDAB_RATE
+                  ,0
+                  ,rt_CORT.CORT_MATL_RATE
+                  ,0
+                  ,rt_CMAT.CMAT_UNUS_COST
+                  ,rt_CMAT.CMAT_SCRP_COST
+                  ,rt_CMAT.CMAT_MATL_COST
+                  ,rt_CMAT.CMAT_MATL_MACT
+                  ,rt_CMAT.CMAT_MATL_CONS
+                  ,rt_CMAT.CMAT_SCRP_CONS
+                  ,'Y'
+                  ,'S'
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  )
+            ;
+        END IF;
+
+        ---------------------------------------------------------------------------
+        --부재료비 (LOOP)
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-53000';
+
+        --조회조건 SET
+        rt_PCBM.PCBM_KIND_CODE := PCBI_R.PCBI_KIND_CODE;
+        rt_PCBM.PCBM_JUMP_YN   := PCBI_R.PCBI_JUMP_YN  ;
+        rt_PCBM.PCBM_COAT_CODE := PCBI_R.PCBI_COAT_CODE;
+        rt_PCBM.PCBM_FLUX_CODE := PCBI_R.PCBI_SOLD_CODE;  --21-1차: 의미없음
+        rt_PCBM.PCBM_CSOL_CODE := PCBI_R.PCBI_SOLD_CODE;  --21-1차: 의미없음
+        rt_PCBM.PCBM_DIPP_CODE := PCBI_R.PCBI_SOLD_CODE;  --21-1차: 의미없음
+        rt_PCBM.PCBM_MAPB_CODE := PCBI_R.PCBI_SOLD_CODE;  --21-1차: 의미없음
+
+        FOR SMAT_R IN cs_SMAT LOOP
+            O_LINE_NO := 'ST-' || (53000 + SMAT_R.PCBM_MATL_SEQ0);
+
+            v_CMAT_PROC_YN := 'Y';
+            rt_CMAT.CMAT_INPT_WEGT := 0.0;
+            rt_CMAT.CMAT_NET0_WEGT := 0.0;
+            rt_CMAT.CMAT_USE0_WEGT := 0.0;
+            rt_CMAT.CMAT_APPL_WEGT := 0.0;
+            rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+            rt_CMAT.CMAT_LOSS_RATE := 0.0;
+            rt_CMAT.CMAT_PDAB_RATE := 0.0;
+            rt_CMAT.CMAT_MRGN_RATE := 0.0;
+            rt_CMAT.CMAT_SCRP_RATE := 0.0;
+            rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PCBM_MATL_PRIC1;
+            rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_COST := 0.0;
+            rt_CMAT.CMAT_SCRP_COST := 0.0;
+            rt_CMAT.CMAT_MATL_COST := 0.0;
+            rt_CMAT.CMAT_MATL_MACT := 0.0;
+            rt_CMAT.CMAT_ADD0_COST := 0.0;
+            rt_CMAT.CMAT_MATL_NAME := SMAT_R.PCBM_MATL_NAME;
+            rt_CMAT.CMAT_MATL_UNIT := SMAT_R.PCBM_MATL_UNIT;
+            rt_CMAT.CMAT_MATL_CONS := 0.0;
+            rt_CMAT.CMAT_SCRP_CONS := 0.0;
+
+            -- [주의] CHAR 필드의 경우 ''값 저장시 SPACE값으로 저장됨. -> 집계시 LP로 집계되지 않는 현상 발생함
+            rt_CMAT.CMAT_MATL_CORP := NULL;
+            rt_CMAT.CMAT_MATL_STND := NULL;
+            rt_CMAT.CMAT_MATL_CODE := NULL;
+            rt_CMAT.CMAT_MATL_APDT := NULL;
+            rt_CMAT.CMAT_MATL_GUBN := NULL;
+            rt_CMAT.CMAT_MATL_CLAS := NULL;
+            rt_CMAT.CMAT_MATL_MTJO := NULL;
+            rt_CMAT.CMAT_MATL_LKGB := 'L';
+
+            CASE
+                 ------------------------------------------
+                 -- 다층 PCB 동박
+                 ------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'COPPER' THEN
+                      IF  PCBI_R.PCBI_MATL_CODE2 > ' ' THEN
+                          IF  PCBI_R.PCBI_COOP_CNT0 <= 0 THEN
+                              O_MESG := '동박적용매수가 0(ZERO)입니다. 확인후 처리하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          rt_CMAT.CMAT_MATL_CORP := PCBI_R.PCBI_MATL_CORP2;
+                          rt_CMAT.CMAT_MATL_STND := PCBI_R.PCBI_MATL_STND2;
+                          rt_CMAT.CMAT_MATL_CODE := PCBI_R.PCBI_MATL_CODE2;
+                          rt_CMAT.CMAT_MATL_APDT := PCBI_R.PCBI_MATL_APDT2;
+                          rt_CMAT.CMAT_MATL_GUBN := PCBI_R.PCBI_MATL_GUBN2;
+                          rt_CMAT.CMAT_MATL_CLAS := PCBI_R.MATL_CLAS_CODE2;
+                          rt_CMAT.CMAT_MATL_MTJO := PCBI_R.MATL_MTJO_CODE2;
+                          rt_CMAT.CMAT_MATL_LKGB := CASE WHEN PCBI_R.MATL_IMPT_CODE2 > ' ' AND  PCBI_R.MATL_IMPT_PRIC2 > 0 THEN 'K' ELSE 'L' END;
+
+                          rt_CMAT.CMAT_MATL_NAME := PCBI_R.MATL_NAME2;
+                          rt_CMAT.CMAT_MATL_UNIT := PCBI_R.MATL_UNIT2;
+                          rt_CMAT.CMAT_MATL_PRIC := PCBI_R.MATL_PRIC2;
+                          rt_CMAT.CMAT_USE0_WEGT := PCBI_R.PCBI_COOP_CNT0;
+                          rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+
+                        --20-1차 주재료에서 모두 처리
+                        --IF  PCBI_R.PCBI_SCRP_PRIC2 > 0 AND
+                        --    PCBI_R.PCBI_SCRP_WEGT2 > 0 AND
+                        --    PCBI_R.PCBI_SCRP_RATE2 > 0 THEN
+                        --    rt_CMAT.CMAT_SCRP_WEGT := PCBI_R.PCBI_SCRP_WEGT2;
+                        --    rt_CMAT.CMAT_SCRP_PRIC := PCBI_R.PCBI_SCRP_PRIC2;
+                        --    rt_CMAT.CMAT_SCRP_RATE := PCBI_R.PCBI_SCRP_RATE2;
+                        --END IF;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 ------------------------------------------
+                 -- 다층 PCB PREPREG
+                 ------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'PREPREG' THEN
+                      IF  PCBI_R.PCBI_MATL_CODE3 > ' ' THEN
+                          IF  PCBI_R.PCBI_PREP_CNT0 <= 0 THEN
+                              O_MESG := 'PREPREG적용매수가 0(ZERO)입니다. 확인후 처리하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          rt_CMAT.CMAT_MATL_CORP := PCBI_R.PCBI_MATL_CORP3;
+                          rt_CMAT.CMAT_MATL_STND := PCBI_R.PCBI_MATL_STND3;
+                          rt_CMAT.CMAT_MATL_CODE := PCBI_R.PCBI_MATL_CODE3;
+                          rt_CMAT.CMAT_MATL_APDT := PCBI_R.PCBI_MATL_APDT3;
+                          rt_CMAT.CMAT_MATL_GUBN := PCBI_R.PCBI_MATL_GUBN3;
+                          rt_CMAT.CMAT_MATL_CLAS := PCBI_R.MATL_CLAS_CODE3;
+                          rt_CMAT.CMAT_MATL_MTJO := PCBI_R.MATL_MTJO_CODE3;
+                          rt_CMAT.CMAT_MATL_LKGB := CASE WHEN PCBI_R.MATL_IMPT_CODE3 > ' ' AND  PCBI_R.MATL_IMPT_PRIC3 > 0 THEN 'K' ELSE 'L' END;
+
+                          rt_CMAT.CMAT_MATL_NAME := PCBI_R.MATL_NAME3;
+                          rt_CMAT.CMAT_MATL_UNIT := PCBI_R.MATL_UNIT3;
+                          rt_CMAT.CMAT_MATL_PRIC := PCBI_R.MATL_PRIC3;
+                          rt_CMAT.CMAT_USE0_WEGT := PCBI_R.PCBI_PREP_CNT0;
+                          rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+
+                        --20-1차 주재료에서 모두 처리
+                        --IF  PCBI_R.PCBI_SCRP_PRIC3 > 0 AND
+                        --    PCBI_R.PCBI_SCRP_WEGT3 > 0 AND
+                        --    PCBI_R.PCBI_SCRP_RATE3 > 0 THEN
+                        --    rt_CMAT.CMAT_SCRP_WEGT := PCBI_R.PCBI_SCRP_WEGT3;
+                        --    rt_CMAT.CMAT_SCRP_PRIC := PCBI_R.PCBI_SCRP_PRIC3;
+                        --    rt_CMAT.CMAT_SCRP_RATE := PCBI_R.PCBI_SCRP_RATE3;
+                        --END IF;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 ------------------------------------------
+                 -- PATTERN : 120dm2/원판 * 단가 / 적용수량
+                 -- PATTERN (다층) : 내층=적용횟수 반영(층수/2) - 1회 (내층, 외층 구분없이 합산값으로 1ROW 처리함)
+                 ------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'PAT_MATL' THEN
+                      IF  PCBI_R.PCBI_KIND_CODE LIKE 'MULTI%' THEN
+                          -- 사용량은 조정없이 단가를 조정하도록 처리함(2018.07.04 소순철CI요청사항)
+                          rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PCBM_MATL_PRIC1 * TRUNC((PCBI_R.CMPK_FLOR_CNT0 / 2) - 1, 0) --내층
+                                                  + SMAT_R.PCBM_MATL_PRIC2;
+                          rt_CMAT.CMAT_USE0_WEGT := SMAT_R.PCBM_MATL_COEF2;
+                          rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+                      ELSE
+                          rt_CMAT.CMAT_USE0_WEGT := SMAT_R.PCBM_MATL_COEF2;
+                          rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+                      END IF;
+
+                 ------------------------------------------
+                 -- PCB표면처리비
+                 ------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'PCB_SURF' THEN
+                    --20-1차 : 면적 별도 입력처리함,
+                    --rt_CMAT.CMAT_USE0_WEGT := SMAT_R.PCBM_MATL_COEF2;
+                      rt_CMAT.CMAT_USE0_WEGT := PCBI_R.PCBI_COAT_AREA;
+                      rt_CMAT.CMAT_APPL_WEGT := PCBI_R.PCBI_APPL_CAVT;
+
+                 ------------------------------------------
+                 --21-1차: FLUX~납땜부분 UNIT공법으로 이관 : 막아둠
+                 ------------------------------------------
+/**********
+                 --------------------------
+                 -- CIRCUIT FLUX : 사용면적(dm2)=제품가로 * 제품세로 / 10000, 단위면적당 0.064g을 사용함
+                 -- [주의] 단가는 kg당 단가임. 사용량은 단가의 단위와 동일하게 사용하므로 사용량으로 처리시 /1000을 해 놓아야 함.
+                 --        이 경우, 극소값이 발생하여 사용량이 아닌 투입량으로 이동하여 처리해 함.
+                 --        사용량으로 꼭 써야 한다면, 단가를 g단위로 변경하여 (/1000) 사용량의 단위와 맞추어야 하는데, 단가가 소수 3자리 이상발생 하게 됨.
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_FLUX' THEN
+                      IF  PCBI_R.PCBI_FLUX_AREA > 0 THEN
+                       -- 면적은 입력으로 변경함.
+                       -- rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * (PCBI_R.PCBI_PROD_WIDE * PCBI_R.PCBI_PROD_LENG / 10000.0) / 1000, 5);  --단가단위와 맞추기 위해 / 1000 처리
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * PCBI_R.PCBI_FLUX_AREA / 1000, 5);  --단가단위와 맞추기 위해 / 1000 처리
+
+                          -- 극소량이 발생가능한 재료여서, 극소값 발생시 미적용 처리함.
+                          IF  rt_CMAT.CMAT_USE0_WEGT <= 0 THEN
+                              v_CMAT_PROC_YN := 'N';
+                          END IF;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 --------------------------
+                 -- CIRCUIT SMD (CREAM SOLDER)
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_SMD' THEN
+                      IF  PCBI_R.PCBI_SMDT_CNT0 + PCBI_R.PCBI_SMDB_CNT0 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * (PCBI_R.PCBI_SMDT_CNT0 + PCBI_R.PCBI_SMDB_CNT0) / 1000, 5);
+                          -- SCRAP 처리
+                          rt_CMAT.CMAT_SCRP_WEGT := SMAT_R.PCBM_MATL_COEF2 * (PCBI_R.PCBI_SMDT_CNT0 + PCBI_R.PCBI_SMDB_CNT0); --계수=g이므로 수량만 반영하면 됨
+                          rt_CMAT.CMAT_SCRP_WEGT := TRUNC(rt_CMAT.CMAT_SCRP_WEGT,2);
+                          rt_CMAT.CMAT_SCRP_PRIC := SMAT_R.PCBM_MATL_PRIC2;
+                          rt_CMAT.CMAT_SCRP_RATE := 99.0;
+                          rt_CMAT.CMAT_SCRP_COST := rt_CMAT.CMAT_SCRP_PRIC * (rt_CMAT.CMAT_SCRP_WEGT / 1000) * (rt_CMAT.CMAT_SCRP_RATE / 100);
+                          rt_CMAT.CMAT_SCRP_COST := TRUNC(rt_CMAT.CMAT_SCRP_COST,trCo);
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 -------------------------------------------
+                 -- CIRCUIT DIPPING 자동납땜: RADIAL,AXIAL POINT에 의해 결정)
+                 -------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_DIP' THEN
+                      IF  PCBI_R.PCBI_AXAL_PNT1 + PCBI_R.PCBI_AXAL_PNT2
+                        + PCBI_R.PCBI_RADL_PNT1 + PCBI_R.PCBI_RADL_PNT2 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * ( PCBI_R.PCBI_AXAL_PNT1 + PCBI_R.PCBI_AXAL_PNT2
+                                                                                   + PCBI_R.PCBI_RADL_PNT1 + PCBI_R.PCBI_RADL_PNT2) / 1000, 5);
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_DIP1' THEN
+                      IF  PCBI_R.PCBI_AXAL_PNT1 + PCBI_R.PCBI_RADL_PNT1 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * (PCBI_R.PCBI_AXAL_PNT1 + PCBI_R.PCBI_RADL_PNT1) / 1000, 5);  --소자리드부
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_DIP2' THEN
+                      IF  PCBI_R.PCBI_AXAL_PNT2 + PCBI_R.PCBI_RADL_PNT2 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * (PCBI_R.PCBI_AXAL_PNT2 + PCBI_R.PCBI_RADL_PNT2) / 1000, 5);  --접점부
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 -------------------------------------------
+                 -- CIRCUIT 수동납땜 : 수동삽입 POINT에 의해 결정
+                 -------------------------------------------
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_MAN' THEN
+                      IF  PCBI_R.PCBI_MANI_PNT1 + PCBI_R.PCBI_MANI_PNT2 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * (PCBI_R.PCBI_MANI_PNT1 + PCBI_R.PCBI_MANI_PNT2) / 1000, 5);
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_MAN1' THEN
+                      IF  PCBI_R.PCBI_MANI_PNT1 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * PCBI_R.PCBI_MANI_PNT1 / 1000, 5);  --소자리드부
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 WHEN SMAT_R.PCBM_MATL_GUBN = 'CIR_MAN2' THEN
+                      IF  PCBI_R.PCBI_MANI_PNT2 > 0 THEN
+                          rt_CMAT.CMAT_USE0_WEGT := TRUNC(SMAT_R.PCBM_MATL_COEF1 * PCBI_R.PCBI_MANI_PNT2 / 1000, 5);  --접점부
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 --------------------------
+                 -- 가공비 -> 재료비 처리항목 (자동납땜 가공비)
+                 WHEN SMAT_R.PCBM_MATL_GUBN LIKE 'SOLD_AT%' THEN
+
+                      --------------------------
+                      -- 가공비처리 START
+                      --------------------------
+                      --CURSOR조회조건의 값을 SET
+                      rt_PCBP.PCBP_KIND_CODE := PCBI_R.PCBI_KIND_CODE;
+                      rt_PCBP.PCBP_JUMP_YN   := PCBI_R.PCBI_JUMP_YN  ;
+
+                      FOR MAPR_R IN cs_MAPR LOOP
+                          v_CPRO_PROC_YN := 'Y'; --처리여부SET
+                          rt_CPRO.CPRO_LOTQ      := rt_CMMS.CMMS_LOTQ_QTY0;
+
+                          rt_CPRO.CPRO_PROC_NAME := MAPR_R.PCBP_PROC_NAME;
+                          rt_CPRO.CPRO_CAVT      := 1;
+                          rt_CPRO.CPRO_PREP_HOUR := MAPR_R.PCBP_PREP_HOUR;
+                          rt_CPRO.CPRO_PRSN_CNT0 := MAPR_R.PCBP_PRSN_CNT0;
+                          v_NET0_CYTM            := MAPR_R.PCBP_NET0_CYTM;
+                          rt_CPRO.CPRO_AEXM_RATE := 0.0;
+                          rt_CPRO.CPRO_MCHH_APDT := '';
+                          rt_CPRO.CPRO_MCHH_CODE := MAPR_R.PCBP_MCHH_CODE;
+                          rt_CPRO.CPRO_MADD_APDT := '';
+                          rt_CPRO.CPRO_MADD_CODE := '';
+
+                          IF  v_CPRO_PROC_YN = 'Y' THEN
+                              CASE
+                                   -----------------------------------------------------------
+                                   -- 자동납땜 가공비 (현재차수는, 자동납땜만 재료비로 표시함)
+                                   -- AXIAL, RADIAL, 수삽소자에 한하여 자동납땜처리 함.
+                                   -----------------------------------------------------------
+                                   WHEN MAPR_R.PCBP_PROC_GUBN = 'SOLD_AT' THEN
+                                        IF  PCBI_R.PCBI_AXAL_CNT0 + PCBI_R.PCBI_RADL_CNT0 + PCBI_R.PCBI_MANI_CNT0 <= 0 THEN
+                                            v_CPRO_PROC_YN := 'N';
+                                        END IF;
+                                   ELSE
+                                        v_CPRO_PROC_YN := 'N';
+                              END CASE;
+                          END IF;
+
+                          IF  v_CPRO_PROC_YN = 'Y' THEN
+                              --기계경비추출
+                              IF  rt_CPRO.CPRO_MCHH_CODE > ' ' THEN
+                                  --2023.03.20
+                                --CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                --            ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                --            ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                                --IF  O_MESG_CODE != 'IQ-001' THEN
+                                --    RAISE UD_EX_ERROR;
+                                --ELSE
+                                --    O_PRGM_ID   := 'CASPPCBD_P20_4';
+                                --    O_MESG_CODE := 'SA-002';
+                                --END IF;
+                                  -----------------------------------------
+                                  CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                              ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                              ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                                  IF  O_MESG_CODE != 'IQ-001' THEN
+                                      RAISE UD_EX_ERROR;
+                                  ELSE
+                                      O_PRGM_ID   := 'CASPPCBD_P20_4';
+                                      O_MESG_CODE := 'SA-002';
+                                  END IF;
+                                  -----------------------------------------
+                                  IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                                      O_MESG := '기계경비정보가 존재하지 않습니다.(자동납땜경비)';
+                                      RAISE UD_EX_ERROR;
+                                  END IF;
+                              ELSE
+                                  rt_MCIF.MCIF_MCHH_NAME := '';
+                                  rt_MCIF.MCIF_DRCT_COST := 0;
+                              END IF;
+
+                              rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                              rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                              --저장/계산은 소수단위 절사후 처리
+                              rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                              rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                              rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                              rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                              rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                              --가공비계산
+                              --[참고] 경영비율은 기준서 18차 기준에 따른 2016년도 비율로 고정 적용함 (타 공법 적용사항과 맞춤) - 소순철CI 확인사항
+                              CRSPCPRO_C01(I_CORP_CODE
+                                          ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                                       -- ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                                          ,16400                 ,70.0                  ,27.0                  ,0                     ,15.0                  ,11.0
+                                          ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                                          ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                              -- TEST
+                              -- EXEC CRSPCPRO_C01('K1',1,20,1,0,0.5,2423,16400,70,27,0,15,11,:V1,:V2,:V3,:V4,:V5,:RTN1,:RTN2,:RTN3,:RTN4,:RTN5);
+
+                              IF  O_MESG_CODE != 'IQ-001' THEN
+                                  O_MESG := '자동납땜 가공비계산 공통수식오류:' || O_MESG;
+                                  RAISE UD_EX_ERROR;
+                              ELSE
+                                  O_PRGM_ID   := 'CASPPCBD_P20_4';
+                                  O_MESG_CODE := 'SA-002';
+                              END IF;
+
+                           -- -- 산출근거 INSERT (1건 뿐이 발생하지 않아 근거저장은 제외해 놓았음)
+                           -- INSERT INTO CATBPCBA
+                           --       (PCBA_CORP_CODE
+                           --       ,PCBA_PART_NO
+                           --       ,PCBA_EONO
+                           --       ,PCBA_CUMT_NO
+                           --       ,PCBA_SEQ0
+                           --       ,PCBA_GUBN_NAME     --구분명
+                           --       ,PCBA_NET0_CYTM     --NET CT
+                           --       ,PCBA_CAVT          --CVT
+                           --       ,PCBA_PREP_HOUR     --준비시간
+                           --       ,PCBA_PRSN_CNT0     --인원
+                           --       ,PCBA_IBR0_COST     --노무비
+                           --       ,PCBA_EXPM_COST     --경비
+                           --       ,PCBA_GME0_COST     --일반관리비
+                           --       ,PCBA_PROF_COST     --이윤
+                           --       ,PCBA_APPL_CAVT     --적용CVT
+                           --       ,PCBA_APPL_PRIC     --적용단가
+                           --       ,PCBA_UPDT_CMAN     --수정자
+                           --       ,PCBA_UPDT_DATE     --수정일
+                           --       ,PCBA_INIT_CMAN     --등록자
+                           --       ,PCBA_INIT_DATE     --등록일
+                           --       )
+                           -- VALUES
+                           --       (I_CORP_CODE
+                           --       ,I_PART_NO
+                           --       ,I_EONO
+                           --       ,I_CUMT_NO
+                           --       ,SMAT_R.PCBM_MATL_SEQ0
+                           --       ,rt_CPRO.CPRO_PROC_NAME
+                           --       ,rt_CPRO.CPRO_NET0_CYTM
+                           --       ,rt_CPRO.CPRO_CAVT
+                           --       ,rt_CPRO.CPRO_PREP_HOUR
+                           --       ,rt_CPRO.CPRO_PRSN_CNT0
+                           --       ,rt_CPRO.CPRO_IBR0_COST
+                           --       ,rt_CPRO.CPRO_EXPM_COST
+                           --       ,rt_CPRO.CPRO_GME0_COST
+                           --       ,rt_CPRO.CPRO_PROF_COST
+                           --       ,  --적용CVT  : 처리시, 아래 수식을 참고하여 작성필요
+                           --       ,  --적용단가 : 처리시, 아래 수식을 참고하여 작성필요
+                           --       ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                           --       ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                           --       );
+                           --
+                          END IF;
+
+                          v_CMAT_PROC_YN := v_CPRO_PROC_YN;
+
+                      END LOOP;
+                      --------------------------
+                      -- 가공비처리 END
+                      --------------------------
+
+                    -- 적용단가 = (가공비 / CVT) / 재관비율
+                    -- CVT : 별도 표기, 재관비율은 미리 나누지 않고 재관비율을 0 적용으로 변경함.
+                      rt_CMAT.CMAT_MATL_PRIC := (  rt_CPRO.CPRO_IBR0_COST
+                                                 + rt_CPRO.CPRO_EXPM_COST
+                                                 + rt_CPRO.CPRO_GME0_COST
+                                                 + rt_CPRO.CPRO_PROF_COST
+                                                );
+                      rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_CMAT.CMAT_MATL_PRIC,trCo);
+                      rt_CMAT.CMAT_USE0_WEGT := 1.0;
+                      rt_CMAT.CMAT_APPL_WEGT := CASE WHEN TRUNC( (200 / PCBI_R.PCBI_PROD_WIDE) * (200 / PCBI_R.PCBI_PROD_LENG), 0) > 0 THEN
+                                                          TRUNC( (200 / PCBI_R.PCBI_PROD_WIDE) * (200 / PCBI_R.PCBI_PROD_LENG), 0)
+                                                     ELSE 1
+                                                END;
+**********/
+
+                 ELSE
+                      v_CMAT_PROC_YN := 'N';
+            END CASE;
+
+            IF  v_CMAT_PROC_YN = 'Y' THEN
+                O_LINE_NO := 'ST-' || (59000 + SMAT_R.PCBM_MATL_SEQ0);
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                --------------------------------------------
+                --재료비 계산
+                --  SCARP만 발생하는 재료는 예외 [참고] CREAM SOLDER일 경우 SCRAP발생하나, 포함하여 계산하도록 하여 현재 차수에서 발생하지 않음.
+                --------------------------------------------
+                IF  SMAT_R.PCBM_MATL_GUBN = 'CIR_SMDS' THEN
+                    rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_SCRP_COST * (-1);
+                ELSE
+                  --IF  rt_CMAT.CMAT_USE0_WEGT <= 0 AND rt_CMAT.CMAT_NET0_WEGT <= 0 AND rt_CMAT.CMAT_INPT_WEGT <= 0 THEN
+                  --    O_MESG := '중량정보가 산출되지 않았습니다. (운영자에 문의요망)' || CHR(10)
+                  --           || '  재료명=' || SMAT_R.PCBM_MATL_NAME;
+                  --    RAISE UD_EX_ERROR;
+                  --END IF;
+
+                    CASE WHEN rt_CMAT.CMAT_INPT_WEGT > 0 THEN
+                              rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_INPT_WEGT * 0.001
+                                                      / CASE WHEN rt_CMAT.CMAT_APPL_WEGT > 0 THEN rt_CMAT.CMAT_APPL_WEGT ELSE 1 END;
+
+                         WHEN rt_CMAT.CMAT_USE0_WEGT > 0 THEN
+                              rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT
+                                                      / CASE WHEN rt_CMAT.CMAT_APPL_WEGT > 0 THEN rt_CMAT.CMAT_APPL_WEGT ELSE 1 END;
+
+                         WHEN rt_CMAT.CMAT_NET0_WEGT > 0 THEN
+                              rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_NET0_WEGT * 0.001
+                                                      / CASE WHEN rt_CMAT.CMAT_APPL_WEGT > 0 THEN rt_CMAT.CMAT_APPL_WEGT ELSE 1 END;
+                         ELSE NULL;
+                    END CASE;
+                END IF;
+
+                rt_CMAT.CMAT_SCRP_COST := rt_CMAT.CMAT_SCRP_WEGT * 0.001 * rt_CMAT.CMAT_SCRP_RATE * 0.01 * rt_CMAT.CMAT_SCRP_PRIC;
+                rt_CMAT.CMAT_SCRP_COST := TRUNC(rt_CMAT.CMAT_SCRP_COST,trCo);
+
+                rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_COST - rt_CMAT.CMAT_SCRP_COST + rt_CMAT.CMAT_UNUS_COST;
+
+                --동박, PREPREG는 계산상수 저장필요
+                IF (SMAT_R.PCBM_MATL_GUBN = 'COPPER'  AND PCBI_R.PCBI_MATL_CODE2 > ' ') OR
+                   (SMAT_R.PCBM_MATL_GUBN = 'PREPREG' AND PCBI_R.PCBI_MATL_CODE3 > ' ') THEN
+                    rt_CMAT.CMAT_MATL_CONS := rt_CMAT.CMAT_USE0_WEGT / rt_CMAT.CMAT_APPL_WEGT;
+                END IF;
+
+                --재관비
+                IF  SMAT_R.PCBM_MATL_GUBN LIKE 'SOLD_AT%' THEN
+                    rt_CMAT.CMAT_MATL_RATE := 0.0;
+                ELSE
+                    rt_CMAT.CMAT_MATL_RATE := rt_CORT.CORT_MATL_RATE;
+                END IF;
+                rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CMAT.CMAT_MATL_RATE * 0.01);
+                rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+                INSERT INTO CRTBCMAT
+                      (CMAT_CORP_CODE
+                      ,CMAT_PART_NO
+                      ,CMAT_EONO
+                      ,CMAT_CUMT_NO
+                      ,CMAT_COME_CODE
+                      ,CMAT_CUMT_GUBN
+                      ,CMAT_MATL_SEQ0
+                      ,CMAT_SORT_KEY0
+                      ,CMAT_INDS_CODE
+                      ,CMAT_MATL_CORP
+                      ,CMAT_MATL_STND
+                      ,CMAT_MATL_CODE
+                      ,CMAT_MATL_APDT
+                      ,CMAT_MATL_GUBN
+                      ,CMAT_MATL_CLAS
+                      ,CMAT_MATL_MTJO
+                      ,CMAT_MATL_LKGB
+                      ,CMAT_MATL_NAME
+                      ,CMAT_MATL_UNIT
+                      ,CMAT_MATL_PRIC
+                      ,CMAT_SCRP_PRIC
+                      ,CMAT_SCRP_RATE
+                      ,CMAT_UNUS_PRIC
+                      ,CMAT_IMPT_CODE
+                      ,CMAT_IMPT_PRIC
+                      ,CMAT_IMPT_APDT
+                      ,CMAT_TRIF_RATE
+                      ,CMAT_INPT_WEGT
+                      ,CMAT_NET0_WEGT
+                      ,CMAT_USE0_WEGT
+                      ,CMAT_APPL_WEGT
+                      ,CMAT_SCRP_WEGT
+                      ,CMAT_LOSS_RATE
+                      ,CMAT_PDAB_RATE
+                      ,CMAT_MRGN_RATE
+                      ,CMAT_MATL_RATE
+                      ,CMAT_ADD0_COST
+                      ,CMAT_UNUS_COST
+                      ,CMAT_SCRP_COST
+                      ,CMAT_MATL_COST
+                      ,CMAT_MATL_MACT
+                      ,CMAT_MATL_CONS
+                      ,CMAT_SCRP_CONS
+                      ,CMAT_APPL_GUBN
+                      ,CMAT_ADD0_GUBN
+                      ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                      ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CMAT.CMAT_MATL_CORP
+                      ,rt_CMAT.CMAT_MATL_STND
+                      ,rt_CMAT.CMAT_MATL_CODE
+                      ,rt_CMAT.CMAT_MATL_APDT
+                      ,rt_CMAT.CMAT_MATL_GUBN
+                      ,rt_CMAT.CMAT_MATL_CLAS
+                      ,rt_CMAT.CMAT_MATL_MTJO
+                      ,rt_CMAT.CMAT_MATL_LKGB
+                      ,rt_CMAT.CMAT_MATL_NAME
+                      ,rt_CMAT.CMAT_MATL_UNIT
+                      ,rt_CMAT.CMAT_MATL_PRIC
+                      ,rt_CMAT.CMAT_SCRP_PRIC
+                      ,rt_CMAT.CMAT_SCRP_RATE
+                      ,rt_CMAT.CMAT_UNUS_PRIC
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,rt_CMAT.CMAT_INPT_WEGT
+                      ,rt_CMAT.CMAT_NET0_WEGT
+                      ,rt_CMAT.CMAT_USE0_WEGT
+                      ,rt_CMAT.CMAT_APPL_WEGT
+                      ,rt_CMAT.CMAT_SCRP_WEGT
+                      ,rt_CMAT.CMAT_LOSS_RATE
+                      ,rt_CMAT.CMAT_PDAB_RATE
+                      ,rt_CMAT.CMAT_MRGN_RATE
+                      ,rt_CMAT.CMAT_MATL_RATE
+                      ,0
+                      ,rt_CMAT.CMAT_UNUS_COST
+                      ,rt_CMAT.CMAT_SCRP_COST
+                      ,rt_CMAT.CMAT_MATL_COST
+                      ,rt_CMAT.CMAT_MATL_MACT
+                      ,rt_CMAT.CMAT_MATL_CONS
+                      ,rt_CMAT.CMAT_SCRP_CONS
+                      ,'Y'
+                      ,'S'
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                ;
+            END IF;
+
+        END LOOP;
+
+        ---------------------------------------------------------------------------
+        --6.가공비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO  := 'ST-60000';
+        v_SORT_KEY := 0;
+
+        --CURSOR조회조건의 값을 SET
+        rt_PCBP.PCBP_KIND_CODE := PCBI_R.PCBI_KIND_CODE;
+        rt_PCBP.PCBP_JUMP_YN   := PCBI_R.PCBI_JUMP_YN  ;
+        rt_PCBP.PCBP_TOPP_GROP := CASE WHEN (PCBI_R.PCBI_SMDT_CNT0 * PCBI_R.PCBI_ARRA_CAVT) <= 177 THEN 'GRP_A' ELSE 'GRP_B' END;
+        rt_PCBP.PCBP_BOTT_GROP := CASE WHEN (PCBI_R.PCBI_SMDB_CNT0 * PCBI_R.PCBI_ARRA_CAVT) <= 177 THEN 'GRP_A' ELSE 'GRP_B' END;
+
+        FOR SPRO_R IN cs_SPRO LOOP
+            O_LINE_NO := 'ST-' || (61000 + SPRO_R.PCBP_PROC_SEQ0);
+
+            v_CPRO_PROC_YN := 'Y'; --처리여부SET
+            rt_CPRO.CPRO_LOTQ      := rt_CMMS.CMMS_LOTQ_QTY0;
+
+            --다층인 경우 공정반복에 따른 명칭분리
+            IF  SPRO_R.PCBP_PROC_GUBN LIKE 'PAT_MI%' THEN
+                rt_CPRO.CPRO_PROC_NAME := SPRO_R.PCBP_PROC_NAME || CASE WHEN v_PCBD_CNT0 > 1 THEN ' #' || SPRO_R.RN ELSE '' END;
+            ELSE
+                rt_CPRO.CPRO_PROC_NAME := SPRO_R.PCBP_PROC_NAME;
+            END IF;
+            rt_CPRO.CPRO_CAVT      := SPRO_R.PCBP_CAVT     ;
+            rt_CPRO.CPRO_PREP_HOUR := SPRO_R.PCBP_PREP_HOUR;
+            rt_CPRO.CPRO_PRSN_CNT0 := SPRO_R.PCBP_PRSN_CNT0;
+            v_NET0_CYTM            := SPRO_R.PCBP_NET0_CYTM;
+            rt_CPRO.CPRO_AEXM_RATE := 0.0;
+            rt_CPRO.CPRO_MCHH_APDT := '';
+            rt_CPRO.CPRO_MCHH_CODE := SPRO_R.PCBP_MCHH_CODE;
+            rt_CPRO.CPRO_MADD_APDT := '';
+            rt_CPRO.CPRO_MADD_CODE := '';
+
+            --수량 발생(적용)한 공정에 대해서만 처리함
+            IF (SPRO_R.PCBP_PROC_GUBN = 'PAT_D20'  AND PCBI_R.PCBI_HOLE_CNT1 <= 0) OR  --PATTERN가공_홀가공_정홀
+               (SPRO_R.PCBP_PROC_GUBN = 'PAT_D30'  AND PCBI_R.PCBI_HOLE_CNT2 <= 0) OR  --PATTERN가공_홀가공_장공홀
+               (SPRO_R.PCBP_PROC_GUBN = 'PAT_MO10' AND PCBI_R.PCBI_HOLE_CNT1 <= 0) OR  --PATTERN가공_외층_홀가공_정홀
+               (SPRO_R.PCBP_PROC_GUBN = 'PAT_MO20' AND PCBI_R.PCBI_HOLE_CNT2 <= 0) OR  --PATTERN가공_외층_홀가공_장공홀
+               (SPRO_R.PCBP_PROC_GUBN = 'SMD_ATOP' AND PCBI_R.PCBI_SMDT_CNT0 <= 0) OR  --SMD_A그룹_TOP
+               (SPRO_R.PCBP_PROC_GUBN = 'SMD_BTOP' AND PCBI_R.PCBI_SMDT_CNT0 <= 0) OR  --SMD_B그룹_TOP
+               (SPRO_R.PCBP_PROC_GUBN = 'SMD_ABOT' AND PCBI_R.PCBI_SMDB_CNT0 <= 0) OR  --SMD_A그룹_BOTTOM
+               (SPRO_R.PCBP_PROC_GUBN = 'SMD_BBOT' AND PCBI_R.PCBI_SMDB_CNT0 <= 0) OR  --SMD_B그룹_BOTTOM
+               (SPRO_R.PCBP_PROC_GUBN = 'AUTO_SEQ' AND PCBI_R.PCBI_SEQN_CNT0 <= 0) OR  --SEQUENCER
+               (SPRO_R.PCBP_PROC_GUBN = 'AUTO_AXI' AND PCBI_R.PCBI_AXAL_CNT0 <= 0) OR  --AXIAL
+               (SPRO_R.PCBP_PROC_GUBN = 'AUTO_RAD' AND PCBI_R.PCBI_RADL_CNT0 <= 0) OR  --RADIAL
+               (SPRO_R.PCBP_PROC_GUBN = 'MANU_IST' AND PCBI_R.PCBI_MANI_CNT0 <= 0) OR  --수동삽입
+               (SPRO_R.PCBP_PROC_GUBN = 'SOLD_MN'  AND PCBI_R.PCBI_MAPB_TERM1 + PCBI_R.PCBI_MAPB_TERM2
+                                                     + PCBI_R.PCBI_MAPB_TERM3 + PCBI_R.PCBI_MAPB_TERM4 <= 0) OR --수납땜
+               (SPRO_R.PCBP_PROC_GUBN = 'SOLD_PA'  AND PCBI_R.PCBI_PAPB_YN <> 'Y') THEN
+                v_CPRO_PROC_YN := 'N';
+            END IF;
+
+            IF  v_CPRO_PROC_YN = 'Y' THEN
+                CASE
+                     --------------------------
+                     -- PATTERN가공 CT = 공정별 PATTERN가공 CT * (120 / 원판당 적용수량) - dm2 단위임.
+                     -- PATTERN가공 (단면)
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'PAT_S%' THEN
+                          v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * (120.0 / PCBI_R.PCBI_APPL_CAVT);
+
+                     -- PATTERN가공 (양면) - 단, 홀가공은 홀 수에 따라 적용함
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'PAT_D%' THEN
+                          CASE WHEN SPRO_R.PCBP_PROC_GUBN = 'PAT_D20' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * PCBI_R.PCBI_HOLE_CNT1;
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'PAT_D30' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * PCBI_R.PCBI_HOLE_CNT2;
+                               ELSE
+                                      v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * (120.0 / PCBI_R.PCBI_APPL_CAVT);
+                          END CASE;
+
+                     -- PATTERN가공 (다층) - 단, 홀가공은 홀 수에 따라 적용함
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'PAT_M%' THEN
+                          CASE WHEN SPRO_R.PCBP_PROC_GUBN = 'PAT_MO10' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * PCBI_R.PCBI_HOLE_CNT1;
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'PAT_MO20' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * PCBI_R.PCBI_HOLE_CNT2;
+                               ELSE
+                                    v_NET0_CYTM := SPRO_R.PCBP_NET0_COEF1 * (120.0 / PCBI_R.PCBI_APPL_CAVT);
+                          END CASE;
+
+                     --------------------------
+                     --21-1차: 자삽~납땜부분 UNIT공법으로 이관 : 막아둠
+                     --------------------------
+                     /**********
+                     -- 자삽_SMD
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'SMD_%' THEN
+                          IF (rt_PCBP.PCBP_TOPP_GROP = 'GRP_A' OR rt_PCBP.PCBP_BOTT_GROP = 'GRP_A') AND
+                              PCBI_R.PCBI_ARRA_CAVT <= 0 THEN
+                              O_MESG := 'SMD ARRAY CVT를 확인하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          CASE WHEN SPRO_R.PCBP_PROC_GUBN = 'SMD_ATOP' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM;  --A GROUP은 수량반영하지 않음(전체 CVT에 대한 CT값임)
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'SMD_ABOT' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM;  --A GROUP은 수량반영하지 않음(전체 CVT에 대한 CT값임)
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'SMD_BTOP' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_SMDT_CNT0;
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'SMD_BBOT' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_SMDB_CNT0;
+                               ELSE
+                                    v_NET0_CYTM := 0;
+                          END CASE;
+
+                          -- A그룹 CVT 입력값 반영
+                          IF  SPRO_R.PCBP_PROC_GUBN LIKE 'SMD_A%' THEN
+                              rt_CPRO.CPRO_CAVT := PCBI_R.PCBI_ARRA_CAVT;
+                          END IF;
+
+                     --------------------------
+                     -- 자삽_SEQUENCER, AXIAL, RADIAL
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'AUTO_%' THEN
+                          CASE WHEN SPRO_R.PCBP_PROC_GUBN = 'AUTO_SEQ' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_SEQN_CNT0;
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'AUTO_AXI' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_AXAL_CNT0;
+                               WHEN SPRO_R.PCBP_PROC_GUBN = 'AUTO_RAD' THEN v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_RADL_CNT0;
+                               ELSE
+                                    v_NET0_CYTM := 0;
+                          END CASE;
+
+                     --------------------------
+                     -- 수삽 : SCREW MOUNTING합산하여 처리 [참고]SCREW MOUNTING시 기본 CT에 추가 +2초
+                     WHEN SPRO_R.PCBP_PROC_GUBN LIKE 'MANU_%' THEN
+                          v_NET0_CYTM := (SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_MANI_CNT0)
+                                       + (PCBI_R.PCBI_MNTS_CNT0 * 2);
+
+                     --------------------------
+                     -- 납땜_수납땜 소자수1->6초 1개 추가시마다 +2
+                     -- [참고] 자동납땜은 재료비로 처리함
+                     WHEN SPRO_R.PCBP_PROC_GUBN = 'SOLD_MN' THEN
+                          v_NET0_CYTM := (SPRO_R.PCBP_NET0_CYTM    ) * PCBI_R.PCBI_MAPB_TERM1
+                                       + (SPRO_R.PCBP_NET0_CYTM + 2) * PCBI_R.PCBI_MAPB_TERM2
+                                       + (SPRO_R.PCBP_NET0_CYTM + 4) * PCBI_R.PCBI_MAPB_TERM3
+                                       + (SPRO_R.PCBP_NET0_CYTM + 6) * PCBI_R.PCBI_MAPB_TERM4;
+
+                     -- 납땜_부분자동납땜
+                     WHEN SPRO_R.PCBP_PROC_GUBN = 'SOLD_PA' THEN
+                          v_NET0_CYTM := SPRO_R.PCBP_NET0_CYTM * PCBI_R.PCBI_PAPB_CNT0;
+                     **********/
+
+                     ELSE
+                          v_CPRO_PROC_YN := 'N';
+
+                END CASE;
+            END IF;
+
+            IF  v_CPRO_PROC_YN = 'Y' THEN
+                O_LINE_NO := 'ST-' || (69000 + SPRO_R.PCBP_PROC_SEQ0);
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                 IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                    O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.';
+                    RAISE UD_EX_ERROR;
+                END IF;
+
+                --기계경비추출
+                IF  rt_CPRO.CPRO_MCHH_CODE > ' ' THEN
+                    --2023.03.20
+                    /****
+                    CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPPCBD_P20_4';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    ****/
+                    -----------------------------------------
+                    CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPPCBD_P20_4';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    -----------------------------------------
+                    IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                        O_MESG := '기계경비정보가 존재하지 않습니다.';
+                        RAISE UD_EX_ERROR;
+                    END IF;
+                ELSE
+                    rt_MCIF.MCIF_MCHH_NAME := '';
+                    rt_MCIF.MCIF_DRCT_COST := 0;
+                END IF;
+
+                rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                --저장/계산은 소수단위 절사후 처리
+                rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                --가공비계산
+                CRSPCPRO_C01(I_CORP_CODE
+                            ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                            ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                            ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                            ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                IF  O_MESG_CODE != 'IQ-001' THEN
+                    O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                    RAISE UD_EX_ERROR;
+                ELSE
+                    O_PRGM_ID   := 'CASPPCBD_P20_4';
+                    O_MESG_CODE := 'SA-002';
+                END IF;
+
+                -----------------------------------
+                -- 다층 내층공정 :적용횟수반영 -> 공정을 나누어 출력하는 것으로 변경함.
+                -----------------------------------
+                /****
+                IF  SPRO_R.PCBP_PROC_GUBN LIKE 'PAT_MI%' THEN
+                    rt_CPRO.CPRO_APPL_CNT0 := PCBI_R.PCBI_PCBD_CNT0;
+
+                    IF  rt_CPRO.CPRO_APPL_CNT0 > 1 THEN
+                        rt_CPRO.CPRO_PROC_COST := rt_CPRO.CPRO_PROC_COST * rt_CPRO.CPRO_APPL_CNT0;
+                        rt_CPRO.CPRO_IBR0_COST := rt_CPRO.CPRO_IBR0_COST * rt_CPRO.CPRO_APPL_CNT0;
+                        rt_CPRO.CPRO_EXPM_COST := rt_CPRO.CPRO_EXPM_COST * rt_CPRO.CPRO_APPL_CNT0;
+                        rt_CPRO.CPRO_GME0_COST := rt_CPRO.CPRO_GME0_COST * rt_CPRO.CPRO_APPL_CNT0;
+                        rt_CPRO.CPRO_PROF_COST := rt_CPRO.CPRO_PROF_COST * rt_CPRO.CPRO_APPL_CNT0;
+                    END IF;
+                ELSE
+                    rt_CPRO.CPRO_APPL_CNT0 := 1;
+                END IF;
+                ****/
+                -----------------------------------
+
+                INSERT INTO CRTBCPRO
+                      (CPRO_CORP_CODE
+                      ,CPRO_PART_NO
+                      ,CPRO_EONO
+                      ,CPRO_CUMT_NO
+                      ,CPRO_COME_CODE
+                      ,CPRO_CUMT_GUBN
+                      ,CPRO_SEQ0
+                      ,CPRO_SORT_KEY0
+                      ,CPRO_INDS_CODE
+                      ,CPRO_PROC_NAME
+                      ,CPRO_MCHH_NAME
+                      ,CPRO_VEND_CODE
+                      ,CPRO_VEND_DATE
+                      ,CPRO_CORT_DATE
+                      ,CPRO_LOTQ
+                      ,CPRO_CAVT
+                      ,CPRO_PREP_HOUR
+                      ,CPRO_PRSN_CNT0
+                      ,CPRO_NET0_CYTM
+                      ,CPRO_MCHH_COST
+                      ,CPRO_PAY0_RATE
+                      ,CPRO_IDRT_RATE
+                      ,CPRO_GME0_RATE
+                      ,CPRO_PROF_RATE
+                      ,CPRO_ET00_RATE
+                      ,CPRO_AEXM_RATE
+                      ,CPRO_RUN0_COST
+                      ,CPRO_PROD_CONT
+                      ,CPRO_IBR0_COST
+                      ,CPRO_EXPM_COST
+                      ,CPRO_PROC_COST
+                      ,CPRO_GME0_COST
+                      ,CPRO_PROF_COST
+                      ,CPRO_APPL_CNT0  --적용횟수
+                      ,CPRO_APPL_GUBN
+                      ,CPRO_ADD0_GUBN
+                      ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                      ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                      ,CPRO_MCHH_CNT0
+                      ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                      ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CPRO.CPRO_PROC_NAME
+                      ,rt_CPRO.CPRO_MCHH_NAME
+                      ,rt_SPMS.SPMS_VEND_CODE
+                      ,rt_SPMS.SPMS_VEND_APFR
+                      ,rt_SPMS.SPMS_BASE_DATE
+                      ,rt_CPRO.CPRO_LOTQ
+                      ,rt_CPRO.CPRO_CAVT
+                      ,rt_CPRO.CPRO_PREP_HOUR
+                      ,rt_CPRO.CPRO_PRSN_CNT0
+                      ,rt_CPRO.CPRO_NET0_CYTM
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CORT.CORT_PAY0_RATE
+                      ,rt_CORT.CORT_IDRT_RATE
+                      ,rt_CORT.CORT_GME0_RATE
+                      ,rt_CORT.CORT_PROF_RATE
+                      ,rt_CORT.CORT_ET00_RATE
+                      ,rt_CPRO.CPRO_AEXM_RATE
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CMMS.CMMS_PROD_CNT0
+                      ,rt_CPRO.CPRO_IBR0_COST
+                      ,rt_CPRO.CPRO_EXPM_COST
+                      ,rt_CPRO.CPRO_PROC_COST
+                      ,rt_CPRO.CPRO_GME0_COST
+                      ,rt_CPRO.CPRO_PROF_COST
+                      ,rt_CPRO.CPRO_APPL_CNT0  --적용횟수
+                      ,'Y'
+                      ,'S'
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      )
+                ;
+
+            END IF;
+
+        END LOOP;
+
+    END LOOP; --INPUT LOOP
+
+    ---------------------------------------------------------------------------
+    --7.계산 후처리
+    ---------------------------------------------------------------------------
+
+    --표준공통율생성
+    O_LINE_NO := 'ST-71000';
+    CRSPCAPL_I01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,rt_CORT.CORT_PAY0_RATE
+                ,rt_CORT.CORT_IDRT_RATE
+                ,rt_CORT.CORT_GME0_RATE
+                ,rt_CORT.CORT_MATL_RATE
+                ,rt_CORT.CORT_PROF_RATE
+                ,rt_CORT.CORT_ET00_RATE
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '표준적용율 생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPCBD_P20_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --실사인경우 재계산처리
+    O_LINE_NO := 'ST-72000';
+    CRSPREAL_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,'A',v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '실사 재계산 오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPCBD_P20_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --집계
+    O_LINE_NO := 'ST-73000';
+    CRSPSPCR_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '집계생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPCBD_P20_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -- 계산시 SUB PART 전체 SORT순번 CLEAR처리
+    UPDATE CRTBCMAT
+       SET CMAT_SORT_SUB0 = NULL
+     WHERE CMAT_CORP_CODE = I_CORP_CODE
+       AND CMAT_PART_NO   = I_PART_NO
+       AND CMAT_EONO      = I_EONO
+       AND CMAT_CUMT_NO   = I_CUMT_NO
+    ;
+
+    UPDATE CRTBCPRO
+       SET CPRO_SORT_SUB0 = NULL
+     WHERE CPRO_CORP_CODE = I_CORP_CODE
+       AND CPRO_PART_NO   = I_PART_NO
+       AND CPRO_EONO      = I_EONO
+       AND CPRO_CUMT_NO   = I_CUMT_NO
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || CHR(10) || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
