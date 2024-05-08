@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/ESAAUMM" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE ESAAUMM (
+	SYS_ID VARCHAR(18) NOT NULL,
+	MENU_CD VARCHAR(18) NOT NULL,
+	UP_MENU_CD VARCHAR(18),
+	LINK_URL VARCHAR(2000),
+	USR_CLS VARCHAR(18),
+	MENU_TYP VARCHAR(18),
+	SORT_ORD NUMBER,
+	USE_YN CHAR(1),
+	REM VARCHAR(128),
+	STS CHAR(1) DEFAULT 'C',
+	REG_ID VARCHAR(18),
+	REG_DT TIMESTAMP(0) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP(0),
+	MOD_ID VARCHAR(18),
+	MOD_DT TIMESTAMP(0) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP(0),
+	CONSTRAINT ESAAUMM_PK PRIMARY KEY (SYS_ID,MENU_CD)
+)
+  ]]>
+ </sql>
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  SYS_ID
+ ,MENU_CD
+ ,UP_MENU_CD
+ ,LINK_URL
+ ,USR_CLS
+ ,MENU_TYP
+ ,SORT_ORD
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) AS (
+       SELECT '100', 'CMT00000', 'ROOT'    , ''                                     , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'CMT10010', 'CMT00000', 'ui/bp/approval/em-aprv-list.html'     , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'CMT10020', 'CMT00000', 'ui/bp/approval/em-aprv-rslt-mgt.html' , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'CMT10030', 'CMT00000', 'ui/bp/approval/em-aprv-line-mgt.html' , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'CMT10070', 'CMT00000', 'ui/bp/approval/em-aprv-regi-aprv.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL 
+ UNION SELECT '100', 'PCA00110', 'PCA00000', 'ui/bp/tcams/cr/cr06/em-cr06-01.html'  , 'B', NULL, 9, 'Y', NULL, 'U', 'ADMIN'   , NULL, 'GE00059' , NULL FROM DUAL
+ UNION SELECT '100', 'PCA00000', 'ROOT'    , ''                                     , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00010', 'PCA00000', 'ui/bp/tcams/cr/cr01/em-cr01.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00020', 'PCA00000', 'ui/bp/tcams/cd/cd03/em-cd03.html?cost_gubn=RR', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00040', 'PCA00000', 'ui/bp/tcams/cd/cd16/em-cd16.html?emst_cost_gubn=R1&isView=Y', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00060', 'PCA00000', 'modules/bp/wcams/cp/cp24/EMCP24.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00080', 'PCA00000', 'ui/bp/tcams/cr/cr04/em-cr04.html?', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00100', 'PCA00000', 'ui/bp/tcams/cr/cr05/em-cr05.html?', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCA00110', 'PCA00000', 'ui/bp/tcams/cr/cr06/em-cr06-01.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM00000', 'ROOT', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM10000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM11000', 'ADM10000', 'modules/bp/admin/org/EMSystem.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM12000', 'ADM10000', 'modules/bp/admin/org/EMOrgMgt.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM14000', 'ADM10000', 'modules/bp/admin/org/EMDept.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM15000', 'ADM10000', 'modules/bp/admin/org/EMOperOrgMgt.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM16000', 'ADM10000', 'modules/bp/admin/org/EMJobMappingUser.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM17000', 'ADM10000', 'modules/bp/admin/org/EMPurchaseDept.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM20000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM21000', 'ADM20000', 'ui/bp/admin/code/em-common-code.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM23000', 'ADM20000', 'ui/bp/admin/code/em-doc-number.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM30000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM31000', 'ADM30000', 'ui/bp/admin/role/em-authority-mgt.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM32000', 'ADM30000', 'ui/bp/admin/menu/em-menu.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM50000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM51000', 'ADM50000', 'ui/bp/admin/user/em-user.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM80000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM81000', 'ADM80000', 'ui/bp/admin/boardMgt/em-board-manager.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM94100', 'ADM94000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADM99999', 'ROOT', 'ui/bp/admin/role/em-authority-mgt.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMB0000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMB1000', 'ADMB0000', 'ui/bp/admin/aprv/em-aprv-regulation-mgt.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF0000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1200', 'ADMF0000', 'ui/bp/admin/log/em-log-list.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1300', 'ADMF0000', 'ui/bp/tcams/ca/genl/em-cagenl-p22.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1400', 'ADMF0000', 'ui/bp/developer/guide/grid/em-tree-grid-guide.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1401', 'ADMF0000', 'ui/bp/developer/guide/grid/em-grid-aggregate-guide.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1402', 'ADMF0000', 'ui/bp/developer/guide/popup/em-common-popup-guide.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1501', 'ADMF0000', 'ui/mcams/pf/em-pf10.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMF1601', 'ADMF0000', 'ui/mcams/pf/pf10/em-pf10.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMG0000', 'ADM00000', '', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'ADMG0010', 'ADMG0000', 'modules/bp/wcams/ci/ci11/EMCI11.swf', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCX00020', 'PCX00000', 'ui/bp/tcams/cd/cd02/em-cd02.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL 
+ UNION SELECT '100', 'PCF00020', 'PCF00000', 'ui/bp/tcams/cd/cd09/em-cd09.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
+ UNION SELECT '100', 'PCC00000', 'ROOT'    , ''                                , 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL 
+ UNION SELECT '100', 'PCC00110', 'PCC00000', 'ui/bp/tcams/ci/ci11/em-ci11.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL 
+ UNION SELECT '100', 'PCW00010', 'PCW00000', 'ui/bp/tcams/cw/cw01/em-cw01.html'     ,'B', NULL, 1, 'Y', NULL, 'U', 'ADMIN'   ,'2020-02-12 10:41:54.000','TSA00024','2023-02-28 16:42:59.000' FROM DUAL
+ UNION SELECT '100', 'PCW00040', 'PCW00000', 'ui/bp/tcams/cw/cw04/em-cw04.html'     ,'B', NULL, 4, 'Y', NULL, 'C', 'ADMIN'   ,'2024-03-19 09:51:00.000','SYSTEMPG','2024-03-19 09:51:00.000' FROM DUAL
+)
+SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN ESAAUMM B
+       ON    B.SYS_ID  = A.SYS_ID
+         AND B.MENU_CD = A.MENU_CD
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO ESAAUMM (
+  SYS_ID
+ ,MENU_CD
+ ,UP_MENU_CD
+ ,LINK_URL
+ ,USR_CLS
+ ,MENU_TYP
+ ,SORT_ORD
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,MOD_ID
+) VALUES ( 
+  #sys_id#
+ ,#menu_cd#
+ ,#up_menu_cd#
+ ,#link_url#
+ ,#usr_cls#
+ ,#menu_typ#
+ ,#sort_ord#
+ ,#use_yn#
+ ,#rem#
+ ,#sts#
+ ,#reg_id#
+ ,#mod_id#
+)
+  ]]>
+ </sql> 
+ 
+</sql-descriptor>
