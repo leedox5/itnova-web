@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/BRAZ/CATBBRAP/18-5" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  BRAP_CORP_CODE
+ ,BRAP_STND_GUBN
+ ,BRAP_STND_DEGR
+ ,BRAP_MATL_SEQ0
+ ,BRAP_KIND_CODE
+ ,BRAP_MATL_NAME
+ ,BRAP_WLDR_CODE
+ ,BRAP_LOSS_TYPE
+ ,BRAP_THIK_MIN0
+ ,BRAP_THIK_MAX0
+ ,BRAP_MATL_PRIC
+ ,BRAP_LOAD_PRIC
+ ,BRAP_PURE_PRIC
+ ,BRAP_UNLO_PRIC
+ ,BRAP_NET0_CYT0
+ ,BRAP_CONV_SPED
+ ,BRAP_NET0_CYTL
+ ,BRAP_NET0_CYTU
+ ,BRAP_CAVT
+ ,BRAP_DFCT_RAT1
+ ,BRAP_DFCT_RAT2
+ ,BRAP_APLY_COEF
+ ,BRAP_BELT_LENG
+ ,BRAP_WELD_PRIC
+ ,BRAP_BRAZ_PRIC
+ ,BRAP_PRSN_CNT0
+ ,BRAP_MCHH_CODE
+ ,BRAP_APPL_GUBN
+ ,BRAP_REMK
+ ,BRAP_UPDT_CMAN
+ ,BRAP_UPDT_DATE
+ ,BRAP_INIT_CMAN
+ ,BRAP_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'18-5' ,'1' ,'TOCH' ,'TORCH BRAZING (수동)' ,'ALL' ,'ALL' ,'0' ,'1.2' ,'0' ,'32.9' ,'48.62' ,'32.9' ,'4' ,'0' ,'3' ,'3' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'TORCH_SUM' ,'Y' ,'NET CT=순수용접CT' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'2' ,'TOCH' ,'TORCH BRAZING (수동)' ,'ALL' ,'ALL' ,'1.2' ,'2.5' ,'0' ,'32.9' ,'65.29' ,'32.9' ,'5.5' ,'0' ,'3' ,'3' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'TORCH_SUM' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'3' ,'TOCH' ,'TORCH BRAZING (수동)' ,'ALL' ,'ALL' ,'2.5' ,'99999999' ,'0' ,'32.9' ,'81.97' ,'32.9' ,'7' ,'0' ,'3' ,'3' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'TORCH_SUM' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'4' ,'HF_TOCH' ,'TORCH BRAZING (반자동)' ,'ALL' ,'ALL' ,'-1' ,'99999999' ,'0' ,'83.01' ,'183.7' ,'65.22' ,'27' ,'0' ,'14' ,'11' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'HF_TOCH' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'5' ,'FNAC' ,'FURNACE BRAZING' ,'NORMAL' ,'ALL' ,'-1' ,'99999999' ,'1.28' ,'0' ,'0' ,'0' ,'1.2' ,'500' ,'0' ,'0' ,'0' ,'0' ,'0' ,'1.57' ,'500' ,'2.16' ,'1.91' ,'0' ,'N_500' ,'Y' ,'재료비=축로비' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'6' ,'FNAC' ,'FURNACE BRAZING' ,'HYDR' ,'ALL' ,'-1' ,'99999999' ,'2.24' ,'0' ,'0' ,'0' ,'2.52' ,'238' ,'0' ,'0' ,'0' ,'0' ,'0' ,'1.57' ,'300' ,'2.16' ,'1.38' ,'0' ,'HYD_300' ,'Y' ,'적용계수=용가재도포CT계수' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'7' ,'FNAC' ,'FURNACE BRAZING' ,'FRAIL' ,'ALL' ,'-1' ,'99999999' ,'1.89' ,'0' ,'0' ,'0' ,'2.64' ,'227' ,'0' ,'0' ,'0' ,'0' ,'0' ,'1.57' ,'500' ,'2.16' ,'3.83' ,'0' ,'FRAIL_SUM' ,'Y' ,NULL ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'18-5' ,'8' ,'VNI_FNAC' ,'진공브레이징' ,'ALL' ,'ALL' ,'-1' ,'99999999' ,'0' ,'0' ,'0' ,'0' ,'21600' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0' ,'0.28' ,'VAC1000' ,'Y' ,'CVT=입력값 적용' ,'SYSTEM' ,'20240215' ,'SYSTEM' ,'20240215'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.BRAP_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.BRAP_UPDT_DATE > B.BRAP_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBBRAP B                                          
+      ON    B.BRAP_CORP_CODE = A.BRAP_CORP_CODE
+        AND B.BRAP_STND_GUBN = A.BRAP_STND_GUBN
+        AND B.BRAP_STND_DEGR = A.BRAP_STND_DEGR
+        AND B.BRAP_MATL_SEQ0 = A.BRAP_MATL_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBBRAP (
+  BRAP_CORP_CODE
+ ,BRAP_STND_GUBN
+ ,BRAP_STND_DEGR
+ ,BRAP_MATL_SEQ0
+ ,BRAP_KIND_CODE
+ ,BRAP_MATL_NAME
+ ,BRAP_WLDR_CODE
+ ,BRAP_LOSS_TYPE
+ ,BRAP_THIK_MIN0
+ ,BRAP_THIK_MAX0
+ ,BRAP_MATL_PRIC
+ ,BRAP_LOAD_PRIC
+ ,BRAP_PURE_PRIC
+ ,BRAP_UNLO_PRIC
+ ,BRAP_NET0_CYT0
+ ,BRAP_CONV_SPED
+ ,BRAP_NET0_CYTL
+ ,BRAP_NET0_CYTU
+ ,BRAP_CAVT
+ ,BRAP_DFCT_RAT1
+ ,BRAP_DFCT_RAT2
+ ,BRAP_APLY_COEF
+ ,BRAP_BELT_LENG
+ ,BRAP_WELD_PRIC
+ ,BRAP_BRAZ_PRIC
+ ,BRAP_PRSN_CNT0
+ ,BRAP_MCHH_CODE
+ ,BRAP_APPL_GUBN
+ ,BRAP_REMK
+ ,BRAP_UPDT_CMAN
+ ,BRAP_UPDT_DATE
+ ,BRAP_INIT_CMAN
+ ,BRAP_INIT_DATE
+) VALUES (
+  #brap_corp_code#
+ ,#brap_stnd_gubn#
+ ,#brap_stnd_degr#
+ ,#brap_matl_seq0#
+ ,#brap_kind_code#
+ ,#brap_matl_name#
+ ,#brap_wldr_code#
+ ,#brap_loss_type#
+ ,#brap_thik_min0#
+ ,#brap_thik_max0#
+ ,#brap_matl_pric#
+ ,#brap_load_pric#
+ ,#brap_pure_pric#
+ ,#brap_unlo_pric#
+ ,#brap_net0_cyt0#
+ ,#brap_conv_sped#
+ ,#brap_net0_cytl#
+ ,#brap_net0_cytu#
+ ,#brap_cavt#
+ ,#brap_dfct_rat1#
+ ,#brap_dfct_rat2#
+ ,#brap_aply_coef#
+ ,#brap_belt_leng#
+ ,#brap_weld_pric#
+ ,#brap_braz_pric#
+ ,#brap_prsn_cnt0#
+ ,#brap_mchh_code#
+ ,#brap_appl_gubn#
+ ,#brap_remk#
+ ,#brap_updt_cman#
+ ,#brap_updt_date#
+ ,#brap_init_cman#
+ ,#brap_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBBRAP
+   SET BRAP_KIND_CODE = #brap_kind_code#
+      ,BRAP_MATL_NAME = #brap_matl_name#
+      ,BRAP_WLDR_CODE = #brap_wldr_code#
+      ,BRAP_LOSS_TYPE = #brap_loss_type#
+      ,BRAP_THIK_MIN0 = #brap_thik_min0#
+      ,BRAP_THIK_MAX0 = #brap_thik_max0#
+      ,BRAP_MATL_PRIC = #brap_matl_pric#
+      ,BRAP_LOAD_PRIC = #brap_load_pric#
+      ,BRAP_PURE_PRIC = #brap_pure_pric#
+      ,BRAP_UNLO_PRIC = #brap_unlo_pric#
+      ,BRAP_NET0_CYT0 = #brap_net0_cyt0#
+      ,BRAP_CONV_SPED = #brap_conv_sped#
+      ,BRAP_NET0_CYTL = #brap_net0_cytl#
+      ,BRAP_NET0_CYTU = #brap_net0_cytu#
+      ,BRAP_CAVT = #brap_cavt#
+      ,BRAP_DFCT_RAT1 = #brap_dfct_rat1#
+      ,BRAP_DFCT_RAT2 = #brap_dfct_rat2#
+      ,BRAP_APLY_COEF = #brap_aply_coef#
+      ,BRAP_BELT_LENG = #brap_belt_leng#
+      ,BRAP_WELD_PRIC = #brap_weld_pric#
+      ,BRAP_BRAZ_PRIC = #brap_braz_pric#
+      ,BRAP_PRSN_CNT0 = #brap_prsn_cnt0#
+      ,BRAP_MCHH_CODE = #brap_mchh_code#
+      ,BRAP_APPL_GUBN = #brap_appl_gubn#
+      ,BRAP_REMK = #brap_remk#
+      ,BRAP_UPDT_CMAN = #brap_updt_cman#
+      ,BRAP_UPDT_DATE = #brap_updt_date#
+ WHERE BRAP_CORP_CODE = #brap_corp_code#
+   AND BRAP_STND_GUBN = #brap_stnd_gubn#
+   AND BRAP_STND_DEGR = #brap_stnd_degr#
+   AND BRAP_MATL_SEQ0 = #brap_matl_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
