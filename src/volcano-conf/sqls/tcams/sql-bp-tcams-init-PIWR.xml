@@ -176,10 +176,10 @@ WITH T1 (
  ,MTDG_MCHH_DATE
  ,MTDG_MODL_NAME
 ) AS (
-           SELECT 'K1' ,'A' ,'PIWR' ,'18' ,NULL ,'20171201' ,'20171201' ,'18' ,'원가계산기준 일원화' ,NULL ,'우한섭' ,'5295' ,'한창선' ,'5272' ,'PCF30270' ,'ui/bp/tcams/ca/piwr/em-capiwr-p19.html' ,'13607' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM' ,'1', NULL, NULL  FROM DUAL
- UNION ALL SELECT 'K1' ,'A' ,'PIWR' ,'19' ,NULL ,'20221102' ,'20221102' ,'19' ,'SUS파이프 조관 추가 外' ,NULL ,'안정환' ,'5374' ,'나종훈' ,'5272' ,'PCF30270' ,'ui/bp/tcams/ca/piwr/em-capiwr-p19.html' ,'1586734849775' ,'Y' ,'20191211' ,'SYSTEM' ,'20191211' ,'SYSTEM' ,'2', NULL, NULL  FROM DUAL
- UNION ALL SELECT 'K1' ,'A' ,'PIWR' ,'19-1' ,NULL ,'20230601' ,'20230501' ,'19-1' ,'전력단가 변경' ,NULL ,'안정환' ,'5374' ,'나종훈' ,'5272' ,'PCF30270' ,'ui/bp/tcams/ca/piwr/em-capiwr-p19.html' ,NULL ,'Y' ,'20230501' ,'ADMIN' ,'20230501' ,'ADMIN' ,'4', NULL, NULL  FROM DUAL
- UNION ALL SELECT 'K1' ,'A' ,'PIWR' ,'19-3' ,NULL ,'20240215' ,'20240215' ,'19-3' ,'전력단가변경' ,NULL ,'안정환' ,'5374' ,'나종훈' ,'5272' ,'PCF30270' ,'ui/bp/tcams/ca/piwr/em-capiwr-p19.html' ,NULL ,'Y' ,'20240215' ,'ADMIN' ,'20240215' ,'ADMIN' ,'5', '20240215', 'CASPPIWR_P19_3'  FROM DUAL
+           SELECT 'K1', 'A', 'PIWR', '18', NULL, '20171201', '20171201', '18', '원가계산기준 일원화', NULL, '우한섭', '5295', '한창선', '5272', 'PCF30270', 'ui/bp/tcams/ca/piwr/em-capiwr-p19.html', '13607', 'Y', '20171214', 'SYSTEM', '20171214', 'SYSTEM', '1', '20171201', 'CASPPIWR_P19' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PIWR', '19', NULL, '20221102', '20221102', '19', 'SUS파이프 조관 추가 外', NULL, '안정환', '5374', '나종훈', '5272', 'PCF30270', 'ui/bp/tcams/ca/piwr/em-capiwr-p19.html', '1586734849775', 'Y', '20191211', 'SYSTEM', '20191211', 'SYSTEM', '2', '20221102', 'CASPPIWR_P19' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PIWR', '19-1', NULL, '20230601', '20230501', '19-1', '전력단가 변경', NULL, '안정환', '5374', '나종훈', '5272', 'PCF30270', 'ui/bp/tcams/ca/piwr/em-capiwr-p19.html', NULL, 'Y', '20230501', 'ADMIN', '20230501', 'ADMIN', '4', '20230501', 'CASPPIWR_P19_1' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'PIWR', '19-3', NULL, '20240215', '20240215', '19-3', '전력단가변경', NULL, '안정환', '5374', '나종훈', '5272', 'PCF30270', 'ui/bp/tcams/ca/piwr/em-capiwr-p19.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '5', '20240215', 'CASPPIWR_P19_3' FROM DUAL
 )
 SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,CASE WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'N' ELSE 'Y' END UPDATED_YN
