@@ -1,0 +1,1497 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CASPBRAZ_P18_5" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPBRAZ_P18_5  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPBRAZ_P18_5'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPBRAZ_P18_5
+(
+    I_CORP_CODE  IN  CATBBRAI.BRAI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CATBBRAI.BRAI_PART_NO%TYPE  ,
+    I_EONO       IN  CATBBRAI.BRAI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CATBBRAI.BRAI_CUMT_NO%TYPE  ,
+    I_INIT_CMAN  IN  CATBBRAI.BRAI_INIT_CMAN%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_BRAZING
+ * [HISTORY ]
+ *  - 2015.10.05 [K.U.K] : 신규작성(16-1차)
+ *  - 2017.08.24 [A.S.M] : 개정    (17  차) : 부재료단가 및 진공브레이징 가공비 산출기준 조정 
+ *                         임률 적용일기준처리 -> 고정값 적용 하는 것으로 변경함 (나머지 경영비율은?) 
+ *  - 2020.01.01 [A.S.M] : 개정    (17-3차) : 변경사항없음
+ *  - 2022.10.01 [A.S.M] : 개정    (18-1차) : 경영비율 기준일자 변경 & 최종메세지 변경
+ *  - 2023.03.20 [A.S.M] : 기계경비추출기준 변경에 따른 수정 (CASPMCHH_Q01 -> CASPMCHH_Q02 변경)
+ *  - 2023.09.01 [A.S.M] : 개정    (18-3차) : LPG GAS단가 변경 -> 모듈에 특이사항 없음
+ *                         재료비,가공비 합산처리 공법에 대한 산출 근거내역 저장처리 추가 (개발자 내부관리용)
+ *  - 2024.02.15 [A.S.M] : 개정    (18-5차) : 전력단가,부재료단가변경 / 경영비율 기준일자 변경
+ *
+ * [COMMENT ]
+ *  - 가공비를 재료비에 합산하는 방식의 공법은 경영비율을 고정하여 처리함
+ *    (S-도금, S-도장, 용접류, BRAZING, UNIT) 
+ *    상기 공법은 경영비율 추출시 고정된 일자를 사용하므로, 차기 개정시 적용일을반드시 확인후 개정할 것!!!
+ *    단, 기계경비는 가변 적용함(입력한 적용일에 따름)
+ *
+ *  - 2023.09 : 쿼리로 처리도록 구성되어 산출근거내역은 별도 처리해 놓지 않았음
+ *              필요시 로직을 분석하여 재구성작업을 실시해야 함. 
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_CMPK      CATBCMPK%ROWTYPE;
+    rt_BRAI      CATBBRAI%ROWTYPE;
+    rt_BRAP      CATBBRAP%ROWTYPE;
+    rt_CORT      CITBCORT%ROWTYPE;
+    rt_MTCD      CITBMTCD%ROWTYPE;
+    rt_CAYR      CITBCAYR%ROWTYPE;
+    rt_CMAT      CRTBCMAT%ROWTYPE;
+    rt_CMAT2     CRTBCMAT%ROWTYPE;  --가공비에 사용
+    rt_CMAT3     CRTBCMAT%ROWTYPE;  --가공비에 사용
+    rt_CMAT4     CRTBCMAT%ROWTYPE;  --가공비에 사용
+    rt_CPRO      CRTBCPRO%ROWTYPE;
+    rt_SPMS      CRTBSPMS%ROWTYPE;
+    rt_CMMS      CRTBCMMS%ROWTYPE;
+    rt_MCIF      CITBMCIF%ROWTYPE ; --기계경비정보
+    rt_CMAC      CRTBCMAC%ROWTYPE;  --계산근거값
+
+    --WORKING VARIABLE
+    v_COME_CODE       CRTBCMMS.CMMS_COME_CODE%TYPE;
+    v_TEMP_COME_CODE  CRTBCMMS.CMMS_COME_CODE%TYPE; -- 상이업종의 LOT량 처리를 위한 공법 코드값
+    v_APPL_CORP       CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_SPMS_STND_GUBN  CRTBSPMS.SPMS_STND_GUBN%TYPE;
+    v_SPMS_BASE_DATE  CRTBSPMS.SPMS_BASE_DATE%TYPE;
+    v_CMMS_PROD_CNT0  CRTBCMMS.CMMS_PROD_CNT0%TYPE;
+    v_EMST_VEHL_GUBN  CRTBEMST.EMST_VEHL_GUBN%TYPE;
+
+    v_IN_TITLE        VARCHAR2(20) ;
+    trCo              NUMBER := 2  ; --원가TRUNC처리소수점단위
+    v_SORT_KEY        NUMBER := 0  ; --SORT KEY
+    v_PRO_SORT_KEY    NUMBER := 0  ; --가공비SORT KEY
+    v_CNT             NUMBER(10)   ;
+    
+    v_CMAT_PROC_YN    CHAR(01)     ; --재료비처리여부
+    v_CPRO_PROC_YN    CHAR(01)     ; --가공비처리여부
+    v_GUBN_CODE       CATBCMPK.CMPK_GUBN_CODE%TYPE;
+    v_CODE            CATBCMPK.CMPK_CODE%TYPE     ;
+    v_INJC_WEGT       NUMBER(20,12); --주입중량
+    v_NET0_CYTM       NUMBER(20,6) ; --NET CT
+    v_CVT             NUMBER(20,6) ; --CVT
+    v_EXEC_LENG       NUMBER(5) ; --여유길이
+    v_DOPO_PRIC       NUMBER(10,2); 
+    v_MATL_PRIC       NUMBER(10,2); 
+    v_LBRC_1          NUMBER(10,2); 
+    v_LBRC_2          NUMBER(10,2); 
+    v_COST            NUMBER(10,2);
+    v_MATL_CNT0       NUMBER := 0  ; 
+    v_PROC_CNT0       NUMBER := 0  ; 
+    v_TEMP_DESC       VARCHAR2(500);
+    
+    --율정보1:업종이 동일한 경우 추출율
+    v_SAME_INDS_CODE  CITBCORT.CORT_INDS_CODE%TYPE;  --업종
+    v_SAME_PAY0_RATE  CITBCORT.CORT_PAY0_RATE%TYPE;  --임율
+    v_SAME_IDRT_RATE  CITBCORT.CORT_IDRT_RATE%TYPE;  --간접경비율
+    v_SAME_GME0_RATE  CITBCORT.CORT_GME0_RATE%TYPE;  --일반관리비율
+    v_SAME_MATL_RATE  CITBCORT.CORT_MATL_RATE%TYPE;  --재료관리비율
+    v_SAME_MAPT_RATE  CITBCORT.CORT_MATL_RATE%TYPE;  --재료관리비율
+    v_SAME_PROF_RATE  CITBCORT.CORT_PROF_RATE%TYPE;  --이익율
+    v_SAME_ET00_RATE  CITBCORT.CORT_ET00_RATE%TYPE;  --ET율
+    v_SAME_APPL_DATE  CITBCORT.CORT_APPL_DATE%TYPE;  --적용일
+    v_SAME_LOTQ_QTY0  CRTBCMMS.CMMS_LOTQ_QTY0%TYPE;  --LOT량
+
+    --율정보2:업종이 상이한 경우 추출율
+    v_DIFF_INDS_CODE  CITBCORT.CORT_INDS_CODE%TYPE;  --업종
+    v_DIFF_PAY0_RATE  CITBCORT.CORT_PAY0_RATE%TYPE;  --임율
+    v_DIFF_IDRT_RATE  CITBCORT.CORT_IDRT_RATE%TYPE;  --간접경비율
+    v_DIFF_GME0_RATE  CITBCORT.CORT_GME0_RATE%TYPE;  --일반관리비율
+    v_DIFF_MATL_RATE  CITBCORT.CORT_MATL_RATE%TYPE;  --재료관리비율
+    v_DIFF_MAPT_RATE  CITBCORT.CORT_MATL_RATE%TYPE;  --재료관리비율
+    v_DIFF_PROF_RATE  CITBCORT.CORT_PROF_RATE%TYPE;  --이익율
+    v_DIFF_ET00_RATE  CITBCORT.CORT_ET00_RATE%TYPE;  --ET율
+    v_DIFF_APPL_DATE  CITBCORT.CORT_APPL_DATE%TYPE;  --적용일
+    v_DIFF_LOTQ_QTY0  CRTBCMMS.CMMS_LOTQ_QTY0%TYPE;  --LOT량
+
+    ------------------------------------------------------
+    -- 입력 재료비,가공비  CURSOR
+    ------------------------------------------------------
+    CURSOR cs_BRAI IS
+        SELECT BRAI_KIND_GUBN        --용접종류분류코드          
+              ,BRAI_KIND_CODE        --용접종류                  
+              ,BRAI_WLDR_GUBN        --용접로분류코드            
+              ,BRAI_WLDR_CODE        --용접로                    
+              ,NVL(BRAI_ITEM_WDTH,0) BRAI_ITEM_WDTH   --제품가로                  
+              ,NVL(BRAI_ITEM_HEGT,0) BRAI_ITEM_HEGT   --제품세로                  
+              ,NVL(BRAI_WELD_THIK,0) BRAI_WELD_THIK   --용접두께                  
+              ,NVL(BRAI_WELD_LENG,0) BRAI_WELD_LENG   --용접길이                  
+              ,NVL(BRAI_PART_CNT0,0) BRAI_PART_CNT0   --부품수                    
+              ,NVL(BRAI_EXTN_LENG,0) BRAI_EXTN_LENG   --내부길이(진공NI)          
+              ,NVL(BRAI_INTN_LENG,0) BRAI_INTN_LENG   --외부길이(진공NI)          
+              ,NVL(BRAI_VANI_CAVT,0) BRAI_VANI_CAVT   --CVT(진공NI)               
+              ,NVL(BRAI_FOIL_QNTY,0) BRAI_FOIL_QNTY   --B/FOIL량(진공NI)          
+              ,BRAI_LOSS_GUBN        --불량율종류(진공NI)분류코드
+              ,BRAI_LOSS_RATE        --불량율종류(진공NI)        
+              ,NVL(BRAI_SCRP_WEGT,0) BRAI_SCRP_WEGT   --제품중량(진공NI)          
+              ,NVL(BRAI_SCRP_PRIC,0) BRAI_SCRP_PRIC   --SCR단가(진공NI)           
+              ,NVL(BRAP_MATL_PRIC,0) BRAP_MATL_PRIC   --재료비       
+              ,NVL(BRAP_LOAD_PRIC,0) BRAP_LOAD_PRIC   --LOAD비     : 17차 ADD
+              ,NVL(BRAP_PURE_PRIC,0) BRAP_PURE_PRIC   --순수용접비 : 17차 ADD
+              ,NVL(BRAP_UNLO_PRIC,0) BRAP_UNLO_PRIC   --UNLOAD비   : 17차 ADD
+              ,DECODE(BRAI_KIND_CODE,'HF_TOCH',BRAP_NET0_CYT0 / 2, BRAP_NET0_CYT0) BRAP_NET0_CYT0   --NET CT       
+              ,DECODE(BRAI_KIND_CODE,'HF_TOCH',BRAP_NET0_CYTL / 2, BRAP_NET0_CYTL) BRAP_NET0_CYTL   --NET CT LOAD      
+              ,DECODE(BRAI_KIND_CODE,'HF_TOCH',BRAP_NET0_CYTU / 2, BRAP_NET0_CYTU) BRAP_NET0_CYTU   --NET CT UNLOAD   
+              ,NVL(BRAP_CONV_SPED,0) BRAP_CONV_SPED   --CONVEYOR속도    
+              ,NVL(BRAP_CAVT     ,0) BRAP_CAVT        --CVT          
+              ,NVL(BRAP_DFCT_RAT1,0) BRAP_DFCT_RAT1   --가공불량률   
+              ,NVL(BRAP_DFCT_RAT2,0) BRAP_DFCT_RAT2   --폐기불량률    
+              ,NVL(BRAP_APLY_COEF,0) BRAP_APLY_COEF   --적용계수     
+              ,NVL(BRAP_BELT_LENG,0) BRAP_BELT_LENG   --BELT길이
+              ,NVL(BRAP_WELD_PRIC,0) BRAP_WELD_PRIC   --용가재금액  
+              ,NVL(BRAP_BRAZ_PRIC,0) BRAP_BRAZ_PRIC   --BRAZ소비금액
+              ,NVL(BRAP_PRSN_CNT0,0) BRAP_PRSN_CNT0   --인원
+              ,BRAP_MCHH_CODE        --기계장비코드
+              ,BRAP_MATL_NAME        --재료코드
+              ,K01.CMPK_CODE_NAME BRAI_KIND_NAME -- 명칭 :용접구분
+              ,CASE WHEN COUNT(*) OVER (PARTITION BY BRAP_MATL_NAME ) > 1 THEN  ' #' || ROW_NUMBER() OVER (PARTITION BY BRAP_MATL_NAME ORDER BY BRAI_WELD_SEQ0) ELSE NULL END SUFFIX_NAME
+          FROM CATBBRAI
+             -- 재료, 가공비 테이블
+             LEFT OUTER JOIN
+               CATBBRAP A
+                   ON A.BRAP_CORP_CODE = v_APPL_CORP
+                  AND A.BRAP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                  AND A.BRAP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                  AND A.BRAP_KIND_CODE IN ('ALL', BRAI_KIND_CODE) -- 용접종류 코드
+                  AND A.BRAP_WLDR_CODE IN ('ALL', BRAI_WLDR_CODE) -- 용접로 코드
+                  AND A.BRAP_LOSS_TYPE IN ('ALL', BRAI_LOSS_RATE) -- 불량율TYPE 코드
+                  AND A.BRAP_THIK_MIN0 < NVL(BRAI_WELD_THIK,0)
+                  AND A.BRAP_THIK_MAX0 >= NVL(BRAI_WELD_THIK,0)  
+                  AND A.BRAP_APPL_GUBN = 'Y'
+
+             -- 명칭 :용접구분
+             LEFT OUTER JOIN
+               CATBCMPK K01
+                   ON K01.CMPK_CORP_CODE = v_APPL_CORP
+                  AND K01.CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                  AND K01.CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR 
+                  AND K01.CMPK_GUBN_CODE = 'BRAZ01'
+                  AND K01.CMPK_CODE      = BRAI_KIND_CODE
+                  AND K01.CMPK_APPL_GUBN = 'Y'
+           WHERE BRAI_CORP_CODE = I_CORP_CODE
+             AND BRAI_PART_NO   = I_PART_NO
+             AND BRAI_EONO      = I_EONO
+             AND BRAI_CUMT_NO   = I_CUMT_NO
+           ORDER BY BRAI_WELD_SEQ0
+        ;
+
+BEGIN
+  --DBMS_OUTPUT.ENABLE(100000);
+    DBMS_OUTPUT.DISABLE;
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPBRAZ_P18_5';
+    O_LINE_NO   := 'ST-START';
+
+    v_COME_CODE := 'BRAZ';
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_INIT_CMAN) IS NULL THEN v_IN_TITLE := '사번'    ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --MAIN
+    ---------------------------------------------------------------------------
+    --3.기준정보추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-30000';
+
+    --공통율정보 추출 (A->자동공법)
+    CRSPCORT_Q01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,'A',
+                 rt_SPMS.SPMS_BASE_DATE, --원가계산기준일
+                 rt_SPMS.SPMS_VEND_CODE, --업체_코드
+                 rt_SPMS.SPMS_VEND_APFR, --업체_적용일
+                 rt_MTCD.MTCD_INDS_CODE, --업종코드
+                 rt_CAYR.CAYR_VEHL_GUBN, --승상구분
+                 rt_CMMS.CMMS_STND_GUBN, --표준 구분
+                 rt_CMMS.CMMS_STND_DEGR, --개정차수
+                 rt_CMMS.CMMS_LOTQ_QTY0, --LOT량
+                 rt_CMMS.CMMS_PROD_CNT0, --총생산개수
+                 rt_CORT.CORT_PAY0_RATE, --임율
+                 rt_CORT.CORT_IDRT_RATE, --간접경비율
+                 rt_CORT.CORT_GME0_RATE, --일반관리비율
+                 rt_CORT.CORT_MATL_RATE, --재료관리비율
+                 rt_CORT.CORT_MAPT_RATE, --재료관리비율_부품
+                 rt_CORT.CORT_PROF_RATE, --이익율
+                 rt_CORT.CORT_ET00_RATE, --ET율
+                 rt_CORT.CORT_APPL_DATE, --적용일
+                 O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'IQ-001' THEN
+        O_MESG := O_MESG; --오류메세지를 그대로 넘김
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPBRAZ_P18_5';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ------------------------------------------------------------------------
+    --17차 : 요청에 의해 경영비율은 적용일로 처리하지 않고 고정값으로 적용함
+    --       2016년도 기준값을 적용함
+    ------------------------------------------------------------------------
+    /*
+    rt_CORT.CORT_PAY0_RATE := 17700;
+    rt_CORT.CORT_IDRT_RATE := 60.0;
+    rt_CORT.CORT_GME0_RATE := 25.0;
+    rt_CORT.CORT_MATL_RATE :=  2.0;
+    rt_CORT.CORT_PROF_RATE := 15.0;
+    rt_CORT.CORT_ET00_RATE := 11.0;
+    rt_CORT.CORT_APPL_DATE := '20160101';
+    */
+    
+    ---------------------------------------------------------------------------
+    -- 17-3차 ADD (18-1차 수정)
+    ---------------------------------------------------------------------------
+    -- 예외처리 : 현재 차수 기준 경영비율은 2020년 경영비율로 고정한다.(차수에 따라 가변적) - 개정시 필히 확인 필요
+    -- [참고] 고정값으로 SET하지 말것 : 총론 변경으로 값이 변경되는 경우가 존재.
+    ---------------------------------------------------------------------------
+    BEGIN
+        SELECT CORT_PAY0_RATE
+              ,CORT_IDRT_RATE
+              ,CORT_GME0_RATE
+              ,CORT_MATL_RATE
+              ,CORT_MAPT_RATE
+              ,CORT_PROF_RATE
+              ,CORT_ET00_RATE
+          INTO rt_CORT.CORT_PAY0_RATE
+              ,rt_CORT.CORT_IDRT_RATE
+              ,rt_CORT.CORT_GME0_RATE
+              ,rt_CORT.CORT_MATL_RATE
+              ,rt_CORT.CORT_MAPT_RATE
+              ,rt_CORT.CORT_PROF_RATE
+              ,rt_CORT.CORT_ET00_RATE
+          FROM CITBCORT
+         WHERE CORT_CORP_CODE = I_CORP_CODE
+           AND CORT_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND CORT_VEND_DEGR = 1
+                            -- 내용 추가시 삽입
+                            --  (
+                            --   SELECT MAX(CHIN_VEND_DEGR)  --2건 이상 존재가능하여 MAX 처리함(동일 END내)
+                            --     FROM CRTBCHIN
+                            --    WHERE CHIN_CORP_SUB0 = I_CORP_CODE
+                            --      AND CHIN_PART_SUB0 = I_PART_NO  
+                            --      AND CHIN_EONO_SUB0 = I_EONO     
+                            --      AND CHIN_CUMT_SUB0 = I_CUMT_NO  
+                            --  )
+           AND CORT_INDS_CODE = rt_MTCD.MTCD_INDS_CODE  --업종
+         --AND CORT_APPL_DATE = '20200101'
+         --AND CORT_APPL_DATE = '20220103'  --18-1차 적용일
+         --AND CORT_APPL_DATE = '20220103'  --18-3차 적용일 (변경사항없음:이전차수일자 유지)
+           AND CORT_APPL_DATE = '20230103'  --18-5차 적용일
+        ;
+    EXCEPTION
+    --  WHEN NO_DATA_FOUND THEN O_MESG := '2020년 경영비율 정보가 존재하지 않습니다.(운영자에 연락요망)';
+    --  WHEN NO_DATA_FOUND THEN O_MESG := '2022년 경영비율 정보가 존재하지 않습니다.(운영자에 연락요망)';
+        WHEN NO_DATA_FOUND THEN O_MESG := '2023년 경영비율 정보가 존재하지 않습니다.(운영자에 연락요망)';
+                                RAISE UD_EX_ERROR;
+    END;
+    
+ -- rt_CORT.CORT_APPL_DATE := '20200101';
+ -- rt_CORT.CORT_APPL_DATE := '20220103'; --18-1차 적용일                                 
+ -- rt_CORT.CORT_APPL_DATE := '20220103'; --18-3차 적용일 (변경사항없음:이전차수일자 유지)
+    rt_CORT.CORT_APPL_DATE := '20230103'; --18-5차 적용일                                 
+    ---------------------------------------------------------------------------
+
+    --업종 상이한 경우에 대비하여 기본 표준값 SAVE
+    v_SAME_INDS_CODE := rt_MTCD.MTCD_INDS_CODE;
+    v_SAME_PAY0_RATE := rt_CORT.CORT_PAY0_RATE;
+    v_SAME_IDRT_RATE := rt_CORT.CORT_IDRT_RATE;
+    v_SAME_GME0_RATE := rt_CORT.CORT_GME0_RATE;
+    v_SAME_MATL_RATE := rt_CORT.CORT_MATL_RATE;
+    v_SAME_PROF_RATE := rt_CORT.CORT_PROF_RATE;
+    v_SAME_ET00_RATE := rt_CORT.CORT_ET00_RATE;
+    v_SAME_APPL_DATE := rt_CORT.CORT_APPL_DATE;
+    v_SAME_LOTQ_QTY0 := rt_CMMS.CMMS_LOTQ_QTY0;
+
+    ---------------------------------------------------------------------------
+    --4.기 생성 결과삭제
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-40000';
+
+    CRSPSUM0_D01(I_CORP_CODE,I_PART_NO,I_EONO     ,I_CUMT_NO,v_COME_CODE,
+                 O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+    IF  O_MESG_CODE != 'DE-001' THEN
+        O_MESG := '이미 생성된 결과자료 삭제시 오류가 발생하였습니다.';
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPBRAZ_P18_5';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -- 2023.09 ADD
+    DELETE FROM CRTBCMAC
+     WHERE CMAC_CORP_CODE = I_CORP_CODE
+       AND CMAC_PART_NO   = I_PART_NO
+       AND CMAC_EONO      = I_EONO
+       AND CMAC_CUMT_NO   = I_CUMT_NO
+       AND CMAC_COME_CODE = v_COME_CODE
+    ;    
+
+    ---------------------------------------------------------------------------
+    FOR BRAI_R IN cs_BRAI LOOP
+        O_LINE_NO  := 'ST-50000';
+
+        ---------------------------------------------------------------------------
+        --표준데이터 검증:콤보추가될 경우 추가필요함(입력값 오류체크용)
+        ---------------------------------------------------------------------------
+        FOR i IN 1..2 LOOP
+            CASE i WHEN 1 THEN v_GUBN_CODE := BRAI_R.BRAI_KIND_GUBN ; v_CODE := BRAI_R.BRAI_KIND_CODE;
+                   WHEN 2 THEN v_GUBN_CODE := BRAI_R.BRAI_WLDR_GUBN ; v_CODE := BRAI_R.BRAI_WLDR_CODE;
+                   ELSE        v_GUBN_CODE := ''                    ; v_CODE := ''                   ;
+            END CASE;
+
+            IF  TRIM(v_GUBN_CODE) > ' ' OR TRIM(v_CODE) > ' ' THEN
+                BEGIN
+                    SELECT CMPK_CORP_CODE
+                      INTO rt_CMPK.CMPK_CORP_CODE
+                      FROM CATBCMPK
+                     WHERE CMPK_CORP_CODE = v_APPL_CORP
+                       AND CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                       AND CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                       AND CMPK_GUBN_CODE = v_GUBN_CODE
+                       AND CMPK_CODE      = v_CODE
+                       AND CMPK_APPL_GUBN IN ('Y','O')
+                    ;
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN O_MESG := '저장표준값 오류(운영자에 연락요망).    구분=' || v_GUBN_CODE || ' 코드=' || v_CODE ;
+                                            RAISE UD_EX_ERROR;
+                END;
+            END IF;
+        END LOOP;
+
+        ----------------
+        -- 입력오류체크
+        ----------------
+        CASE BRAI_R.BRAI_KIND_CODE 
+             WHEN 'TOCH' THEN
+                  IF  BRAI_R.BRAI_WELD_THIK <= 0 OR
+                      BRAI_R.BRAI_WELD_LENG <= 0 OR
+                      BRAI_R.BRAI_PART_CNT0 <= 0 THEN
+                      O_MESG := 'BRADIZING 입력정보를 확인하시기 바랍니다.(용접두께/길이,부품수 등)';
+                      RAISE UD_EX_ERROR; 
+                  END IF;
+
+             WHEN 'HF_TOCH' THEN NULL;
+
+             WHEN 'FNAC' THEN
+                  IF  BRAI_R.BRAI_ITEM_WDTH <= 0 OR
+                      BRAI_R.BRAI_ITEM_HEGT <= 0 OR
+                      BRAI_R.BRAI_WELD_LENG <= 0 THEN
+                      O_MESG := 'BRADIZING 입력정보를 확인하시기 바랍니다.(제품가로/세로,용접길이 등)';
+                      RAISE UD_EX_ERROR; 
+                  END IF;
+
+             WHEN 'VNI_FNAC' THEN
+                  IF  BRAI_R.BRAI_EXTN_LENG + BRAI_R.BRAI_INTN_LENG <= 0 OR
+                      BRAI_R.BRAI_VANI_CAVT <= 0 OR
+                      BRAI_R.BRAI_FOIL_QNTY <= 0 THEN
+                      O_MESG := 'BRADIZING 입력정보를 확인하시기 바랍니다.(용접길이,CVT,B/FOIL사용량 등)';
+                      RAISE UD_EX_ERROR; 
+                  END IF;
+             ELSE NULL;
+        END CASE; 
+
+        -- 산출내역 CLEAR
+        v_MATL_CNT0 := 0;
+        v_PROC_CNT0 := 0;
+        rt_CMAC.CMAC_DESC_01 := '';
+        rt_CMAC.CMAC_DESC_02 := '';
+        rt_CMAC.CMAC_DESC_03 := '';
+        rt_CMAC.CMAC_DESC_04 := '';
+        rt_CMAC.CMAC_DESC_05 := '';
+        rt_CMAC.CMAC_DESC_06 := '';
+        rt_CMAC.CMAC_DESC_07 := '';
+        rt_CMAC.CMAC_DESC_08 := '';
+        rt_CMAC.CMAC_DESC_09 := '';
+        rt_CMAC.CMAC_DESC_10 := '';
+        rt_CMAC.CMAC_DESC_11 := '';
+        rt_CMAC.CMAC_DESC_12 := '';
+        rt_CMAC.CMAC_DESC_13 := '';
+        rt_CMAC.CMAC_DESC_14 := '';
+        rt_CMAC.CMAC_DESC_15 := '';
+        rt_CMAC.CMAC_DESC_16 := '';
+        rt_CMAC.CMAC_DESC_17 := '';
+        rt_CMAC.CMAC_DESC_18 := '';
+        rt_CMAC.CMAC_DESC_19 := '';
+        rt_CMAC.CMAC_DESC_20 := '';
+        rt_CMAC.CMAC_COEF_01 := '';
+        rt_CMAC.CMAC_COEF_02 := '';
+        rt_CMAC.CMAC_COEF_03 := '';
+        rt_CMAC.CMAC_COEF_04 := '';
+        rt_CMAC.CMAC_COEF_05 := '';
+        rt_CMAC.CMAC_COEF_06 := '';
+        rt_CMAC.CMAC_COEF_07 := '';
+        rt_CMAC.CMAC_COEF_08 := '';
+        rt_CMAC.CMAC_COEF_09 := '';
+        rt_CMAC.CMAC_COEF_10 := '';
+        
+        ---------------------------------------------------------------------------
+        --5.재료비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO  := 'ST-51000';
+        v_SORT_KEY := v_SORT_KEY + 1;
+
+        rt_CPRO.CPRO_MCHH_CODE := BRAI_R.BRAP_MCHH_CODE;
+        
+        --기계경비추출
+        IF  TRIM(rt_CPRO.CPRO_MCHH_CODE) > ' ' THEN
+            --2023.03.20
+            /****
+            CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                        ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                        ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+            IF  O_MESG_CODE != 'IQ-001' THEN
+                O_MESG := O_MESG
+                       || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MCHH_CODE
+                       || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                RAISE UD_EX_ERROR;
+            ELSE
+                O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                O_MESG_CODE := 'SA-002';
+            END IF;
+            ****/
+            -----------------------------------------
+            CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                        ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                        ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+            IF  O_MESG_CODE != 'IQ-001' THEN
+                RAISE UD_EX_ERROR;
+            ELSE
+                O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                O_MESG_CODE := 'SA-002';
+            END IF;
+            -----------------------------------------
+            IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                O_MESG := '기계경비정보가 존재하지 않습니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+        ELSE
+            rt_MCIF.MCIF_MCHH_NAME := '';
+            rt_MCIF.MCIF_DRCT_COST := 0;
+        END IF;
+
+        rt_CMAT.CMAT_INPT_WEGT := 0.0;
+        rt_CMAT.CMAT_NET0_WEGT := 0.0;
+        rt_CMAT.CMAT_USE0_WEGT := 0.0;
+        rt_CMAT.CMAT_USE0_WEGT := 0.0;
+        rt_CMAT.CMAT_APPL_WEGT := 0.0;
+        rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+        rt_CMAT.CMAT_LOSS_RATE := 0.0;
+        rt_CMAT.CMAT_PDAB_RATE := 0.0;
+        rt_CMAT.CMAT_SCRP_RATE := 0.0;
+        rt_CMAT.CMAT_MATL_PRIC := 0.0;
+        rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+        rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+        rt_CMAT.CMAT_UNUS_COST := 0.0;
+        rt_CMAT.CMAT_SCRP_COST := 0.0;
+        rt_CMAT.CMAT_MATL_COST := 0.0;
+        rt_CMAT.CMAT_MATL_MACT := 0.0;
+        rt_CMAT.CMAT_INPT_WEGT := 0.0;
+        rt_CMAT.CMAT_NET0_WEGT := 0.0;
+        rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+        rt_CMAT.CMAT_SCRP_COST := 0.0;
+        rt_CMAT.CMAT_SCRP_CONS := 0.0;
+
+        O_LINE_NO  := 'ST-51100';
+
+        CASE ----------------------------------------------------
+             -- 수동 TORCH, 반자동 TORCH
+             ----------------------------------------------------
+             -- 17차 : 가공비 계산방식이 아닌, 단가 적용으로 변경 (고정 경영비율 적용) - 소순철CI 요청에 따름
+             ----------------------------------------------------
+             WHEN BRAI_R.BRAI_KIND_CODE IN ('TOCH','HF_TOCH') THEN
+                  O_LINE_NO  := 'ST-51200';
+                  
+                  /***********************************************
+                  rt_CPRO.CPRO_LOTQ      := rt_CMMS.CMMS_LOTQ_QTY0;
+                  rt_CPRO.CPRO_PROC_NAME := 'BRAZING';
+                  rt_CPRO.CPRO_CAVT      := 1     ;
+                  rt_CPRO.CPRO_PREP_HOUR := 0.0;
+                  rt_CPRO.CPRO_PRSN_CNT0 := 1;
+                  rt_CPRO.CPRO_AEXM_RATE := 0.0;
+                  rt_CPRO.CPRO_MCHH_APDT := '';
+                  rt_CPRO.CPRO_MADD_APDT := '';
+                  rt_CPRO.CPRO_MADD_CODE := '';
+                  
+                  rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                  rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                  rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                  rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+                  rt_CPRO.CPRO_AEXM_RATE := 0;
+
+                  ----------------------------------------------------
+                  -- 1. LOADING비 계산
+                  ----------------------------------------------------
+                  O_LINE_NO  := 'ST-51210';
+                  rt_CPRO.CPRO_NET0_CYTM := TRUNC(BRAI_R.BRAP_NET0_CYTL, 2);
+   
+                  CRSPCPRO_C03(I_CORP_CODE
+                              ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                              ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE,NULL
+                              ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                              ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+   
+                  IF  O_MESG_CODE != 'IQ-001' THEN
+                      O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                      RAISE UD_EX_ERROR;
+                  ELSE
+                      O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                      O_MESG_CODE := 'SA-002';
+                  END IF;
+   
+                  rt_CMAT2.CMAT_USE0_WEGT := 1;
+                  rt_CMAT2.CMAT_APPL_WEGT := 1;
+                  rt_CMAT2.CMAT_MATL_PRIC := NVL(rt_CPRO.CPRO_PROC_COST,0);
+                  rt_CMAT2.CMAT_MATL_COST := rt_CMAT2.CMAT_MATL_PRIC * (1 + rt_CORT.CORT_GME0_RATE * 0.01) * (1 + rt_CORT.CORT_PROF_RATE * 0.01) / (1 + rt_CORT.CORT_MATL_RATE * 0.01);
+                  rt_CMAT2.CMAT_MATL_COST := TRUNC(rt_CMAT2.CMAT_MATL_COST,trCo);
+                  rt_CMAT2.CMAT_MATL_PRIC := rt_CMAT2.CMAT_MATL_COST * rt_CMAT2.CMAT_APPL_WEGT; 
+   
+                  ----------------------------------------------------
+                  -- 2. 순수용접비 계산
+                  ----------------------------------------------------
+                  O_LINE_NO  := 'ST-51220';
+                  rt_CPRO.CPRO_NET0_CYTM := TRUNC(BRAI_R.BRAP_NET0_CYT0, 2);
+                  
+                  CRSPCPRO_C03(I_CORP_CODE
+                              ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                              ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE,NULL
+                              ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                              ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+   
+                  IF  O_MESG_CODE != 'IQ-001' THEN
+                      O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                      RAISE UD_EX_ERROR;
+                  ELSE
+                      O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                      O_MESG_CODE := 'SA-002';
+                  END IF;
+   
+                  rt_CMAT3.CMAT_USE0_WEGT := 1;
+                  rt_CMAT3.CMAT_APPL_WEGT := 1;
+                  rt_CMAT3.CMAT_MATL_PRIC := NVL(rt_CPRO.CPRO_PROC_COST,0);
+   
+                  rt_CMAT3.CMAT_MATL_COST := BRAI_R.BRAP_MATL_PRIC +  (rt_CMAT3.CMAT_MATL_PRIC * (1 + rt_CORT.CORT_GME0_RATE * 0.01) * (1 + rt_CORT.CORT_PROF_RATE * 0.01)/ (1 + rt_CORT.CORT_MATL_RATE * 0.01));
+                  rt_CMAT3.CMAT_MATL_COST := TRUNC(rt_CMAT3.CMAT_MATL_COST,trCo);
+                  rt_CMAT3.CMAT_MATL_PRIC := rt_CMAT3.CMAT_MATL_COST * rt_CMAT3.CMAT_APPL_WEGT; 
+   
+                  ----------------------------------------------------
+                  -- 3. UNLOADING비 계산
+                  ----------------------------------------------------
+                  O_LINE_NO  := 'ST-51230';
+                  rt_CPRO.CPRO_NET0_CYTM := TRUNC(BRAI_R.BRAP_NET0_CYTU, 2);
+
+                  CRSPCPRO_C03(I_CORP_CODE
+                              ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                              ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE,NULL
+                              ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                              ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+   
+                  IF  O_MESG_CODE != 'IQ-001' THEN
+                      O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                      RAISE UD_EX_ERROR;
+                  ELSE
+                      O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                      O_MESG_CODE := 'SA-002';
+                  END IF;
+   
+                  rt_CMAT4.CMAT_USE0_WEGT := 1;
+                  rt_CMAT4.CMAT_APPL_WEGT := 1;
+                  rt_CMAT4.CMAT_MATL_PRIC := NVL(rt_CPRO.CPRO_PROC_COST,0);
+                  rt_CMAT4.CMAT_MATL_COST := rt_CMAT4.CMAT_MATL_PRIC *  (1 + rt_CORT.CORT_GME0_RATE * 0.01) * (1 + rt_CORT.CORT_PROF_RATE * 0.01)/ (1 + rt_CORT.CORT_MATL_RATE * 0.01);
+                  rt_CMAT4.CMAT_MATL_COST := TRUNC(rt_CMAT4.CMAT_MATL_COST,trCo);
+                  rt_CMAT4.CMAT_MATL_PRIC := rt_CMAT4.CMAT_MATL_COST * rt_CMAT4.CMAT_APPL_WEGT; 
+   
+                  --용접비 = * 용접길이 + * 부품수   
+                  CASE WHEN BRAI_R.BRAI_KIND_CODE = 'TOCH' THEN
+                            rt_CMAT.CMAT_MATL_PRIC :=  TRUNC(rt_CMAT2.CMAT_MATL_PRIC * BRAI_R.BRAI_PART_CNT0
+                                                    + ((rt_CMAT3.CMAT_MATL_PRIC) * BRAI_R.BRAI_WELD_LENG) + rt_CMAT4.CMAT_MATL_PRIC, trCo);
+
+                       WHEN BRAI_R.BRAI_KIND_CODE = 'HF_TOCH' THEN
+                            rt_CMAT.CMAT_MATL_PRIC :=  TRUNC(rt_CMAT2.CMAT_MATL_PRIC  + rt_CMAT3.CMAT_MATL_PRIC + rt_CMAT4.CMAT_MATL_PRIC, trCo);
+                       
+                       ELSE NULL;
+                  END CASE;
+                  ***********************************************/
+              
+                  -- 17차 수정
+                  -- 용접비=LOAD+순수용접+UNLOAD 
+                  -- [참고] 순수용접단가에 재료비 포함되어 있음. 가공비는 재관비 이중방지를 위해 이미 나누어진 단가로 되어 있음
+                  CASE WHEN BRAI_R.BRAI_KIND_CODE = 'TOCH' THEN
+                            rt_CMAT.CMAT_MATL_PRIC := BRAI_R.BRAP_LOAD_PRIC * BRAI_R.BRAI_PART_CNT0
+                                                    + BRAI_R.BRAP_PURE_PRIC * BRAI_R.BRAI_WELD_LENG
+                                                    + BRAI_R.BRAP_UNLO_PRIC;
+
+                       WHEN BRAI_R.BRAI_KIND_CODE = 'HF_TOCH' THEN
+                            rt_CMAT.CMAT_MATL_PRIC := BRAI_R.BRAP_LOAD_PRIC 
+                                                    + BRAI_R.BRAP_PURE_PRIC
+                                                    + BRAI_R.BRAP_UNLO_PRIC;
+                       
+                       ELSE NULL;
+                  END CASE;
+                  
+                  rt_CMAT.CMAT_MATL_PRIC :=  TRUNC(rt_CMAT.CMAT_MATL_PRIC, trCo);
+
+             ----------------------------------------------------
+             -- FURNACE
+             ----------------------------------------------------
+             WHEN BRAI_R.BRAI_KIND_CODE = 'FNAC' THEN
+                  O_LINE_NO  := 'ST-51300';
+
+                  --여유길이
+                  IF  BRAI_R.BRAI_WLDR_CODE = 'FRAIL' THEN
+                      v_EXEC_LENG := 100;
+                  ELSE 
+                      v_EXEC_LENG := 10;
+                  END IF;
+                  
+                  --도포비
+                  v_DOPO_PRIC := TRUNC(BRAI_R.BRAP_APLY_COEF * (1 + rt_CORT.CORT_ET00_RATE * 0.01) * rt_CORT.CORT_PAY0_RATE /3600 * (1+rt_CORT.CORT_GME0_RATE*0.01) * (1 + rt_CORT.CORT_PROF_RATE * 0.01) / (1 + rt_CORT.CORT_MATL_RATE * 0.01),2);
+                  
+                  IF  BRAI_R.BRAI_WLDR_CODE <> 'NORMAL' THEN
+                      IF BRAI_R.BRAI_WLDR_CODE <> 'HYDR' THEN 
+                          v_DOPO_PRIC := 0;
+                      END IF;
+                      v_NET0_CYTM := 1 / BRAI_R.BRAP_CONV_SPED * 60 * 10;
+                  ELSE
+                      v_NET0_CYTM := BRAI_R.BRAP_NET0_CYT0;
+                  END IF; 
+                  
+                  --재료비
+                  v_MATL_PRIC := TRUNC(v_NET0_CYTM * (1+rt_CORT.CORT_ET00_RATE * 0.01) * (BRAI_R.BRAP_BRAZ_PRIC + BRAI_R.BRAP_MATL_PRIC),2);
+                  
+                  --노무비
+                  v_LBRC_1    := TRUNC(v_NET0_CYTM*(1+rt_CORT.CORT_ET00_RATE*0.01)*rt_CORT.CORT_PAY0_RATE/3600*1*(1+rt_CORT.CORT_GME0_RATE*0.01)*(1 + rt_CORT.CORT_PROF_RATE * 0.01)/ (1 + rt_CORT.CORT_MATL_RATE * 0.01),2);
+                  v_LBRC_2    := TRUNC(v_NET0_CYTM*(1+rt_CORT.CORT_ET00_RATE*0.01)*rt_CORT.CORT_PAY0_RATE/3600*2*(1+rt_CORT.CORT_GME0_RATE*0.01)*(1 + rt_CORT.CORT_PROF_RATE * 0.01)/ (1 + rt_CORT.CORT_MATL_RATE * 0.01),2);
+
+                  IF  BRAI_R.BRAI_WLDR_CODE = 'FRAIL' THEN
+                      v_LBRC_2 := v_LBRC_1;
+                  END IF;
+  
+                  --경비
+                  v_COST      := TRUNC(v_NET0_CYTM*(1+rt_CORT.CORT_ET00_RATE*0.01)*TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo)/3600*(1+rt_CORT.CORT_IDRT_RATE*0.01)*(1+rt_CORT.CORT_GME0_RATE*0.01)*(1 + rt_CORT.CORT_PROF_RATE * 0.01)/ (1 + rt_CORT.CORT_MATL_RATE * 0.01),2);
+  
+                  IF  TRUNC(BRAI_R.BRAP_BELT_LENG / (BRAI_R.BRAI_ITEM_WDTH + v_EXEC_LENG)) <= 0 AND 
+                      TRUNC(BRAI_R.BRAP_BELT_LENG / (BRAI_R.BRAI_ITEM_HEGT + v_EXEC_LENG)) <= 0 THEN
+                      O_MESG := '제품폭(가로,세로길이)과 여유길이('||v_EXEC_LENG||')합이 벨트 길이('||BRAI_R.BRAP_BELT_LENG||') 보다 클수 없습니다.';
+                      RAISE UD_EX_ERROR;
+                  END IF;
+                  
+                  O_LINE_NO  := 'ST-51310';
+                  
+                  ----------------------------------------------------
+                  -- 1.제품 가로,세로를 바꾸어 최적의 배열을 구한다.
+                  -- 2.CVT, 벨트소요길이, 용재도포CT, BRAZING CT 산출
+                  -- 3.용가재비, BARZINF비 산출
+                  -- 4.CVT가 큰 것 또는 CVT가 동일한 경우 용접비 작은 것을 취한다. 
+                  ----------------------------------------------------
+                  FOR C1 IN 
+                     (
+                      SELECT CVT
+                            ,WELD_PRIC
+                            ,BELT_USED_LENG
+                            ,WELD_MATL_PRIC
+                            ,BRAZ_PRIC 
+                        FROM
+                            (
+                             SELECT CVT
+                                   ,WELD_PRIC
+                                   ,BELT_USED_LENG
+                                   ,WELD_MATL_PRIC
+                                   ,BRAZ_PRIC
+                               FROM (
+                                     SELECT CVT
+                                           --용접비 = 용가재비 * 용접길이 + BRAZ비*벨트 소요길이/CVT
+                                           ,TRUNC(WELD_MATL_PRIC * BRAI_WELD_LENG + BRAZ_PRIC * BELT_USED_LENG / CVT,2) WELD_PRIC
+                                           ,BELT_USED_LENG
+                                           ,WELD_MATL_PRIC
+                                           ,BRAZ_PRIC
+                                       FROM
+                                            (
+                                              SELECT --용가재비
+                                                     CASE WHEN DOPO_CT <= BRAZ_CT THEN BRAI_R.BRAP_WELD_PRIC
+                                                          ELSE                         BRAI_R.BRAP_WELD_PRIC + v_DOPO_PRIC -- 용가재비 + 도포비
+                                                     END  WELD_MATL_PRIC
+                                                        
+                                                    -- BRAZ비 = 재료비 + 노무비 + 경비 
+                                                    ,CASE WHEN DOPO_CT <= BRAZ_CT THEN v_MATL_PRIC + v_LBRC_2 + v_COST
+                                                          ELSE                         v_MATL_PRIC + v_LBRC_1 + v_COST
+                                                     END  BRAZ_PRIC
+                                                     ,CVT
+                                                     ,BELT_USED_LENG
+                                                     ,BRAI_WELD_LENG
+                                                FROM 
+                                                     (-- 제품 가로,세로를 바꾸어 최적의 배열을 구한다.                                               
+                                                      SELECT BRAP_BELT_LENG
+                                                            ,BRAI_WELD_LENG
+                                                            ,ITEM_WIDTH
+                                                            ,ITEM_LENG
+                                                            ,TRUNC(BRAP_BELT_LENG / (ITEM_WIDTH + v_EXEC_LENG)) CVT             -- CVT = BELT길이 / (제품가로(세로) + 여유길이
+                                                            ,(ITEM_LENG + v_EXEC_LENG) / 10                     BELT_USED_LENG  -- 벨트소요길이
+                                                            ,BRAI_R.BRAP_APLY_COEF * BRAI_R.BRAI_WELD_LENG      DOPO_CT         -- 용재도포 CT
+                                                            ,v_NET0_CYTM * ITEM_LENG / 10 
+                                                            / TRUNC(BRAI_R.BRAP_BELT_LENG / (ITEM_WIDTH + v_EXEC_LENG)) BRAZ_CT -- BRAZ_CT
+                                                        FROM
+                                                            (--BELT길이, 용접길이, 제품가로(세로), 제품세로(가로) 추출 
+                                                             SELECT BRAI_R.BRAP_BELT_LENG BRAP_BELT_LENG, BRAI_R.BRAI_WELD_LENG BRAI_WELD_LENG, BRAI_R.BRAI_ITEM_WDTH ITEM_WIDTH, BRAI_R.BRAI_ITEM_HEGT ITEM_LENG FROM DUAL UNION
+                                                             SELECT BRAI_R.BRAP_BELT_LENG BRAP_BELT_LENG, BRAI_R.BRAI_WELD_LENG BRAI_WELD_LENG, BRAI_R.BRAI_ITEM_HEGT ITEM_WIDTH, BRAI_R.BRAI_ITEM_WDTH ITEM_LENG FROM DUAL
+                                                            ) A
+                                                        WHERE TRUNC(BRAI_R.BRAP_BELT_LENG / (ITEM_WIDTH + v_EXEC_LENG)) <> 0
+                                                     )
+                                            )
+                                    )
+                             ORDER BY CVT DESC,WELD_PRIC ASC  -- CVT값이 큰값 같은경우에는 용접비가 적은 금액 적용
+                        ) WHERE ROWNUM = 1
+                     )
+                  LOOP
+                      rt_CMAT.CMAT_MATL_PRIC  := C1.WELD_PRIC;
+                  END LOOP;
+              
+             ----------------------------------------------------
+             -- 진공 니켈 FURNACE
+             ----------------------------------------------------
+             WHEN BRAI_R.BRAI_KIND_CODE = 'VNI_FNAC' THEN
+                  O_LINE_NO  := 'ST-51400';
+                
+                  ----------------------------------------------------
+                  -- 1. 재료비처리 [참고] 17차 : 브레이징 PASTE 수입단가 환산처리하지 않음-로직은 동일하게 유지
+                  ----------------------------------------------------
+                  FOR C1 IN 
+                     (
+                      SELECT BRAM_MATL_CODE
+                            ,BRAM_MATL_NAME
+                            ,CASE WHEN BRAM_IMPT_CODE IS NULL THEN BRAM_MATL_PRIC ELSE IMPT_MATL_PRIC END MATL_PRIC
+                            ,BRAM_MATL_UNIT
+                            ,DECODE (BRAM_MATL_CODE,'NITROGAS',BRAM_MATL_USE0
+                                                   ,'IN_BNI_5',BRAM_MATL_USE0 * BRAI_R.BRAI_INTN_LENG / 1000  --cm당 0.11g 사용 -> kg으로 처리를 위해 /1000 나누어줌
+                                                   ,'IN_BNI_2',BRAM_MATL_USE0 * BRAI_R.BRAI_EXTN_LENG / 1000  --cm당 0.11g 사용 -> kg으로 처리를 위해 /1000 나누어줌
+                                                   ,'FOIL',BRAI_R.BRAI_FOIL_QNTY)                    USE0_QNTY
+                            ,DECODE (BRAM_MATL_CODE,'NITROGAS',BRAI_R.BRAI_VANI_CAVT,BRAM_MATL_APLY) MATL_APLY
+                            ,BRAM_IMPT_CODE
+                            ,BRAM_MATL_USE0
+                        FROM CATBBRAM
+                          LEFT OUTER JOIN
+                             --수입환산단가정보
+                             CRTBIMPT
+                          ON     I_CORP_CODE = IMPT_CORP_CODE
+                             AND I_PART_NO   = IMPT_PART_NO
+                             AND I_EONO      = IMPT_EONO
+                             AND I_CUMT_NO   = IMPT_CUMT_NO
+                             AND 'BRAZ'         = IMPT_COME_CODE
+                             AND BRAM_MATL_CODE = IMPT_MATL_CODE
+                             AND 'S'            = IMPT_COST_GUBN
+                       WHERE BRAM_CORP_CODE = v_APPL_CORP
+                         AND BRAM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                         AND BRAM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                       ORDER BY  BRAM_MATL_SEQ0
+                     )
+                  LOOP
+                      v_SORT_KEY := v_SORT_KEY + 1;
+                      
+                      rt_CMAT.CMAT_MATL_NAME := C1.BRAM_MATL_NAME;
+                      
+                      IF  C1.BRAM_MATL_CODE <> 'SCRAP' THEN
+                          rt_CMAT.CMAT_MATL_UNIT := C1.BRAM_MATL_UNIT;
+                          rt_CMAT.CMAT_MATL_LKGB := CASE WHEN C1.BRAM_IMPT_CODE IS NOT NULL THEN 'K' ELSE 'L' END;
+                          rt_CMAT.CMAT_APPL_WEGT := C1.MATL_APLY;
+                          rt_CMAT.CMAT_USE0_WEGT := C1.USE0_QNTY;
+                          rt_CMAT.CMAT_MATL_PRIC := C1.MATL_PRIC;
+                          IF  C1.BRAM_IMPT_CODE IS NOT NULL THEN
+                              rt_CMAT.CMAT_MATL_PRIC := TRUNC(C1.MATL_PRIC / 1000 * C1.BRAM_MATL_USE0,trCo);
+                          END IF;
+                          
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT / rt_CMAT.CMAT_APPL_WEGT;
+                          rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+                          rt_CMAT.CMAT_MATL_RATE := rt_CORT.CORT_MATL_RATE;
+                          rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+                          rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+                          
+                          rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+                          rt_CMAT.CMAT_SCRP_RATE := 0.0;
+                          rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+                          rt_CMAT.CMAT_SCRP_COST := 0.0;
+                      ELSE
+                          rt_CMAT.CMAT_MATL_UNIT := '';
+                          rt_CMAT.CMAT_MATL_LKGB := 'Z';
+                          rt_CMAT.CMAT_APPL_WEGT := 0.0;
+                          rt_CMAT.CMAT_USE0_WEGT := 0.0;
+                          rt_CMAT.CMAT_MATL_PRIC := 0.0;
+                          rt_CMAT.CMAT_MATL_COST := 0.0;
+                          rt_CMAT.CMAT_MATL_RATE := 0.0;
+                          rt_CMAT.CMAT_MATL_MACT := 0.0;
+                          
+                          rt_CMAT.CMAT_SCRP_PRIC := BRAI_R.BRAI_SCRP_PRIC;
+                          rt_CMAT.CMAT_SCRP_RATE := 100.0;
+                          rt_CMAT.CMAT_SCRP_WEGT := BRAI_R.BRAI_SCRP_WEGT;
+                          rt_CMAT.CMAT_SCRP_COST := TRUNC((BRAI_R.BRAI_SCRP_WEGT / 1000) * BRAI_R.BRAI_SCRP_PRIC,trCo);
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_SCRP_COST * (-1);
+                      END IF;
+
+                      O_LINE_NO  := 'ST-51410';
+                      
+                      IF  rt_CMAT.CMAT_MATL_COST <> 0 THEN
+                          INSERT INTO CRTBCMAT
+                                (CMAT_CORP_CODE
+                                ,CMAT_PART_NO
+                                ,CMAT_EONO
+                                ,CMAT_CUMT_NO
+                                ,CMAT_COME_CODE
+                                ,CMAT_CUMT_GUBN
+                                ,CMAT_MATL_SEQ0
+                                ,CMAT_SORT_KEY0
+                                ,CMAT_INDS_CODE
+                                ,CMAT_MATL_CORP
+                                ,CMAT_MATL_STND
+                                ,CMAT_MATL_CODE
+                                ,CMAT_MATL_APDT
+                                ,CMAT_MATL_GUBN
+                                ,CMAT_MATL_CLAS
+                                ,CMAT_MATL_MTJO
+                                ,CMAT_MATL_LKGB
+                                ,CMAT_MATL_NAME
+                                ,CMAT_MATL_UNIT
+                                ,CMAT_MATL_PRIC
+                                ,CMAT_SCRP_PRIC
+                                ,CMAT_SCRP_RATE
+                                ,CMAT_UNUS_PRIC
+                                ,CMAT_IMPT_CODE
+                                ,CMAT_IMPT_PRIC
+                                ,CMAT_IMPT_APDT
+                                ,CMAT_TRIF_RATE
+                                ,CMAT_INPT_WEGT
+                                ,CMAT_NET0_WEGT
+                                ,CMAT_USE0_WEGT
+                                ,CMAT_APPL_WEGT
+                                ,CMAT_SCRP_WEGT
+                                ,CMAT_LOSS_RATE
+                                ,CMAT_PDAB_RATE
+                                ,CMAT_MRGN_RATE
+                                ,CMAT_MATL_RATE
+                                ,CMAT_ADD0_COST
+                                ,CMAT_UNUS_COST
+                                ,CMAT_SCRP_COST
+                                ,CMAT_MATL_COST
+                                ,CMAT_MATL_MACT
+                                ,CMAT_MATL_CONS
+                                ,CMAT_SCRP_CONS
+                                ,CMAT_APPL_GUBN
+                                ,CMAT_ADD0_GUBN
+                                ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                                ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                                )
+                          VALUES 
+                                (I_CORP_CODE
+                                ,I_PART_NO
+                                ,I_EONO
+                                ,I_CUMT_NO
+                                ,v_COME_CODE
+                                ,'S'                     
+                                ,v_SORT_KEY              
+                                ,v_SORT_KEY              
+                                ,rt_MTCD.MTCD_INDS_CODE  
+                                ,NULL                    
+                                ,NULL                    
+                                ,NULL                    
+                                ,NULL                    
+                                ,NULL                    
+                                ,NULL                    
+                                ,''                      
+                                ,rt_CMAT.CMAT_MATL_LKGB
+                                ,rt_CMAT.CMAT_MATL_NAME
+                                ,rt_CMAT.CMAT_MATL_UNIT
+                                ,rt_CMAT.CMAT_MATL_PRIC
+                                ,rt_CMAT.CMAT_SCRP_PRIC
+                                ,rt_CMAT.CMAT_SCRP_RATE
+                                ,NULL 
+                                ,NULL 
+                                ,NULL 
+                                ,NULL 
+                                ,0    
+                                ,0    
+                                ,0    
+                                ,rt_CMAT.CMAT_USE0_WEGT 
+                                ,rt_CMAT.CMAT_APPL_WEGT 
+                                ,rt_CMAT.CMAT_SCRP_WEGT  
+                                ,0  
+                                ,0  
+                                ,0  
+                                ,rt_CMAT.CMAT_MATL_RATE
+                                ,0 
+                                ,0 
+                                ,rt_CMAT.CMAT_SCRP_COST 
+                                ,rt_CMAT.CMAT_MATL_COST 
+                                ,rt_CMAT.CMAT_MATL_MACT 
+                                ,NULL
+                                ,NULL
+                                ,'Y'
+                                ,'S'
+                                ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                                ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                                )
+                          ;
+                      END IF;
+                  END LOOP;
+                  
+                  ----------------------------------------------------
+                  --2. 가공비처리
+                  ----------------------------------------------------
+                  v_PRO_SORT_KEY := v_PRO_SORT_KEY + 1;
+
+                  rt_CPRO.CPRO_PROC_NAME := '진공브레이징';
+                  rt_CPRO.CPRO_CAVT      := BRAI_R.BRAI_VANI_CAVT;
+                  rt_CPRO.CPRO_PREP_HOUR := 0.0;   --준비시간은 C/T포함됨
+                  rt_CPRO.CPRO_PRSN_CNT0 := BRAI_R.BRAP_PRSN_CNT0;
+                  v_NET0_CYTM            := BRAI_R.BRAP_NET0_CYT0;
+                  rt_CPRO.CPRO_AEXM_RATE := 0.0; --추가경비율
+                  rt_CPRO.CPRO_MCHH_APDT := '';
+                  rt_CPRO.CPRO_MCHH_CODE := BRAI_R.BRAP_MCHH_CODE;
+                  rt_CPRO.CPRO_MADD_APDT := '';
+                  rt_CPRO.CPRO_MADD_CODE := '';
+                  rt_CPRO.CPRO_LOTQ      := rt_CMMS.CMMS_LOTQ_QTY0;
+
+                  IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                      O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.';
+                      RAISE UD_EX_ERROR;
+                  END IF;
+                
+                  O_LINE_NO  := 'ST-51430';
+                  --기계경비추출
+                  IF  rt_CPRO.CPRO_MCHH_CODE > ' ' THEN
+                      --2023.03.20
+                      /****
+                      CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                  ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                  ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                      IF  O_MESG_CODE != 'IQ-001' THEN
+                          O_MESG := O_MESG
+                                 || CHR(10) || '기계코드=' || rt_CPRO.CPRO_MCHH_CODE
+                                 || CHR(10) || '기준일  =' || rt_SPMS.SPMS_BASE_DATE;
+                          RAISE UD_EX_ERROR;
+                      ELSE
+                          O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                          O_MESG_CODE := 'SA-002';
+                      END IF;
+                      ****/
+                      -----------------------------------------
+                      CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                  ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                  ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                      IF  O_MESG_CODE != 'IQ-001' THEN
+                          RAISE UD_EX_ERROR;
+                      ELSE
+                          O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                          O_MESG_CODE := 'SA-002';
+                      END IF;
+                      -----------------------------------------
+                      IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                          O_MESG := '기계경비정보가 존재하지 않습니다.';
+                          RAISE UD_EX_ERROR;
+                      END IF;
+                  ELSE
+                      rt_MCIF.MCIF_MCHH_NAME := '';
+                      rt_MCIF.MCIF_DRCT_COST := 0;
+                  END IF;
+                
+                  rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                  rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+                
+                  --저장/계산은 소수단위 절사후 처리
+                  rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                  rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                  rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                  rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                  rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+                
+                  --공통율정보 추출
+                  O_LINE_NO := 'ST-51440';
+                
+                  --가공비계산
+                  CRSPCPRO_C01(I_CORP_CODE
+                              ,rt_CPRO.CPRO_LOTQ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                              ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,rt_CPRO.CPRO_AEXM_RATE,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                              ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                              ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+                
+                  IF  O_MESG_CODE != 'IQ-001' THEN
+                      O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                      RAISE UD_EX_ERROR;
+                  ELSE
+                      O_PRGM_ID   := 'CASPBRAZ_P18_5';
+                      O_MESG_CODE := 'SA-002';
+                  END IF;
+                
+                  INSERT INTO CRTBCPRO
+                        (CPRO_CORP_CODE
+                        ,CPRO_PART_NO
+                        ,CPRO_EONO
+                        ,CPRO_CUMT_NO
+                        ,CPRO_COME_CODE
+                        ,CPRO_CUMT_GUBN
+                        ,CPRO_SEQ0
+                        ,CPRO_SORT_KEY0
+                        ,CPRO_INDS_CODE
+                        ,CPRO_PROC_NAME
+                        ,CPRO_MCHH_NAME
+                        ,CPRO_VEND_CODE
+                        ,CPRO_VEND_DATE
+                        ,CPRO_CORT_DATE
+                        ,CPRO_LOTQ
+                        ,CPRO_CAVT
+                        ,CPRO_PREP_HOUR
+                        ,CPRO_PRSN_CNT0
+                        ,CPRO_NET0_CYTM
+                        ,CPRO_MCHH_COST
+                        ,CPRO_PAY0_RATE
+                        ,CPRO_IDRT_RATE
+                        ,CPRO_GME0_RATE
+                        ,CPRO_PROF_RATE
+                        ,CPRO_ET00_RATE
+                        ,CPRO_AEXM_RATE
+                        ,CPRO_RUN0_COST
+                        ,CPRO_PROD_CONT
+                        ,CPRO_IBR0_COST
+                        ,CPRO_EXPM_COST
+                        ,CPRO_PROC_COST
+                        ,CPRO_GME0_COST
+                        ,CPRO_PROF_COST
+                        ,CPRO_APPL_GUBN
+                        ,CPRO_ADD0_GUBN
+                        ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                        ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                        ,CPRO_MCHH_CNT0
+                        ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                        ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                        )
+                 VALUES (I_CORP_CODE
+                        ,I_PART_NO
+                        ,I_EONO
+                        ,I_CUMT_NO
+                        ,v_COME_CODE
+                        ,'S'
+                        ,v_PRO_SORT_KEY
+                        ,v_PRO_SORT_KEY
+                        ,rt_MTCD.MTCD_INDS_CODE
+                        ,rt_CPRO.CPRO_PROC_NAME
+                        ,rt_CPRO.CPRO_MCHH_NAME
+                        ,rt_SPMS.SPMS_VEND_CODE
+                        ,rt_SPMS.SPMS_VEND_APFR
+                        ,rt_CORT.CORT_APPL_DATE --rt_SPMS.SPMS_BASE_DATE  2022.10 실제적용일로 변경저장
+                        ,rt_CPRO.CPRO_LOTQ
+                        ,rt_CPRO.CPRO_CAVT
+                        ,rt_CPRO.CPRO_PREP_HOUR
+                        ,rt_CPRO.CPRO_PRSN_CNT0
+                        ,rt_CPRO.CPRO_NET0_CYTM
+                        ,rt_CPRO.CPRO_MCHH_COST
+                        ,rt_CORT.CORT_PAY0_RATE
+                        ,rt_CORT.CORT_IDRT_RATE
+                        ,rt_CORT.CORT_GME0_RATE
+                        ,rt_CORT.CORT_PROF_RATE
+                        ,rt_CORT.CORT_ET00_RATE
+                        ,rt_CPRO.CPRO_AEXM_RATE
+                        ,rt_CPRO.CPRO_MCHH_COST
+                        ,rt_CMMS.CMMS_PROD_CNT0
+                        ,rt_CPRO.CPRO_IBR0_COST
+                        ,rt_CPRO.CPRO_EXPM_COST
+                        ,rt_CPRO.CPRO_PROC_COST
+                        ,rt_CPRO.CPRO_GME0_COST
+                        ,rt_CPRO.CPRO_PROF_COST
+                        ,'Y'
+                        ,'S'
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                        ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                        ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                        ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                        )
+                      ;
+
+                  ----------------------------------------------------
+                  --3. 불량비처리 : 처리하지 않음 불량율=0
+                  ----------------------------------------------------
+                  O_LINE_NO := 'ST-51460';
+                  
+                  IF  BRAI_R.BRAP_DFCT_RAT1 > 0 AND 1 = 0 THEN 
+                      v_SORT_KEY := v_SORT_KEY + 1;
+ 
+                      INSERT INTO CRTBCMAT
+                            (CMAT_CORP_CODE
+                            ,CMAT_PART_NO
+                            ,CMAT_EONO
+                            ,CMAT_CUMT_NO
+                            ,CMAT_COME_CODE
+                            ,CMAT_CUMT_GUBN
+                            ,CMAT_MATL_SEQ0
+                            ,CMAT_SORT_KEY0
+                            ,CMAT_INDS_CODE
+                            ,CMAT_MATL_CORP
+                            ,CMAT_MATL_STND
+                            ,CMAT_MATL_CODE
+                            ,CMAT_MATL_APDT
+                            ,CMAT_MATL_GUBN
+                            ,CMAT_MATL_CLAS
+                            ,CMAT_MATL_MTJO
+                            ,CMAT_MATL_LKGB
+                            ,CMAT_MATL_NAME
+                            ,CMAT_MATL_UNIT
+                            ,CMAT_MATL_PRIC
+                            ,CMAT_SCRP_PRIC
+                            ,CMAT_SCRP_RATE
+                            ,CMAT_UNUS_PRIC
+                            ,CMAT_IMPT_CODE
+                            ,CMAT_IMPT_PRIC
+                            ,CMAT_IMPT_APDT
+                            ,CMAT_TRIF_RATE
+                            ,CMAT_INPT_WEGT
+                            ,CMAT_NET0_WEGT
+                            ,CMAT_USE0_WEGT
+                            ,CMAT_APPL_WEGT
+                            ,CMAT_SCRP_WEGT
+                            ,CMAT_LOSS_RATE
+                            ,CMAT_PDAB_RATE
+                            ,CMAT_MRGN_RATE
+                            ,CMAT_MATL_RATE
+                            ,CMAT_ADD0_COST
+                            ,CMAT_UNUS_COST
+                            ,CMAT_SCRP_COST
+                            ,CMAT_MATL_COST
+                            ,CMAT_MATL_MACT
+                            ,CMAT_MATL_CONS
+                            ,CMAT_SCRP_CONS
+                            ,CMAT_APPL_GUBN
+                            ,CMAT_ADD0_GUBN
+                            ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                            ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                            )
+                      VALUES 
+                            (I_CORP_CODE
+                            ,I_PART_NO
+                            ,I_EONO
+                            ,I_CUMT_NO
+                            ,v_COME_CODE
+                            ,'S'                     --원가계산구분
+                            ,v_SORT_KEY              --재료비SEQ
+                            ,v_SORT_KEY              --정렬순서
+                            ,rt_MTCD.MTCD_INDS_CODE  --업종_코드
+                            ,NULL                    --재료단가_법인코드
+                            ,NULL                    --재료단가_표준구분
+                            ,NULL                    --재료단가_재료코드
+                            ,NULL                    --재료단가_적용일
+                            ,NULL                    --재료단가_재질구분
+                            ,NULL                    --재료분류
+                            ,''                      --재료종류
+                            ,'L'                     --
+                            ,'불량비'               --재료명칭 
+                            ,'EA'  --재료단위
+                            ,TRUNC(rt_CPRO.CPRO_PROC_COST * BRAI_R.BRAP_DFCT_RAT1,trCo)  --재료단가
+                            ,NULL   --SCRAP단가
+                            ,NULL                    --SCRAP회수율
+                            ,NULL                    --산폐단가
+                            ,NULL                    --수입코드
+                            ,NULL                    --수입단가
+                            ,NULL                    --수입코드_적용일
+                            ,0                       --관세율
+                            ,0                       --투입량
+                            ,0                       --NET량
+                            ,1  --사용량
+                            ,0  --적용량
+                            ,0  --SCRAP중량
+                            ,0  --LOSS율
+                            ,0  --불량율
+                            ,0  --여유율
+                            ,0  --재료관리비율
+                            ,0  --추가비
+                            ,0  --산폐비
+                            ,0  --SCRAP비
+                            ,TRUNC(rt_CPRO.CPRO_PROC_COST*BRAI_R.BRAP_DFCT_RAT1,trCo)  --재료비
+                            ,NULL  --재료관리비
+                            ,NULL
+                            ,NULL
+                            ,'Y'
+                            ,'S'
+                            ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                            ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                            );
+                  END IF;
+                  
+             ELSE NULL;
+        END CASE;
+
+        ----------------------------------------------------
+        -- 진공 니켈 FURNACE 이외의 재료비 처리
+        ----------------------------------------------------
+        IF  BRAI_R.BRAI_KIND_CODE <> 'VNI_FNAC' THEN
+            rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_PRIC,trCo);
+          --17차 : 연동상수는 주재료 발생시 에만 필요
+          --rt_CMAT.CMAT_MATL_CONS := rt_CMAT.CMAT_INPT_WEGT * 0.001;
+            rt_CMAT.CMAT_MATL_CONS := 0.0;
+    
+            --재관비 = (재료비 + SCRAP비 - 산폐비) * 관리비율
+            rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+            rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+    
+            rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+            rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+            rt_CMAT.CMAT_MATL_NAME := BRAI_R.BRAP_MATL_NAME || BRAI_R.SUFFIX_NAME;
+    
+            O_LINE_NO := 'ST-52000';
+
+            INSERT INTO CRTBCMAT
+                  (CMAT_CORP_CODE
+                  ,CMAT_PART_NO
+                  ,CMAT_EONO
+                  ,CMAT_CUMT_NO
+                  ,CMAT_COME_CODE
+                  ,CMAT_CUMT_GUBN
+                  ,CMAT_MATL_SEQ0
+                  ,CMAT_SORT_KEY0
+                  ,CMAT_INDS_CODE
+                  ,CMAT_MATL_CORP
+                  ,CMAT_MATL_STND
+                  ,CMAT_MATL_CODE
+                  ,CMAT_MATL_APDT
+                  ,CMAT_MATL_GUBN
+                  ,CMAT_MATL_CLAS
+                  ,CMAT_MATL_MTJO
+                  ,CMAT_MATL_LKGB
+                  ,CMAT_MATL_NAME
+                  ,CMAT_MATL_UNIT
+                  ,CMAT_MATL_PRIC
+                  ,CMAT_SCRP_PRIC
+                  ,CMAT_SCRP_RATE
+                  ,CMAT_UNUS_PRIC
+                  ,CMAT_IMPT_CODE
+                  ,CMAT_IMPT_PRIC
+                  ,CMAT_IMPT_APDT
+                  ,CMAT_TRIF_RATE
+                  ,CMAT_INPT_WEGT
+                  ,CMAT_NET0_WEGT
+                  ,CMAT_USE0_WEGT
+                  ,CMAT_APPL_WEGT
+                  ,CMAT_SCRP_WEGT
+                  ,CMAT_LOSS_RATE
+                  ,CMAT_PDAB_RATE
+                  ,CMAT_MRGN_RATE
+                  ,CMAT_MATL_RATE
+                  ,CMAT_ADD0_COST
+                  ,CMAT_UNUS_COST
+                  ,CMAT_SCRP_COST
+                  ,CMAT_MATL_COST
+                  ,CMAT_MATL_MACT
+                  ,CMAT_MATL_CONS
+                  ,CMAT_SCRP_CONS
+                  ,CMAT_APPL_GUBN
+                  ,CMAT_ADD0_GUBN
+                  ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                  ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                  )
+           VALUES (I_CORP_CODE
+                  ,I_PART_NO
+                  ,I_EONO
+                  ,I_CUMT_NO
+                  ,v_COME_CODE
+                  ,'S'                     
+                  ,v_SORT_KEY              
+                  ,v_SORT_KEY              
+                  ,rt_MTCD.MTCD_INDS_CODE  --업종_코드
+                  ,NULL                    --재료단가_법인코드
+                  ,NULL                    --재료단가_표준구분
+                  ,NULL                    --재료단가_재료코드
+                  ,NULL                    --재료단가_적용일
+                  ,NULL                    --재료단가_재질구분
+                  ,NULL                    --재료분류
+                  ,''                      --재료종류
+                  ,'L'                     --
+                  ,rt_CMAT.CMAT_MATL_NAME  --재료명칭 
+                  ,'EA'                    --재료단위
+                  ,rt_CMAT.CMAT_MATL_PRIC  --재료단가
+                  ,NULL                    --SCRAP단가
+                  ,NULL                    --SCRAP회수율
+                  ,NULL                    --산폐단가
+                  ,NULL                    --수입코드
+                  ,NULL                    --수입단가
+                  ,NULL                    --수입코드_적용일
+                  ,0                       --관세율
+                  ,0                       --투입량
+                  ,0                       --NET량
+                  ,1                       --사용량
+                  ,rt_CMAT.CMAT_APPL_WEGT  --적용량
+                  ,0                       --SCRAP중량
+                  ,0                       --LOSS율
+                  ,0                       --불량율
+                  ,0                       --여유율
+                  ,rt_CORT.CORT_MATL_RATE  --재료관리비율
+                  ,0                       --추가비
+                  ,0                       --산폐비
+                  ,0                       --SCRAP비
+                  ,rt_CMAT.CMAT_MATL_COST  --재료비
+                  ,rt_CMAT.CMAT_MATL_MACT  --재료관리비
+                  ,NULL
+                  ,NULL
+                  ,'Y'
+                  ,'S'
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  )
+            ;
+            END IF;
+
+    END LOOP; --INPUT LOOP
+
+    ---------------------------------------------------------------------------
+    --7.계산 후처리
+    ---------------------------------------------------------------------------
+    --표준공통율생성
+    O_LINE_NO := 'ST-71000';
+    CRSPCAPL_I01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,rt_CORT.CORT_PAY0_RATE
+                ,rt_CORT.CORT_IDRT_RATE
+                ,rt_CORT.CORT_GME0_RATE
+                ,rt_CORT.CORT_MATL_RATE
+                ,rt_CORT.CORT_PROF_RATE
+                ,rt_CORT.CORT_ET00_RATE
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '표준적용율 생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPBRAZ_P18_5';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --실사인경우 재계산처리
+    O_LINE_NO := 'ST-72000';
+    CRSPREAL_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,'A',v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '실사 재계산 오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPBRAZ_P18_5';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --집계
+    O_LINE_NO := 'ST-73000';
+    CRSPSPCR_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '집계생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPBRAZ_P18_5';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -- 계산시 SUB PART 전체 SORT순번 CLEAR처리
+    UPDATE CRTBCMAT
+       SET CMAT_SORT_SUB0 = NULL
+     WHERE CMAT_CORP_CODE = I_CORP_CODE
+       AND CMAT_PART_NO   = I_PART_NO
+       AND CMAT_EONO      = I_EONO
+       AND CMAT_CUMT_NO   = I_CUMT_NO
+    ;
+
+    UPDATE CRTBCPRO
+       SET CPRO_SORT_SUB0 = NULL
+     WHERE CPRO_CORP_CODE = I_CORP_CODE
+       AND CPRO_PART_NO   = I_PART_NO
+       AND CPRO_EONO      = I_EONO
+       AND CPRO_CUMT_NO   = I_CUMT_NO
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    -- 18-1차 ADD : 진공 니켈 FURNACE로 계산한 건이 있는지 체크 (메세지 별도처리)
+    SELECT COUNT(*)
+      INTO v_CNT
+      FROM CATBBRAI
+     WHERE BRAI_CORP_CODE = I_CORP_CODE
+       AND BRAI_PART_NO   = I_PART_NO
+       AND BRAI_EONO      = I_EONO
+       AND BRAI_CUMT_NO   = I_CUMT_NO
+       AND BRAI_KIND_CODE = 'VNI_FNAC'
+    ;
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    IF  v_CNT > 0 THEN
+        O_MESG  := O_MESG || '<br> (진공 니켈 FURNACE: 집계 및 END기타비에서 불량비 별도 계산할 것)';
+    END IF;
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || CHR(10) || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
