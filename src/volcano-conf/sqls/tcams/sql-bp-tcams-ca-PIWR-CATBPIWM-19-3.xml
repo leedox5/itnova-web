@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/PIWR/CATBPIWM/19-3" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PIWM_CORP_CODE
+ ,PIWM_STND_GUBN
+ ,PIWM_STND_DEGR
+ ,PIWM_MATL_SEQ0
+ ,PIWM_MATL_GUBN
+ ,PIWM_MATT_CODE
+ ,PIWM_SHAP_CODE
+ ,PIWM_PROD_CODE
+ ,PIWM_2CUT_CODE
+ ,PIWM_BEND_YN
+ ,PIWM_MAKE_YN
+ ,PIWM_MATL_NAME
+ ,PIWM_MATL_PRIC
+ ,PIWM_MATL_COEF1
+ ,PIWM_MATL_COEF2
+ ,PIWM_MATL_UNIT
+ ,PIWM_APPL_GUBN
+ ,PIWM_REMK
+ ,PIWM_UPDT_CMAN
+ ,PIWM_UPDT_DATE
+ ,PIWM_INIT_CMAN
+ ,PIWM_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'19-3' ,'1' ,'CUTTER' ,'GENL' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'CUTTER' ,'3.89' ,'0' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'2' ,'CUTTER' ,'STAC' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'CUTTER' ,'3.89' ,'0' ,'0' ,'EA' ,'Y' ,'STAC은 일반에 준함' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'3' ,'CUTTER' ,'SUS300' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'CUTTER' ,'3.89' ,'0' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'4' ,'CUTTER' ,'SUS400' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'CUTTER' ,'3.89' ,'0' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'5' ,'CUTTER' ,'AL' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'CUTTER' ,'1.61' ,'0' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'6' ,'CIRCSAW' ,'GENL' ,NULL ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.3' ,'1' ,'1' ,'EA' ,'Y' ,'단가*PIPE외경*적용계수1*계수2' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'7' ,'CIRCSAW' ,'STAC' ,NULL ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.3' ,'1' ,'1' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'8' ,'CIRCSAW' ,'SUS300' ,NULL ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.49' ,'1' ,'1' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'9' ,'CIRCSAW' ,'SUS400' ,NULL ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.49' ,'1' ,'1' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'10' ,'CIRCSAW' ,'AL' ,NULL ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.33' ,'0.6' ,'1' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'11' ,'CIRCSAW' ,'GENL' ,NULL ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.3' ,'1' ,'2' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'12' ,'CIRCSAW' ,'STAC' ,NULL ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.3' ,'1' ,'2' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'13' ,'CIRCSAW' ,'SUS300' ,NULL ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.49' ,'1' ,'2' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'14' ,'CIRCSAW' ,'SUS400' ,NULL ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.49' ,'1' ,'2' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'15' ,'CIRCSAW' ,'AL' ,NULL ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'CIRCULAR SAW' ,'0.33' ,'0.6' ,'2' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'16' ,'BEND' ,'ALL' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'Y' ,'ALL' ,'BENDING TOOL' ,'16.7' ,'0' ,'0' ,'POINT' ,'Y' ,'BENDING POINT반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'17' ,'SQ_SUB10' ,'ALL' ,NULL ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'조관유' ,'2.1' ,'0' ,'0' ,'kg' ,'Y' ,'중량반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'18' ,'SQ_SUB20' ,'ALL' ,NULL ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'톱날' ,'2.8' ,'0' ,'0' ,'kg' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'19' ,'SQ_SUB30' ,'ALL' ,NULL ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'바이트' ,'0.7' ,'0' ,'0' ,'kg' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'20' ,'SQ_SUB40' ,'ALL' ,NULL ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'용접전력비' ,'0.7' ,'0' ,'0' ,'kg' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'21' ,'RO_SUB10' ,'SUS300' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'용접부재료비(가스+용가재)' ,'2.1' ,'0' ,'0' ,'cm' ,'Y' ,'길이반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'22' ,'RO_SUB10' ,'SUS400' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'용접부재료비(가스+용가재)' ,'2' ,'0' ,'0' ,'cm' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'23' ,'RO_SUB20' ,'SUS400' ,NULL ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'천공PIN' ,'0.6' ,'0' ,'0' ,'EA' ,'Y' ,'HOLE수 반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'24' ,'MOLD' ,'ALL' ,NULL ,'ROUND' ,'EGR' ,'ALL' ,'ALL' ,'ALL' ,'금형비' ,'100' ,'0' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'25' ,'MOLD' ,'ALL' ,NULL ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'금형비' ,'15000000' ,'5000000' ,'0' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'26' ,'PDAB' ,'ALL' ,NULL ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'ALL' ,'불량비' ,'0' ,'3.8' ,'0' ,'EA' ,'Y' ,'재료+가공일부에 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'27' ,'PDAB' ,'ALL' ,NULL ,'ROUND' ,'MUFF' ,'ALL' ,'ALL' ,'ALL' ,'불량비' ,'0' ,'0.7' ,'0' ,'EA' ,'Y' ,'PIPE제조원가에 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.PIWM_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.PIWM_UPDT_DATE > B.PIWM_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBPIWM B                                          
+      ON    B.PIWM_CORP_CODE = A.PIWM_CORP_CODE
+        AND B.PIWM_STND_GUBN = A.PIWM_STND_GUBN
+        AND B.PIWM_STND_DEGR = A.PIWM_STND_DEGR
+        AND B.PIWM_MATL_SEQ0 = A.PIWM_MATL_SEQ0
+        AND B.PIWM_MATL_GUBN = A.PIWM_MATL_GUBN
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBPIWM (
+  PIWM_CORP_CODE
+ ,PIWM_STND_GUBN
+ ,PIWM_STND_DEGR
+ ,PIWM_MATL_SEQ0
+ ,PIWM_MATL_GUBN
+ ,PIWM_MATT_CODE
+ ,PIWM_SHAP_CODE
+ ,PIWM_PROD_CODE
+ ,PIWM_2CUT_CODE
+ ,PIWM_BEND_YN
+ ,PIWM_MAKE_YN
+ ,PIWM_MATL_NAME
+ ,PIWM_MATL_PRIC
+ ,PIWM_MATL_COEF1
+ ,PIWM_MATL_COEF2
+ ,PIWM_MATL_UNIT
+ ,PIWM_APPL_GUBN
+ ,PIWM_REMK
+ ,PIWM_UPDT_CMAN
+ ,PIWM_UPDT_DATE
+ ,PIWM_INIT_CMAN
+ ,PIWM_INIT_DATE
+) VALUES (
+  #piwm_corp_code#
+ ,#piwm_stnd_gubn#
+ ,#piwm_stnd_degr#
+ ,#piwm_matl_seq0#
+ ,#piwm_matl_gubn#
+ ,#piwm_matt_code#
+ ,#piwm_shap_code#
+ ,#piwm_prod_code#
+ ,#piwm_2cut_code#
+ ,#piwm_bend_yn#
+ ,#piwm_make_yn#
+ ,#piwm_matl_name#
+ ,#piwm_matl_pric#
+ ,#piwm_matl_coef1#
+ ,#piwm_matl_coef2#
+ ,#piwm_matl_unit#
+ ,#piwm_appl_gubn#
+ ,#piwm_remk#
+ ,#piwm_updt_cman#
+ ,#piwm_updt_date#
+ ,#piwm_init_cman#
+ ,#piwm_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBPIWM
+   SET PIWM_MATT_CODE = #piwm_matt_code#
+      ,PIWM_SHAP_CODE = #piwm_shap_code#
+      ,PIWM_PROD_CODE = #piwm_prod_code#
+      ,PIWM_2CUT_CODE = #piwm_2cut_code#
+      ,PIWM_BEND_YN = #piwm_bend_yn#
+      ,PIWM_MAKE_YN = #piwm_make_yn#
+      ,PIWM_MATL_NAME = #piwm_matl_name#
+      ,PIWM_MATL_PRIC = #piwm_matl_pric#
+      ,PIWM_MATL_COEF1 = #piwm_matl_coef1#
+      ,PIWM_MATL_COEF2 = #piwm_matl_coef2#
+      ,PIWM_MATL_UNIT = #piwm_matl_unit#
+      ,PIWM_APPL_GUBN = #piwm_appl_gubn#
+      ,PIWM_REMK = #piwm_remk#
+      ,PIWM_UPDT_CMAN = #piwm_updt_cman#
+      ,PIWM_UPDT_DATE = #piwm_updt_date#
+ WHERE PIWM_CORP_CODE = #piwm_corp_code#
+   AND PIWM_STND_GUBN = #piwm_stnd_gubn#
+   AND PIWM_STND_DEGR = #piwm_stnd_degr#
+   AND PIWM_MATL_SEQ0 = #piwm_matl_seq0#
+   AND PIWM_MATL_GUBN = #piwm_matl_gubn#
+  ]]>
+ </sql>
+</sql-descriptor> 

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/PIWR/CATBPIWP/19-3" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PIWP_CORP_CODE
+ ,PIWP_STND_GUBN
+ ,PIWP_STND_DEGR
+ ,PIWP_PROC_SEQ0
+ ,PIWP_PROC_GUBN
+ ,PIWP_MATT_CODE
+ ,PIWP_SHAP_CODE
+ ,PIWP_PROD_CODE
+ ,PIWP_2CUT_CODE
+ ,PIWP_BELL_CODE
+ ,PIWP_EXPN_CODE
+ ,PIWP_SQUA_CODE
+ ,PIWP_MAKE_YN
+ ,PIWP_DOIL_YN
+ ,PIWP_DIA0_MIN0
+ ,PIWP_DIA0_MAX0
+ ,PIWP_PROC_NAME
+ ,PIWP_NET0_CYTM
+ ,PIWP_NET0_COEF1
+ ,PIWP_NET0_COEF2
+ ,PIWP_NET0_COEF3
+ ,PIWP_NET0_COEF4
+ ,PIWP_CAVT
+ ,PIWP_CAVT_COEF1
+ ,PIWP_CAVT_COEF2
+ ,PIWP_PREP_HOUR
+ ,PIWP_PRSN_CNT1
+ ,PIWP_PRSN_CNT2
+ ,PIWP_LOTQ
+ ,PIWP_MCHH_CODE
+ ,PIWP_APPL_GUBN
+ ,PIWP_REMK
+ ,PIWP_UPDT_CMAN
+ ,PIWP_UPDT_DATE
+ ,PIWP_INIT_CMAN
+ ,PIWP_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'19-3' ,'1' ,'CUT1' ,'GENL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'40' ,'1차 CUTTING(Φ40이하)' ,'0' ,'0.25' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'2' ,'CUT1' ,'GENL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'40' ,'99999999' ,'1차 CUTTING(Φ40초과)' ,'0' ,'0.3' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'3' ,'CUT1' ,'STAC' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'40' ,'1차 CUTTING(Φ40이하)' ,'0' ,'0.25' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'4' ,'CUT1' ,'STAC' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'40' ,'99999999' ,'1차 CUTTING(Φ40초과)' ,'0' ,'0.3' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'5' ,'CUT1' ,'SUS300' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'40' ,'1차 CUTTING(Φ40이하)' ,'0' ,'0.25' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'6' ,'CUT1' ,'SUS300' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'40' ,'99999999' ,'1차 CUTTING(Φ40초과)' ,'0' ,'0.3' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'7' ,'CUT1' ,'SUS400' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'40' ,'1차 CUTTING(Φ40이하)' ,'0' ,'0.25' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'8' ,'CUT1' ,'SUS400' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'40' ,'99999999' ,'1차 CUTTING(Φ40초과)' ,'0' ,'0.3' ,'2.5' ,'1' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'9' ,'CUT1' ,'AL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'40' ,'1차 CUTTING(Φ40이하)' ,'0' ,'0.25' ,'2.5' ,'5.8' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'10' ,'CUT1' ,'AL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'40' ,'99999999' ,'1차 CUTTING(Φ40초과)' ,'0' ,'0.3' ,'2.5' ,'5.8' ,'3' ,'1' ,'0' ,'0' ,'15' ,'0.75' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,'NET CT=계수1*D+계수2*t/계수3-계수4' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'11' ,'BEND1' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 1' ,'0' ,'5' ,'4' ,'0' ,'0' ,'1' ,'0' ,'0' ,'50' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC1' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'12' ,'BEND2' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 2' ,'0' ,'5' ,'7' ,'0' ,'0' ,'1' ,'0' ,'0' ,'50' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC23' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'13' ,'BEND3' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 3' ,'0' ,'5' ,'10' ,'0' ,'0' ,'1' ,'0' ,'0' ,'50' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC23' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'14' ,'BEND4' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 4' ,'0' ,'5' ,'12' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC4' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'15' ,'BEND5' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 5' ,'0' ,'8' ,'10' ,'0' ,'0' ,'1' ,'0' ,'0' ,'90' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC56' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'16' ,'BEND6' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CNC BENDING 6' ,'0' ,'8' ,'12' ,'0' ,'0' ,'1' ,'0' ,'0' ,'90' ,'1' ,'0.5' ,'0' ,'CNC-BEND-MC56' ,'Y' ,'NET CT=계수1+계수2*밴딩수, 인원=NETCT에  의해결정' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'17' ,'CUT2' ,'GENL' ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'18' ,'CUT2' ,'STAC' ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'19' ,'CUT2' ,'SUS300' ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'18' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'20' ,'CUT2' ,'SUS400' ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'18' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'21' ,'CUT2' ,'AL' ,'ROUND' ,'ALL' ,'ONE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'N' ,'AL=일반에 준함 (18차:현업요청에의해 막음)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'22' ,'CUT2' ,'GENL' ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'2' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'23' ,'CUT2' ,'STAC' ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'2' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'24' ,'CUT2' ,'SUS300' ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'18' ,'2' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'25' ,'CUT2' ,'SUS400' ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'18' ,'2' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'26' ,'CUT2' ,'AL' ,'ROUND' ,'ALL' ,'DBL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'2차 CUTTING' ,'14' ,'2' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'SAW' ,'N' ,'AL=일반에 준함 (18차:현업요청에의해 막음)' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'27' ,'BELLOWS' ,'ALL' ,'ROUND' ,'EGR' ,'ALL' ,'FORM' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'BELOWS성형(성형)' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'30' ,'1' ,'0' ,'0' ,'BELLOWS-FORMING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'28' ,'BELLOWS' ,'ALL' ,'ROUND' ,'EGR' ,'ALL' ,'PRES' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'BELOWS성형(압착)' ,'15' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'30' ,'1' ,'0' ,'0' ,'BELLOWS-FORMING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'29' ,'EXPAND1' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIPE확관' ,'6' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'30' ,'1' ,'0' ,'0' ,'EXPAND-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'30' ,'SHRINK' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIPE축관' ,'6' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'30' ,'1' ,'0' ,'0' ,'EXPAND-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'31' ,'EXPAND2' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'135DN' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'확관(동심,편심)' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'1' ,'0' ,'0' ,'MULTI-EXPAND-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'32' ,'EXPAND2' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'150DN' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'확관(동심,편심)' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'1' ,'0' ,'0' ,'MULTI-EXPAND-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'33' ,'EXPAND2' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'150UP' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'확관(동심,편심)' ,'25' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'1' ,'0' ,'0' ,'MULTI-EXPAND-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'34' ,'PIERCING' ,'ALL' ,'ROUND' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PIERCING-MC' ,'Y' ,'MAIN과 맞춤' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'35' ,'PIERCING' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PIERCING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'36' ,'PIERCING' ,'ALL' ,'ROUND' ,'EGR' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PIERCING-MC' ,'Y' ,'MAIN과 맞춤' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'37' ,'PIERCING' ,'ALL' ,'ROUND' ,'SUSU' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PIERCING-MC' ,'Y' ,'MAIN과 맞춤' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'38' ,'PIERCING' ,'ALL' ,'ROUND' ,'SEAT' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PIERCING-MC' ,'Y' ,'MAIN과 맞춤' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'39' ,'PIERMUFF' ,'ALL' ,'ROUND' ,'MUFF' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'PIERCING' ,'0' ,'2.4' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'250TON PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'40' ,'CURLING' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'전조,컬링,다짐' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'PLATE-COMPACTOR' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'41' ,'CORRECT' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'교정' ,'25' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'42' ,'CORRECT' ,'ALL' ,'ROUND' ,'SUSU' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'교정' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'43' ,'SIZEING' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'SIZING' ,'6' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'IO-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'44' ,'CHAMFER' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'CHAMFERING' ,'4' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'CHAMFERING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'45' ,'ROLLFORM' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'ROLL FORMING' ,'12' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'ROLL-FORMING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'46' ,'ENDFORM' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'END FORMING' ,'6' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'END-FORMING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'47' ,'BURR' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'BURRING' ,'30' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'0.5' ,'0' ,'0' ,'BURRING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'48' ,'BRUSH' ,'ALL' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'BRUSH' ,'10' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'49' ,'DEOIL' ,'ALL' ,'ROUND' ,'SEAT' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'0' ,'99999999' ,'오일제거' ,'8' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'50' ,'GRE_HOLE' ,'ALL' ,'ROUND' ,'SEAT' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'GREASE HOLE가공' ,'0' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'DRILL-MC' ,'Y' ,'NET CT=CNC BENDING C/T' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'51' ,'GRE_INJT' ,'ALL' ,'ROUND' ,'SEAT' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'GREASE 주입' ,'4' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'AIR-GREASE-PUMP' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'52' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'GENL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'19' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'53' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'MAIN' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'20' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-ELEC-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'54' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'EGR' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'19' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'55' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'SUSU' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'19' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'56' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'SEAT' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'19' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'57' ,'LEAKTEST' ,'ALL' ,'ROUND' ,'MUFF' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'LEAK TEST' ,'19' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'20' ,'1' ,'0' ,'0' ,'LEAK-TESTER' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'58' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'22_1.6' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.91' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'15800' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'59' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'22_1.8' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.83' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'20700' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'60' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'22_2.0' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.78' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'11400' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'61' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'25_1.6' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.81' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'9900' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'62' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'25_1.8' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.77' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'10000' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'63' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'25_2.0' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.73' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'29600' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'64' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'25_2.3' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.78' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'23300' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'65' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'28_2.0' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.8' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'12200' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'66' ,'MAKEPIPE' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'28_2.3' ,'Y' ,'ALL' ,'0' ,'99999999' ,'조관' ,'0.75' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'100' ,'6' ,'0' ,'18900' ,'SQUARE-PIPE-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'67' ,'MAKEPIPE' ,'SUS300' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'ALL' ,'0' ,'15.8' ,'조관' ,'0' ,'1.4' ,'1.8' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'0.5' ,'0' ,'7000' ,'PIPE-MAKE-MC' ,'Y' ,'19차 ADD, NET CT=계수1*외경+계수2*두께' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'68' ,'MAKEPIPE' ,'SUS300' ,'ROUND' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'ALL' ,'15.8' ,'99999999' ,'조관' ,'0' ,'1.4' ,'1.8' ,'0' ,'0' ,'1' ,'0' ,'0' ,'60' ,'0.5' ,'0' ,'20000' ,'PIPE-MAKE-MC' ,'Y' ,'19차 ADD, NET CT=계수1*외경+계수2*두께' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'69' ,'CUT10' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'1차 CUTTING' ,'5.63' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'15' ,'1' ,'0' ,'0' ,'CUTTING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'70' ,'SIDECUT' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'면취' ,'3' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'CHAMFERING-MC' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'71' ,'AIRBLOW' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'AIR BLOW' ,'0.6' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'72' ,'DEOIL10' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'Y' ,'0' ,'99999999' ,'오일제거' ,'8' ,'0' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,'0' ,'1' ,'0' ,'0' ,NULL ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-3' ,'73' ,'BENDSQ' ,'ALL' ,'SQUARE' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'ALL' ,'0' ,'99999999' ,'사각파이프 BENDING' ,'0' ,'14' ,'0.1' ,'0' ,'0' ,'2' ,'0' ,'0' ,'15' ,'1' ,'0' ,'0' ,'5BENDING-MC' ,'Y' ,'NET CT=벤딩길이 적용' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.PIWP_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.PIWP_UPDT_DATE > B.PIWP_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBPIWP B                                          
+      ON    B.PIWP_CORP_CODE = A.PIWP_CORP_CODE
+        AND B.PIWP_STND_GUBN = A.PIWP_STND_GUBN
+        AND B.PIWP_STND_DEGR = A.PIWP_STND_DEGR
+        AND B.PIWP_PROC_SEQ0 = A.PIWP_PROC_SEQ0
+        AND B.PIWP_PROC_GUBN = A.PIWP_PROC_GUBN
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBPIWP (
+  PIWP_CORP_CODE
+ ,PIWP_STND_GUBN
+ ,PIWP_STND_DEGR
+ ,PIWP_PROC_SEQ0
+ ,PIWP_PROC_GUBN
+ ,PIWP_MATT_CODE
+ ,PIWP_SHAP_CODE
+ ,PIWP_PROD_CODE
+ ,PIWP_2CUT_CODE
+ ,PIWP_BELL_CODE
+ ,PIWP_EXPN_CODE
+ ,PIWP_SQUA_CODE
+ ,PIWP_MAKE_YN
+ ,PIWP_DOIL_YN
+ ,PIWP_DIA0_MIN0
+ ,PIWP_DIA0_MAX0
+ ,PIWP_PROC_NAME
+ ,PIWP_NET0_CYTM
+ ,PIWP_NET0_COEF1
+ ,PIWP_NET0_COEF2
+ ,PIWP_NET0_COEF3
+ ,PIWP_NET0_COEF4
+ ,PIWP_CAVT
+ ,PIWP_CAVT_COEF1
+ ,PIWP_CAVT_COEF2
+ ,PIWP_PREP_HOUR
+ ,PIWP_PRSN_CNT1
+ ,PIWP_PRSN_CNT2
+ ,PIWP_LOTQ
+ ,PIWP_MCHH_CODE
+ ,PIWP_APPL_GUBN
+ ,PIWP_REMK
+ ,PIWP_UPDT_CMAN
+ ,PIWP_UPDT_DATE
+ ,PIWP_INIT_CMAN
+ ,PIWP_INIT_DATE
+) VALUES (
+  #piwp_corp_code#
+ ,#piwp_stnd_gubn#
+ ,#piwp_stnd_degr#
+ ,#piwp_proc_seq0#
+ ,#piwp_proc_gubn#
+ ,#piwp_matt_code#
+ ,#piwp_shap_code#
+ ,#piwp_prod_code#
+ ,#piwp_2cut_code#
+ ,#piwp_bell_code#
+ ,#piwp_expn_code#
+ ,#piwp_squa_code#
+ ,#piwp_make_yn#
+ ,#piwp_doil_yn#
+ ,#piwp_dia0_min0#
+ ,#piwp_dia0_max0#
+ ,#piwp_proc_name#
+ ,#piwp_net0_cytm#
+ ,#piwp_net0_coef1#
+ ,#piwp_net0_coef2#
+ ,#piwp_net0_coef3#
+ ,#piwp_net0_coef4#
+ ,#piwp_cavt#
+ ,#piwp_cavt_coef1#
+ ,#piwp_cavt_coef2#
+ ,#piwp_prep_hour#
+ ,#piwp_prsn_cnt1#
+ ,#piwp_prsn_cnt2#
+ ,#piwp_lotq#
+ ,#piwp_mchh_code#
+ ,#piwp_appl_gubn#
+ ,#piwp_remk#
+ ,#piwp_updt_cman#
+ ,#piwp_updt_date#
+ ,#piwp_init_cman#
+ ,#piwp_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBPIWP
+   SET PIWP_MATT_CODE = #piwp_matt_code#
+      ,PIWP_SHAP_CODE = #piwp_shap_code#
+      ,PIWP_PROD_CODE = #piwp_prod_code#
+      ,PIWP_2CUT_CODE = #piwp_2cut_code#
+      ,PIWP_BELL_CODE = #piwp_bell_code#
+      ,PIWP_EXPN_CODE = #piwp_expn_code#
+      ,PIWP_SQUA_CODE = #piwp_squa_code#
+      ,PIWP_MAKE_YN = #piwp_make_yn#
+      ,PIWP_DOIL_YN = #piwp_doil_yn#
+      ,PIWP_DIA0_MIN0 = #piwp_dia0_min0#
+      ,PIWP_DIA0_MAX0 = #piwp_dia0_max0#
+      ,PIWP_PROC_NAME = #piwp_proc_name#
+      ,PIWP_NET0_CYTM = #piwp_net0_cytm#
+      ,PIWP_NET0_COEF1 = #piwp_net0_coef1#
+      ,PIWP_NET0_COEF2 = #piwp_net0_coef2#
+      ,PIWP_NET0_COEF3 = #piwp_net0_coef3#
+      ,PIWP_NET0_COEF4 = #piwp_net0_coef4#
+      ,PIWP_CAVT = #piwp_cavt#
+      ,PIWP_CAVT_COEF1 = #piwp_cavt_coef1#
+      ,PIWP_CAVT_COEF2 = #piwp_cavt_coef2#
+      ,PIWP_PREP_HOUR = #piwp_prep_hour#
+      ,PIWP_PRSN_CNT1 = #piwp_prsn_cnt1#
+      ,PIWP_PRSN_CNT2 = #piwp_prsn_cnt2#
+      ,PIWP_LOTQ = #piwp_lotq#
+      ,PIWP_MCHH_CODE = #piwp_mchh_code#
+      ,PIWP_APPL_GUBN = #piwp_appl_gubn#
+      ,PIWP_REMK = #piwp_remk#
+      ,PIWP_UPDT_CMAN = #piwp_updt_cman#
+      ,PIWP_UPDT_DATE = #piwp_updt_date#
+ WHERE PIWP_CORP_CODE = #piwp_corp_code#
+   AND PIWP_STND_GUBN = #piwp_stnd_gubn#
+   AND PIWP_STND_DEGR = #piwp_stnd_degr#
+   AND PIWP_PROC_SEQ0 = #piwp_proc_seq0#
+   AND PIWP_PROC_GUBN = #piwp_proc_gubn#
+  ]]>
+ </sql>
+</sql-descriptor> 
