@@ -92,7 +92,7 @@ WITH T1 (
  UNION SELECT '100', 'PCC00110', 'PCC00000', 'ui/bp/tcams/ci/ci11/em-ci11.html', 'B', NULL, 0, 'Y', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL 
  UNION SELECT '100', 'PCW00010', 'PCW00000', 'ui/bp/tcams/cw/cw01/em-cw01.html'     ,'B', NULL, 1, 'Y', NULL, 'U', 'ADMIN'   ,'2020-02-12 10:41:54.000','TSA00024','2023-02-28 16:42:59.000' FROM DUAL
  UNION SELECT '100', 'PCW00040', 'PCW00000', 'ui/bp/tcams/cw/cw04/em-cw04.html'     ,'B', NULL, 4, 'Y', NULL, 'C', 'ADMIN'   ,'2024-03-19 09:51:00.000','SYSTEMPG','2024-03-19 09:51:00.000' FROM DUAL
- UNION SELECT '100', 'PCF30160', 'PCF00000', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', 'B', NULL, '43', 'N', NULL, 'U', 'SYSTEM', '2017-12-04 17:40', 'ADMIN', '2019-12-23 13:49:36' FROM DUAL
+ UNION SELECT '100', 'PCF30160', 'PCF00000', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', 'B', NULL, 43, 'N', NULL, 'U', 'SYSTEM', '2017-12-04 17:40', 'ADMIN', '2019-12-23 13:49:36' FROM DUAL
 )
 SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,A.* 
