@@ -1,0 +1,1769 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CASPPIWR_P19_3" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CASPPIWR_P19_3  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CASPPIWR_P19_3'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CASPPIWR_P19_3
+(
+    I_CORP_CODE  IN  CATBPIWI.PIWI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CATBPIWI.PIWI_PART_NO%TYPE  ,
+    I_EONO       IN  CATBPIWI.PIWI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CATBPIWI.PIWI_CUMT_NO%TYPE  ,
+    I_INIT_CMAN  IN  CATBPIWI.PIWI_INIT_CMAN%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 자동공법_PIPE가공
+ * [HISTORY ]
+ *  - 2014.07.01 [A.S.M] : 신규작성(16-1차)(가공), 14-3차(인발)
+ *  - 2017.09.12 [A.S.M] : 개정    (18  차) : 개정시 인발-가공공법을 분리함.
+ *  - 2020.01.01 [A.S.M] : 개정    (19  차) : SUS조관 추가 등
+ *  - 2022.10.01 [A.S.M] : 변동원가 계산시 불량비 연동을 위한 수정 
+ *  - 2023.03.20 [A.S.M] : 기계경비추출기준 변경에 따른 수정 (CASPMCHH_Q01 -> CASPMCHH_Q02 변경)
+ *  - 2023.05.01 [A.S.M] : 개정    (19-1차) : 기계경비 변경외 특이사항없음
+ *  - 2024.02.05 [A.S.M] : 개정    (19-3차) : 특이사항없음 (전력단가 변경) 
+ *
+ * [COMMENT ]
+ *  - 불량비는 현업의 요청에 따라, 재료비가 아닌 기타비의 불량비 항목으로 처리하였음.
+ *    개정시, 실사계산/변동계산 로직의 불량비 처리 부분을 반드시 확인 후 적용할 것 !!!
+ *    개정시, 실사계산/변동계산 로직의 불량비 처리 부분을 반드시 확인 후 적용할 것 !!!
+ *    개정시, 실사계산/변동계산 로직의 불량비 처리 부분을 반드시 확인 후 적용할 것 !!!
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_CMPK      CATBCMPK%ROWTYPE;
+    rt_PIWI      CATBPIWI%ROWTYPE;
+    rt_PIWM      CATBPIWM%ROWTYPE;
+    rt_PIWP      CATBPIWP%ROWTYPE;
+    rt_CORT      CITBCORT%ROWTYPE;
+    rt_MTCD      CITBMTCD%ROWTYPE;
+    rt_CAYR      CITBCAYR%ROWTYPE;
+    rt_CMAT      CRTBCMAT%ROWTYPE;
+    rt_CPRO      CRTBCPRO%ROWTYPE;
+    rt_SPMS      CRTBSPMS%ROWTYPE;
+    rt_CMMS      CRTBCMMS%ROWTYPE;
+    rt_CMCT      CRTBCMCT%ROWTYPE;
+    rt_MCIF      CITBMCIF%ROWTYPE ; --기계경비정보
+
+    --WORKING VARIABLE
+    v_COME_CODE       CRTBCMMS.CMMS_COME_CODE%TYPE;
+    v_APPL_CORP       CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    v_IN_TITLE        VARCHAR2(20) ;
+    trCo              NUMBER := 2  ; --원가TRUNC처리소수점단위
+    v_SORT_KEY        NUMBER := 0  ; --SORT KEY
+    v_CMAT_PROC_YN    CHAR(01)     ; --재료비처리여부
+    v_CPRO_PROC_YN    CHAR(01)     ; --가공비처리여부
+    v_GUBN_CODE       CATBCMPK.CMPK_GUBN_CODE%TYPE;
+    v_CODE            CATBCMPK.CMPK_CODE%TYPE     ;
+
+    v_INPT_LENG       NUMBER :=0   ; --투입길이
+    v_NET0_CYTM       NUMBER(20,6) ; --NET CT
+    v_BEND_CHK        CHAR(01)     ;
+    v_BEND_CYTM       NUMBER := 0  ; --BENDING CYTM (SEAT FRAME GREASE HOLE가공 공정시 사용)
+    v_019Dt           NUMBER := 0  ;
+    v_RD              NUMBER := 0  ;
+    v_MAKE_WEGT       NUMBER :=0   ; --조관중량
+
+    --불량비 처리용
+    v_MATL_COST       NUMBER := 0  ; --재료비
+    v_SCRP_PRIC       NUMBER := 0  ; --SCRAP단가
+    v_INPT_WEGT       NUMBER := 0  ; --투입중량
+    v_PROC_COST       NUMBER := 0  ; --가공비
+    v_PROC_COST1      NUMBER := 0  ; --1차 컷팅~확관 가공비
+
+    ------------------------------------------------------
+    --입력CURSOR
+    ------------------------------------------------------
+    CURSOR cs_PIWI IS
+        SELECT PIWI_MATL_CORP
+              ,PIWI_MATL_STND
+              ,PIWI_MATL_CODE
+              ,PIWI_MATL_APDT
+              ,PIWI_MATL_GUBN
+              --재료정보(주재료)
+              ,M.MATL_CLAS_CODE         MATL_CLAS_CODE  --재료분류코드
+              ,M.MATL_MTJO_CODE         MATL_MTJO_CODE  --재료종류코드
+              ,M.MATL_NAME              MATL_NAME       --재질명칭
+              ,NVL(M.MATL_PRIC,0)       MATL_PRIC       --재료단가
+              ,M.MATL_UNIT              MATL_UNIT       --재료단위
+              ,NVL(M.MATL_SCRP_PRIC,0)  MATL_SCRP_PRIC  --SCRAP단가
+              ,CASE WHEN NVL(M.MATL_SCRP_RATE,0) = 0
+                    THEN 99
+                    ELSE M.MATL_SCRP_RATE
+               END                      MATL_SCRP_RATE  --SCRAP율
+              ,NVL(M.MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV  --비중
+              ,NVL(M.MATL_UNUS_PRIC,0)  MATL_UNUS_PRIC  --산폐단가
+              ,NVL(M.MATL_THIK_SIZE,0)  MATL_THIK_SIZE  --두께_외경
+              ,NVL(M.MATL_WIDT_SIZE,0)  MATL_WIDT_SIZE  --가로_두께
+              ,NVL(M.MATL_LENG_SIZE,0)  MATL_LENG_SIZE  --세로_길이
+              ,M.MATL_IMPT_CODE         MATL_IMPT_CODE  --수입코드
+              ,NVL(M.MATL_IMPT_PRIC,0)  MATL_IMPT_PRIC  --수입단가
+              ,NVL(M.MATL_TRIF_RATE,0)  MATL_TRIF_RATE  --관세율
+              ,NVL(M.MATL_TRIF_COST,0)  MATL_TRIF_COST  --관세
+              --입력정보
+              ,PIWI_MATL_YN
+              ,NVL(PIWI_GRVT_NUMB, 0)   PIWI_GRVT_NUMB
+              ,NVL(PIWI_COIL_WIDT, 0)   PIWI_COIL_WIDT  --코일폭
+              ,NVL(PIWI_COIL_PITC, 0)   PIWI_COIL_PITC  --피치
+              ,NVL(PIWI_COIL_THIK, 0)   PIWI_COIL_THIK  --두께
+              ,PIWI_MATT_GUBN
+              ,PIWI_MATT_CODE
+              ,PIWI_SHAP_GUBN
+              ,PIWI_SHAP_CODE           --소재형태
+              ,PIWI_PROD_GUBN
+              ,PIWI_PROD_CODE           --적용부품
+              ,PIWI_SQUA_GUBN
+              ,PIWI_SQUA_CODE
+              ,NVL(PIWI_AFTR_DIA0 ,0)   PIWI_AFTR_DIA0
+              ,NVL(PIWI_AFTR_THIK ,0)   PIWI_AFTR_THIK
+              ,NVL(PIWI_NET0_LENG ,0)   PIWI_NET0_LENG
+              ,NVL(PIWI_NET0_WEGT ,0)   PIWI_NET0_WEGT
+              ,PIWI_BEND_GUBN
+              ,PIWI_BEND_CODE
+              ,PIWI_ANGL_GUBN
+              ,PIWI_ANGL_CODE
+              ,NVL(PIWI_BEND_PONT ,0)   PIWI_BEND_PONT
+              ,NVL(PIWI_SHRT_X    ,0)   PIWI_SHRT_X
+              ,NVL(PIWI_LONG_Y    ,0)   PIWI_LONG_Y
+              ,NVL(PIWI_LONG_RADI ,0)   PIWI_LONG_RADI
+              ,NVL(PIWI_LONG_LENG ,0)   PIWI_LONG_LENG
+              ,NVL(PIWI_SPAR_LEN1 ,0)   PIWI_SPAR_LEN1
+              ,NVL(PIWI_SPAR_LEN2 ,0)   PIWI_SPAR_LEN2
+              ,NVL(PIWI_BEND_LENG ,0)   PIWI_BEND_LENG
+              ,PIWI_CUT2_GUBN
+              ,PIWI_CUT2_CODE
+              ,PIWI_BELL_GUBN
+              ,PIWI_BELL_CODE
+              ,NVL(PIWI_EXRE_CNT0 ,0)   PIWI_EXRE_CNT0
+              ,NVL(PIWI_REDU_CNT0 ,0)   PIWI_REDU_CNT0
+              ,NVL(PIWI_PIER_CNT0 ,0)   PIWI_PIER_CNT0
+              ,NVL(PIWI_SIZE_CNT0 ,0)   PIWI_SIZE_CNT0
+              ,NVL(PIWI_CHAM_CNT0 ,0)   PIWI_CHAM_CNT0
+              ,NVL(PIWI_ROLL_CNT0 ,0)   PIWI_ROLL_CNT0
+              ,NVL(PIWI_ENDF_CNT0 ,0)   PIWI_ENDF_CNT0
+              ,NVL(PIWI_BURR_CNT0 ,0)   PIWI_BURR_CNT0
+              ,NVL(PIWI_BRUS_CNT0 ,0)   PIWI_BRUS_CNT0
+              ,NVL(PIWI_LEAK_CNT0 ,0)   PIWI_LEAK_CNT0
+              ,PIWI_EXPN_GUBN
+              ,PIWI_EXPN_CODE
+              ,PIWI_DOIL_YN
+              ,PIWI_CNCB_CODE           --CNC BENDING 결정값
+              ,PIWI_MAKE_YN             --조관여부
+              ,NVL(PIWI_BEFR_DIA0 ,0)   PIWI_BEFR_DIA0   --투입외경
+              ,NVL(PIWI_BEFR_THIK ,0)   PIWI_BEFR_THIK   --소재두께
+              --19차 ADD
+              ,NVL(PIWI_WELD_LENG ,0)   PIWI_WELD_LENG   --용접길이   
+              ,NVL(PIWI_HOLE_CNT0 ,0)   PIWI_HOLE_CNT0   --천공HOLE 수
+              --표준정보
+              ,CASE WHEN PIWI_SHAP_CODE = 'ROUND' THEN
+                         C01.CMPK_APPL_RATE1
+                    ELSE C02.CMPK_APPL_RATE1
+               END                      CMPK_LOSS_RATE  --PIPE LOSS율
+              ,C02.CMPK_APPL_RATE2      CMPK_MAKE_RATE  --각형 조관 LOSS율
+              -- CNC BENDING 결정 TABLE 입력건수
+              ,(SELECT COUNT(*)
+                  FROM CATBPIWA
+                 WHERE PIWA_CORP_CODE = PIWI_CORP_CODE
+                   AND PIWA_PART_NO   = PIWI_PART_NO
+                   AND PIWA_EONO      = PIWI_EONO
+                   AND PIWA_CUMT_NO   = PIWI_CUMT_NO
+               )                        PIWA_CNT0
+          FROM CATBPIWI
+
+            LEFT OUTER JOIN
+               CITBMATL M
+            ON     PIWI_MATL_CORP = M.MATL_CORP_CODE
+               AND PIWI_MATL_STND = M.MATL_STND_GUBN
+               AND PIWI_MATL_CODE = M.MATL_CODE
+               AND PIWI_MATL_APDT = M.MATL_APPL_DATE
+               AND PIWI_MATL_GUBN = M.MATL_GUBN
+
+            LEFT OUTER JOIN
+               CATBCMPK C01         --재질구분
+            ON     v_APPL_CORP      = C01.CMPK_CORP_CODE
+               AND rt_CMMS.CMMS_STND_GUBN = C01.CMPK_STND_GUBN
+               AND rt_CMMS.CMMS_STND_DEGR = C01.CMPK_STND_DEGR
+               AND PIWI_MATT_GUBN   = C01.CMPK_GUBN_CODE
+               AND PIWI_MATT_CODE   = C01.CMPK_CODE
+               AND 'Y'              = C01.CMPK_APPL_GUBN
+
+            LEFT OUTER JOIN
+               CATBCMPK C02         --소재형태
+            ON     v_APPL_CORP      = C02.CMPK_CORP_CODE
+               AND rt_CMMS.CMMS_STND_GUBN = C02.CMPK_STND_GUBN
+               AND rt_CMMS.CMMS_STND_DEGR = C02.CMPK_STND_DEGR
+               AND PIWI_SHAP_GUBN   = C02.CMPK_GUBN_CODE
+               AND PIWI_SHAP_CODE   = C02.CMPK_CODE
+               AND 'Y'              = C02.CMPK_APPL_GUBN
+
+         WHERE PIWI_CORP_CODE = I_CORP_CODE
+           AND PIWI_PART_NO   = I_PART_NO
+           AND PIWI_EONO      = I_EONO
+           AND PIWI_CUMT_NO   = I_CUMT_NO
+        ;
+
+    ------------------------------------------------------
+    --부재료CURSOR
+    ------------------------------------------------------
+    CURSOR cs_SMAT IS
+        SELECT PIWM_MATL_SEQ0
+              ,PIWM_MATL_GUBN
+              ,PIWM_MATL_NAME
+              ,PIWM_MATL_UNIT
+              ,NVL(PIWM_MATL_PRIC, 0)  PIWM_MATL_PRIC
+              ,NVL(PIWM_MATL_COEF1,0)  PIWM_MATL_COEF1
+              ,NVL(PIWM_MATL_COEF2,0)  PIWM_MATL_COEF2
+          FROM CATBPIWM
+         WHERE PIWM_CORP_CODE = v_APPL_CORP
+           AND PIWM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PIWM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PIWM_MATT_CODE IN ('ALL',rt_PIWM.PIWM_MATT_CODE)
+           AND PIWM_SHAP_CODE IN ('ALL',rt_PIWM.PIWM_SHAP_CODE)
+           AND PIWM_PROD_CODE IN ('ALL',rt_PIWM.PIWM_PROD_CODE)
+           AND PIWM_2CUT_CODE IN ('ALL',rt_PIWM.PIWM_2CUT_CODE)
+           AND PIWM_BEND_YN   IN ('ALL',rt_PIWM.PIWM_BEND_YN  )
+           AND PIWM_MAKE_YN   IN ('ALL',rt_PIWM.PIWM_MAKE_YN  )
+           AND PIWM_APPL_GUBN = 'Y'
+           AND PIWM_MATL_GUBN <> 'PDAB'  --불량비제외
+         ORDER BY PIWM_MATL_SEQ0
+        ;
+
+    ------------------------------------------------------
+    --가공비CURSOR
+    ------------------------------------------------------
+    CURSOR cs_SPRO IS
+        SELECT PIWP_PROC_GUBN
+              ,PIWP_PROC_SEQ0
+              ,PIWP_PROC_NAME
+              ,NVL(PIWP_NET0_CYTM ,0) PIWP_NET0_CYTM
+              ,NVL(PIWP_NET0_COEF1,0) PIWP_NET0_COEF1
+              ,NVL(PIWP_NET0_COEF2,0) PIWP_NET0_COEF2
+              ,NVL(PIWP_NET0_COEF3,0) PIWP_NET0_COEF3
+              ,NVL(PIWP_NET0_COEF4,0) PIWP_NET0_COEF4
+              ,NVL(PIWP_CAVT      ,0) PIWP_CAVT
+              ,NVL(PIWP_CAVT_COEF1,0) PIWP_CAVT_COEF1
+              ,NVL(PIWP_CAVT_COEF2,0) PIWP_CAVT_COEF2
+              ,NVL(PIWP_PREP_HOUR ,0) PIWP_PREP_HOUR
+              ,NVL(PIWP_PRSN_CNT1 ,0) PIWP_PRSN_CNT1
+              ,NVL(PIWP_PRSN_CNT2 ,0) PIWP_PRSN_CNT2
+              ,NVL(PIWP_LOTQ      ,0) PIWP_LOTQ
+              ,PIWP_MCHH_CODE
+          FROM CATBPIWP
+         WHERE PIWP_CORP_CODE = v_APPL_CORP
+           AND PIWP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PIWP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PIWP_MATT_CODE IN ('ALL',rt_PIWP.PIWP_MATT_CODE)
+           AND PIWP_SHAP_CODE IN ('ALL',rt_PIWP.PIWP_SHAP_CODE)
+           AND PIWP_PROD_CODE IN ('ALL',rt_PIWP.PIWP_PROD_CODE)
+           AND PIWP_2CUT_CODE IN ('ALL',rt_PIWP.PIWP_2CUT_CODE)
+           AND PIWP_BELL_CODE IN ('ALL',rt_PIWP.PIWP_BELL_CODE)
+           AND PIWP_EXPN_CODE IN ('ALL',rt_PIWP.PIWP_EXPN_CODE)
+           AND PIWP_SQUA_CODE IN ('ALL',rt_PIWP.PIWP_SQUA_CODE)
+           AND PIWP_MAKE_YN   IN ('ALL',rt_PIWP.PIWP_MAKE_YN  )
+           AND PIWP_DOIL_YN   IN ('ALL',rt_PIWP.PIWP_DOIL_YN  )
+           AND PIWP_DIA0_MIN0 <   rt_PIWP.PIWP_DIA0_MIN0  --초과
+           AND PIWP_DIA0_MAX0 >=  rt_PIWP.PIWP_DIA0_MIN0  --이하
+           AND PIWP_APPL_GUBN = 'Y'
+         ORDER BY PIWP_PROC_SEQ0
+        ;
+
+    ------------------------------------------------------
+    --불량비CURSOR
+    ------------------------------------------------------
+    CURSOR cs_PDAB IS
+        SELECT PIWM_MATL_SEQ0
+              ,PIWM_MATL_GUBN
+              ,PIWM_PROD_CODE
+              ,PIWM_MATL_NAME
+              ,PIWM_MATL_UNIT
+              ,NVL(PIWM_MATL_PRIC, 0)  PIWM_MATL_PRIC
+              ,NVL(PIWM_MATL_COEF1,0)  PIWM_MATL_COEF1
+              ,NVL(PIWM_MATL_COEF2,0)  PIWM_MATL_COEF2
+          FROM CATBPIWM
+         WHERE PIWM_CORP_CODE = v_APPL_CORP
+           AND PIWM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND PIWM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND PIWM_MATT_CODE IN ('ALL',rt_PIWM.PIWM_MATT_CODE)
+           AND PIWM_SHAP_CODE IN ('ALL',rt_PIWM.PIWM_SHAP_CODE)
+           AND PIWM_PROD_CODE IN ('ALL',rt_PIWM.PIWM_PROD_CODE)
+           AND PIWM_2CUT_CODE IN ('ALL',rt_PIWM.PIWM_2CUT_CODE)
+           AND PIWM_BEND_YN   IN ('ALL',rt_PIWM.PIWM_BEND_YN  )
+           AND PIWM_MAKE_YN   IN ('ALL',rt_PIWM.PIWM_MAKE_YN  )
+           AND PIWM_APPL_GUBN = 'Y'
+           AND PIWM_MATL_GUBN LIKE 'PDAB%'
+         ORDER BY PIWM_MATL_SEQ0
+        ;
+BEGIN
+  --DBMS_OUTPUT.ENABLE(100000);
+    DBMS_OUTPUT.DISABLE;
+
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CASPPIWR_P19_3';
+    O_LINE_NO   := 'ST-START';
+
+    v_COME_CODE := 'PIWR';
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_INIT_CMAN) IS NULL THEN v_IN_TITLE := '사번'    ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --MAIN
+    ---------------------------------------------------------------------------
+    --3.기준정보추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-30000';
+
+    --공통율정보 추출 (A->자동공법)
+    CRSPCORT_Q01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,'A',
+                 rt_SPMS.SPMS_BASE_DATE, --원가계산기준일
+                 rt_SPMS.SPMS_VEND_CODE, --업체_코드
+                 rt_SPMS.SPMS_VEND_APFR, --업체_적용일
+                 rt_MTCD.MTCD_INDS_CODE, --업종코드
+                 rt_CAYR.CAYR_VEHL_GUBN, --승상구분
+                 rt_CMMS.CMMS_STND_GUBN, --표준 구분
+                 rt_CMMS.CMMS_STND_DEGR, --개정차수
+                 rt_CMMS.CMMS_LOTQ_QTY0, --LOT량
+                 rt_CMMS.CMMS_PROD_CNT0, --총생산개수
+                 rt_CORT.CORT_PAY0_RATE, --임율
+                 rt_CORT.CORT_IDRT_RATE, --간접경비율
+                 rt_CORT.CORT_GME0_RATE, --일반관리비율
+                 rt_CORT.CORT_MATL_RATE, --재료관리비율
+                 rt_CORT.CORT_MAPT_RATE, --재료관리비율_부품
+                 rt_CORT.CORT_PROF_RATE, --이익율
+                 rt_CORT.CORT_ET00_RATE, --ET율
+                 rt_CORT.CORT_APPL_DATE, --적용일
+                 O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'IQ-001' THEN
+        O_MESG := O_MESG; --오류메세지를 그대로 넘김
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPIWR_P19_3';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ---------------------------------------------------------------------------
+    --4.기 생성 결과삭제
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-40000';
+
+    CRSPSUM0_D01(I_CORP_CODE,I_PART_NO,I_EONO     ,I_CUMT_NO,v_COME_CODE,
+                 O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+    IF  O_MESG_CODE != 'DE-001' THEN
+        O_MESG := '이미 생성된 결과자료 삭제시 오류가 발생하였습니다.';
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPIWR_P19_3';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    FOR PIWI_R IN cs_PIWI LOOP
+        O_LINE_NO  := 'ST-50000';
+        ---------------------------------------------------------------------------
+        --표준데이터 검증:콤보추가될 경우 추가필요함(입력값 오류체크용)
+        ---------------------------------------------------------------------------
+        FOR i IN 1..9 LOOP
+            CASE i WHEN 1 THEN v_GUBN_CODE := PIWI_R.PIWI_MATT_GUBN ; v_CODE := PIWI_R.PIWI_MATT_CODE;
+                   WHEN 2 THEN v_GUBN_CODE := PIWI_R.PIWI_SHAP_GUBN ; v_CODE := PIWI_R.PIWI_SHAP_CODE;
+                   WHEN 3 THEN v_GUBN_CODE := PIWI_R.PIWI_PROD_GUBN ; v_CODE := PIWI_R.PIWI_PROD_CODE;
+                   WHEN 4 THEN v_GUBN_CODE := PIWI_R.PIWI_SQUA_GUBN ; v_CODE := PIWI_R.PIWI_SQUA_CODE;
+                   WHEN 5 THEN v_GUBN_CODE := PIWI_R.PIWI_BEND_GUBN ; v_CODE := PIWI_R.PIWI_BEND_CODE;
+                   WHEN 6 THEN v_GUBN_CODE := PIWI_R.PIWI_ANGL_GUBN ; v_CODE := PIWI_R.PIWI_ANGL_CODE;
+                   WHEN 7 THEN v_GUBN_CODE := PIWI_R.PIWI_CUT2_GUBN ; v_CODE := PIWI_R.PIWI_CUT2_CODE;
+                   WHEN 8 THEN v_GUBN_CODE := PIWI_R.PIWI_BELL_GUBN ; v_CODE := PIWI_R.PIWI_BELL_CODE;
+                   WHEN 9 THEN v_GUBN_CODE := PIWI_R.PIWI_EXPN_GUBN ; v_CODE := PIWI_R.PIWI_EXPN_CODE;
+                   ELSE        v_GUBN_CODE := ''                    ; v_CODE := ''                   ;
+            END CASE;
+
+            IF  TRIM(v_GUBN_CODE) > ' ' OR TRIM(v_CODE) > ' ' THEN
+                BEGIN
+                    SELECT CMPK_CORP_CODE
+                      INTO rt_CMPK.CMPK_CORP_CODE
+                      FROM CATBCMPK
+                     WHERE CMPK_CORP_CODE = v_APPL_CORP
+                       AND CMPK_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+                       AND CMPK_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+                       AND CMPK_GUBN_CODE = v_GUBN_CODE
+                       AND CMPK_CODE      = v_CODE
+                       AND CMPK_APPL_GUBN = 'Y'
+                    ;
+                EXCEPTION
+                    WHEN NO_DATA_FOUND THEN O_MESG := '저장표준값 오류(운영자에 연락요망).    구분=' || v_GUBN_CODE || ' 코드=' || v_CODE ;
+                                            RAISE UD_EX_ERROR;
+                END;
+            END IF;
+        END LOOP;
+
+        ----------------
+        --입력값 체크
+        ----------------
+        IF  PIWI_R.PIWI_AFTR_DIA0 < PIWI_R.PIWI_AFTR_THIK THEN
+            O_MESG := '제품외경값이 두께보다 작습니다.(입력값 확인요망)';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        --CHAMFERING은 2차 CUT적용시 적용가능 (표준3P)
+        IF  PIWI_R.PIWI_CHAM_CNT0 > 0 AND TRIM(PIWI_R.PIWI_CUT2_CODE) IN ('','N') THEN
+            O_MESG := 'CHAMFERING은 2차 CUT적용시에만 적용가능합니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF  rt_CMMS.CMMS_LOTQ_QTY0 <= 0 THEN
+            O_MESG := 'LOT를 확인(또는 입력)하시기 바랍니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF  PIWI_R.PIWI_BEND_CODE <> 'N' THEN
+            IF  PIWI_R.PIWI_CNCB_CODE IS NULL OR
+                PIWI_R.PIWI_CNCB_CODE = '' THEN
+                O_MESG := 'CNC BENDING M/C을 결정후, 계산하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            IF  PIWI_R.PIWI_BEND_PONT <= 0 THEN
+                O_MESG := 'BENDING POINT수를 입력 후, 계산하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            IF  PIWI_R.PIWA_CNT0 <> PIWI_R.PIWI_BEND_PONT THEN
+                O_MESG := 'BENDING CNC MACHINE 입력갯수와 POINT수 가 상이합니다.' || CHR(10)
+                       || '입력사항을 확인후 계산하시기 바랍니다.'       || CHR(10)
+                       || '  BENDING POINT 수=' || PIWI_R.PIWI_BEND_PONT || CHR(10)
+                       || '  BENDING 입력갯수=' || PIWI_R.PIWA_CNT0;
+                RAISE UD_EX_ERROR;
+            END IF;
+        END IF;
+
+        IF  PIWI_R.PIWI_PROD_CODE = 'MUFF' THEN
+            IF  PIWI_R.PIWI_CUT2_CODE IN ('ONE','DBL') AND
+               (PIWI_R.PIWI_CHAM_CNT0 <= 0 OR
+                PIWI_R.PIWI_EXRE_CNT0 <= 0 OR
+                PIWI_R.PIWI_SIZE_CNT0 <= 0)  THEN
+                O_MESG := 'MUFFLER PIPE 2차 CUTTING시,' || CHR(10)
+                       || 'CHAMFERING, 확관, SIZING공정은 필수로 처리해야 합니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+        END IF;
+        
+        -- 19차 ADD 체크
+        /****
+        IF  PIWI_R.PIWI_SHRT_X > PIWI_R.PIWI_LONG_Y THEN
+            O_MESG := '단측(X)길이를 장측(Y)보다 작은 값으로 입력하시기 바랍니다.';
+            RAISE UD_EX_ERROR;
+        END IF;
+        ****/
+
+
+        ---------------------------------------------------------------------------
+        --주재료비
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-51000';
+        v_SORT_KEY := 0;
+
+        --초기화 AND 값SET
+        v_CMAT_PROC_YN := 'Y';
+        rt_CMAT.CMAT_INPT_WEGT := 0.0;
+        rt_CMAT.CMAT_NET0_WEGT := 0.0;
+        rt_CMAT.CMAT_USE0_WEGT := 0.0;
+        rt_CMAT.CMAT_APPL_WEGT := 0.0;
+        rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+        rt_CMAT.CMAT_LOSS_RATE := 0.0;
+        rt_CMAT.CMAT_PDAB_RATE := 0.0;
+        rt_CMAT.CMAT_SCRP_RATE := PIWI_R.MATL_SCRP_RATE;
+
+      --원형인 경우 KG당 단가를 입력한 경우, M당 단가로 환산처리함.
+      --IF  PIWI_R.PIWI_SHAP_CODE = 'ROUND' AND
+      --    UPPER(PIWI_R.MATL_UNIT) = 'KG'  THEN
+      --    rt_CMAT.CMAT_MATL_PRIC := PIWI_R.MATL_PRIC * PIWI_R.PIWI_NET0_WEGT / PIWI_R.PIWI_NET0_LENG;
+      --    rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_CMAT.CMAT_MATL_PRIC ,trCo);
+      --ELSE
+      --    rt_CMAT.CMAT_MATL_PRIC := PIWI_R.MATL_PRIC;
+      --END IF;
+
+        --[참고] KG당 단가 인 경우, 중량으로 / M당 단가인 경우 길이로 게산하므로 단가의 변환은 하지 않음
+        rt_CMAT.CMAT_MATL_PRIC := PIWI_R.MATL_PRIC;
+
+        rt_CMAT.CMAT_SCRP_PRIC := PIWI_R.MATL_SCRP_PRIC;
+        rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+        rt_CMAT.CMAT_UNUS_COST := 0.0;
+        rt_CMAT.CMAT_SCRP_COST := 0.0;
+        rt_CMAT.CMAT_MATL_COST := 0.0;
+        rt_CMAT.CMAT_MATL_MACT := 0.0;
+        rt_CMAT.CMAT_PDAB_CLAS := '';  --TCAMS고도화 : 불량비공정코드 저장용
+
+        ------------------------------
+        -- 주재료 적용시 처리
+        ------------------------------
+        --주재료 처리하지 않는 경우에도 중량은 필요하여 계산은 처리하고, 저장을 처리하지 않음.
+
+        IF  PIWI_R.PIWI_MATL_YN = 'Y' THEN
+            IF  PIWI_R.PIWI_SHAP_CODE = 'ROUND' AND
+                UPPER(PIWI_R.MATL_UNIT) NOT IN ('KG','M') THEN
+                O_MESG := '원형소재는 KG 또는 M(미터)당 단가를 선택하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+
+            IF  PIWI_R.PIWI_SHAP_CODE = 'SQUARE' THEN
+                IF  UPPER(PIWI_R.MATL_UNIT) <> 'KG'  THEN
+                    O_MESG := '각형강관은 KG당 단가를 선택하시기 바랍니다.';
+                    RAISE UD_EX_ERROR;
+                END IF;
+
+                IF  PIWI_R.PIWI_COIL_WIDT <= 0 OR
+                    PIWI_R.PIWI_COIL_PITC <= 0 OR
+                    PIWI_R.PIWI_COIL_THIK <= 0 OR
+                    PIWI_R.PIWI_GRVT_NUMB <= 0 THEN
+                    O_MESG := '코일폭,피치,두께,비중을 입력하시기 바랍니다.';
+                    RAISE UD_EX_ERROR;
+                END IF;
+            END IF;
+        END IF;
+
+        IF  PIWI_R.PIWI_SHAP_CODE = 'SQUARE' THEN
+            IF  PIWI_R.PIWI_COIL_WIDT <= 0 OR
+                PIWI_R.PIWI_COIL_PITC <= 0 OR
+                PIWI_R.PIWI_COIL_THIK <= 0 OR
+                PIWI_R.PIWI_GRVT_NUMB <= 0 THEN
+                O_MESG := '코일폭,피치,두께,비중을 입력하시기 바랍니다.';
+                RAISE UD_EX_ERROR;
+            END IF;
+        END IF;
+
+        ------------------------------
+        --투입길이/중량 계산 (원형:길이, 각형:중량)
+        ------------------------------
+        CASE WHEN PIWI_R.PIWI_SHAP_CODE = 'ROUND' AND PIWI_R.PIWI_MATT_CODE IN ('GENL','STAC','SUS','SUS300','SUS400') THEN  --19차 SUS재질추가
+
+                  --단가를 중량으로 입력한 경우, 중량 산출 / 길이단위인 경우 표준서에 따른 투입길이 산출
+                  --투입중량=((투입외경^2*PI()*0.25 - (투입외경-소재두께*2)^2*PI()*0.25)*투입길이*비중)/1000  -> SCRAP중량 처리를 위해 항상 처리
+                  v_INPT_LENG := (PIWI_R.PIWI_NET0_LENG + 3.0) * (1 + PIWI_R.CMPK_LOSS_RATE / 100 + (5.0 / rt_CMMS.CMMS_LOTQ_QTY0) )
+                               + PIWI_R.PIWI_SPAR_LEN1
+                               + PIWI_R.PIWI_SPAR_LEN2;
+                  v_INPT_LENG := TRUNC(v_INPT_LENG, 2);
+
+                  v_INPT_WEGT := (   POWER(PIWI_R.PIWI_AFTR_DIA0,2)                             * ACOS(-1.0) * 0.25
+                                   - POWER(PIWI_R.PIWI_AFTR_DIA0 - PIWI_R.PIWI_AFTR_THIK * 2,2) * ACOS(-1.0) * 0.25 )
+                               * v_INPT_LENG
+                               * (PIWI_R.PIWI_GRVT_NUMB / 1000);
+                  v_INPT_WEGT := TRUNC(v_INPT_WEGT, 2);
+
+                  IF  UPPER(PIWI_R.MATL_UNIT) = 'KG'  THEN
+                      rt_CMAT.CMAT_INPT_WEGT := v_INPT_WEGT;
+                  ELSE
+                      rt_CMAT.CMAT_INPT_WEGT := v_INPT_LENG;
+                  END IF;
+
+                  rt_CMAT.CMAT_NET0_WEGT := PIWI_R.PIWI_NET0_WEGT;  --중량
+                  --rt_CMAT.CMAT_SCRP_WEGT := v_INPT_WEGT - PIWI_R.PIWI_NET0_WEGT;
+                  rt_CMAT.CMAT_SCRP_WEGT := rt_CMAT.CMAT_INPT_WEGT - PIWI_R.PIWI_NET0_WEGT;
+
+                  -- 19차 : SUS300 조관처리를 위해 조관중량계산 (각형과 공식은 동일) 
+                  -- 중량 = 코일폭*피치*두께*비중*(1+LOSS율) : 조관 적용시 조관LOSS율 추가 적용함.
+                  v_MAKE_WEGT := PIWI_R.PIWI_COIL_WIDT * PIWI_R.PIWI_COIL_PITC * PIWI_R.PIWI_COIL_THIK * PIWI_R.PIWI_GRVT_NUMB / 1000
+                               * (1 + (  PIWI_R.CMPK_LOSS_RATE
+                                       + CASE WHEN PIWI_R.PIWI_MAKE_YN = 'Y' THEN PIWI_R.CMPK_MAKE_RATE ELSE 0 END) / 100);
+                  v_MAKE_WEGT := TRUNC(v_INPT_LENG, 2);
+
+             WHEN PIWI_R.PIWI_SHAP_CODE = 'ROUND' AND PIWI_R.PIWI_MATT_CODE IN ('AL') THEN
+
+                  --단가를 중량으로 입력한 경우, 중량 산출 / 길이단위인 경우 표준서에 따른 투입길이 산출
+                  --투입중량=((투입외경^2*PI()*0.25 - (투입외경-소재두께*2)^2*PI()*0.25)*투입길이*비중)/1000  -> SCRAP중량 처리를 위해 항상 처리
+                  v_INPT_LENG := (PIWI_R.PIWI_NET0_LENG + 3.0)
+                               + PIWI_R.PIWI_SPAR_LEN1
+                               + PIWI_R.PIWI_SPAR_LEN2;
+                  v_INPT_LENG := TRUNC(v_INPT_LENG, 2);
+
+                  v_INPT_WEGT := (   POWER(PIWI_R.PIWI_AFTR_DIA0,2)                             * ACOS(-1.0) * 0.25
+                                   - POWER(PIWI_R.PIWI_AFTR_DIA0 - PIWI_R.PIWI_AFTR_THIK * 2,2) * ACOS(-1.0) * 0.25 )
+                               * v_INPT_LENG
+                               * (PIWI_R.PIWI_GRVT_NUMB / 1000);
+                  v_INPT_WEGT := TRUNC(v_INPT_WEGT, 2);
+
+                  IF  UPPER(PIWI_R.MATL_UNIT) = 'KG'  THEN
+                      rt_CMAT.CMAT_INPT_WEGT := v_INPT_WEGT;
+                  ELSE
+                      rt_CMAT.CMAT_INPT_WEGT := v_INPT_LENG;
+                  END IF;
+
+                  rt_CMAT.CMAT_NET0_WEGT := PIWI_R.PIWI_NET0_WEGT;  --중량
+                  --rt_CMAT.CMAT_SCRP_WEGT := v_INPT_WEGT - PIWI_R.PIWI_NET0_WEGT;
+                  rt_CMAT.CMAT_SCRP_WEGT := rt_CMAT.CMAT_INPT_WEGT - PIWI_R.PIWI_NET0_WEGT;
+
+             WHEN PIWI_R.PIWI_SHAP_CODE = 'SQUARE' THEN
+                  -- 중량 = 코일폭*피치*두께*비중*(1+LOSS율) : 조관 적용시 조관LOSS율 추가 적용함.
+                  v_INPT_LENG := PIWI_R.PIWI_COIL_WIDT * PIWI_R.PIWI_COIL_PITC * PIWI_R.PIWI_COIL_THIK * PIWI_R.PIWI_GRVT_NUMB / 1000
+                               * (1 + (  PIWI_R.CMPK_LOSS_RATE
+                                       + CASE WHEN PIWI_R.PIWI_MAKE_YN = 'Y' THEN PIWI_R.CMPK_MAKE_RATE ELSE 0 END) / 100);
+
+                  rt_CMAT.CMAT_INPT_WEGT := TRUNC(v_INPT_LENG, 2);
+                  rt_CMAT.CMAT_NET0_WEGT := PIWI_R.PIWI_NET0_WEGT;  --중량
+
+                  --SCRAP중량 = 투입중량 - NET중량
+                  rt_CMAT.CMAT_SCRP_WEGT := rt_CMAT.CMAT_INPT_WEGT - PIWI_R.PIWI_NET0_WEGT;
+
+                  --조관중량 SAVE (금형비계산시 사용)
+                  v_MAKE_WEGT := rt_CMAT.CMAT_INPT_WEGT;
+
+             ELSE
+                  v_INPT_LENG := 0.0;
+        END CASE;
+
+        IF  rt_CMAT.CMAT_SCRP_WEGT <= 0 THEN
+            O_MESG := '투입중량이 NET중량보다 적습니다. (입력값 확인요망)'
+                    || CHR(10) || '투입중량=' || rt_CMAT.CMAT_INPT_WEGT
+                    || CHR(10) || 'NET 중량=' || PIWI_R.PIWI_NET0_WEGT;
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF  PIWI_R.PIWI_MATL_YN = 'Y' THEN
+            rt_CMAT.CMAT_SCRP_COST := rt_CMAT.CMAT_SCRP_WEGT * 0.001 * rt_CMAT.CMAT_SCRP_RATE * 0.01 * rt_CMAT.CMAT_SCRP_PRIC;
+            rt_CMAT.CMAT_SCRP_COST := TRUNC(rt_CMAT.CMAT_SCRP_COST,trCo);
+            rt_CMAT.CMAT_SCRP_CONS := rt_CMAT.CMAT_SCRP_WEGT * 0.001 * rt_CMAT.CMAT_SCRP_RATE * 0.01;
+
+            rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_INPT_WEGT * 0.001 * rt_CMAT.CMAT_MATL_PRIC;
+            rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+            rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_COST - rt_CMAT.CMAT_SCRP_COST + rt_CMAT.CMAT_UNUS_COST;
+            rt_CMAT.CMAT_MATL_CONS := rt_CMAT.CMAT_INPT_WEGT * 0.001;
+
+            --재관비 = (재료비 + SCRAP비 - 산폐비) * 관리비율
+            rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+            rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+
+            O_LINE_NO := 'ST-52000';
+
+            ----------------------------------------------------------------
+            -- TCAMS고도화 (2022년)
+            -- 불량비 처리를 위해 재료비 SAVE처리 위치이동
+            ----------------------------------------------------------------
+            CASE  -- MAIN PIPE F/NECK : 확관율 제약이 있음
+                  WHEN PIWI_R.PIWI_PROD_CODE = 'MAIN' THEN
+                      IF  PIWI_R.PIWI_EXPN_CODE IN ('150DN','150UP') THEN 
+                          IF  PIWI_R.PIWI_AFTR_DIA0 <= 0 OR
+                              PIWI_R.PIWI_AFTR_THIK <= 0 THEN
+                              O_MESG := '투입외경, 두께 입력값을 확인하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+                          
+                          IF  PIWI_R.PIWI_AFTR_DIA0 < PIWI_R.PIWI_AFTR_THIK THEN
+                              O_MESG := '투입외경값이 두께보다 작습니다.(입력값 확인요망)';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+                          
+                          v_MATL_COST := v_MATL_COST + rt_CMAT.CMAT_MATL_COST;
+                          v_SCRP_PRIC := rt_CMAT.CMAT_SCRP_PRIC;
+                          
+                          --투입중량=((투입외경^2*PI()*0.25 - (투입외경-소재두께*2)^2*PI()*0.25)*투입길이*비중)/1000
+                          v_INPT_WEGT := (   POWER(PIWI_R.PIWI_AFTR_DIA0,2)                             * ACOS(-1.0) * 0.25
+                                           - POWER(PIWI_R.PIWI_AFTR_DIA0 - PIWI_R.PIWI_AFTR_THIK * 2,2) * ACOS(-1.0) * 0.25 )
+                                       * v_INPT_LENG
+                                       * (PIWI_R.PIWI_GRVT_NUMB / 1000);
+                          v_INPT_WEGT := TRUNC(v_INPT_WEGT,2);
+                          rt_CMAT.CMAT_PDAB_CLAS := 'PDAB_MAI'; 
+                      END IF;
+                          
+                 -- MUFFLER PIPE
+                 WHEN PIWI_R.PIWI_PROD_CODE = 'MUFF' THEN
+                      v_MATL_COST := v_MATL_COST + rt_CMAT.CMAT_MATL_COST;
+                      rt_CMAT.CMAT_PDAB_CLAS := 'PDAB_MUF'; 
+
+                 ELSE NULL;
+            END CASE;
+            ----------------------------------------------------------------
+
+            INSERT INTO CRTBCMAT
+                  (CMAT_CORP_CODE
+                  ,CMAT_PART_NO
+                  ,CMAT_EONO
+                  ,CMAT_CUMT_NO
+                  ,CMAT_COME_CODE
+                  ,CMAT_CUMT_GUBN
+                  ,CMAT_MATL_SEQ0
+                  ,CMAT_SORT_KEY0
+                  ,CMAT_INDS_CODE
+                  ,CMAT_MATL_CORP
+                  ,CMAT_MATL_STND
+                  ,CMAT_MATL_CODE
+                  ,CMAT_MATL_APDT
+                  ,CMAT_MATL_GUBN
+                  ,CMAT_MATL_CLAS
+                  ,CMAT_MATL_MTJO
+                  ,CMAT_MATL_LKGB
+                  ,CMAT_MATL_NAME
+                  ,CMAT_MATL_UNIT
+                  ,CMAT_MATL_PRIC
+                  ,CMAT_SCRP_PRIC
+                  ,CMAT_SCRP_RATE
+                  ,CMAT_UNUS_PRIC
+                  ,CMAT_IMPT_CODE
+                  ,CMAT_IMPT_PRIC
+                  ,CMAT_IMPT_APDT
+                  ,CMAT_TRIF_RATE
+                  ,CMAT_INPT_WEGT
+                  ,CMAT_NET0_WEGT
+                  ,CMAT_USE0_WEGT
+                  ,CMAT_APPL_WEGT
+                  ,CMAT_SCRP_WEGT
+                  ,CMAT_LOSS_RATE
+                  ,CMAT_PDAB_RATE
+                  ,CMAT_MRGN_RATE
+                  ,CMAT_MATL_RATE
+                  ,CMAT_ADD0_COST
+                  ,CMAT_UNUS_COST
+                  ,CMAT_SCRP_COST
+                  ,CMAT_MATL_COST
+                  ,CMAT_MATL_MACT
+                  ,CMAT_MATL_CONS
+                  ,CMAT_SCRP_CONS
+                  ,CMAT_APPL_GUBN
+                  ,CMAT_ADD0_GUBN
+                  ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                  ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                  ,CMAT_PDAB_CLAS
+                  )
+            VALUES
+                  (I_CORP_CODE
+                  ,I_PART_NO
+                  ,I_EONO
+                  ,I_CUMT_NO
+                  ,v_COME_CODE
+                  ,'S'                     --원가계산구분
+                  ,v_SORT_KEY              --재료비SEQ
+                  ,v_SORT_KEY              --정렬순서
+                  ,rt_MTCD.MTCD_INDS_CODE  --업종_코드
+                  ,PIWI_R.PIWI_MATL_CORP   --재료단가_법인코드
+                  ,PIWI_R.PIWI_MATL_STND   --재료단가_표준구분
+                  ,PIWI_R.PIWI_MATL_CODE   --재료단가_재료코드
+                  ,PIWI_R.PIWI_MATL_APDT   --재료단가_적용일
+                  ,PIWI_R.PIWI_MATL_GUBN   --재료단가_재질구분
+                  ,PIWI_R.MATL_CLAS_CODE   --재료분류
+                  ,PIWI_R.MATL_MTJO_CODE   --재료종류
+                  ,CASE WHEN TRIM(PIWI_R.MATL_IMPT_CODE) > ' ' THEN 'K' ELSE 'L' END
+                  ,PIWI_R.MATL_NAME        --재료명칭
+                  ,PIWI_R.MATL_UNIT        --재료단위
+                  ,rt_CMAT.CMAT_MATL_PRIC  --재료단가
+                  ,rt_CMAT.CMAT_SCRP_PRIC  --SCRAP단가
+                  ,rt_CMAT.CMAT_SCRP_RATE  --SCRAP회수율
+                  ,rt_CMAT.CMAT_UNUS_PRIC  --산폐단가
+                  ,PIWI_R.MATL_IMPT_CODE   --수입코드
+                  ,PIWI_R.MATL_IMPT_PRIC   --수입단가
+                  ,NULL                    --수입코드_적용일
+                  ,PIWI_R.MATL_TRIF_RATE   --관세율
+                  ,rt_CMAT.CMAT_INPT_WEGT  --투입량
+                  ,rt_CMAT.CMAT_NET0_WEGT  --NET량
+                  ,rt_CMAT.CMAT_USE0_WEGT  --사용량
+                  ,rt_CMAT.CMAT_APPL_WEGT  --적용량
+                  ,rt_CMAT.CMAT_SCRP_WEGT  --SCRAP중량
+                  ,rt_CMAT.CMAT_LOSS_RATE  --LOSS율
+                  ,rt_CMAT.CMAT_PDAB_RATE  --불량율
+                  ,0                       --여유율
+                  ,rt_CORT.CORT_MATL_RATE  --재료관리비율
+                  ,0                       --추가비
+                  ,rt_CMAT.CMAT_UNUS_COST  --산폐비
+                  ,rt_CMAT.CMAT_SCRP_COST  --SCRAP비
+                  ,rt_CMAT.CMAT_MATL_COST  --재료비
+                  ,rt_CMAT.CMAT_MATL_MACT  --재료관리비
+                  ,rt_CMAT.CMAT_MATL_CONS
+                  ,rt_CMAT.CMAT_SCRP_CONS
+                  ,'Y'
+                  ,'S'
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,rt_CMAT.CMAT_PDAB_CLAS -- TCAMS 고도화 ADD
+                  )
+            ;
+
+            --계산값 저장
+            UPDATE CATBPIWI
+               SET PIWI_INPT_WEGT = rt_CMAT.CMAT_INPT_WEGT
+                  ,PIWI_INPT_LENG = v_INPT_LENG
+             WHERE PIWI_CORP_CODE = I_CORP_CODE
+               AND PIWI_PART_NO   = I_PART_NO
+               AND PIWI_EONO      = I_EONO
+               AND PIWI_CUMT_NO   = I_CUMT_NO
+            ;
+
+        END IF;
+
+        ---------------------------------------------------------------------------
+        --부재료비 (LOOP)
+        ---------------------------------------------------------------------------
+        O_LINE_NO := 'ST-53000';
+
+        --조회조건 SET
+        rt_PIWM.PIWM_MATT_CODE := PIWI_R.PIWI_MATT_CODE;
+        rt_PIWM.PIWM_SHAP_CODE := PIWI_R.PIWI_SHAP_CODE;
+        rt_PIWM.PIWM_PROD_CODE := PIWI_R.PIWI_PROD_CODE;
+        rt_PIWM.PIWM_2CUT_CODE := PIWI_R.PIWI_CUT2_CODE;
+        rt_PIWM.PIWM_MAKE_YN   := CASE WHEN PIWI_R.PIWI_MAKE_YN = 'Y' THEN 'Y' ELSE 'N' END;
+        rt_PIWM.PIWM_BEND_YN   := CASE WHEN PIWI_R.PIWI_BEND_PONT > 0 THEN 'Y' ELSE 'N' END;
+
+        FOR SMAT_R IN cs_SMAT LOOP
+            O_LINE_NO := 'ST-' || (53000 + SMAT_R.PIWM_MATL_SEQ0);
+
+            v_CMAT_PROC_YN := 'Y';
+            rt_CMAT.CMAT_INPT_WEGT := 0.0;
+            rt_CMAT.CMAT_NET0_WEGT := 0.0;
+            rt_CMAT.CMAT_USE0_WEGT := 0.0;
+            rt_CMAT.CMAT_APPL_WEGT := 0.0;
+            rt_CMAT.CMAT_SCRP_WEGT := 0.0;
+            rt_CMAT.CMAT_LOSS_RATE := 0.0;
+            rt_CMAT.CMAT_PDAB_RATE := 0.0;
+            rt_CMAT.CMAT_MRGN_RATE := 0.0;
+            rt_CMAT.CMAT_SCRP_RATE := 0.0;
+            rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+            rt_CMAT.CMAT_SCRP_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_PRIC := 0.0;
+            rt_CMAT.CMAT_UNUS_COST := 0.0;
+            rt_CMAT.CMAT_SCRP_COST := 0.0;
+            rt_CMAT.CMAT_MATL_COST := 0.0;
+            rt_CMAT.CMAT_MATL_MACT := 0.0;
+            rt_CMAT.CMAT_ADD0_COST := 0.0;
+            rt_CMAT.CMAT_MATL_NAME := SMAT_R.PIWM_MATL_NAME;
+            rt_CMAT.CMAT_MATL_UNIT := SMAT_R.PIWM_MATL_UNIT;
+            rt_CMAT.CMAT_MATL_CONS := 0.0;
+            rt_CMAT.CMAT_SCRP_CONS := 0.0;
+
+            rt_CMAT.CMAT_MATL_CORP := '';
+            rt_CMAT.CMAT_MATL_STND := '';
+            rt_CMAT.CMAT_MATL_CODE := '';
+            rt_CMAT.CMAT_MATL_APDT := '';
+            rt_CMAT.CMAT_MATL_GUBN := '';
+            rt_CMAT.CMAT_MATL_CLAS := '';
+            rt_CMAT.CMAT_MATL_MTJO := '';
+            rt_CMAT.CMAT_MATL_LKGB := 'L';
+
+            rt_CMAT.CMAT_PDAB_CLAS := '';  --TCAMS고도화 : 불량비공정코드 저장용
+
+            CASE
+                 --------------------------
+                 -- CUTTER(1차 CUTTING) : EA당 처리
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'CUTTER' THEN
+                      rt_CMAT.CMAT_USE0_WEGT := 1.0;
+                      rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                      rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+                 --------------------------
+                 -- 2차 CUT : PIPE외경 반영
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'CIRCSAW' THEN
+                      rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC * PIWI_R.PIWI_AFTR_DIA0 * SMAT_R.PIWM_MATL_COEF1;
+                      rt_CMAT.CMAT_USE0_WEGT := SMAT_R.PIWM_MATL_COEF2;
+                      rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                      rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+                 --------------------------
+                 -- BENDING TOOL : POINT반영
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'BEND' THEN
+                      rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+                      rt_CMAT.CMAT_USE0_WEGT := PIWI_R.PIWI_BEND_PONT;
+                      rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                      rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+                 --------------------------
+                 -- 사각파이프조관 : kg당
+                 WHEN SMAT_R.PIWM_MATL_GUBN LIKE 'SQ_SUB%' THEN
+                      rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+                      rt_CMAT.CMAT_NET0_WEGT := PIWI_R.PIWI_NET0_WEGT;
+                      rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_NET0_WEGT / 1000;
+                      rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+
+                 --------------------------
+                 -- 원형 용접부재료비 (입력단위와 단가 단위가 동일함) - 19차
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'RO_SUB10' THEN
+                      IF  PIWI_R.PIWI_WELD_LENG > 0 THEN
+                          rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+                          rt_CMAT.CMAT_USE0_WEGT := PIWI_R.PIWI_WELD_LENG;
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                          rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 --------------------------
+                 -- 원형 천공PIN (입력단위와 단가 단위가 동일함) - 19차
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'RO_SUB20' THEN
+                      IF  PIWI_R.PIWI_HOLE_CNT0 > 0 THEN
+                          rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+                          rt_CMAT.CMAT_USE0_WEGT := PIWI_R.PIWI_HOLE_CNT0;
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                          rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+ 
+                 --------------------------
+                 -- 금형비
+                 WHEN SMAT_R.PIWM_MATL_GUBN = 'MOLD' THEN
+                      IF  SMAT_R.PIWM_MATL_COEF1 > 0 THEN
+                          IF  v_MAKE_WEGT <= 0 THEN
+                              O_MESG := '금형비 적용 중량이 0(또는 0 이하) 입니다. (제품규격 확인요망)' || CHR(10)
+                                     || '  투입중량=' || v_MAKE_WEGT;
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                          DBMS_OUTPUT.PUT_LINE('v_MAKE_WEGT=' || v_MAKE_WEGT);
+
+                          rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC / (SMAT_R.PIWM_MATL_COEF1 / (v_MAKE_WEGT / 1000) );
+                          rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_CMAT.CMAT_MATL_PRIC,trCo);
+                          rt_CMAT.CMAT_USE0_WEGT := 1;
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                          rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                      ELSE
+                          rt_CMAT.CMAT_MATL_PRIC := SMAT_R.PIWM_MATL_PRIC;
+                          rt_CMAT.CMAT_USE0_WEGT := 1;
+                          rt_CMAT.CMAT_MATL_COST := rt_CMAT.CMAT_MATL_PRIC * rt_CMAT.CMAT_USE0_WEGT;
+                          rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                      END IF;
+                 ELSE
+                      NULL;
+            END CASE;
+
+            --재료비처리
+            IF  v_CMAT_PROC_YN = 'Y' THEN
+                O_LINE_NO := 'ST-' || (59000 + SMAT_R.PIWM_MATL_SEQ0);
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                rt_CMAT.CMAT_MATL_COST := TRUNC(rt_CMAT.CMAT_MATL_COST,trCo);
+                IF  SMAT_R.PIWM_MATL_GUBN = 'MOLD' THEN
+                    rt_CMAT.CMAT_MATL_MACT := 0.0;
+                    rt_CMAT.CMAT_MATL_LKGB := 'Z';
+                ELSE
+                    rt_CMAT.CMAT_MATL_MACT := (rt_CMAT.CMAT_MATL_COST + rt_CMAT.CMAT_SCRP_COST - rt_CMAT.CMAT_UNUS_COST) * (rt_CORT.CORT_MATL_RATE * 0.01);
+                    rt_CMAT.CMAT_MATL_MACT := TRUNC(rt_CMAT.CMAT_MATL_MACT,trCo);
+                END IF;
+
+                ----------------------------------------------------------------
+                -- TCAMS고도화 (2022년)
+                -- 불량비 처리를 위해 재료비 SAVE처리 위치이동
+                ----------------------------------------------------------------
+                CASE WHEN PIWI_R.PIWI_PROD_CODE = 'MAIN' THEN
+                          IF  PIWI_R.PIWI_EXPN_CODE IN ('150DN','150UP') THEN 
+                              v_MATL_COST := v_MATL_COST + rt_CMAT.CMAT_MATL_COST;
+                              rt_CMAT.CMAT_PDAB_CLAS := 'PDAB_MAI'; 
+                          END IF;
+
+                     WHEN PIWI_R.PIWI_PROD_CODE = 'MUFF' THEN
+                          v_MATL_COST := v_MATL_COST + rt_CMAT.CMAT_MATL_COST;
+                          rt_CMAT.CMAT_PDAB_CLAS := 'PDAB_MUF'; 
+    
+                     ELSE NULL;
+                END CASE;
+                ----------------------------------------------------------------
+
+                INSERT INTO CRTBCMAT
+                      (CMAT_CORP_CODE
+                      ,CMAT_PART_NO
+                      ,CMAT_EONO
+                      ,CMAT_CUMT_NO
+                      ,CMAT_COME_CODE
+                      ,CMAT_CUMT_GUBN
+                      ,CMAT_MATL_SEQ0
+                      ,CMAT_SORT_KEY0
+                      ,CMAT_INDS_CODE
+                      ,CMAT_MATL_CORP
+                      ,CMAT_MATL_STND
+                      ,CMAT_MATL_CODE
+                      ,CMAT_MATL_APDT
+                      ,CMAT_MATL_GUBN
+                      ,CMAT_MATL_CLAS
+                      ,CMAT_MATL_MTJO
+                      ,CMAT_MATL_LKGB
+                      ,CMAT_MATL_NAME
+                      ,CMAT_MATL_UNIT
+                      ,CMAT_MATL_PRIC
+                      ,CMAT_SCRP_PRIC
+                      ,CMAT_SCRP_RATE
+                      ,CMAT_UNUS_PRIC
+                      ,CMAT_IMPT_CODE
+                      ,CMAT_IMPT_PRIC
+                      ,CMAT_IMPT_APDT
+                      ,CMAT_TRIF_RATE
+                      ,CMAT_INPT_WEGT
+                      ,CMAT_NET0_WEGT
+                      ,CMAT_USE0_WEGT
+                      ,CMAT_APPL_WEGT
+                      ,CMAT_SCRP_WEGT
+                      ,CMAT_LOSS_RATE
+                      ,CMAT_PDAB_RATE
+                      ,CMAT_MRGN_RATE
+                      ,CMAT_MATL_RATE
+                      ,CMAT_ADD0_COST
+                      ,CMAT_UNUS_COST
+                      ,CMAT_SCRP_COST
+                      ,CMAT_MATL_COST
+                      ,CMAT_MATL_MACT
+                      ,CMAT_MATL_CONS
+                      ,CMAT_SCRP_CONS
+                      ,CMAT_APPL_GUBN
+                      ,CMAT_ADD0_GUBN
+                      ,CMAT_UPDT_DATE,CMAT_UPDT_CMAN
+                      ,CMAT_INIT_DATE,CMAT_INIT_CMAN
+                      ,CMAT_PDAB_CLAS
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,rt_CMAT.CMAT_MATL_LKGB
+                      ,rt_CMAT.CMAT_MATL_NAME
+                      ,rt_CMAT.CMAT_MATL_UNIT
+                      ,rt_CMAT.CMAT_MATL_PRIC
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,NULL
+                      ,rt_CMAT.CMAT_INPT_WEGT
+                      ,rt_CMAT.CMAT_NET0_WEGT
+                      ,rt_CMAT.CMAT_USE0_WEGT
+                      ,rt_CMAT.CMAT_APPL_WEGT
+                      ,rt_CMAT.CMAT_SCRP_WEGT
+                      ,rt_CMAT.CMAT_LOSS_RATE
+                      ,rt_CMAT.CMAT_PDAB_RATE
+                      ,rt_CMAT.CMAT_MRGN_RATE
+                      ,CASE WHEN SMAT_R.PIWM_MATL_GUBN = 'MOLD' THEN 0 ELSE rt_CORT.CORT_MATL_RATE END
+                      ,0
+                      ,rt_CMAT.CMAT_UNUS_COST
+                      ,rt_CMAT.CMAT_SCRP_COST
+                      ,rt_CMAT.CMAT_MATL_COST
+                      ,rt_CMAT.CMAT_MATL_MACT
+                      ,rt_CMAT.CMAT_MATL_CONS
+                      ,rt_CMAT.CMAT_SCRP_CONS
+                      ,'Y'
+                      ,'S'
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,rt_CMAT.CMAT_PDAB_CLAS -- TCAMS 고도화 ADD
+                      )
+                ;
+            END IF;
+        END LOOP;
+
+        ---------------------------------------------------------------------------
+        --6.가공비처리
+        ---------------------------------------------------------------------------
+        O_LINE_NO  := 'ST-60000';
+        v_SORT_KEY := 0;
+
+        v_BEND_CHK := 'N';
+
+        --CURSOR조회조건의 값을 SET
+        rt_PIWP.PIWP_MATT_CODE := PIWI_R.PIWI_MATT_CODE;
+        rt_PIWP.PIWP_SHAP_CODE := PIWI_R.PIWI_SHAP_CODE;
+        rt_PIWP.PIWP_PROD_CODE := PIWI_R.PIWI_PROD_CODE;
+        rt_PIWP.PIWP_2CUT_CODE := PIWI_R.PIWI_CUT2_CODE;
+        rt_PIWP.PIWP_BELL_CODE := PIWI_R.PIWI_BELL_CODE;
+        rt_PIWP.PIWP_EXPN_CODE := PIWI_R.PIWI_EXPN_CODE;
+        rt_PIWP.PIWP_SQUA_CODE := PIWI_R.PIWI_SQUA_CODE;
+        rt_PIWP.PIWP_MAKE_YN   := CASE WHEN PIWI_R.PIWI_MAKE_YN = 'Y' THEN 'Y' ELSE 'N' END;
+        rt_PIWP.PIWP_DOIL_YN   := CASE WHEN PIWI_R.PIWI_DOIL_YN = 'Y' THEN 'Y' ELSE 'N' END;
+        rt_PIWP.PIWP_DIA0_MIN0 := PIWI_R.PIWI_AFTR_DIA0;
+
+        FOR SPRO_R IN cs_SPRO LOOP
+            O_LINE_NO := 'ST-' || (61000 + SPRO_R.PIWP_PROC_SEQ0);
+
+            v_CPRO_PROC_YN := 'Y'; --처리여부SET
+            rt_CPRO.CPRO_LOTQ      := rt_CMMS.CMMS_LOTQ_QTY0;  --일부공정 LOT 예외 적용됨
+
+            rt_CPRO.CPRO_PROC_NAME := SPRO_R.PIWP_PROC_NAME;
+            rt_CPRO.CPRO_CAVT      := SPRO_R.PIWP_CAVT     ;
+            rt_CPRO.CPRO_PREP_HOUR := SPRO_R.PIWP_PREP_HOUR;
+            rt_CPRO.CPRO_PRSN_CNT0 := SPRO_R.PIWP_PRSN_CNT1;
+            v_NET0_CYTM            := SPRO_R.PIWP_NET0_CYTM;
+            rt_CPRO.CPRO_AEXM_RATE := 0.0;
+            rt_CPRO.CPRO_MCHH_APDT := '';
+            rt_CPRO.CPRO_MCHH_CODE := SPRO_R.PIWP_MCHH_CODE;
+            rt_CPRO.CPRO_MADD_APDT := '';
+            rt_CPRO.CPRO_MADD_CODE := '';
+
+            rt_CPRO.CPRO_PDAB_CLAS := '';  --TCAMS고도화 : 불량비공정코드 저장용
+
+            -- 횟수 입력항목의 입력여부 체크
+            IF  (SPRO_R.PIWP_PROC_GUBN = 'EXPAND1'  AND PIWI_R.PIWI_EXRE_CNT0 = 0) OR   --확관
+                (SPRO_R.PIWP_PROC_GUBN = 'SHRINK'   AND PIWI_R.PIWI_REDU_CNT0 = 0) OR   --축관
+                (SPRO_R.PIWP_PROC_GUBN = 'PIERCING' AND PIWI_R.PIWI_PIER_CNT0 = 0) OR   --PIERCING
+                (SPRO_R.PIWP_PROC_GUBN = 'PIERMUFF' AND PIWI_R.PIWI_HOLE_CNT0 = 0) OR   --PIERCING (19차: MUFFLER인 경우 천공HOLE이 존재시 공정처리)
+                (SPRO_R.PIWP_PROC_GUBN = 'SIZEING'  AND PIWI_R.PIWI_SIZE_CNT0 = 0) OR   --SIZ'G
+                (SPRO_R.PIWP_PROC_GUBN = 'CHAMFER'  AND PIWI_R.PIWI_CHAM_CNT0 = 0) OR   --CHAMFERING
+                (SPRO_R.PIWP_PROC_GUBN = 'ROLLFORM' AND PIWI_R.PIWI_ROLL_CNT0 = 0) OR   --ROLL FORMING
+                (SPRO_R.PIWP_PROC_GUBN = 'ENDFORM'  AND PIWI_R.PIWI_ENDF_CNT0 = 0) OR   --END FORMING
+                (SPRO_R.PIWP_PROC_GUBN = 'BURR'     AND PIWI_R.PIWI_BURR_CNT0 = 0) OR   --BURRING
+                (SPRO_R.PIWP_PROC_GUBN = 'BRUSH'    AND PIWI_R.PIWI_BRUS_CNT0 = 0) OR   --BRUSH
+                (SPRO_R.PIWP_PROC_GUBN = 'LEAKTEST' AND PIWI_R.PIWI_LEAK_CNT0 = 0) THEN --LEAK TEST
+                v_CPRO_PROC_YN := 'N';
+            END IF;
+
+            IF  v_CPRO_PROC_YN = 'Y' THEN
+                CASE
+                     --------------------------
+                     -- 1차CUT
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CUT1' THEN
+                          --NET CT=계수1*D+계수2*t/계수3-계수4
+                          v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 * PIWI_R.PIWI_AFTR_DIA0
+                                       + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_AFTR_THIK
+                                       / SPRO_R.PIWP_NET0_COEF3
+                                       - SPRO_R.PIWP_NET0_COEF4;
+
+                          --음수발생가능 하여, 오류체크 추가함
+                          IF  v_NET0_CYTM <= 0 THEN
+                              O_MESG := '1차 CUT 공정 NET CT가 0 이하 값이 산출되었습니다.' || CHR(10)
+                                     || '경, 두께 값을 재확인 하시기 바랍니다.';
+                              RAISE UD_EX_ERROR;
+                          END IF;
+
+                     --------------------------
+                     -- BENDING
+                     -- BEND1 = CNC BENDING 1
+                     -- BEND2 = CNC BENDING 2
+                     -- BEND3 = CNC BENDING 3 : MANDREL인 경우는 CNC3 로 결정
+                     -- BEND4 = CNC BENDING 4
+                     -- BEND5 = CNC BENDING 5
+                     -- BEND6 = CNC BENDING 6
+                     --------------------------
+                     -- [참고] 현업의 요청에 의해, 계산시 EBNDING을 결정하지 않고
+                     --        결정된 값을 확인하여 사용자가 변경 하도록 구성하여
+                     --        최종 결정(입력)한 값으로 처리하도록 변경하여 계산 로직을 막음 (2017.12.06)
+                     --------------------------
+                     WHEN SPRO_R.PIWP_PROC_GUBN IN ('BEND1','BEND2','BEND3','BEND4','BEND5','BEND6') THEN
+
+                          /************************
+                          --------------------------
+                          --1. D<36                                       : BEND 1
+                          --2. 42.7<=D, t <= 1.2, 0.019D/t+0.916<=R/D<2.3 : BEND 3 (BEND 2 보다 먼저 체크)
+                          --3. 36 <= D < 61, 0.019D/t+0.916<=R/D          : BEND 2
+                          --4. D>=25.4, R/D<0.019D/t+0.916                : BEND 4
+                          --5. 61<=D<=90                                  : BEND 5
+                          --6. 90<D                                       : BEND 6
+                          --------------------------
+                          v_019Dt := 0.019 * PIWI_R.PIWI_AFTR_DIA0 / PIWI_R.PIWI_AFTR_THIK + 0.916;
+                          v_RD    := PIWI_R.PIWI_LONG_RADI / PIWI_R.PIWI_AFTR_DIA0;
+
+                          -----------------------------------------------------------------
+                          -- BENDING이 한번이라도 처리되면 나머지는 처리하지 않음
+                          -- MANDREL BENDING은 CNC BENDING#3 기준으로 처리함 (최우선 적용)
+                          -----------------------------------------------------------------
+                          IF  v_BEND_CHK = 'N' THEN
+
+                              CASE WHEN PIWI_R.PIWI_BEND_CODE = 'HYPERO' THEN
+                                        IF  SPRO_R.PIWP_PROC_GUBN = 'BEND3' THEN
+                                            v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_BEND_PONT;
+                                            v_BEND_CHK  := 'Y';
+                                        ELSE
+                                            v_CPRO_PROC_YN := 'N';
+                                        END IF;
+
+                                   ELSE
+                                        v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_BEND_PONT;
+
+                                        CASE WHEN PIWI_R.PIWI_AFTR_DIA0 <  36.0     THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND1' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+
+                                             WHEN PIWI_R.PIWI_AFTR_DIA0 >= 42.7     AND
+                                                  PIWI_R.PIWI_AFTR_THIK <=  1.2     AND
+                                                  v_019Dt               <= v_RD     AND
+                                                  v_RD                  <   2.3     THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND3' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+                                             WHEN PIWI_R.PIWI_AFTR_DIA0 >= 36.0     AND
+                                                  PIWI_R.PIWI_AFTR_DIA0 >= 61.0     AND
+                                                  v_019Dt               <= v_RD     THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND2' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+                                             WHEN PIWI_R.PIWI_AFTR_DIA0 >= 25.4     AND
+                                                  v_RD                  <  v_019Dt  THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND4' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+                                             WHEN PIWI_R.PIWI_AFTR_DIA0 >= 61.0     AND
+                                                  PIWI_R.PIWI_AFTR_DIA0 <= 90.0     THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND5' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+                                             WHEN PIWI_R.PIWI_AFTR_DIA0 >  90.0     THEN IF  SPRO_R.PIWP_PROC_GUBN = 'BEND6' THEN
+                                                                                             v_BEND_CHK := 'Y';
+                                                                                         ELSE
+                                                                                             v_CPRO_PROC_YN := 'N';
+                                                                                         END IF;
+                                             ELSE v_CPRO_PROC_YN := 'N';
+                                             --   O_MESG := 'BENDING처리가 결정되지 않았습니다.(입력값 확인요망)';
+                                             --   RAISE UD_EX_ERROR;
+                                        END CASE;
+
+                              END CASE;
+
+                              -- GREASE HOLE가공에 사용하기 위해 CNC BENDING NET CT SAVE
+                              IF  v_BEND_CHK = 'Y' THEN
+                                  v_BEND_CYTM := v_NET0_CYTM;
+                              END IF;
+                          ELSE
+                              v_CPRO_PROC_YN := 'N';
+                          END IF;
+
+                          -- (예외처리) BENDING TYPE 미적용시, BENDING을 처리하지 않음
+                          IF  PIWI_R.PIWI_BEND_CODE = 'N' THEN
+                              v_CPRO_PROC_YN := 'N';
+                          END IF;
+                          ************************/
+
+                          -- 결정된 것과 공정구분이 동일한 경우만 처리
+                          IF  PIWI_R.PIWI_CNCB_CODE = SPRO_R.PIWP_PROC_GUBN THEN
+                              v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_BEND_PONT;
+
+                              -- GREASE HOLE가공에 사용하기 위해 CNC BENDING NET CT SAVE
+                              v_BEND_CYTM := v_NET0_CYTM;
+                          ELSE
+                              v_CPRO_PROC_YN := 'N';
+                          END IF;
+
+                     --------------------------
+                     -- 2차CUT
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CUT2' THEN
+                          v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * SPRO_R.PIWP_NET0_COEF1;  --양쪽은 2배 적용됨
+
+                     -- 상기외 기타 공정
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'BELLOWS'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'EXPAND1'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_EXRE_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'SHRINK'   THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_REDU_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'EXPAND2'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'PIERCING' THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_PIER_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'PIERMUFF' THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 * CEIL(PIWI_R.PIWI_HOLE_CNT0 / 80);  --19차
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CURLING'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CORRECT'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'SIZEING'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_SIZE_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CHAMFER'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_CHAM_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'ROLLFORM' THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_ROLL_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'ENDFORM'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_ENDF_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'BURR'     THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_BURR_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'BRUSH'    THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_BRUS_CNT0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'DEOIL'    THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'GRE_HOLE' THEN v_NET0_CYTM := v_BEND_CYTM;            --CNC BENDING NET CT로 처리
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'GRE_INJT' THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * 1.0;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'LEAKTEST' THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * PIWI_R.PIWI_LEAK_CNT0;
+
+                     -- 각형 공정(19차:조관-원형추가)
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'MAKEPIPE' THEN IF  PIWI_R.PIWI_SHAP_CODE = 'SQUARE' THEN
+                                                                      v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM * v_MAKE_WEGT / 1000;
+                                                                      rt_CPRO.CPRO_LOTQ := TRUNC(SPRO_R.PIWP_LOTQ / (v_MAKE_WEGT / 1000) ,0);      --LOT별도 적용
+                                                                  ELSE
+                                                                      v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 * PIWI_R.PIWI_AFTR_DIA0
+                                                                                   + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_AFTR_THIK;
+                                                                      rt_CPRO.CPRO_LOTQ := TRUNC(SPRO_R.PIWP_LOTQ / (v_MAKE_WEGT / 1000) ,0);      --LOT별도 적용(각형과 동일공식 적용)
+                                                                  END IF;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'CUT10'    THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'SIDECUT'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'AIRBLOW'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'DEOIL10'  THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_CYTM;
+                     WHEN SPRO_R.PIWP_PROC_GUBN = 'BENDSQ'   THEN v_NET0_CYTM := SPRO_R.PIWP_NET0_COEF1 + SPRO_R.PIWP_NET0_COEF2 * PIWI_R.PIWI_BEND_LENG;
+
+                     ELSE
+                          v_NET0_CYTM := 0;
+
+                END CASE;
+            END IF;
+
+            --예외적용 : BENDING처리시 NET CT 50초과시 인원 0.5적용 (SERVO는 제외)
+            IF  SPRO_R.PIWP_PROC_GUBN LIKE 'BEND%' THEN
+                IF  v_NET0_CYTM > 50 AND SPRO_R.PIWP_PRSN_CNT2 > 0 THEN
+                    rt_CPRO.CPRO_PRSN_CNT0 := SPRO_R.PIWP_PRSN_CNT2;
+                END IF;
+            END IF;
+
+            IF  v_CPRO_PROC_YN = 'Y' THEN
+                O_LINE_NO := 'ST-' || (69000 + SPRO_R.PIWP_PROC_SEQ0);
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                 IF  TRIM(rt_CPRO.CPRO_PROC_NAME) IS NULL THEN
+                    O_MESG := '공정명이 누락되었습니다. 확인후 재계산하시기 바랍니다.';
+                    RAISE UD_EX_ERROR;
+                END IF;
+
+                --기계경비추출
+                IF  rt_CPRO.CPRO_MCHH_CODE > ' ' THEN
+                    --2023.03.20
+                    /****
+                    CASPMCHH_Q01(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'A','20',v_COME_CODE,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPPIWR_P19_3';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    ****/
+                    -----------------------------------------
+                    CASPMCHH_Q02(I_CORP_CODE,rt_CMMS.CMMS_STND_GUBN,'A','20',v_COME_CODE,rt_CMMS.CMMS_STND_DEGR,rt_CPRO.CPRO_MCHH_CODE
+                                ,rt_MCIF.MCIF_MCHH_NAME,rt_MCIF.MCIF_DRCT_COST,rt_CPRO.CPRO_MCHH_APDT
+                                ,O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+                    IF  O_MESG_CODE != 'IQ-001' THEN
+                        RAISE UD_EX_ERROR;
+                    ELSE
+                        O_PRGM_ID   := 'CASPPIWR_P19_3';
+                        O_MESG_CODE := 'SA-002';
+                    END IF;
+                    -----------------------------------------
+                    IF  NVL(rt_MCIF.MCIF_DRCT_COST,0) <= 0 THEN
+                        O_MESG := '기계경비정보가 존재하지 않습니다.';
+                        RAISE UD_EX_ERROR;
+                    END IF;
+                ELSE
+                    rt_MCIF.MCIF_MCHH_NAME := '';
+                    rt_MCIF.MCIF_DRCT_COST := 0;
+                END IF;
+
+                rt_CPRO.CPRO_MCHH_NAME := rt_MCIF.MCIF_MCHH_NAME;
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_MCIF.MCIF_DRCT_COST,trCo);
+
+                --저장/계산은 소수단위 절사후 처리
+                rt_CPRO.CPRO_CAVT      := TRUNC(rt_CPRO.CPRO_CAVT     ,0);
+                rt_CPRO.CPRO_PREP_HOUR := TRUNC(rt_CPRO.CPRO_PREP_HOUR,3);  --3자리까지 처리함
+                rt_CPRO.CPRO_PRSN_CNT0 := TRUNC(rt_CPRO.CPRO_PRSN_CNT0,2);
+                rt_CPRO.CPRO_NET0_CYTM := TRUNC(v_NET0_CYTM           ,2);
+                rt_CPRO.CPRO_MCHH_COST := TRUNC(rt_CPRO.CPRO_MCHH_COST,trCo);
+
+                --가공비계산
+                CRSPCPRO_C01(I_CORP_CODE
+                            ,rt_CPRO.CPRO_LOTQ     ,rt_CPRO.CPRO_NET0_CYTM,rt_CPRO.CPRO_CAVT     ,rt_CPRO.CPRO_PREP_HOUR,rt_CPRO.CPRO_PRSN_CNT0,rt_CPRO.CPRO_MCHH_COST
+                            ,rt_CORT.CORT_PAY0_RATE,rt_CORT.CORT_IDRT_RATE,rt_CORT.CORT_GME0_RATE,0                     ,rt_CORT.CORT_PROF_RATE,rt_CORT.CORT_ET00_RATE
+                            ,rt_CPRO.CPRO_PROC_COST,rt_CPRO.CPRO_IBR0_COST,rt_CPRO.CPRO_EXPM_COST,rt_CPRO.CPRO_GME0_COST,rt_CPRO.CPRO_PROF_COST
+                            ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+                IF  O_MESG_CODE != 'IQ-001' THEN
+                    O_MESG := '가공비계산 공통수식오류:' || O_MESG;
+                    RAISE UD_EX_ERROR;
+                ELSE
+                    O_PRGM_ID   := 'CASPPIWR_P19_3';
+                    O_MESG_CODE := 'SA-002';
+                END IF;
+
+                ----------------------------------------------------------------
+                -- TCAMS고도화 (2022년) 
+                -- 불량비 처리를 위해 가공비 SAVE처리 위치이동
+                -- & 변동원가계산을 위한 공정코드 저장추가 
+                -- 불량비코드는 CMCT에 저장하는 코드와 반드시 일치화 작업필요!!!
+                ----------------------------------------------------------------
+                CASE WHEN PIWI_R.PIWI_PROD_CODE = 'MAIN' THEN
+                          --1차 CUT ~ 확관까지 가공비
+                          IF  PIWI_R.PIWI_EXPN_CODE IN ('150DN','150UP') AND
+                              SPRO_R.PIWP_PROC_GUBN IN ('CUT1','BEND1','BEND2','BEND3','BEND4','BEND5','BEND6','CUT2','BELLOWS','EXPAND1') THEN
+                              v_PROC_COST1 := v_PROC_COST1 + rt_CPRO.CPRO_PROC_COST;
+                              rt_CPRO.CPRO_PDAB_CLAS := 'PDAB_MAI'; 
+                          END IF;
+
+                     WHEN PIWI_R.PIWI_PROD_CODE = 'MUFF' THEN
+                          v_PROC_COST := v_PROC_COST + rt_CPRO.CPRO_PROC_COST;
+                          rt_CPRO.CPRO_PDAB_CLAS := 'PDAB_MUF'; 
+
+                     ELSE NULL;
+                END CASE;
+                ----------------------------------------------------------------
+
+                INSERT INTO CRTBCPRO
+                      (CPRO_CORP_CODE
+                      ,CPRO_PART_NO
+                      ,CPRO_EONO
+                      ,CPRO_CUMT_NO
+                      ,CPRO_COME_CODE
+                      ,CPRO_CUMT_GUBN
+                      ,CPRO_SEQ0
+                      ,CPRO_SORT_KEY0
+                      ,CPRO_INDS_CODE
+                      ,CPRO_PROC_NAME
+                      ,CPRO_MCHH_NAME
+                      ,CPRO_VEND_CODE
+                      ,CPRO_VEND_DATE
+                      ,CPRO_CORT_DATE
+                      ,CPRO_LOTQ
+                      ,CPRO_CAVT
+                      ,CPRO_PREP_HOUR
+                      ,CPRO_PRSN_CNT0
+                      ,CPRO_NET0_CYTM
+                      ,CPRO_MCHH_COST
+                      ,CPRO_PAY0_RATE
+                      ,CPRO_IDRT_RATE
+                      ,CPRO_GME0_RATE
+                      ,CPRO_PROF_RATE
+                      ,CPRO_ET00_RATE
+                      ,CPRO_AEXM_RATE
+                      ,CPRO_RUN0_COST
+                      ,CPRO_PROD_CONT
+                      ,CPRO_IBR0_COST
+                      ,CPRO_EXPM_COST
+                      ,CPRO_PROC_COST
+                      ,CPRO_GME0_COST
+                      ,CPRO_PROF_COST
+                      ,CPRO_APPL_GUBN
+                      ,CPRO_ADD0_GUBN
+                      ,CPRO_MCHH_CORP,CPRO_MCHH_STND,CPRO_MCHH_APDT,CPRO_MCHH_ATMO,CPRO_MCHH_COME,CPRO_MCHH_CODE
+                      ,CPRO_MADD_CORP,CPRO_MADD_STND,CPRO_MADD_APDT,CPRO_MADD_ATMO,CPRO_MADD_COME,CPRO_MADD_CODE
+                      ,CPRO_MCHH_CNT0
+                      ,CPRO_UPDT_DATE,CPRO_UPDT_CMAN
+                      ,CPRO_INIT_DATE,CPRO_INIT_CMAN
+                      ,CPRO_PDAB_CLAS
+                      )
+               VALUES (I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,v_SORT_KEY
+                      ,v_SORT_KEY
+                      ,rt_MTCD.MTCD_INDS_CODE
+                      ,rt_CPRO.CPRO_PROC_NAME
+                      ,rt_CPRO.CPRO_MCHH_NAME
+                      ,rt_SPMS.SPMS_VEND_CODE
+                      ,rt_SPMS.SPMS_VEND_APFR
+                      ,rt_CORT.CORT_APPL_DATE --rt_SPMS.SPMS_BASE_DATE  2022.10 실제적용일로 변경저장
+                      ,rt_CPRO.CPRO_LOTQ
+                      ,rt_CPRO.CPRO_CAVT
+                      ,rt_CPRO.CPRO_PREP_HOUR
+                      ,rt_CPRO.CPRO_PRSN_CNT0
+                      ,rt_CPRO.CPRO_NET0_CYTM
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CORT.CORT_PAY0_RATE
+                      ,rt_CORT.CORT_IDRT_RATE
+                      ,rt_CORT.CORT_GME0_RATE
+                      ,rt_CORT.CORT_PROF_RATE
+                      ,rt_CORT.CORT_ET00_RATE
+                      ,rt_CPRO.CPRO_AEXM_RATE
+                      ,rt_CPRO.CPRO_MCHH_COST
+                      ,rt_CMMS.CMMS_PROD_CNT0
+                      ,rt_CPRO.CPRO_IBR0_COST
+                      ,rt_CPRO.CPRO_EXPM_COST
+                      ,rt_CPRO.CPRO_PROC_COST
+                      ,rt_CPRO.CPRO_GME0_COST
+                      ,rt_CPRO.CPRO_PROF_COST
+                      ,'Y'
+                      ,'S'
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN rt_CPRO.CPRO_MCHH_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN I_CORP_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CMMS.CMMS_STND_GUBN ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_APDT ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN 'A'                    ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN v_COME_CODE            ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MADD_CODE > ' ' THEN rt_CPRO.CPRO_MADD_CODE ELSE '' END
+                      ,CASE WHEN rt_CPRO.CPRO_MCHH_CODE > ' ' THEN 1                      ELSE 0  END
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,rt_CPRO.CPRO_PDAB_CLAS -- TCAMS 고도화 ADD
+                      )
+                ;
+            END IF;
+
+        END LOOP;
+
+        ---------------------------------------------------------------------------
+        --6A.불량비처리
+        ---------------------------------------------------------------------------
+        -- [처리방법]
+        -- CASE1 : 계산값을 재료비에 넣는 방법
+        -- CASE2 : 계산값을 기타비에 넣는 방법 -> 이 방법으로 결정
+        -- TCAMS고도화 : CASE1에 대비한 로직은 삭제 정리함
+        ---------------------------------------------------------------------------
+        O_LINE_NO  := 'ST-6A000';
+        v_SORT_KEY := 0;
+
+        -- 기 생성 데이터 삭제 (실사는 공통 처리시 다시 생성함)
+        DELETE FROM CRTBCMCT
+         WHERE CMCT_CORP_CODE = I_CORP_CODE
+           AND CMCT_PART_NO   = I_PART_NO
+           AND CMCT_EONO      = I_EONO
+           AND CMCT_CUMT_NO   = I_CUMT_NO
+           AND CMCT_COME_CODE = v_COME_CODE
+         --AND CMCT_CUMT_GUBN --구분 불필요
+           AND CMCT_CETC_GUBN = 'PDAB'
+        ;
+
+        FOR PDAB_R IN cs_PDAB LOOP
+            v_CMAT_PROC_YN := 'Y';
+            rt_CMCT.CMCT_REMK_0001 := PDAB_R.PIWM_MATL_NAME; --CMCT_REMK_0001에 한글명칭 저장
+            rt_CMCT.CMCT_PDAB_RATE := 0.0;
+            rt_CMCT.CMCT_PDAB_MATL := 0.0;
+            rt_CMCT.CMCT_PDAB_PROC := 0.0; 
+            rt_CMCT.CMCT_PDAB_TOTL := 0.0;  --불량비대상금액
+            rt_CMCT.CMCT_PDAB_COST := 0.0;  --불량율을 반영한 금액(원가적용대상 불량비)
+
+            rt_CMCT.CMCT_PDAB_FACT1 := 0.0;
+            rt_CMCT.CMCT_PDAB_FACT2 := 0.0;
+
+            CASE --F/NECK은 확관율 135% 이상인 경우 적용
+                 -- [(재료비-투입중량*SCRAP단가)+(가공비(1차컷팅~확관)] * 불량율 --> (주의) 일반적인 공용수식과 상이함 (별도계산이 필요:변동원가계산)
+                 WHEN PDAB_R.PIWM_PROD_CODE = 'MAIN' THEN
+                      IF  PIWI_R.PIWI_EXPN_CODE IN ('150DN','150UP') THEN
+                          rt_CMCT.CMCT_PDAB_GUBN := 'PDAB_MAI';   --PIPE_MAI를 PDAB_MAI로 변경 (현재까지 발생데이터 없음)
+                          rt_CMCT.CMCT_PDAB_RATE := PDAB_R.PIWM_MATL_COEF1;
+                          rt_CMCT.CMCT_PDAB_MATL := v_MATL_COST;
+                          rt_CMCT.CMCT_PDAB_PROC := v_PROC_COST1;
+                          rt_CMCT.CMCT_PDAB_TOTL := rt_CMCT.CMCT_PDAB_MATL + rt_CMCT.CMCT_PDAB_PROC;
+                          rt_CMCT.CMCT_PDAB_COST := ((rt_CMCT.CMCT_PDAB_MATL - v_INPT_WEGT / 1000 * v_SCRP_PRIC) + rt_CMCT.CMCT_PDAB_PROC) * (rt_CMCT.CMCT_PDAB_RATE * 0.01);
+                          rt_CMCT.CMCT_PDAB_COST := TRUNC(rt_CMCT.CMCT_PDAB_COST,trCo);
+                          
+                          -- PIPE가공 예외사항 : 투입중량과 SCRAP단가를 저장해 놓는다 (TCAMS고도화)
+                          rt_CMCT.CMCT_PDAB_FACT1 := v_INPT_WEGT;
+                          rt_CMCT.CMCT_PDAB_FACT2 := v_SCRP_PRIC;
+                      ELSE
+                          v_CMAT_PROC_YN := 'N';
+                      END IF;
+
+                 --MUFFLER = PIPE제조원가 * 불량율
+                 WHEN PDAB_R.PIWM_PROD_CODE = 'MUFF' THEN
+                   -- rt_CMAT.CMAT_MATL_PRIC := (v_MATL_COST + v_PROC_COST) * PDAB_R.PIWM_MATL_COEF1 / 100;
+                   -- rt_CMAT.CMAT_MATL_PRIC := TRUNC(rt_CMAT.CMAT_MATL_PRIC,trCo);
+
+                      rt_CMCT.CMCT_PDAB_GUBN := 'PDAB_MUF';   --PIPE_MUF를 PDAB_MUF로 변경 (현재까지 발생데이터 없음)
+                      rt_CMCT.CMCT_PDAB_RATE := PDAB_R.PIWM_MATL_COEF1;
+                      rt_CMCT.CMCT_PDAB_MATL := v_MATL_COST;
+                      rt_CMCT.CMCT_PDAB_PROC := v_PROC_COST;
+                      rt_CMCT.CMCT_PDAB_TOTL := rt_CMCT.CMCT_PDAB_MATL + rt_CMCT.CMCT_PDAB_PROC;
+                      rt_CMCT.CMCT_PDAB_COST := rt_CMCT.CMCT_PDAB_TOTL * (rt_CMCT.CMCT_PDAB_RATE * 0.01);
+                      rt_CMCT.CMCT_PDAB_COST := TRUNC(rt_CMCT.CMCT_PDAB_COST,trCo);
+                 ELSE
+                      v_CMAT_PROC_YN := 'N';
+            END CASE;
+
+            IF  rt_CMCT.CMCT_PDAB_COST <= 0 THEN
+                v_CMAT_PROC_YN := 'N';
+            END IF;
+
+            IF  v_CMAT_PROC_YN = 'Y' THEN
+                v_SORT_KEY := v_SORT_KEY + 1;
+
+                -- 표준만 처리함. (실사는 실사 계산 로직에서 처리)
+                INSERT INTO CRTBCMCT
+                      (
+                       CMCT_CORP_CODE
+                      ,CMCT_PART_NO
+                      ,CMCT_EONO
+                      ,CMCT_CUMT_NO
+                      ,CMCT_COME_CODE
+                      ,CMCT_CUMT_GUBN
+                      ,CMCT_CETC_GUBN
+                      ,CMCT_CETC_SEQ0
+                      ,CMCT_PDAB_GUBN
+                      ,CMCT_PDAB_RATE
+                      ,CMCT_PDAB_MATL
+                      ,CMCT_PDAB_PROC
+                      ,CMCT_PDAB_TOTL
+                      ,CMCT_PDAB_COST
+                      ,CMCT_APPL_YN
+                      ,CMCT_REMK_0001
+                      ,CMCT_REMK_0002
+                      ,CMCT_UPDT_DATE,CMCT_UPDT_CMAN
+                      ,CMCT_INIT_DATE,CMCT_INIT_CMAN
+                      ,CMCT_PDAB_FACT1
+                      ,CMCT_PDAB_FACT2
+                      )
+                SELECT I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'S'
+                      ,'PDAB'
+                      ,v_SORT_KEY
+                      ,rt_CMCT.CMCT_PDAB_GUBN
+                      ,rt_CMCT.CMCT_PDAB_RATE
+                      ,rt_CMCT.CMCT_PDAB_MATL
+                      ,rt_CMCT.CMCT_PDAB_PROC
+                      ,rt_CMCT.CMCT_PDAB_TOTL
+                      ,rt_CMCT.CMCT_PDAB_COST
+                      ,'Y'
+                      ,'PIPE가공_' || rt_CMCT.CMCT_REMK_0001
+                      ,''
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,rt_CMCT.CMCT_PDAB_FACT1
+                      ,rt_CMCT.CMCT_PDAB_FACT2
+                  FROM DUAL
+
+                UNION ALL
+                -- 구분 'A'도 'S'와 동일하게 생성
+                SELECT I_CORP_CODE
+                      ,I_PART_NO
+                      ,I_EONO
+                      ,I_CUMT_NO
+                      ,v_COME_CODE
+                      ,'A'
+                      ,'PDAB'
+                      ,v_SORT_KEY
+                      ,rt_CMCT.CMCT_PDAB_GUBN
+                      ,rt_CMCT.CMCT_PDAB_RATE
+                      ,rt_CMCT.CMCT_PDAB_MATL
+                      ,rt_CMCT.CMCT_PDAB_PROC
+                      ,rt_CMCT.CMCT_PDAB_TOTL
+                      ,rt_CMCT.CMCT_PDAB_COST
+                      ,'Y'
+                      ,'PIPE가공_' || rt_CMCT.CMCT_REMK_0001
+                      ,''
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                      ,rt_CMCT.CMCT_PDAB_FACT1
+                      ,rt_CMCT.CMCT_PDAB_FACT2
+                  FROM DUAL
+                ;
+            END IF;
+        END LOOP;  --불량비 END
+
+    END LOOP; --INPUT LOOP
+
+    ---------------------------------------------------------------------------
+    --7.계산 후처리
+    ---------------------------------------------------------------------------
+
+    --표준공통율생성
+    O_LINE_NO := 'ST-71000';
+    CRSPCAPL_I01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,rt_CORT.CORT_PAY0_RATE
+                ,rt_CORT.CORT_IDRT_RATE
+                ,rt_CORT.CORT_GME0_RATE
+                ,rt_CORT.CORT_MATL_RATE
+                ,rt_CORT.CORT_PROF_RATE
+                ,rt_CORT.CORT_ET00_RATE
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '표준적용율 생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPIWR_P19_3';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --실사인경우 재계산처리
+    O_LINE_NO := 'ST-72000';
+    CRSPREAL_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,'A',v_COME_CODE,rt_MTCD.MTCD_INDS_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '실사 재계산 오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPIWR_P19_3';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --집계
+    O_LINE_NO := 'ST-73000';
+    CRSPSPCR_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,I_INIT_CMAN
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+        O_MESG := '집계생성오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CASPPIWR_P19_3';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -- 계산시 SUB PART 전체 SORT순번 CLEAR처리
+    UPDATE CRTBCMAT
+       SET CMAT_SORT_SUB0 = NULL
+     WHERE CMAT_CORP_CODE = I_CORP_CODE
+       AND CMAT_PART_NO   = I_PART_NO
+       AND CMAT_EONO      = I_EONO
+       AND CMAT_CUMT_NO   = I_CUMT_NO
+    ;
+
+    UPDATE CRTBCPRO
+       SET CPRO_SORT_SUB0 = NULL
+     WHERE CPRO_CORP_CODE = I_CORP_CODE
+       AND CPRO_PART_NO   = I_PART_NO
+       AND CPRO_EONO      = I_EONO
+       AND CPRO_CUMT_NO   = I_CUMT_NO
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || CHR(10) || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
