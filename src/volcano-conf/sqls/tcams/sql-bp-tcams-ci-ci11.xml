@@ -69,13 +69,13 @@ SELECT ROW_NUMBER() OVER(ORDER BY MTCD_METH_GUBN, MTDG_APPL_DATE) COMD_SEQ
   ]]>
  </sql>
 
-    <sql id="get.roll" comment="권한 조회">
-        <![CDATA[
-            SELECT COUNT(*) cnt
-              FROM ESAAURP
-             WHERE USR_ID =#reg_id# AND ROLE_CD ='M10'
-        ]]>
-    </sql>
+ <sql id="get.roll" comment="권한 조회">
+  <![CDATA[
+SELECT COUNT(*) cnt
+  FROM ESAAURP
+ WHERE USR_ID =#reg_id# AND ROLE_CD ='M10'
+  ]]>
+ </sql>
 
  <sql id="mtcdList.select2" comment="조회 (현재적용)">
   <![CDATA[
