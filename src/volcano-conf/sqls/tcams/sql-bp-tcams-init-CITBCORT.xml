@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CITBCORT" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE CITBCORT (
+	CORT_CORP_CODE VARCHAR(4) NOT NULL,
+	CORT_STND_GUBN CHAR(1) NOT NULL,
+	CORT_VEND_DEGR NUMBER(1) NOT NULL,
+	CORT_INDS_CODE CHAR(2) NOT NULL,
+	CORT_APPL_DATE CHAR(8) NOT NULL,
+	CORT_PAY0_RATE NUMBER(14,6),
+	CORT_IDRT_RATE NUMBER(6,2),
+	CORT_GME0_RATE NUMBER(6,2),
+	CORT_MATL_RATE NUMBER(6,2),
+	CORT_MAPT_RATE NUMBER(6,2),
+	CORT_PROF_RATE NUMBER(6,2),
+	CORT_ET00_RATE NUMBER(6,2),
+	CORT_UPDT_DATE CHAR(8),
+	CORT_UPDT_CMAN VARCHAR(8),
+	CORT_INIT_DATE CHAR(8),
+	CORT_INIT_CMAN VARCHAR(8)
+)
+  ]]>
+ </sql>
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  CORT_CORP_CODE
+ ,CORT_STND_GUBN
+ ,CORT_VEND_DEGR
+ ,CORT_INDS_CODE
+ ,CORT_APPL_DATE
+ ,CORT_PAY0_RATE
+ ,CORT_IDRT_RATE
+ ,CORT_GME0_RATE
+ ,CORT_MATL_RATE
+ ,CORT_MAPT_RATE
+ ,CORT_PROF_RATE
+ ,CORT_ET00_RATE
+ ,CORT_UPDT_DATE
+ ,CORT_UPDT_CMAN
+ ,CORT_INIT_DATE
+ ,CORT_INIT_CMAN
+) AS (
+       SELECT 'K1','H',1,'RB','20230101',21000,55,25,2,1,15,10,'20200101','ADMIN','20200101','ADMIN' FROM DUAL
+ UNION SELECT 'K1','H',1,'LE','20230101',22400,70,27,2,1,15,10,'20200101','ADMIN','20200101','ADMIN' FROM DUAL
+ UNION SELECT 'K1','H',2,'LE','20230101',21200,70,26,2,1,15,10,'20200403','ADMIN','20200403','ADMIN' FROM DUAL
+)
+SELECT CASE WHEN B.CORT_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T1 A
+      LEFT OUTER JOIN 
+       CITBCORT B
+      ON    B.CORT_CORP_CODE = A.CORT_CORP_CODE
+        AND B.CORT_STND_GUBN = A.CORT_STND_GUBN
+        AND B.CORT_VEND_DEGR = A.CORT_VEND_DEGR
+        AND B.CORT_INDS_CODE = A.CORT_INDS_CODE
+        AND B.CORT_APPL_DATE = A.CORT_APPL_DATE
+  ]]>
+ </sql>
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBCORT (
+  CORT_CORP_CODE
+ ,CORT_STND_GUBN
+ ,CORT_VEND_DEGR
+ ,CORT_INDS_CODE
+ ,CORT_APPL_DATE
+ ,CORT_PAY0_RATE
+ ,CORT_IDRT_RATE
+ ,CORT_GME0_RATE
+ ,CORT_MATL_RATE
+ ,CORT_MAPT_RATE
+ ,CORT_PROF_RATE
+ ,CORT_ET00_RATE
+ ,CORT_UPDT_DATE
+ ,CORT_UPDT_CMAN
+ ,CORT_INIT_DATE
+ ,CORT_INIT_CMAN
+) VALUES ( 
+  #cort_corp_code#
+ ,#cort_stnd_gubn#
+ ,#cort_vend_degr#
+ ,#cort_inds_code#
+ ,#cort_appl_date#
+ ,#cort_pay0_rate#
+ ,#cort_idrt_rate#
+ ,#cort_gme0_rate#
+ ,#cort_matl_rate#
+ ,#cort_mapt_rate#
+ ,#cort_prof_rate#
+ ,#cort_et00_rate#
+ ,#cort_updt_date#
+ ,#cort_updt_cman#
+ ,#cort_init_date#
+ ,#cort_init_cman#
+)
+  ]]>
+ </sql> 
+ 
+</sql-descriptor>
