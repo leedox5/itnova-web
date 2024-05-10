@@ -2672,7 +2672,7 @@ WITH T1 (C1, C2, C3) AS (
 SELECT COALESCE(MTDG_MODL_NAME, 'CASP' || MTDG_COME_CODE || '_P' || REPLACE(MTDG_STND_DEGR,'-','_')) PROC_NAME 
       ,REPLACE(MTDG_MODL_NAME, '_P', '_A')                                          PROC_NAME_A
       ,REPLACE(MTDG_MODL_NAME, '_P', '_B')                                          PROC_NAME_B
-      ,SUBSTRING(MTDG_MODL_NAME,1,7) || 'Z' || SUBSTRING(MTDG_MODL_NAME,9)          PROC_NAME_Z
+      ,SUBSTR(MTDG_MODL_NAME,1,7) || 'Z' || SUBSTR(MTDG_MODL_NAME,9)          PROC_NAME_Z
       ,C2        SRC_NAME
       ,C3        SRC_ID
       ,A.*
@@ -2699,7 +2699,7 @@ WITH T1 (C1, C2, C3) AS (
 SELECT COALESCE(MTDG_MODL_NAME, 'CASP' || MTDG_COME_CODE || '_P' || REPLACE(MTDG_STND_DEGR,'-','_')) PROC_NAME 
       ,REPLACE(MTDG_MODL_NAME, '_P', '_A')                                          PROC_NAME_A
       ,REPLACE(MTDG_MODL_NAME, '_P', '_B')                                          PROC_NAME_B
-      ,SUBSTRING(MTDG_MODL_NAME,1,7) || 'Z' || SUBSTRING(MTDG_MODL_NAME,9)          PROC_NAME_Z
+      ,SUBSTR(MTDG_MODL_NAME,1,7) || 'Z' || SUBSTR(MTDG_MODL_NAME,9)          PROC_NAME_Z
       ,C2        SRC_NAME
       ,C3        SRC_ID
       ,A.*
@@ -2753,7 +2753,7 @@ SELECT CASE
  
  <sql id="2308.0002">
   <![CDATA[
-SELECT SUBSTRING(MTDG_MODL_NAME, 11) DEGR_PROC
+SELECT SUBSTR(MTDG_MODL_NAME, 11) DEGR_PROC
   FROM CITBMTDG
  WHERE MTDG_CORP_CODE = #cmms_corp_code#
    AND MTDG_METH_GUBN = #cmms_meth_gubn#
