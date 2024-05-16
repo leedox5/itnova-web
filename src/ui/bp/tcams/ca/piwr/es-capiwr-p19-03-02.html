@@ -1,0 +1,35 @@
+<dom-module id="es-capiwr-p19-03-02">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <cc-page-title-bar page-title="">
+            <sc-button text="닫기" on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<table class="tb-form" style="margin-top:10px; width:99%;">
+            <tr>
+            	<td>
+            	    <img src="/assets/images/tcams/piwr/ca_piwr_p19_04_pipebending.png"/>
+            	</td>
+            </tr>
+		</table>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-03-02",
+
+            load : function() {
+
+            },
+            
+            onClose : function() {
+            	this.fire("close");
+            }
+        });
+	</script>
+
+</dom-module>

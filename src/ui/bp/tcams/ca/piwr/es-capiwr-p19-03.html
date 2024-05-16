@@ -1,0 +1,1503 @@
+<sc-link rel="import" href="es-capiwr-p19-03-01.html"></sc-link>
+<sc-link rel="import" href="es-capiwr-p19-03-02.html"></sc-link>
+<sc-link rel="import" href="es-capiwr-p19-03-03.html"></sc-link>
+<sc-link rel="import" href="es-capiwr-p19-03-04.html"></sc-link>
+<sc-link rel="import" href="es-capiwr-p19-03-05.html"></sc-link>
+<dom-module id="es-capiwr-p19-03">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : PIPE 가공
+        ** @Description     :
+        ** @Author          : MHLEE
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <sc-service-provider id="getStndInfoRPC"  descriptor="bp/tcams/ca/piwr/p19" service-id="get.piwr.stndInfo1" on-response="resultStndInfo"></sc-service-provider>
+
+        <sc-label text="[ 가공비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+        <div id="cproDiv">
+        <sc-toolbar>
+            <sc-label text="BENDING" ></sc-label>
+        </sc-toolbar>
+			<table class="come-form" style="border-top: 1px solid #1e5784;border-bottom: 1px solid #1e5784">
+	            <colgroup>
+	                <col style="width:170px">
+	                <col style="width: 25px">
+	                <col style="width:250px">
+	                <col style="width:170px">
+	                <col style="width: 25px">
+	                <col style="width: 80px">
+	                <col style="width: 25px">
+	                <col style="width: 80px">
+	                <col>
+	            </colgroup>
+	            <tr>
+	                <th>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-label text="BEND`G 여유 길이 산출"></sc-label>
+	                </td>
+	                <td>
+                        <a><img src="../../../../assets/img/bull_reference.gif" on-click="openHelp01"/></a>	                
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_beng_leng" hidden="{{!formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="BENDING길이(mm)" ></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_bend_leng" class="align-right" style="width:100px;" value="{{inputParam.piwi_bend_leng}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" validation-group="saveCheck" editVal></sc-text-field>
+	                </td>
+	                <th>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_bend_code" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="BENDING TYPE"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{bendCodes}}" input-clear="false" style="width:100px" id="cb_piwi_bend_code"   display-field="label" value-field="data" value="{{inputParam.piwi_bend_code}}" on-change="onChangeBendCode"></sc-combobox-field>	                    
+	                </td>
+	                <td>
+	                    <sc-label id="lb_shrt_x" text="CASE 1"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-label id="lb_shrt_x_1" text="X1"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-text-field  id="tb_piwi_shrt_x"   class="align-right" value="{{inputParam.piwi_shrt_x}}"   maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal on-change="onChangeShrtX"></sc-text-field>
+	                </td>
+	                <td>
+	                    <sc-label id="lb_shrt_y_1" text="X2"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-text-field  id="tb_piwi_shrt_x_1" class="align-right" value="{{inputParam.piwi_shrt_x_1}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal on-change="onChangeShrtX1"></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_bend_pont" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="BEND'G POINT수" ></sc-label>
+	                </th>
+	                <td>
+	                    <a><img src="../../../../assets/img/bull_calculation.gif" id="img_calc" on-click="showBendPopup"/></a>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_bend_pont" style="width:100px;" class="align-right" value="{{inputParam.piwi_bend_pont}}" maxlength="2" mask-re="/[0-9]/" validation-group="saveCheck" editVal></sc-text-field>
+	                </td>
+	                <td>
+	                    <sc-label text="CASE 2"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-label id="lb_shrt_x_2" text="Y1"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_long_y"   class="align-right" value="{{inputParam.piwi_long_y}}"   maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" validation-group="saveCheck" on-change="onChangeLongY" editVal></sc-text-field>
+	                </td>
+	                <td>
+	                    <sc-label id="lb_shrt_y_2" text="Y2"></sc-label>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_long_y_1" class="align-right" value="{{inputParam.piwi_long_y_1}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" validation-group="saveCheck" on-change="onChangeLongY1" editVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_cncb_vlau" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="BENDING M/C 결정"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{cncbCodes}}" input-clear="false" style="width:100px" id="sb_prod_gubn"   display-field="label" value-field="data" value="{{inputParam.piwi_cncb_code}}" ></sc-combobox-field>
+	                    <sc-text-field hidden="true" id="tb_piwi_cncb_vlau" style="width:122px;" value="{{inputParam.piwi_cncb_vlau}}" disabled="true"></sc-text-field>
+	                </td>
+	                <td>
+	                    <sc-label id="lb_long_radi" text="최대R" hidden="true"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_long_radi" hidden="true" class="align-right" value="{{inputParam.piwi_long_radi}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeLongRadi" editVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_angl_code" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label id="lb_angl_code" text="최대 BENDING각"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field id="cb_angl_code" input-clear="false" items="{{anglCodes}}" style="width:150px" id="piwi_angl_code"   display-field="label" value-field="data" value="{{inputParam.piwi_angl_code}}" ></sc-combobox-field>	                    
+	                </td>
+	                <td>
+	                    <sc-label id="lb_long_leng" text="최장BD호길이"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_long_leng" class="align-right" value="{{inputParam.piwi_long_leng}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeLongLeng" validation-group="saveCheck" editVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_spar_len1" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-label text="L1-X"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_spar_len1"   class="align-right" value="{{inputParam.piwi_spar_len1}}"   disabled="true" format-type="number" on-blur="substr2num" calcVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_spar_len1_1" class="align-right" value="{{inputParam.piwi_spar_len1_1}}" disabled="true" format-type="number" on-blur="substr2num" calcVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_spar_len2" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-label text="L2-Y"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_spar_len2"   class="align-right" value="{{inputParam.piwi_spar_len2}}"   disabled="true"  on-blur="substr2num" calcVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_spar_len2_1" class="align-right" value="{{inputParam.piwi_spar_len2_1}}" disabled="true"  on-blur="substr2num" calcVal></sc-text-field>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+			</table>
+		<sc-panel title-text="공정" collapsible="true">
+			<table class="come-form" style="border-top: 1px solid #1e5784; border-bottom: 1px solid #1e5784">
+	            <colgroup>
+	                <col style="width:170px">
+	                <col style="width: 25px">
+	                <col style="width:250px">
+	                <col style="width:170px">
+	                <col style="width: 25px">
+	                <col style="width:170px">
+	                <col>
+	            </colgroup>
+	            <tr hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="1차 CUTTING"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-label text="1"></sc-label>
+	                </td>
+	                <th>
+	                    <sc-label id="lb_bend_cnt0" text="BEND'G" hidden="true"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-label id="ld_bend_cnt0" text="" hidden="true"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_cut2_code" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label id="lb_cut2_code" text="2차 CUTTING"></sc-label>
+	                </th>
+	                <td>
+	                    <a id="im_piwi_cut2_code"><img src="../../../../assets/img/bull_reference.gif" on-click="openHelp02"/></a>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{cut2Codes}}" id="cb_cut2_code" input-clear="false" style="width:100px" display-field="label" value-field="data" value="{{inputParam.piwi_cut2_code}}"></sc-combobox-field>	                    
+	                </td>
+	                <th>
+	                    <sc-label id="lb_bell_code" text="BELLOWS"></sc-label>
+	                </th>
+	                <td>
+	                    <a id="ln_bell_code"><img src="../../../../assets/img/bull_reference.gif" on-click="openHelp04"/></a>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{bellCodes}}" id="cb_bell_code" input-clear="false" style="width:100px" display-field="label" value-field="data" value="{{inputParam.piwi_bell_code}}"></sc-combobox-field>	                    
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="확관 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_exre_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_exre_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <th>
+	                    <sc-label text="축관 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_redu_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_redu_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_expn_code" hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label id="lb_expn_code" text="확관율(동심,편심)"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{expnCodes}}" id="piwi_expn_code" input-clear="false" style="width:100px" display-field="label" value-field="data" value="{{inputParam.piwi_expn_code}}"></sc-combobox-field>	                    
+	                </td>
+	                <th>
+	                    <sc-label id="lb_piwi_pier_cnt0" text="PIERCING 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_pier_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_pier_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label id="lb_piwi_pier_cnt0_1" text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="SIZ'G 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_size_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_size_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <th>
+	                    <sc-label id="lb_piwi_cham_cnt0" text="CHAMFER'G 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="tb_piwi_cham_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_cham_cnt0}}" maxlength="1" mask-re="/[0-3]/" editVal></sc-text-field>
+	                    <sc-label id="lb_piwi_cham_cnt0_1" text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="ROLL FORM'G 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_roll_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_roll_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <th>
+	                    <sc-label text="END FORM'G 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_endf_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_endf_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr hidden="{{formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label text="BURR'G 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_burr_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_burr_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <th>
+	                    <sc-label text="BRUSH 가공횟수"></sc-label>
+	                </th>
+	                <td>
+	                    <a><img src="../../../../assets/img/bull_reference.gif" on-click="openHelp03"/></a>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_brus_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_brus_cnt0}}" maxlength="1" mask-re="/[0-3]/"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr id="tr_make_yn" hidden="{{!formula('isHiddenShapCode')}}">
+	                <th>
+	                    <sc-label id="lb_make_yn" text="조관여부"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{applYns}}" id="piwi_make_yn" input-clear="false" style="width:100px" display-field="label" value-field="data" value="{{inputParam.piwi_make_yn}}"></sc-combobox-field>	                    
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+	            <tr>
+	                <th>
+	                    <sc-label id="lb_piwi_doil_yn" text="오일제거"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+						<sc-combobox-field items="{{applYns}}" id="cb_piwi_doil_yn" input-clear="false" style="width:100px" display-field="label" value-field="data" value="{{inputParam.piwi_doil_yn}}"></sc-combobox-field>	                    
+	                </td>
+	                <th>
+	                    <sc-label text="LEAK TEST 가공횟수" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+	                </th>
+	                <td>
+	                </td>
+	                <td>
+	                    <sc-text-field id="piwi_leak_cnt0" class="align-right" style="width:30px;" value="{{inputParam.piwi_leak_cnt0}}" maxlength="1" mask-re="/[0-3]/" hidden="{{formula('isHiddenShapCode')}}"></sc-text-field>
+	                    <sc-label text="(0~3)" style="padding-left:5px" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+	                </td>
+	                <td>
+	                </td>
+	            </tr>
+			</table>
+		</sc-panel>
+		</div>	
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-03",
+            
+            properties: {
+             	// 표준정보 ComboList 데이터
+             	standInfoList : {type: Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam     : {type: Object , value: function() { return {}; } },		
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+		    	// 초기 진입 구분값
+		    	initFlag      : {type: Boolean, value: true },
+
+		    	// 화면에서 사용할 콤보 구성 들....
+		    	// 구분
+		    	bendCodes : {type : Array  , value : function() { return [];} },
+		    	cncbCodes : {type : Array  , value : function() { return [];} },
+		    	anglCodes : {type : Array  , value : function() { return [];} },
+		    	cut2Codes : {type : Array  , value : function() { return [];} },
+		    	expnCodes : {type : Array  , value : function() { return [];} },
+		    	
+		    	piwaList  : {type : Array  , value : function() { return [];} },
+		    	
+            	applYns : {
+            		type : Array,
+            		value : function() {
+            			return [
+            			    {data : "N", label : "미적용"}
+           				   ,{data : "Y", label : "적용"  }
+            			]	
+            		}
+            	},
+              	// 필수입력 체크 text-field
+		    	validList : { 
+		    		type : Array, 
+		    		value : function() { 
+		    			return [];
+		    		} 
+            	},
+            	
+            	hiddenArr : {
+            		type : Array,
+            		value : function() {
+            			return 
+            			[
+            			     {item : "lb_shrt_x"   , val : true }
+            			    ,{item : "tr_bend_pont", val : true }
+            			]	
+            		}
+            	},
+            },
+            
+	    	observers : [
+	    		            'inputParamChanged(inputParam.*)',
+	    		            'shapCodeChanged(inputParam.piwi_shap_code)',
+	    		            'bendCodeChanged(inputParam.piwi_bend_code)',
+	    		            'anglCodeChanged(inputParam.piwi_angl_code)'
+	    		 		],
+            
+            shapCodeChanged : function() {
+            	var me = this;
+				me.applyFormula("isHiddenShapCode");
+				me.applyProdCode();
+				me.applyBendCode();
+            },	
+            
+            anglCodeChanged : function(code)  {
+            	var me = this;
+
+            	me.$.lb_long_leng.hidden = true;
+            	me.$.tb_piwi_long_leng.hidden = true;
+            	
+            	if(me.inputParam.piwi_prod_code == null) {
+            		return;
+            	}
+            	
+            	var prod_code = me.get("inputParam.piwi_prod_code");
+            	var bend_code = me.get("inputParam.piwi_bend_code");
+            	
+            	
+            	if(prod_code == "SUS") {
+            		if(me.inputParam.piwi_bend_code == "GENL" || me.inputParam.piwi_bend_code == "MANDREL") {
+            			me.$.lb_long_leng.text = "최종BD호길이";
+            		} else if (me.inputParam.piwi_bend_code == "HYPERO") {
+            			me.$.lb_long_leng.text = "최장BD호길이";
+            		}
+                	me.$.lb_long_leng.hidden = false;
+                	me.$.tb_piwi_long_leng.hidden = false;
+            	} else {
+            		if (bend_code == "GENL" || bend_code == "MANDREL") {
+            			me.$.lb_long_leng.hidden = false;
+                    	me.$.tb_piwi_long_leng.hidden = false;
+            		} else if(bend_code == "HYPERO") {
+                		if (me.inputParam.piwi_angl_code == "175DN" || me.inputParam.piwi_angl_code == "175UP") {
+                			me.$.lb_long_leng.text = "최장BD호길이";
+
+                			me.$.lb_long_leng.hidden = false;
+                        	me.$.tb_piwi_long_leng.hidden = false;
+                		}
+            		}
+            	}
+            },    		 		
+
+            
+            applyAnglCode : function() {
+            	var me = this;
+
+            	me.$.lb_long_leng.hidden = true;
+            	me.$.tb_piwi_long_leng.hidden = true;
+            	
+            	if(me.inputParam.piwi_prod_code == null) {
+            		return;
+            	}
+            	
+            	var bend_code = me.get("inputParam.piwi_bend_code");
+
+            	if(me.inputParam.piwi_prod_code == "SUS") {
+            		if(me.inputParam.piwi_bend_code == "GENL" || me.inputParam.piwi_bend_code == "MANDREL") {
+            			me.$.lb_long_leng.text = "최종BD호길이";
+            		} else if (me.inputParam.piwi_bend_code == "HYPERO") {
+            			me.$.lb_long_leng.text = "최장BD호길이";
+            		}
+                	me.$.lb_long_leng.hidden = false;
+                	me.$.tb_piwi_long_leng.hidden = false;
+            	} else {
+            		if (bend_code == "GENL" || bend_code == "MANDREL") {
+            			me.$.lb_long_leng.hidden = false;
+                    	me.$.tb_piwi_long_leng.hidden = false;
+            		} else if(bend_code == "HYPERO") {
+                		if (me.inputParam.piwi_angl_code == "175DN" || me.inputParam.piwi_angl_code == "175UP") {
+                			me.$.lb_long_leng.text = "최장BD호길이";
+
+                			me.$.lb_long_leng.hidden = false;
+                        	me.$.tb_piwi_long_leng.hidden = false;
+                		}
+            		}
+            	}
+            },
+            
+            bendCodeChanged : function(code) {
+            	var me = this;
+            	
+            	var hiddenArr = [ 
+            	      {item : "lb_shrt_x"      , val : true}
+            	     ,{item : "lb_shrt_x_1"    , val : true}
+             	     ,{item : "tb_piwi_shrt_x" , val : true}
+            	     ,{item : "tr_bend_pont"   , val : true}
+            	     ,{item : "tr_cncb_vlau"   , val : true}
+            	     ,{item : "tr_angl_code"   , val : true}
+            	     ,{item : "tr_spar_len1"   , val : true}
+            	     ,{item : "tr_spar_len2"   , val : true}
+            	     ,{item : "lb_bell_code"   , val : true}
+            	     ,{item : "ln_bell_code"   , val : true}
+            	     ,{item : "cb_bell_code"   , val : true}
+            	];
+            	if(me.inputParam.piwi_shap_code == "SQUARE") {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = true;
+        			}
+            	} else if(me.inputParam.piwi_bend_code == "N" || UT.isEmpty(me.inputParam.piwi_bend_code)) {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = true;
+        			}
+        		} else if(me.inputParam.piwi_bend_code == "GENL") {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        			me.$.lb_long_radi.hidden = true;
+        			me.$.tb_piwi_long_radi.hidden = true;
+        			me.$.lb_angl_code.hidden = true;
+        			me.$.cb_angl_code.hidden = true;
+        			me.$.lb_bell_code.hidden = true;
+        			me.$.ln_bell_code.hidden = true;
+        			me.$.cb_bell_code.hidden = true;
+        			me.$.lb_long_leng.hidden = false;
+        			me.$.tb_piwi_long_leng.hidden = false;
+        		} else if(code == "MANDREL") {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        			me.$.lb_long_radi.hidden = true;
+        			me.$.tb_piwi_long_radi.hidden = true;
+        			me.$.lb_angl_code.hidden = true;
+        			me.$.cb_angl_code.hidden = true;
+        			me.$.lb_long_leng.hidden = false;
+        			me.$.tb_piwi_long_leng.hidden = false;
+        			me.$.lb_bell_code.hidden = true;
+        			me.$.ln_bell_code.hidden = true;
+        			me.$.cb_bell_code.hidden = true;
+        		} else if(code == "HYPERO") {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        			me.$.lb_long_radi.hidden = false;
+        			me.$.tb_piwi_long_radi.hidden = false;
+        			me.$.lb_angl_code.hidden = false;
+        			me.$.cb_angl_code.hidden = false;
+        			me.$.lb_long_leng.hidden = true;
+        			me.$.tb_piwi_long_leng.hidden = true;
+        			me.$.lb_bell_code.hidden = true;
+        			me.$.ln_bell_code.hidden = true;
+        			me.$.cb_bell_code.hidden = true;
+        		} else {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        		}
+        		me.$.tb_piwi_cncb_vlau.hidden = true;
+        		me.applyAnglCode();
+        		me.autoCalcs();
+            },	    		 		
+	    		
+            applyBendCode : function() {
+            	var me = this;
+            	
+            	var hiddenArr = [ 
+            	      {item : "lb_shrt_x"      , val : true}
+            	     ,{item : "lb_shrt_x_1"    , val : true}
+             	     ,{item : "tb_piwi_shrt_x" , val : true}
+            	     ,{item : "tr_bend_pont"   , val : true}
+            	     ,{item : "tr_cncb_vlau"   , val : true}
+            	     ,{item : "tr_angl_code"   , val : true}
+            	     ,{item : "tr_spar_len1"   , val : true}
+            	     ,{item : "tr_spar_len2"   , val : true}
+            	];
+        		if(me.inputParam.piwi_bend_code == "N" || UT.isEmpty(me.inputParam.piwi_bend_code)) {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = true;
+        			}
+        		} else if(me.inputParam.piwi_bend_code == "GENL") {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        			me.$.lb_angl_code.hidden = true;
+        			me.$.cb_angl_code.hidden = true;
+        		} else {
+        			for(var i = 0 ; i < hiddenArr.length ; i++) {
+            			me.$$("#" + hiddenArr[i].item).hidden = false;
+        			}
+        		}
+            },
+            
+            applyProdCode : function() {
+            	var me = this;
+        		if(me.inputParam.piwi_shap_code == "ROUND") {
+        			if(me.inputParam.piwi_prod_code == "MAIN") {
+        				me.$.lb_expn_code.hidden = false;
+        				me.$.piwi_expn_code.hidden = false;
+
+        				me.$.lb_bell_code.hidden = true;
+        				me.$.ln_bell_code.hidden = true;
+        				me.$.cb_bell_code.hidden = true;
+
+        				//me.$.lb_piwi_doil_yn.hidden = true;
+        				//me.$.cb_piwi_doil_yn.hidden = true;
+
+        			} else if(me.inputParam.piwi_prod_code == "EGR") {
+        				me.$.lb_expn_code.hidden = true;
+        				me.$.piwi_expn_code.hidden = true;
+        				
+        				me.$.lb_bell_code.hidden = false;
+        				me.$.ln_bell_code.hidden = false;
+        				me.$.cb_bell_code.hidden = false;
+        				
+        				//me.$.lb_piwi_doil_yn.hidden = true;
+        				//me.$.cb_piwi_doil_yn.hidden = true;
+        			} else if(me.inputParam.piwi_prod_code == "SUSU") {
+        				me.$.lb_expn_code.hidden = true;
+        				me.$.piwi_expn_code.hidden = true;
+        				
+        				me.$.lb_bell_code.hidden = true;
+        				me.$.ln_bell_code.hidden = true;
+        				me.$.cb_bell_code.hidden = true;
+        				
+        				//me.$.lb_piwi_doil_yn.hidden = true;
+        				//me.$.cb_piwi_doil_yn.hidden = true;
+        			} else if(me.inputParam.piwi_prod_code == "SEAT") {
+        				me.$.lb_expn_code.hidden = true;
+        				me.$.piwi_expn_code.hidden = true;
+
+        				me.$.lb_bell_code.hidden = true;
+        				me.$.ln_bell_code.hidden = true;
+        				me.$.cb_bell_code.hidden = true;
+
+        				//me.$.lb_piwi_doil_yn.hidden = false;
+        				//me.$.cb_piwi_doil_yn.hidden = false;
+        			} else {
+        				me.$.lb_expn_code.hidden = true;
+        				me.$.piwi_expn_code.hidden = true;
+
+        				me.$.lb_bell_code.hidden = true;
+        				me.$.ln_bell_code.hidden = true;
+        				me.$.cb_bell_code.hidden = true;
+
+        				//me.$.lb_piwi_doil_yn.hidden = true;
+        				//me.$.cb_piwi_doil_yn.hidden = true;
+        			}
+        		} else {
+    				//me.$.lb_piwi_doil_yn.hidden = false;
+    				//me.$.cb_piwi_doil_yn.hidden = false;
+        		}
+        		me.applyAnglCode();            	
+            },
+            
+            inputParamChanged : function(changed) {
+            	var me = this;
+            	var param_name = changed.path.substring(11);
+            	
+            	var hiddenArr = [ 
+            	      {item : "lb_shrt_x"      , val : true}
+            	     ,{item : "lb_shrt_x_1"    , val : true}
+             	     ,{item : "tb_piwi_shrt_x" , val : true}
+            	     ,{item : "tr_bend_pont"   , val : true}
+            	     ,{item : "tr_cncb_vlau"   , val : true}
+            	     ,{item : "tr_angl_code"   , val : true}
+            	     ,{item : "tr_spar_len1"   , val : true}
+            	     ,{item : "tr_spar_len2"   , val : true}
+            	];
+            	
+            	if(param_name == "piwi_shap_code") {
+					this.applyFormula("isHiddenShapCode");
+					me.applyBendCode();
+            	}
+            	
+            	if(param_name == "piwi_matt_code") {
+            		if(me.inputParam.piwi_shap_code == "ROUND") {
+            			if(me.inputParam.piwi_matt_code == "AL") {
+            				me.$.lb_cut2_code.hidden = true;
+            				me.$.im_piwi_cut2_code.hidden = true;
+            				me.$.cb_cut2_code.hidden = true
+            			} else {
+            				me.$.lb_cut2_code.hidden = false;
+            				me.$.im_piwi_cut2_code.hidden = false;
+            				me.$.cb_cut2_code.hidden = false;
+            			}
+            		} else {
+        				me.$.lb_cut2_code.hidden = false;
+        				me.$.cb_cut2_code.hidden = false
+            		}
+            	}
+            	
+            	if(param_name == "piwi_prod_code") {
+            		me.applyProdCode();
+            		me.applyAnglCode();
+            	}
+            	
+            	if(param_name == "piwi_bend_pont") {
+            		me.$.ld_bend_cnt0.text = me.inputParam.piwi_bend_pont;
+            	}
+            	
+            	if(param_name == "piwi_cut2_code") {
+            		var matt_code = me.inputParam.piwi_matt_code;
+            		var cut2_code = me.inputParam.piwi_cut2_code;
+            		
+            		if(matt_code != "AL") {
+            			if(cut2_code == "N") {
+            				me.$.lb_piwi_cham_cnt0.hidden = true;
+            				me.$.lb_piwi_cham_cnt0_1.hidden = true;
+            				me.$.tb_piwi_cham_cnt0.hidden = true;
+                			me.set("inputParam.piwi_cham_cnt0", null);
+            			} else {
+            				me.set("inputParam.piwi_cham_cnt0","1");
+                			me.$.lb_piwi_cham_cnt0.hidden = false;
+            				me.$.lb_piwi_cham_cnt0_1.hidden = false;
+            				me.$.tb_piwi_cham_cnt0.hidden = false;
+            			}
+            		} else {
+            			me.set("inputParam.piwi_cham_cnt0","");
+            			me.$.lb_piwi_cham_cnt0.hidden = true;
+        				me.$.lb_piwi_cham_cnt0_1.hidden = true;
+        				me.$.tb_piwi_cham_cnt0.hidden = true;
+            		}
+            	}
+            },	    		 		
+	    	
+			formulas : {
+				isHiddenShapCode : function() {
+					return !(this.inputParam.piwi_shap_code == "ROUND");
+				},
+				isSelectionModeCheck : function() {
+					return this.formula('isUseSelection') && (this.selectionMode === "check");
+				},
+				isHiddenBendCode : function() {
+					var me = this;
+					//return this.formula("isHiddenShapCode") && (this.inputParam.piwi_bend_code == "N");
+					if(me.inputParam.piwi_shap_code == "ROUND") {
+						if(me.inputParam.piwi_bend_code == "N") {
+							return true;
+						} 
+					}
+					return true;
+				},
+				isHiddenAnglCode : function() {
+					return this.formula("isHiddenShapCode") && (this.inputParam.piwi_bend_code == "HYPERO");
+				}
+			},
+            
+            load : function(obj) {
+                var me = this;
+
+                me.set('initFlag'    , true);
+                me.initParam = {};
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+                me.set("piwaList"     , obj.piwaList);
+
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+                //me.set('initFlag'    , false);
+                
+                /*
+                this.applyFormula("isHiddenShapCode");
+                this.applyFormula("isHiddenBendCode");
+                */
+            },
+            
+		    comboInit : function() {
+		    	var me = this;
+
+            	me.$.getStndInfoRPC.body = { param : me.get("searchParam") };	
+				me.$.getStndInfoRPC.service();
+  				
+		    },
+
+            resultStndInfo : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	if(data.result.MESG_CODE == "SA-001") {
+            		me.set("bendCodes", data.bend_codes);
+            		me.set("cncbCodes", data.cncb_codes);
+            		me.set("anglCodes", data.angl_codes);
+            		me.set("cut2Codes", data.cut2_codes);
+            		me.set("bellCodes", data.bell_codes);
+            		me.set("expnCodes", data.expn_codes);
+            		
+
+            		this.applyFormula("isHiddenShapCode");
+                    this.applyFormula("isHiddenBendCode");
+            		/*
+            		me.set("inputParam.piwi_bend_code", "N");
+            		me.set("inputParam.piwi_cncb_code", "BEND1");
+            		me.set("inputParam.piwi_angl_code", "90DN");
+            		me.set("inputParam.piwi_cut2_code", "N");
+            		me.set("inputParam.piwi_bell_code", "FORM");
+            		me.set("inputParam.piwi_expn_code", "135DN");
+            		*/
+            	} else {
+            		UT.alert(data.result.MESG);
+            	}
+            	
+
+			    // 콤보 변경 후 기존 값 처리
+			    if (me.get('initParam.iCount') != "0" && me.get('initFlag')) { 
+			    	// 기존 데이터가 존재하는 경우
+			    	me.set("inputParam", UT.copy(me.get("initParam")));
+			    	
+				} else { 
+					// 기존 데이터가 존재하지 않는 경우
+            		me.set("inputParam.piwi_bend_code", "N");
+            		me.set("inputParam.piwi_cncb_code", "BEND1");
+            		me.set("inputParam.piwi_angl_code", "90DN");
+            		me.set("inputParam.piwi_cut2_code", "N");
+            		me.set("inputParam.piwi_bell_code", "FORM");
+            		me.set("inputParam.piwi_expn_code", "135DN");
+
+            		me.set("inputParam.piwi_bend_code", "N");
+            		me.set("inputParam.piwi_make_yn", "N");
+            		me.set("inputParam.piwi_doil_yn", "N");
+				}
+        		me.applyBendCode();
+			    me.setVisible();
+                //me.applyFormula("isHiddenShapCode");
+                me.applyFormula("isHiddenBendCode");
+
+        		me.set("initFlag", false);
+            },
+
+            setVisible : function() {
+            	var me = this;
+            	
+            	if(me.inputParam.piwi_cut2_code == "N") {
+            		me.$.lb_piwi_cham_cnt0.hidden = true;
+            		me.$.lb_piwi_cham_cnt0_1.hidden = true;
+            		me.$.tb_piwi_cham_cnt0.hidden = true;	
+            	} else {
+            		me.$.lb_piwi_cham_cnt0.hidden = false;
+            		me.$.lb_piwi_cham_cnt0_1.hidden = false;
+            		me.$.tb_piwi_cham_cnt0.hidden = false;	
+            	}
+            	
+            	if(me.inputParam.piwi_shap_code == "ROUND") {
+    				if(me.inputParam.piwi_matt_code == "SUS300") {
+    					me.$.tr_make_yn.hidden = false;
+    				} else {
+    					me.$.tr_make_yn.hidden = true;
+    				}
+            	}
+            	
+            },
+            
+            getInputData : function() {
+            	var me = this;
+
+            	me.set("inputParam.piwi_bend_gubn", "PIWR04");
+            	me.set("inputParam.piwi_angl_gubn", "PIWR05");
+            	me.set("inputParam.piwi_cut2_gubn", "PIWR06");
+            	me.set("inputParam.piwi_bell_gubn", "PIWR07");
+            	me.set("inputParam.piwi_expn_gubn", "PIWR08");
+            	
+				// 숨김처리된 콤포넌트 값 초기화
+				me.cleanUnvisibleData();
+
+				// Validation Check
+				if (!me.validCheck()) {
+                    return false;
+				}            	
+            	return true;
+
+            },
+
+        	/**
+             * 숨김 처리된 콤포넌트 값 초기화 처리
+             **/
+		    cleanUnvisibleData : function() {
+		    	var me = this;
+
+				// 각 공법별 상이하게 구현(예시-구분코드와 코드는 항상 쌍으로 움직이도록 처리!!)
+				/*
+				if (UT.isEmpty(me.$.sb_matt_gubn.selectedItem.data)) {
+					me.set("inputParam.gmti_matt_gubn", "");
+					me.set("inputParam.gmti_matt_code", "");
+				}
+
+				if (UT.isEmpty(me.$.sb_item_gubn.selectedItem.data)) {
+					me.set("inputParam.gmti_item_gubn", "");
+					me.set("inputParam.gmti_item_code", "");
+				}
+				*/
+				if (me.$.tr_beng_leng.hidden == false) {
+					me.inputParam.piwi_bend_gubn = "";
+					me.inputParam.piwi_bend_code = "";
+					me.inputParam.piwi_bend_pont = "";
+					me.inputParam.piwi_angl_gubn = "";
+					me.inputParam.piwi_angl_code = "";
+					me.inputParam.piwi_shrt_x    = "";
+					me.inputParam.piwi_long_y    = "";
+					me.inputParam.piwi_cncb_code = "";
+					me.inputParam.piwi_bend_pont = "";
+					me.inputParam.piwi_long_radi = "";
+					me.inputParam.piwi_long_leng = "";
+					me.inputParam.piwi_spar_len1 = "";
+					me.inputParam.piwi_spar_len2 = "";
+				} 
+				
+				if (me.$.tr_bend_code.hidden == false) {
+					
+				} else {
+					me.inputParam.piwi_bend_gubn = "";
+					me.inputParam.piwi_bend_code = "";
+				}
+				
+				if (me.$.tr_cut2_code.hidden == true) {
+					me.inputParam.piwi_cut2_gubn = "";
+					me.inputParam.piwi_cut2_code = "";
+					me.inputParam.piwi_bell_gubn = "";
+					me.inputParam.piwi_bell_code = "";
+				} else {
+					me.inputParam.piwi_cut2_gubn = "PIWR06";
+					me.inputParam.piwi_bell_gubn = "PIWR07";
+				}
+				
+				if (me.$.tr_expn_code.hidden == true) {
+					me.inputParam.piwi_expn_gubn = "";
+					me.inputParam.piwi_expn_code = "";
+				} else {
+					me.inputParam.piwi_expn_gubn = "PIWR08";
+				}
+				
+				if(me.$.tb_piwi_pier_cnt0.hidden) {
+					me.set("inputParam.piwi_pier_cnt0", null);
+				}	
+				
+				if(me.$.tr_make_yn.hidden) {
+					me.set("inputParam.piwi_make_yn", null);
+				}
+
+		    },
+            
+            
+        	/**
+             * 필수 값 체크
+             **/
+		    validCheck : function() {
+		    	var me = this;
+
+				// 각 공법별 상이하게 구현(예시)
+				// sc-text-field 필수 체크
+				if (!commonAS.validCheck(me.validList)) {
+                    return false;
+				}
+				return true;
+		    },
+		    
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                var id = e.target.id;
+
+                var nstr = commonAS.substr2num(me.inputParam[id.substring(3)]);
+                
+                me.set("inputParam." + id.substring(3), nstr);
+            },
+		    
+            getPiwaList : function() {
+            	return this.piwaList ;
+            },
+            
+			showBendPopup: function() {
+				var me = this;
+				
+                if(UT.isEmpty(me.inputParam.piwi_bend_pont)) {					
+					UT.alert("BEND'G POINT수를 입력해주세요.");
+					return;
+				}
+				
+               	if (!me.bendPopup) {
+   					me.bendPopup = UT.popup("es-capiwr-p19-03-01", me, 800, 315, {
+   						"selected-items" : function(popup, e) {
+   							var selected = e.detail;
+   							
+   							// 선택 완료 후 callback
+   			    			//me.onPopupSelectedItems("es-caanod-p12a-02-01", selected);
+   							console.log(selected.item);
+   							console.log(selected.piwaList);
+   							
+   							me.set("inputParam.piwi_long_radi", selected.item.long_radi);
+   							me.set("inputParam.piwi_cncb_code", selected.item.cncb_code);
+   							me.set("inputParam.piwi_cncb_vlau", "계산값 : " + selected.item.cncb_name );
+   							
+   							me.set("piwaList", selected.piwaList);
+   							
+   							me.$.tb_piwi_cncb_vlau.hidden = false;
+   							
+   							if(me.inputParam.piwi_bend_code == "HYPERO") {
+   								if(me.inputParam.piwi_angl_code == "90DN") {
+   									me.autoCalcs();
+   								}
+   							}
+   							
+   							popup.close();
+   						},
+   						
+   						"close" : function(popup, e) {
+   							popup.close();
+   							console.log(me.piwaList);
+   						}
+   		            }, {title: me.translate("BENDING CNC MACHINE 결정")});
+   				}
+
+            	me.bendPopup.show();
+				me.bendPopup.getWindowContent().load( {searchParam : me.searchParam, inputParam : me.inputParam, piwaList : me.piwaList} );
+			},            
+
+			openHelp01 : function() {
+				var me = this;
+				
+				if(!me.popupHelp01) {
+					me.popupHelp01 = UT.popup("es-capiwr-p19-03-02", me, 700, 500, {
+						"close" : function(popup, e) {
+							popup.close();
+						}
+					}, {title: me.translate("PIPE BEND'G 정보")});
+				}
+				
+				me.popupHelp01.show();
+			},
+
+			openHelp02 : function() {
+				var me = this;
+				
+				if(!me.popupHelp02) {
+					me.popupHelp02 = UT.popup("es-capiwr-p19-03-03", me, 370, 150, {
+						"close" : function(popup, e) {
+							popup.close();
+						}
+					}, {title: me.translate("2차 CUTTING 정보")});
+				}
+				
+				me.popupHelp02.show();
+			},
+
+			openHelp03 : function() {
+				var me = this;
+				
+				if(!me.popupHelp03) {
+					me.popupHelp03 = UT.popup("es-capiwr-p19-03-04", me, 370, 150, {
+						"close" : function(popup, e) {
+							popup.close();
+						}
+					}, {title: me.translate("BRUSH 가공횟수 정보")});
+				}
+				
+				me.popupHelp03.show();
+			},
+
+			openHelp04 : function() {
+				var me = this;
+				
+				if(!me.popupHelp04) {
+					me.popupHelp04 = UT.popup("es-capiwr-p19-03-05", me, 370, 150, {
+						"close" : function(popup, e) {
+							popup.close();
+						}
+					}, {title: me.translate("BELLOW 정보")});
+				}
+				
+				me.popupHelp04.show();
+			},
+			
+			onChangeLongLeng : function() {
+				var me = this;
+				me.autoCalcs();
+			},
+			
+			onChangeShrtX : function() {
+				var me = this;
+				me.autoCalcs();
+			},
+			
+			onChangeShrtX1 : function() {
+				var me = this;
+				me.autoCalcs1();
+			},
+			
+			onChangeLongY : function() {
+				var me = this;
+				me.autoCalcs();
+			},
+
+			onChangeLongY1 : function() {
+				var me = this;
+				me.autoCalcs1();
+			},
+
+			autoCalcs1 : function() {
+				var me = this;
+				
+				var prodCode = me.inputParam.piwi_prod_code;
+				var bendCode = me.inputParam.piwi_bend_code;
+				var anglCode = me.inputParam.piwi_angl_code;
+				
+				var aftrDia0 = me.inputParam.piwi_aftr_dia0;
+				var shrtX    = me.inputParam.piwi_shrt_x_1;
+				var longY    = me.inputParam.piwi_long_y_1;
+				var longLeng = me.inputParam.piwi_long_leng;
+				var longRadi = me.inputParam.piwi_long_radi;
+				
+				var sparLen1_v = 0.0 ;
+				var sparLen2_v = 0.0 ;
+				
+				var sparLen1;
+				var sparLen2;
+				
+				if (UT.isEmpty(aftrDia0) || UT.isEmpty(shrtX)) {
+					sparLen1 = "0.0";
+				} else if (bendCode == "N") {
+					sparLen1 = "0.0";
+				} else if (bendCode == "GENL") {
+					if (Number(shrtX) > (1.1 * Number(aftrDia0))) {
+						sparLen1 = "0.0";
+					} else {
+						sparLen1 = commonAS.setPrecision((1.1 * Number(aftrDia0) - Number(shrtX)).toString(), 1);
+					}
+				} else if (bendCode == "MANDREL" || bendCode == "HYPERO") {
+					if (Number(shrtX) > (1.2 * Number(aftrDia0))) {
+						sparLen1 = "0.0";
+					} else {
+						sparLen1 = commonAS.setPrecision((1.2 * Number(aftrDia0) - Number(shrtX)).toString(), 1);
+					}
+				}
+				
+				if (bendCode == "N") {
+					sparLen2 = "0.0";
+				} else if (bendCode == "GENL") {
+
+					if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+						sparLen2 = "0.0";
+					} else {
+						sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) - Number(longY);
+						if( sparLen2_v < 0.0 ) {
+							sparLen2 = "0.0";
+						} else {
+							sparLen2 = commonAS.setPrecision((Number(longLeng) + 2 * Number(aftrDia0) - Number(longY)).toString(), 1);
+						}
+					}
+				} else if (bendCode == "MANDREL") {
+					if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) ||  UT.isEmpty(longLeng)) {
+						sparLen2 = "0.0";
+					} else {
+						sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 45 - Number(longY);
+						if(spaLen2_v < 0.0) {
+							sparLen2 = "0.0"							
+						} else {
+							sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+						}
+					}
+				} else if (bendCode == "HYPERO") {
+					if (prodCode == "SUSU") {
+						if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+							sparLen2 = "0.0";
+						} else {
+							sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 + 70 - Number(longY);
+							if(sparLen2_v < 0.0) {
+                                sparLen2 = "0.0";								
+							} else {
+								sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+							}
+						}
+					} else {	
+						if (anglCode == "90DN") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longRadi)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Math.PI / 2 * Number(longRadi) + 2 * Number(aftrDia0) + 10 - Number(longY) ;
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						} else if (anglCode == "175DN") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 - Number(longY);
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						} else if (anglCode == "175UP") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 + 70 - Number(longY);
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						}
+					}	
+				}
+				me.set("inputParam.piwi_spar_len1_1", sparLen1);
+				me.set("inputParam.piwi_spar_len2_1", sparLen2);
+			},
+			
+			autoCalcs : function() {
+				var me = this;
+				
+				var prodCode = me.inputParam.piwi_prod_code;
+				var bendCode = me.inputParam.piwi_bend_code;
+				var anglCode = me.inputParam.piwi_angl_code;
+				
+				var aftrDia0 = me.inputParam.piwi_aftr_dia0;
+				var shrtX    = me.inputParam.piwi_shrt_x;
+				var longY    = me.inputParam.piwi_long_y;
+				var longLeng = me.inputParam.piwi_long_leng;
+				var longRadi = me.inputParam.piwi_long_radi;
+				
+				var sparLen1_v = 0.0;
+				var sparLen2_v = 0.0;
+				
+				var sparLen1;
+				var sparLen2;
+				
+				if (UT.isEmpty(aftrDia0) || UT.isEmpty(shrtX)) {
+					sparLen1 = "0.0";
+				} else if (bendCode == "N") {
+					sparLen1 = "0.0";
+				} else if (bendCode == "GENL") {
+					if (Number(shrtX) > (1.1 * Number(aftrDia0))) {
+						sparLen1 = "0.0";
+					} else {
+						sparLen1 = commonAS.setPrecision((1.1 * Number(aftrDia0) - Number(shrtX)).toString(), 1);
+					}
+				} else if (bendCode == "MANDREL" || bendCode == "HYPERO") {
+					if (Number(shrtX) > (1.2 * Number(aftrDia0))) {
+						sparLen1 = "0.0";
+					} else {
+						sparLen1 = commonAS.setPrecision((1.2 * Number(aftrDia0) - Number(shrtX)).toString(), 1);
+					}
+				}
+				
+				if (bendCode == "N") {
+					sparLen2 = "0.0";
+				} else if (bendCode == "GENL") {
+					if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+						sparLen2 = "0.0";
+					} else {
+						sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) - Number(longY);
+						if(sparLen2_v < 0.0) {
+                            sparlen2 = "0.0";							
+						} else {
+							sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+						}
+					}
+				} else if (bendCode == "MANDREL") {
+					if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) ||  UT.isEmpty(longLeng)) {
+						sparLen2 = "0.0";
+					} else {
+						sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 45 - Number(longY);
+						if(sparLen2_v < 0.0) {
+                            sparLen2 = "0.0";							
+						} else {
+							sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+						}
+					}
+				} else if (bendCode == "HYPERO") {
+					if (prodCode == "SUSU") {
+						if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+							sparLen2 = "0.0";
+						} else {
+							sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 + 70 - Number(longY);
+							if(sparLen2_v < 0.0) {
+                                sparLen2 = "0.0";								
+							} else {
+								sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+							}
+						}
+					} else {	
+						if (anglCode == "90DN") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longRadi)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Math.PI / 2 * Number(longRadi) + 2 * Number(aftrDia0) + 10 - Number(longY);
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						} else if (anglCode == "175DN") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 - Number(longY);
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						} else if (anglCode == "175UP") {
+							if (UT.isEmpty(aftrDia0) || UT.isEmpty(longY) || UT.isEmpty(longLeng)) {
+								sparLen2 = "0.0";
+							} else {
+								sparLen2_v = Number(longLeng) + 2 * Number(aftrDia0) + 10 + 70 - Number(longY);
+								if(sparLen2_v < 0.0) {
+									sparLen2 = "0.0";
+								} else {
+									sparLen2 = commonAS.setPrecision(sparLen2_v.toString(), 1);
+								}
+							}
+						}
+					}	
+				}
+				me.set("inputParam.piwi_spar_len1", sparLen1);
+				me.set("inputParam.piwi_spar_len2", sparLen2);
+			},
+			
+			onChangeShapCode : function() {
+				var me = this;
+				if(me.inputParam.piwi_shap_code == "ROUND") {
+					me.$.tr_beng_leng.hidden = true;
+					me.$.tr_bend_code.hidden = false;
+					me.$.tr_bend_pont.hidden = false;
+					me.$.tr_angl_code.hidden = false;
+					me.$.tr_spar_len1.hidden = false;
+					me.$.tr_spar_len2.hidden = false;
+					if(me.inputParam.piwi_matt_code == "SUS300") {
+						me.$.tr_make_yn.hidden = false;
+					} else {
+						me.$.tr_make_yn.hidden = true;
+					}
+				} else {
+					me.$.tr_beng_leng.hidden = false;
+					me.$.tr_bend_code.hidden = true;
+					me.$.tr_bend_pont.hidden = true;
+					me.$.tr_angl_code.hidden = true;
+					me.$.tr_spar_len1.hidden = true;
+					me.$.tr_spar_len2.hidden = true;
+				}
+				me.bendCodeChanged();
+			},
+			
+			onChangeBendCode : function() {
+				var me = this;
+				if(me.inputParam.piwi_bend_code == "N") {
+					me.$.tb_piwi_shrt_x_1.hidden = true;
+					me.$.lb_shrt_y_1.hidden = true;
+				} else {
+					me.$.tb_piwi_shrt_x_1.hidden = false;
+					me.$.lb_shrt_y_1.hidden = false;
+				}
+			},
+			
+			onChangeMattCode : function() {
+				var me = this;
+				if(me.inputParam.piwi_matt_code == "SUS300") {
+					me.$.tr_make_yn.hidden = false;
+				} else {
+					me.$.tr_make_yn.hidden = true;
+				}
+			},
+			
+			onChangeProdCode : function() {
+				var me = this;
+				if(me.inputParam.piwi_prod_code == "MUFF") {
+					me.$.lb_piwi_pier_cnt0.hidden = true;		
+					me.$.tb_piwi_pier_cnt0.hidden = true;		
+					me.$.lb_piwi_pier_cnt0_1.hidden = true;		
+				} else {
+					me.$.lb_piwi_pier_cnt0.hidden = false;		
+					me.$.tb_piwi_pier_cnt0.hidden = false;		
+					me.$.lb_piwi_pier_cnt0_1.hidden = false;		
+				}
+			},
+			
+			onChangeAftrDia0 : function() {
+				var me = this;
+				me.autoCalcs();	
+			},
+			
+			onChangeLongRadi : function() {
+				var me = this;
+				me.autoCalcs();
+			},
+        });
+	</script>
+
+</dom-module>

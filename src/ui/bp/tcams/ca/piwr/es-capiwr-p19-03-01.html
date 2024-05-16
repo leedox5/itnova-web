@@ -1,0 +1,174 @@
+<dom-module id="es-capiwr-p19-03-01">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <sc-service-provider id="getPIWACalcResRPC" descriptor="bp/tcams/ca/piwr/p19" service-id="get.piwa.calcRes" on-response="calcComplete"></sc-service-provider>
+        <sc-service-provider id="getPIWAApplyRPC" descriptor="bp/tcams/ca/piwr/p19" service-id="get.piwa.apply" on-response="applyComplete"></sc-service-provider>
+
+        <cc-page-title-bar page-title="">
+			<sc-button text="적용"         on-click="onApply"  ></sc-button>
+			<sc-button text="확인"         on-click="onConfirm"></sc-button>
+			<sc-button text="닫기"         on-click="onClose"  ></sc-button>
+        </cc-page-title-bar>
+
+		<sc-grid id="gridPanel" data-provider="{{piwaList}}" class="flex" editable="true" use-state="false" 
+		         use-selection="true" 
+		         show-number-line="true" 
+		         on-item-click="onItemClick" 
+		         on-item-edit-end="onItemEditEnd">
+    		<sc-grid-columns>
+				<sc-data-column     data-field="piwa_seq0"      header-text="POINT"        width="80" text-align="center" ></sc-data-column>
+				<sc-data-column     data-field="piwa_d"         header-text="직경(D)"      width="80" text-align="right"  editable="true"></sc-data-column>
+				<sc-data-column     data-field="piwa_t"         header-text="두께(t)"      width="80" text-align="right"  editable="true"></sc-data-column>
+				<sc-data-column     data-field="piwa_r"         header-text="곡률반경(R)"  width="80" text-align="right"  editable="true"></sc-data-column>
+				<sc-data-column     data-field="piwa_dt"        header-text="D/t"          width="80" text-align="right"  ></sc-data-column>
+				<sc-data-column     data-field="piwa_rd"        header-text="R/D"          width="80" text-align="center" ></sc-data-column>
+				<sc-data-column     data-field="piwa_cncb_name" header-text="M/C 판별"     width="80" text-align="center" ></sc-data-column>
+    		</sc-grid-columns>
+    		<sc-grid-fields>
+    			<sc-grid-field data-field="piwa_corp_code" data-type="text"></sc-grid-field>
+    			<sc-grid-field data-field="piwa_part_no"   data-type="text"></sc-grid-field>
+    			<sc-grid-field data-field="piwa_eono"      data-type="text"></sc-grid-field>
+    			<sc-grid-field data-field="piwa_cumt_no"   data-type="text"></sc-grid-field>
+    			<sc-grid-field data-field="piwa_cncb_code" data-type="text"></sc-grid-field>
+    		</sc-grid-fields>
+		</sc-grid>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-03-01",
+            
+            properties: {
+		    	searchParam : {type : Object , value : function() { return {};} , notify : true},
+		    	inputParam : {type : Object , value : function() { return {};} , notify : true},
+		    	
+		    	piwaList : {type: Array  , value : function() { return [];} },
+            },
+            
+            load : function(param) {
+            	var me = this;
+            	me.set("searchParam", param.searchParam);
+            	me.set("inputParam" , param.inputParam);
+            	me.set("piwaList"   , param.piwaList);
+            	
+				var piwaList  = param.piwaList;
+				if(UT.isEmpty(piwaList)) {
+					var piwaCnt = 0;					
+				} else {
+					var piwaCnt = piwaList.length;
+				}
+            	var addRowCnt = parseInt(me.inputParam.piwi_bend_pont);
+            	var provider = me.$.gridPanel.getDataProvider();
+
+				if(piwaCnt > 0) {
+					if(piwaCnt > addRowCnt) {
+						for(var k = 0 ; k < piwaCnt ; k++) {
+							provider.setItemAt(k, {
+           						'piwa_dt'        : null,
+           						'piwa_rd'        : null,
+           						'piwa_cncb_code' : null,
+           						'piwa_cncb_name' : null
+         					});
+						}
+						
+						for(var i = (piwaCnt - 1) ; i >= addRowCnt ; i--) {
+							provider.removeItemAt(addRowCnt);
+						}
+					} else if(piwaCnt < addRowCnt) {
+						for(var j = piwaCnt ; j < addRowCnt ; j++ ) {
+			            	var row = {
+			                		piwa_corp_code : me.searchParam.corp_code
+			                 	   ,piwa_part_no   : me.searchParam.part_no
+			                 	   ,piwa_eono      : me.searchParam.eono
+			                 	   ,piwa_cumt_no   : me.searchParam.cumt_no
+			                 	   ,piwa_seq0      : j+1
+			            	};
+			            	provider.addItemAt(j, row);
+						}
+					} else {
+
+					}
+				} else {
+					if(addRowCnt > 0) {
+		            	me.addRow();
+					}
+				}
+            	
+				//me.$.gridPanel.setDataProvider(piwaList1);
+            	//me.set("piwaList"   , piwaList);
+            },
+            
+            addRow : function() {
+            	var me = this;
+            	var provider = me.$.gridPanel.getDataProvider();
+            	
+            	var addRowCnt = parseInt(me.inputParam.piwi_bend_pont);
+            	
+            	var row = {
+                		piwa_corp_code : me.searchParam.corp_code
+                 	   ,piwa_part_no   : me.searchParam.part_no
+                 	   ,piwa_eono      : me.searchParam.eono
+                 	   ,piwa_cumt_no   : me.searchParam.cumt_no
+                 	   ,piwa_seq0      : 1
+            	};
+            	
+            	for(var i = 0 ; i < addRowCnt ; i++) {
+            		row.piwa_seq0 = i+1;
+                	provider.addItem(row);
+            	}
+            },
+            
+            onApply : function() {
+                var me = this;
+     			var provider = me.$.gridPanel.getDataProvider();
+                
+                me.$.getPIWAApplyRPC.body = { piwaList : provider.getItems() }
+				me.$.getPIWAApplyRPC.service();
+            },
+            
+            applyComplete : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	console.log(data);
+                me.fire("selected-items", { item : data.item, piwaList : me.piwaList });
+            },
+            
+            onConfirm : function() {
+            	var me = this;
+            	
+     			var provider = me.$.gridPanel.getDataProvider();
+
+    			var allItems = provider.getItems();
+            	
+              	me.$.getPIWACalcResRPC.body = {
+	            	piwaList : allItems,
+	            	param : me.searchParam
+	            };	
+            	
+            	me.$.getPIWACalcResRPC.service();
+            },
+            
+            onClose : function() {
+            	this.fire("close");
+            },
+            
+            calcComplete : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	if(data.result.MESG_CODE == "SA-001") {
+            		me.set("piwaList", data.calc_Result);
+            	} else {
+            		commonAS.comeAlert(data.result);
+            	}
+            }
+        });
+	</script>
+
+</dom-module>

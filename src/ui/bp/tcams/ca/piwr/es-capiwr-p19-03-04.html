@@ -1,0 +1,35 @@
+<dom-module id="es-capiwr-p19-03-04">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <cc-page-title-bar page-title="">
+            <sc-button text="닫기" on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<table class="come-form" style="margin-top:10px; width:99%;">
+            <tr>
+            	<td>
+            	    표면처리 없는 아크용접함
+            	</td>
+            </tr>
+		</table>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-03-04",
+
+            load : function() {
+
+            },
+            
+            onClose : function() {
+            	this.fire("close");
+            }
+        });
+	</script>
+
+</dom-module>

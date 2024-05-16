@@ -1,0 +1,738 @@
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+<sc-link rel="import" href="es-capiwr-p19-02-01.html"></sc-link>
+<dom-module id="es-capiwr-p19-02">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : PIPE 가공
+        ** @Description     :
+        ** @Author          : MHLEE
+        ** @Create Date     : 2019.12.16
+        ** @History         : 2019.12.16 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <sc-service-provider id="getStndInfoRPC"  descriptor="bp/tcams/ca/piwr/p19" service-id="get.piwr.stndInfo" on-response="resultStndInfo"></sc-service-provider>
+
+	    <sc-label text="[ 재료비 정보 ]" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+	    <div id="matlDiv">
+		<sc-panel title-text="적용구분" collapsible="true">
+			<table class="come-form" style="border-bottom: 1px solid #1e5784">
+				<col style="width:180px"/>
+				<col style="width:300px"/>
+				<col style="width:50px"/>
+				<col style="width:170px"/>
+				<col style="width:170px"/>
+				<col/>
+				<tr>
+					<th>
+						<sc-label text="소재형태"></sc-label>
+					</th>
+					<td>
+						<sc-combobox-field id="cb_shap_code" input-clear="false" style="width:140px" display-field="label" value-field="data" on-change="onChangeShapCode"  
+										   items="{{shapCodes}}" value="{{inputParam.piwi_shap_code}}" placeholder="선택">
+						</sc-combobox-field>	                    
+					</td>
+					<td>
+					</td>
+					<th>
+						<sc-label text="재질구분" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+					</th>
+					<td>
+						<sc-combobox-field id="cb_piwi_matt_code" input-clear="false" display-field="label" value-field="data"  style="width:140px" on-change="onChangeMattCode"
+										   items="{{mattCodes}}" value="{{inputParam.piwi_matt_code}}" hidden="{{formula('isHiddenShapCode')}}" placeholder="선택">
+						</sc-combobox-field>	                    
+					</td>
+					<td>
+					</td>
+				</tr>
+				<tr  hidden="{{formula('isHiddenShapCode')}}">
+					<th>
+						<sc-label text="적용부품" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+					</th>
+					<td>
+						<sc-combobox-field input-clear="false" style="width:140px" display-field="label" value-field="data" on-change="onChangeProdCode"  
+										   items="{{prodCodes}}" value="{{inputParam.piwi_prod_code}}" hidden="{{formula('isHiddenShapCode')}}" placeholder="선택">
+						</sc-combobox-field>	                    
+					</td>
+					<td>
+					</td>
+					<th>
+					</th>
+					<td>
+					</td>
+					<td>
+					</td>
+				</tr>
+				<tr>
+					<th>
+						<sc-label text="주재료 적용여부"></sc-label>
+					</th>
+					<td>
+						<sc-checkbox-field input-value="{{inputParam.piwi_matl_yn}}" checked-value="Y" un-checked-value="N" ></sc-checkbox-field>                    
+					</td>
+					<td>
+					</td>
+					<th>
+					</th>
+					<td>
+					</td>
+					<td>
+					</td>
+				</tr>
+			</table>
+		</sc-panel>	    
+
+		<sc-panel title-text="재질" collapsible="true" >
+			<table class="come-form" style="border-top: 1px solid #1e5784;border-bottom: 1px solid #1e5784">
+	            <colgroup>
+	                <col style="width:180px">
+	                <col style="width:300px">
+	                <col style="width:50px">
+	                <col style="width:170px">
+	                <col style="width:170px">
+	                <col>
+	            </colgroup>
+		            <tr id="tr_matl_name">
+		                <th>
+		                    <sc-label text="명칭"></sc-label>
+		                    <a><img src="../../../../assets/img/bull_choice.gif" on-click="onSearchMatl" style="padding-left:15px"/></a>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_name" style="width:140px" value="{{inputParam.piwi_matl_name}}" disabled="true" ></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="CODE"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_matl_code" style="width:140px" value="{{inputParam.piwi_matl_code}}" disabled="true"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr id="tr_matl_pric">
+		                <th>
+		                    <sc-label text="단가 / 단위"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="tb_pric" class="align-right" style="width:100px;" value="{{inputParam.piwi_matl_pric}}" disabled="true" format-type="number" input-cover="true" style="width:80%"></sc-text-field>
+		                    <sc-label text="{{inputParam.houi_matl_unit}}" style="padding-left:5px;padding-right:5px"></sc-label>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="적용일"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-date-field id="tb_matl_apdt" value="{{inputParam.piwi_matl_apdt}}" string-date="true" disabled="true" style="width:100px"></sc-date-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr>
+		                <th>
+		                    <sc-label  id="lb_scrp_pric" text="SCRAP단가"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="td_scrp_pric" class="align-right" style="width:100px;" value="{{inputParam.piwi_scrp_pric}}" disabled="true" on-blur="substr2num" format-type="amt" style="width:80%"></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="비중"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="piwi_grvt_numb" name="비중" value="{{inputParam.piwi_grvt_numb}}" class="align-right" style="width:100px;" maxlength="10" mask-re="/[0-9.]/" on-blur="setPrecision" on-change="onChangeGrvtNumb" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr hidden="{{!formula('isHiddenShapCode')}}">
+		                <th>
+		                    <sc-label text="코일폭(mm) x 피치 x 두께(t)"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="piwi_coil_widt" name="코일폭(mm)" class="align-right" style="width:80px;" value="{{inputParam.piwi_coil_widt}}" maxlength="10" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+		                    <sc-label text="x" style="padding-left:5px;padding-right:5px"></sc-label>
+		                    <sc-text-field id="piwi_coil_pitc" name="피치"       class="align-right" style="width:80px;" value="{{inputParam.piwi_coil_pitc}}" maxlength="10" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+		                    <sc-label text="x" style="padding-left:5px;padding-right:5px"></sc-label>
+		                    <sc-text-field id="piwi_coil_thik" name="두께(t)"    class="align-right" style="width:80px;" value="{{inputParam.piwi_coil_thik}}" maxlength="10" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                </th>
+		                <td>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+		            <tr  hidden="true">
+		                <th>
+		                    <sc-label text="투입 외경(Ø), 높이" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="befr_dia0" class="align-right" style="width:100px;" value="{{inputParam.piwi_befr_dia0}}" mask-re="/[0-9.]/" on-blur="substr2num" hidden="{{formula('isHiddenShapCode')}}" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		                <th>
+		                    <sc-label text="투입 두께(mm)" hidden="{{formula('isHiddenShapCode')}}"></sc-label>
+		                </th>
+		                <td>
+		                    <sc-text-field id="befr_thik" class="align-right" style="width:100px;" value="{{inputParam.piwi_befr_thik}}" maxlength="10" mask-re="/[0-9.]/"  on-blur="substr2num" hidden="{{formula('isHiddenShapCode')}}" editVal></sc-text-field>
+		                </td>
+		                <td>
+		                </td>
+		            </tr>
+			</table>
+	    </sc-panel>
+
+		<div class="page">
+		<sc-panel title-text="제품규격" collapsible="true">
+			<table class="come-form" style="border-top: 1px solid #1e5784;border-bottom: 1px solid #1e5784"">
+                <col style="width:180px">
+                <col style="width:300px">
+                <col style="width:50px">
+                <col style="width:170px">
+                <col style="width:170px">
+                <col>
+	            <tr id="tr_matl1" hidden="{{!formula('isHiddenShapCode')}}">
+	            	<th>
+	            		<sc-label text="PIPE규격"></sc-label>
+	            	</th>
+	            	<td>
+						<sc-combobox-field id="cb_squa_code" input-clear="false" display-field="label" value-field="data" style="width:100px" 
+										   items="{{squaCodes}}" value="{{inputParam.piwi_squa_code}}" placeholder="선택" >
+						</sc-combobox-field>	                    
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+	            <tr>
+	            	<th>
+	            		<sc-label text="외경(Ø), 높이"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="aftr_dia0" class="align-right" style="width:100px;" disabled="{{formula('isDisabledByShapCode')}}" value="{{inputParam.piwi_aftr_dia0}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeAftrDia0"editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<th>
+	            		<sc-label text="두께(mm)"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="aftr_thik" class="align-right" style="width:100px;" disabled="{{formula('isDisabledByShapCode')}}" value="{{inputParam.piwi_aftr_thik}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeAftrThik" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+	            <tr>
+	            	<th>
+	            		<sc-label text="NET 길이(mm)"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="net0_leng" class="align-right" style="width:100px;" value="{{inputParam.piwi_net0_leng}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" on-change="onChangeNet0Leng" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<th>
+	            		<sc-label text="NET 중량(g)"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="net0_wegt" class="align-right" style="width:100px;" value="{{inputParam.piwi_net0_wegt}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+			</table>
+		</sc-panel>
+		</div>
+		<sc-panel title-text="부재료" collapsible="true" hidden="{{formula('isHiddenSubMat')}}">
+			<table class="come-form"  style="border-bottom: 1px solid #1e5784">
+                <col style="width:180px">
+                <col style="width:300px">
+                <col style="width:50px">
+                <col style="width:170px">
+                <col style="width:170px">
+                <col>
+	            <tr>
+	            	<th>
+	            		<sc-label text="용접길이(cm)"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="weld_leng" class="align-right" style="width:100px;" value="{{inputParam.piwi_weld_leng}}" maxlength="13" mask-re="/[0-9.]/" on-blur="substr2num" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<th>
+	            	</th>
+	            	<td>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+	            <tr>
+	            	<th>
+	            		<sc-label text="천공HOLE수"></sc-label>
+	            	</th>
+	            	<td>
+		                 <sc-text-field id="tb_piwi_hole_cnt0" class="align-right" style="width:100px;" value="{{inputParam.piwi_hole_cnt0}}" maxlength="3" mask-re="/[0-9]/" editVal></sc-text-field>
+	            	</td>
+	            	<td>
+	            	</td>
+	            	<th>
+	            	</th>
+	            	<td>
+	            	</td>
+	            	<td>
+	            	</td>
+	            </tr>
+			</table>
+		</sc-panel>	
+		</div>	
+		<template>
+			<es-capiwr-p19-02-01 id="es-capiwr-p19-02-01"></es-capiwr-p19-02-01>
+		</template>	
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-02",
+
+            properties: {
+             	// 표준정보 ComboList 데이터
+             	standInfoList : {type: Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam     : {type: Object , value: function() { return {}; } },		
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam   : {type: Object , value: function() { return {}; } , notify : true},
+		    	// 초기 진입 구분값
+		    	initFlag      : {type: Boolean, value: true },
+
+		    	// 화면에서 사용할 콤보 구성 들....
+		    	shapCodes : {type : Array  , value : function() { return [];} },
+		    	mattCodes : {type : Array  , value : function() { return [];} },
+		    	prodCodes : {type : Array  , value : function() { return [];} },
+		    	squaCodes : {type : Array  , value : function() { return [];} },
+
+		    	isHidden  : { type : Object,	value : function() { return false; } },
+		    	
+            	applYns : {
+            		type : Array,
+            		value : function() {
+            			return [
+            			    {data : "N", label : "미적용"}
+           				   ,{data : "Y", label : "적용"  }
+            			]	
+            		}
+            	},
+            	
+              	// 필수입력 체크 text-field
+		    	validList : { 
+		    		type : Array, 
+		    		value : function() { 
+		    			return [ 
+		    			    {data:"piwi_grvt_numb"}
+		    	           ,{data:"piwi_coil_widt"}
+		    	           ,{data:"piwi_coil_pitc"}
+		    			   ,{data:"piwi_coil_thik"}
+		    			];
+		    		} 
+            	},
+            },
+           
+
+	    	observers : [
+	    		            'matlYnChanged(inputParam.piwi_matl_yn)',
+	    		            'shapCodeChanged(inputParam.piwi_shap_code)',
+	    		            'squaCodeChanged(inputParam.piwi_squa_code)'
+	    		 		],   
+	    		 		
+			matlYnChanged : function(matl_yn) {
+				var me = this;
+
+				me.$.tr_matl_name.hidden = (matl_yn == "Y") ? false : true ;
+				me.$.tr_matl_pric.hidden = (matl_yn == "Y") ? false : true ;
+				me.$.td_scrp_pric.hidden = (matl_yn == "Y") ? false : true ;
+				me.$.lb_scrp_pric.hidden = (matl_yn == "Y") ? false : true ;
+			},	    		 		
+	    		 
+			shapCodeChanged : function(code) {
+				var me = this;
+ 				this.applyFormula("isHiddenShapCode");
+ 				this.applyFormula("isDisabledByShapCode");
+
+ 				if(code == null) return;
+ 				
+ 				if(me.squaCodes != null) {
+            		if(me.squaCodes.length > 0) {
+            			if(me.$.cb_squa_code.hidden == false) {
+                			if(me.$.cb_squa_code.selectedIndex != null) {
+                          		me.set("inputParam.piwi_aftr_dia0", me.squaCodes[me.$.cb_squa_code.selectedIndex].valu);
+                          		me.set("inputParam.piwi_aftr_thik", me.squaCodes[me.$.cb_squa_code.selectedIndex].rate1);
+                          		me.netWegtAutoCalcs();
+                			}
+            			}
+            		}
+            	}
+			},
+			
+			squaCodeChanged : function(code) {
+            	var me = this;
+            	
+            	if(code == null) return;
+            	
+            	if(me.squaCodes != null) {
+            		if(me.squaCodes.length > 0) {
+            			if(me.inputParam.piwi_shap_code != "ROUND") {
+                      		me.set("inputParam.piwi_aftr_dia0", me.squaCodes[me.$.cb_squa_code.selectedIndex].valu);
+                      		me.set("inputParam.piwi_aftr_thik", me.squaCodes[me.$.cb_squa_code.selectedIndex].rate1);
+                      		me.netWegtAutoCalcs();
+            			}
+            		}
+            	}
+			},
+			
+	        netWegtAutoCalcs : function() {
+	        	var me = this;
+				var grvtNumb = me.inputParam.piwi_grvt_numb; // 비중
+				var aftrDia0 = me.inputParam.piwi_aftr_dia0; // 외경,높이
+				var aftrThik = me.inputParam.piwi_aftr_thik; // 두께
+				var net0Leng = me.inputParam.piwi_net0_leng; // NET길이
+				var net0Wegt = 0;
+				
+				if ((UT.isEmpty(aftrDia0)) ||
+					(UT.isEmpty(aftrThik)) ||
+					(UT.isEmpty(net0Leng)) ||
+					(UT.isEmpty(grvtNumb))) {
+					return;
+				}
+				
+				if (me.inputParam.piwi_shap_code == "ROUND") {				
+					net0Wegt = (aftrDia0 * aftrDia0 * Math.PI * 0.25 - (aftrDia0 - aftrThik * 2) * (aftrDia0 - aftrThik * 2) * Math.PI * 0.25) * net0Leng * grvtNumb / 1000;
+				} else {
+					net0Wegt = aftrDia0 * 4 * aftrThik * net0Leng * grvtNumb / 1000;
+				}
+				
+				me.set("inputParam.piwi_net0_wegt", commonAS.substr2num(net0Wegt.toString()));	        	
+	        },
+	        
+			formulas : {
+				isHiddenShapCode : function() {
+					return !(this.inputParam.piwi_shap_code == "ROUND");
+				},
+				isDisabledByShapCode : function() {
+					return !(this.inputParam.piwi_shap_code == "ROUND"); 
+				},
+				isHiddenSubMat : function() {
+					return !(this.inputParam.piwi_shap_code == "ROUND" && (this.inputParam.piwi_matt_code == "SUS400" || this.inputParam.piwi_matt_code == "SUS300"));
+				}
+			},
+			
+			/**
+             * 부모에서 호출
+             **/            
+            load : function(obj) {
+                var me = this;
+                
+                me.set('initFlag'    , true);
+                me.initParam = {};
+				// 부모로 부터 전달된 파라미터 SET				
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+
+                // 조회된 값이 존재하는 경우만 별도 저장
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	//me.set('initParam'    , obj.inputParam);
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+                me.set('initFlag'    , false);
+            },            
+            
+            comboInit : function() {
+		    	var me = this;
+
+				//소재형태
+				/*
+		    	var filteredInfos = me.standInfoList.filter(function(e) {
+            		return e.cmpk_gubn_code == "PIWR02";
+            	});
+  				me.set("shapCodes", filteredInfos);
+				*/
+            	me.$.getStndInfoRPC.body = { param : me.get("searchParam") };	
+				me.$.getStndInfoRPC.service();
+  				
+			    if(me.get("initParam.iCount") != "0" && me.get("initFlag") == true) { 
+			    	// 기존 데이터가 존재하는 경우
+
+			    } else {
+				    me.set("inputParam.piwi_shap_code", "ROUND");
+				    me.set("inputParam.piwi_matl_yn"  , "Y");
+			    }
+            },
+            
+            resultStndInfo : function(e, res) {
+            	var me = this;
+            	var data = res.response;
+            	
+            	if(data.result.MESG_CODE == "SA-001") {
+            		me.set("shapCodes", data.shap_codes);
+            		me.set("mattCodes", data.matt_codes);
+            		me.set("prodCodes", data.prod_codes);
+            		me.set("squaCodes", data.squa_codes);
+            		
+            		if(me.get("initParam.iCount") == "0") {
+                		me.set("inputParam.piwi_matt_code", "GENL");
+                		me.set("inputParam.piwi_prod_code", "GENL");
+                		me.set("inputParam.piwi_squa_code", "22_1.6");
+            		}
+            		
+            	} else {
+            		UT.alert(data.result.MESG);
+            	}
+            },
+            
+            getInputData : function() {
+            	var me = this;
+
+            	me.set("inputParam.piwi_matt_gubn", "PIWR01");
+            	me.set("inputParam.piwi_shap_gubn", "PIWR02");
+            	me.set("inputParam.piwi_prod_gubn", "PIWR03");
+            	me.set("inputParam.piwi_squa_gubn", "PIWR09");
+            	
+				// 숨김처리된 콤포넌트 값 초기화
+				me.cleanUnvisibleData();
+            	
+				// Validation Check
+				//if (!me.validCheck()) {
+                //    return false;
+				//}
+				
+            	return true;
+            },
+            
+        	/**
+             * 숨김 처리된 콤포넌트 값 초기화 처리
+             **/
+		    cleanUnvisibleData : function() {
+		    	var me = this;
+
+				// 각 공법별 상이하게 구현(예시-구분코드와 코드는 항상 쌍으로 움직이도록 처리!!)
+				/*
+				if (UT.isEmpty(me.$.sb_matt_gubn.selectedItem.data)) {
+					me.set("inputParam.gmti_matt_gubn", "");
+					me.set("inputParam.gmti_matt_code", "");
+				}
+
+				if (UT.isEmpty(me.$.sb_item_gubn.selectedItem.data)) {
+					me.set("inputParam.gmti_item_gubn", "");
+					me.set("inputParam.gmti_item_code", "");
+				}
+				*/
+				if (me.inputParam.piwi_shap_code == "ROUND") {
+					me.inputParam.piwi_matt_gubn = "PIWR01";
+					me.inputParam.piwi_prod_gubn = "PIWR03";
+					me.inputParam.piwi_squa_gubn = "";
+					me.inputParam.piwi_squa_code = "";
+					me.inputParam.piwi_coil_widt = "";
+					me.inputParam.piwi_coil_pitc = "";
+					me.inputParam.piwi_coil_thik = "";
+					
+				} else {
+					me.inputParam.piwi_matt_gubn = "";
+					me.inputParam.piwi_matt_code = "";
+					me.inputParam.piwi_prod_gubn = "";
+					me.inputParam.piwi_prod_code = "";
+					me.inputParam.piwi_befr_dia0 = "";
+					me.inputParam.piwi_befr_thik = "";
+					me.inputParam.piwi_squa_gubn = "PIWR09";
+				}
+		    },
+            
+        	/**
+             * 필수 값 체크
+             **/
+		    validCheck : function() {
+		    	var me = this;
+
+				// 각 공법별 상이하게 구현(예시)
+				// sc-text-field 필수 체크
+				if (!commonAS.validCheck(me.validList)) {
+                    return false;
+				}
+				return true;
+		    },
+            
+            setPrecision : function() {
+            	var me = this;
+				var imsi = commonAS.setPrecision(me.inputParam.piwi_grvt_numb, 4);
+				
+				me.set("inputParam.piwi_grvt_numb", imsi);
+            },
+
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                var id = e.target.id;
+
+                var nstr = commonAS.substr2num(me.get("inputParam.piwi_" + id));
+                
+                me.set("inputParam.piwi_" + id, nstr);
+            },
+            
+            //------------------------------
+            
+			openPopup: function() {
+				var me = this;
+               	if (!me.helpPopup) {
+   					me.helpPopup = UT.popup("es-capiwr-p19-02-01", me, 700, 400, {
+   						"selected-items" : function(popup, e) {
+   							var selected = e.detail;
+   							
+   							// 선택 완료 후 callback
+   			    			me.onPopupSelectedItems("es-capiwr-p19-02-01", selected);
+   							popup.close();
+   						}
+   		            }, {title: me.translate("도움말")});
+   				}
+
+            	me.helpPopup.show();
+			},            
+            onSelectCombo : function(e) {
+            	var me = this;
+            	//UT.alert(e.detail.selectedItem.data, null, true);
+            	if(e.detail.selectedItem.data == "RACK") {
+            		me.$.lb_elec_yn.hidden = false;
+            		me.$.sb_elec_yn.hidden = false;
+            	} else {
+            		me.$.lb_elec_yn.hidden = true;
+            		me.$.sb_elec_yn.hidden = true;
+            	}
+            },
+            
+            onSearchMatl : function(){
+            	var me = this;
+				var gubn3 = "";
+            	if(me.inputParam.piwi_shap_code == "SQUARE") {
+            		gubn3 = "PR";	
+            	}
+            	
+   				if (!me.PopupMatl) {
+   					me.PopupMatl = UT.popup("es-cacm-03", me, 1400, 550, {
+   						"getMatlInfo" : function(popup, e) {
+   							var selected = e.detail;
+
+   			    			me.onPopupSelectedItems("es-cacm-03", selected);
+   							popup.close();
+   						}
+   		            }, {title: me.translate("재료단가 정보")});
+   				}
+
+				me.PopupMatl.show();
+				me.PopupMatl.getWindowContent().load({singleSelect : true, defaultParam : me.searchParam, gubn3 : gubn3});
+            },
+
+            /**
+             * 팝업에서 선택된 아이템 재료코드에 반환
+             **/
+            onPopupSelectedItems : function(sPopupID, matlParam) {
+            	var me = this;
+
+            	// =============================================
+				// 재질정보
+               	// =============================================
+                if (sPopupID == "es-cacm-03") {
+                	me.set("inputParam.piwi_matl_corp", matlParam.comd_corp_code);
+                	me.set("inputParam.piwi_matl_stnd", matlParam.comd_stnd_gubn);
+                	me.set("inputParam.piwi_matl_gubn", matlParam.comd_matl_gubn);
+                	me.set("inputParam.piwi_matl_code", matlParam.comd_matl_code);
+                	me.set("inputParam.piwi_matl_name", matlParam.comd_matl_name);
+                	me.set("inputParam.piwi_matl_apdt", matlParam.comd_appl_date);
+                	me.set("inputParam.piwi_matl_pric", matlParam.comd_matl_pric);
+                	me.set("inputParam.piwi_matl_unit", matlParam.comd_matl_unit);
+                	me.set("inputParam.piwi_scrp_pric", matlParam.comd_scrp_pric);
+                	me.set("inputParam.piwi_grvt_numb", matlParam.comd_spec_grav);
+                }
+            },
+
+            
+            onChangeShapCode : function() {
+            	var me = this;
+            	me.setVisible();	
+            	
+            	me.fire("change-shap-code");
+            },
+            
+
+            onChangeMattCode : function() {
+            	var me = this;
+            	me.setVisible();
+            	me.fire("change-matt-code");
+            },
+            
+            onChangeProdCode : function() {
+				var me = this;
+				me.fire("change-prod-code");
+            },
+
+            
+            setVisible : function() {
+            	var me = this;
+            	if(me.inputParam.piwi_shap_code == "ROUND" && (me.inputParam.piwi_matt_code == "SUS400" || me.inputParam.piwi_matt_code == "SUS300")) {
+            		
+            	} else {
+            		me.set("inputParam.piwi_weld_leng", null);
+            		me.set("inputParam.piwi_hole_cnt0", null);
+            	}
+            	me.applyFormula("isHiddenSubMat");
+            },
+            
+            onChangeGrvtNumb : function() {
+            	var me = this;
+            	me.netWegtAutoCalcs();
+            },
+            
+            onChangeAftrDia0 : function() {
+            	var me = this;
+            	me.netWegtAutoCalcs();
+            	me.fire("change-aftr-dia0");
+            },
+            
+            onChangeAftrThik : function() {
+            	var me = this;
+            	me.netWegtAutoCalcs();
+            },
+            
+            onChangeNet0Leng : function() {
+            	var me = this;
+            	me.netWegtAutoCalcs();
+            },
+        });
+	</script>
+
+</dom-module>

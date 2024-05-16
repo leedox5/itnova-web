@@ -1,0 +1,35 @@
+<dom-module id="es-capiwr-p19-03-05">
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+	<template>
+        <cc-page-title-bar page-title="">
+            <sc-button text="닫기" on-click="onClose"></sc-button>
+        </cc-page-title-bar>
+		<table class="come-form" style="margin-top:10px; width:99%;">
+            <tr>
+            	<td>
+            	    압착은 PITCH 5이하 적용
+            	</td>
+            </tr>
+		</table>
+	</template>
+	
+	<script>
+        Polymer({
+            is: "es-capiwr-p19-03-05",
+
+            load : function() {
+
+            },
+            
+            onClose : function() {
+            	this.fire("close");
+            }
+        });
+	</script>
+
+</dom-module>
