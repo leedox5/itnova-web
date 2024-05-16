@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/ca/piwr/p19">
+
+	<service id="get.piwr.stndInfo0" label="표준정보 조회">
+		<select descriptor="bp/tcams/ca/piwr/p19" 
+		        sql-id="get.piwr.stndInfo.select"
+			    parameter-name="param" 
+			    result-class="list" 
+			    result-name="combo_info" />
+	</service>
+	
+	<service id="get.piwr.stndInfo" label="표준정보 조회">
+		<script>
+		<![CDATA[
+		    var result = new Map();
+			var shap_codes = new List();
+			var matt_codes = new List();
+			var prod_codes = new List();
+			var squa_codes = new List();
+			
+			var vend_codes = new List();
+			
+			try {
+				
+				$data.param.gubn_code = "PIWR02";	
+				shap_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+				
+				$data.param.gubn_code = "PIWR01";	
+				matt_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR03";	
+				prod_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR09";	
+				squa_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+				
+				$data.param.gubn_code = "PIWR04";	
+				bend_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				result.MESG_CODE = "SA-001";
+				
+			} catch(e) {
+				$logger.info("Error : " + e.message);
+				result.MESG_CODE = "SA-002";
+				result.MESG      = e.message;
+			}
+			
+			$data.shap_codes = shap_codes;
+			$data.matt_codes = matt_codes;
+			$data.prod_codes = prod_codes;
+			$data.squa_codes = squa_codes;
+			$data.bend_codes = bend_codes;
+			
+			$data.result     = result;
+		]]>
+		</script>
+	</service>
+	
+
+	<service id="get.piwr.stndInfo1" label="표준정보 조회">
+		<script>
+		<![CDATA[
+		    var result = new Map();
+			var vend_codes = new List();
+			var cncb_codes = new List();
+			var angl_codes = new List();
+			var cut2_codes = new List();
+			var bell_codes = new List();
+			var expn_codes = new List();
+			
+			try {
+				
+				$data.param.gubn_code = "PIWR04";	
+				bend_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR10";	
+				cncb_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR05";	
+				angl_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR06";	
+				cut2_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR07";	
+				bell_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				$data.param.gubn_code = "PIWR08";	
+				expn_codes = $jdbc.queryList("bp/tcams/ca/piwr/p19","get.piwr.stndInfo.select", $data.param)
+
+				result.MESG_CODE = "SA-001";
+				
+			} catch(e) {
+				$logger.info("Error : " + e.message);
+				result.MESG_CODE = "SA-002";
+				result.MESG      = e.message;
+			}
+			$data.bend_codes = bend_codes;
+			$data.cncb_codes = cncb_codes;
+			$data.angl_codes = angl_codes;
+			$data.cut2_codes = cut2_codes;
+			$data.bell_codes = bell_codes;
+			$data.expn_codes = expn_codes;
+			$data.result     = result;
+		]]>
+		</script>
+	</service>
+
+	<service id="get.piwr.infoCount0" label="입력데이터  Count">
+		<select descriptor="bp/tcams/ca/piwr/p19" 
+		        sql-id="get.piwrInfo.count"
+			    parameter-name="param" 
+			    result-class="map" 
+			    result-name="ca_count" />
+	</service>
+
+	<service id="get.piwr.infoCount" label="입력데이터  Count">
+		<script>
+		<![CDATA[
+		    var result     = new Map();
+		    var ca_count   = new Map();
+			
+			try {
+			    
+				ca_count   = $jdbc.query    ("bp/tcams/ca/piwr/p19", "get.piwrInfo.count"     , $data.param);
+				
+				result.MESG_CODE = "SA-001";
+				
+			} catch(e) {
+				var msg = e.message;
+				$logger.info('Error:' + msg);
+				
+				result.MESG_CODE = "SA-002";
+				result.MESG      = "System Error : <br>" + msg; 			
+			}
+			
+			$data.result     = result;
+			$data.ca_count   = ca_count;
+		]]>
+		</script>
+	</service>
+
+	<service id="get.piwr.Info" label="입력데이터 조회">
+		<script>
+		<![CDATA[
+		    var result     = new Map();
+		    var ca_info    = new Map();
+		    var ca_ainfo   = new List();
+			
+			try {
+			    
+				ca_info       = $jdbc.query    ("bp/tcams/ca/piwr/p19", "get.piwrInfo.select"     , $data.param);
+				
+				var piwaList  = $jdbc.queryList("bp/tcams/ca/piwr/p19", "get.piwaInfo.select"     , $data.param);
+				if(piwaList != null) {
+				    ca_ainfo = piwaList;
+				}
+				
+				result.MESG_CODE = "SA-001";
+				
+			} catch(e) {
+				var msg = e.message;
+				$logger.info('Error:' + msg);
+				
+				result.MESG_CODE = "SA-002";
+				result.MESG      = "System Error : <br>" + msg; 			
+			}
+			
+			$data.result     = result;
+			$data.ca_info    = ca_info;
+			$data.ca_ainfo   = ca_ainfo;
+		]]>
+		</script>
+	</service>
+
+	
+	<service id="get.piwr.Info0" label="입력데이터 조회">
+		 <select descriptor="bp/tcams/ca/piwr/p19" 
+		        sql-id="get.piwrInfo.select"
+			    parameter-name="param" 
+			    result-class="map" 
+			    result-name="ca_info" />
+	</service>
+	
+	<service id="get.piwa.Info" label="입력데이터 조회">
+		 <select descriptor="bp/tcams/ca/piwr/p19" 
+		        sql-id="get.piwaInfo.select"
+			    parameter-name="param" 
+			    result-class="list" 
+			    result-name="ca_ainfo" />
+	</service> 
+	
+ <service id="save.piwr.Info" label="PIPE 가공 입력데이터 저장">
+  <script>
+   <![CDATA[
+            importClass(Packages.emro.util.StringUtil);
+            var strUtil   = new StringUtil();
+            var colList = new List();
+
+			try {
+
+				$data.result = new Map();
+
+				var deleteCnt     = 0;				
+				var insertCnt     = 0;
+				var piwaDeleteCnt = 0;
+				var piwaInsertCnt = 0;
+				
+				if(strUtil.isEmpty($data.param.piwi_angl_code)) {
+				    $data.param.piwi_angl_gubn = null;
+				}
+				
+				if($data.param.piwi_bend_code == "N") {
+                    $data.param.piwi_shrt_x       = null;
+                    $data.param.piwi_shrt_x_1     = null;
+                    $data.param.piwi_bend_pont    = null;
+                    $data.param.piwi_long_y       = null;
+                    $data.param.piwi_long_y_1     = null;
+                    $data.param.piwi_cncb_code    = null;
+                    $data.param.piwi_long_radi    = null;
+                    $data.param.piwi_long_radi    = null;
+                    $data.param.piwi_angl_gubn    = null;
+                    $data.param.piwi_angl_code    = null;
+                    $data.param.piwi_long_leng    = null;
+                    $data.param.piwi_spar_len1    = null;
+                    $data.param.piwi_spar_len1_1  = null;
+                    $data.param.piwi_spar_len2    = null;
+                    $data.param.piwi_spar_len2_1  = null;				
+				}
+				
+			    colList = $jdbc.queryList("bp/tcams/ca/piwr/p19", "get.MandColCommon", $data.param);
+			    
+			    var chk = "";
+			    var cnt = 0;
+			    
+			    for(var i = 0 ; i < colList.size() ; i++) {
+			    	if(strUtil.isEmpty($data.param[colList[i].col])) {
+                
+			    		if(cnt > 0) {
+			    			chk += ", ";
+			    		}
+			    		chk += colList[i].des;
+			    		cnt++;
+			    	}
+			    }
+			    
+			    /*
+			    if(cnt > 0) {
+			    	throw new Exception("[ " + chk + " ]" + "은(는) 필수입력입니다.");
+			    }
+			    */				
+				
+				// 입력 데이터 삭제
+				deleteCnt = $jdbc.update("bp/tcams/ca/piwr/p19", "piwr.Info.delete", $data.param);
+				$logger.info("deleteCnt --> " + deleteCnt );
+				
+				// 입력 데이터 저장
+				if ($data.param.piwi_matl_yn == "N") {
+					$data.param.piwi_matl_name = null;
+					$data.param.piwi_matl_code = null;
+					$data.param.piwi_matl_pric = null;
+					$data.param.piwi_matl_unit = null;
+					$data.param.piwi_matl_apdt = null;
+					$data.param.piwi_matl_corp = null;
+					$data.param.piwi_matl_stnd = null;
+					$data.param.piwi_mach_gubn = null;
+					$data.param.piwi_matl_gubn = null;
+					$data.param.piwi_scrp_pric = null;
+				} 
+			
+				if(!strUtil.isEmpty($data.param.piwi_spar_len1_1)) {
+				   var spar_len1   = parseFloat($data.param.piwi_spar_len1  );
+				   var spar_len2   = parseFloat($data.param.piwi_spar_len2  );
+
+				   var spar_len1_1 = parseFloat($data.param.piwi_spar_len1_1);
+				   var spar_len2_1 = parseFloat($data.param.piwi_spar_len2_1);
+				   
+				   var spar_len0 = spar_len1   + spar_len2   ;
+				   var spar_len1 = spar_len1_1 + spar_len2_1 ;
+				   
+				   if(spar_len0 > spar_len1) {
+				       $data.param.piwi_shrt_x = $data.param.piwi_shrt_x_1;
+				       $data.param.piwi_long_y = $data.param.piwi_long_y_1;
+				       $data.param.piwi_spar_len1 = $data.param.piwi_spar_len1_1;
+				       $data.param.piwi_spar_len2 = $data.param.piwi_spar_len2_1; 
+				   }
+				}
+			
+				insertCnt = $jdbc.update("bp/tcams/ca/piwr/p19", "piwr.Info.insert", $data.param);
+				
+				if (insertCnt > 0) {
+					$data.result.MESG_CODE = "SA-001";
+				}
+				
+				System.out.println("================================");
+				System.out.println("insertCnt :::: " + insertCnt);
+				System.out.println("================================");
+				
+				// 기존에 존재하는 BENDING 입력 데이터 삭제
+				piwaDeleteCnt = $jdbc.update("bp/tcams/ca/piwr/p19", "piwa.Info.delete", $data.param);
+				
+				System.out.println("================================");
+				System.out.println("piwaDeleteCnt :::: " + piwaDeleteCnt);
+				System.out.println("================================");
+				
+				
+				// BEN'D TYPE 미적용이 아닌 경우만 BENDING 입력 데이터 저장
+				if ($data.piwaList != null) {
+    				if ($data.piwaList.size() > 0) {
+    					
+    					for (var i = 0; i < $data.piwaList.size(); i++) {
+    						piwaInsertCnt = $jdbc.update("bp/tcams/ca/piwr/p19", "piwa.Info.insert", $data.piwaList[i]);
+    						
+    						if (piwaInsertCnt > 0) {
+    							$data.result.MESG_CODE = "SA-001";
+    						}
+    					}
+    				}
+    			}
+				
+				System.out.println("================================");
+				System.out.println("piwaInsertCnt :::: " + piwaInsertCnt);
+				System.out.println("================================");
+				
+			} catch(e) {
+				var rollback = new Map();
+				var msg      = e.message;
+				var index    = msg.indexOf('JDBC');
+				
+				$data.result.MESG_CODE = 'SA-002';
+				
+				if ("JDBC-5111" == msg.substr(index, 9)) {
+					$data.result.MESG = "지정된 자릿수보다 초과한 값이 입력되었습니다. <br>자릿수를 확인하세요.";
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다. <br>" + msg;
+				}
+				
+				System.out.println("================================");
+				System.out.println(msg);
+				System.out.println("================================");
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+   ]]>
+  </script>
+ </service>
+	
+	<service id="get.piwa.calcRes" label="자동 계산 (프로시저)">
+		<script>
+		<![CDATA[
+		
+			$data.result = new Map();
+		
+			$logger.info($data.param);
+			
+			try {
+			    if($data.param.degr.indexOf("-") > -1) {
+		            $data.param.degr_proc = $data.param.degr.length > 3 ? $data.param.degr : "0" + $data.param.degr;
+			    } else {
+		            $data.param.degr_proc = $data.param.degr.length > 1 ? $data.param.degr : "0" + $data.param.degr;
+			    }
+		        $data.param.degr_proc = $data.param.degr_proc.replace("-", "_");
+
+				// 입력받은 BEND'G POINT 수만큼 프로시저 호출 
+				for (var i = 0; i < $data.piwaList.size(); i++) {
+                    $data.piwaList[i].degr = $data.param.degr;
+                    $data.piwaList[i].degr_proc = $data.param.degr_proc;
+                     
+					var calcResult = $jdbc.call("bp/tcams/ca/piwr/p19", "get.piwa.calcRes.select", $data.piwaList[i]);
+					
+					// 프로시저 결과 값 담기
+					$data.piwaList[i].piwa_dt        = calcResult.DT;
+					$data.piwaList[i].piwa_rd        = calcResult.RD;
+					$data.piwaList[i].piwa_cncb_code = calcResult.CNCB_CODE;
+					$data.piwaList[i].piwa_cncb_name = calcResult.CNCB_NAME;
+					
+					// 프로시저 오류 발생 시, 오류 정보 담기
+					if (calcResult.MESG_CODE == "SA-002") {
+						$data.result.MESG_CODE = calcResult.MESG_CODE;
+						$data.result.MESG      = calcResult.MESG;
+						$data.result.SQL0_CODE = calcResult.SQL0_CODE;
+						$data.result.PRGM_ID   = calcResult.PRGM_ID;
+						$data.result.LINE_NO   = calcResult.LINE_NO;
+						throw new Exception($data.result.MESG);
+					}                   		
+				}
+				
+				// 데이터 담기
+				$data.calc_Result = $data.piwaList;
+				
+				// 프로시저 
+				$data.result.MESG_CODE = 'SA-001';
+				
+			} catch(e) {
+				var rollback = new Map();
+				var msg      = e.message;
+				var index    = msg.indexOf('JDBC');
+
+				$data.result.MESG_CODE = 'SA-002';
+				$data.result.MESG      = msg;
+				
+				if ("JDBC-5111" == msg.substr(index, 9)) {
+					$data.result.MESG_CODE = 'SA-002';
+					$data.result.MESG      = "지정된 자릿수보다 초과한 값이 입력되었습니다. \r자릿수를 확인하세요.";
+				}
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}	
+		]]>
+		</script>
+	</service>
+
+	<service id="get.piwa.apply" label="적용">
+		<script>
+		<![CDATA[
+			var item = new Map();
+			var idx = 0; 
+			var arrCncb = new Array();
+			
+			var maxMC = 0;
+			var MC    = 0;
+			
+			var maxR  = 0;
+			var R     = 0;
+			
+			var cncbCode = "";
+			var cncbName = "";
+			
+			$logger.info($data.piwaList);
+			
+			for (var i = 0; i < $data.piwaList.size(); i++) {
+				var cncb = $data.piwaList[i]["piwa_cncb_code"];
+				
+				if( i > 0 ) {
+					idx++;
+				}
+
+				$logger.info("cncb, idx--> " + cncb + "," + idx);
+
+				if(cncb == "BEND1") {
+					arrCncb[idx] = 3;
+				}				
+			}
+
+			for(var arridx = 0 ; arridx < arrCncb.length ; arridx++) {
+				$logger.info("arrCncb--> [" + arridx + "]" + arrCncb[arridx]);
+				if(arridx == 0) {
+					maxMC = arrCncb[0];	
+				}
+				MC = arrCncb[arridx];
+                
+                if (MC > maxMC) {
+					maxMC = MC;
+				}
+			}
+			
+			if (maxMC == 1) {
+				cncbCode = "BEND6";
+				cncbName = "BEND'G 6";
+			} else if (maxMC == 2) {
+				cncbCode = "BEND5";
+				cncbName = "BEND'G 5";
+			} else if (maxMC == 3) {
+				cncbCode = "BEND1";
+				cncbName = "BEND'G 1";
+			} else if (maxMC == 4) {
+				cncbCode = "BEND2";
+				cncbName = "BEND'G 2";
+			} else if (maxMC == 5) {
+				cncbCode = "BEND3";
+				cncbName = "BEND'G 3";
+			} else if (maxMC == 6) {
+				cncbCode = "BEND4";
+				cncbName = "BEND'G 4";
+			}
+			
+			for(var n = 0 ; n < $data.piwaList.size() ; n++) {
+				if(n == 0) {
+					maxR = $data.piwaList[0]['piwa_r'];
+				}
+				R = $data.piwaList[n]['piwa_r'];
+				
+				if(R > maxR) {
+				    maxR = R;
+				} 
+			}
+			
+			item.cncb_code = cncbCode;
+			item.cncb_name = cncbName;
+			item.long_radi = maxR;
+			
+			$data.item = item;
+		]]>
+		</script>
+	</service>
+
+ <service id="get.piwr.calcRes" label="자동 계산 (프로시저)">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    
+    try {
+        var len = $data.param.degr.indexOf("-") > -1 ? 3 : 1 ;
+        $data.param.degr_proc = $data.param.degr.length > len ? $data.param.degr : "0" + $data.param.degr;
+        
+        $data.param.degr_proc = $data.param.degr_proc.replace("-", "_");
+   
+   	    result = $jdbc.call("bp/tcams/ca/piwr/p19", "get.piwr.calcRes.select", $data.param);
+    } catch(e) {
+		result.MESG_CODE = "SA-002" ;
+		result.MESG      = "System Error: <br>" + e.message;	
+    }
+    $data.calc_Result = result;
+   ]]>
+  </script>
+ </service>
+	
+	<service id="init.piwr" label="PIPE 가공 입력 초기화">
+		<script>
+		<![CDATA[
+			$jdbc.update("bp/tcams/ca/piwr/p19", "delete.piwi", $data.searchParam);
+		]]>
+		</script>
+	</service>
+	
+</service-descriptor>

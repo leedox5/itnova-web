@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/piwr/p19" data-source="tcamsDS">
+
+	<sql id="get.piwr.stndInfo.select" comment="PIPE 가공 공통 패키지 정보 조회">
+        <![CDATA[
+			SELECT CMPK_GUBN_CODE  GUBN
+			      ,CMPK_CODE       DATA
+			      ,CMPK_SORT_NUMB  SORT
+			      ,CMPK_GUBN_NAME  GUBN_NAME
+			      ,CMPK_CODE_NAME  LABEL
+			      ,CMPK_APPL_VALU  VALU
+			      ,CMPK_APPL_RATE1 RATE1
+			  FROM CATBCMPK
+			 WHERE CMPK_CORP_CODE = #corp_code#
+			   AND CMPK_STND_GUBN = #stnd_gubn#
+			   AND CMPK_GUBN_CODE LIKE #gubn_code# || '%'
+			   AND CMPK_STND_DEGR = '19'
+			   AND CMPK_APPL_GUBN = 'Y'
+			 ORDER BY CMPK_SORT_NUMB
+        ]]>
+	</sql>
+
+	<sql id="get.piwrInfo.count" comment="PIPE 가공 입력 데이터 건수 조회">
+        <![CDATA[
+			SELECT COUNT(*) PIWI_COUNT
+			  FROM CATBPIWI 
+			 WHERE PIWI_CORP_CODE = #corp_code#
+			   AND PIWI_PART_NO   = #part_no#
+			   AND PIWI_EONO      = #eono#
+			   AND PIWI_CUMT_NO   = #cumt_no#
+        ]]>
+	</sql>
+	
+	<sql id="get.piwrInfo.select" comment="PIPE 가공 입력 데이터 조회">
+        <![CDATA[
+			SELECT A.PIWI_CORP_CODE                              PIWI_CORP_CODE
+			      ,A.PIWI_PART_NO                                PIWI_PART_NO
+			      ,A.PIWI_EONO                                   PIWI_EONO
+			      ,A.PIWI_CUMT_NO                                PIWI_CUMT_NO
+			      ,A.PIWI_MATL_CORP                              PIWI_MATL_CORP
+			      ,A.PIWI_MATL_STND                              PIWI_MATL_STND
+			      ,A.PIWI_MATL_CODE                              PIWI_MATL_CODE
+			      ,A.PIWI_MATL_APDT                              PIWI_MATL_APDT
+			      ,A.PIWI_MATL_GUBN                              PIWI_MATL_GUBN
+			      ,A.PIWI_MATL_YN                                PIWI_MATL_YN
+			      ,A.PIWI_GRVT_NUMB                              PIWI_GRVT_NUMB
+			      ,A.PIWI_COIL_WIDT                              PIWI_COIL_WIDT
+			      ,A.PIWI_COIL_PITC                              PIWI_COIL_PITC
+			      ,A.PIWI_COIL_THIK                              PIWI_COIL_THIK
+			      ,A.PIWI_MATT_GUBN                              PIWI_MATT_GUBN
+			      ,A.PIWI_MATT_CODE                              PIWI_MATT_CODE
+			      ,A.PIWI_SHAP_GUBN                              PIWI_SHAP_GUBN
+			      ,A.PIWI_SHAP_CODE                              PIWI_SHAP_CODE
+			      ,A.PIWI_PROD_GUBN                              PIWI_PROD_GUBN
+			      ,A.PIWI_PROD_CODE                              PIWI_PROD_CODE
+			      ,A.PIWI_SQUA_GUBN                              PIWI_SQUA_GUBN
+			      ,A.PIWI_SQUA_CODE                              PIWI_SQUA_CODE
+			      ,A.PIWI_AFTR_DIA0                              PIWI_AFTR_DIA0
+			      ,A.PIWI_AFTR_THIK                              PIWI_AFTR_THIK
+			      ,A.PIWI_NET0_LENG                              PIWI_NET0_LENG
+			      ,A.PIWI_NET0_WEGT                              PIWI_NET0_WEGT
+			      ,A.PIWI_BEND_GUBN                              PIWI_BEND_GUBN
+			      ,A.PIWI_BEND_CODE                              PIWI_BEND_CODE
+			      ,A.PIWI_ANGL_GUBN                              PIWI_ANGL_GUBN
+			      ,A.PIWI_ANGL_CODE                              PIWI_ANGL_CODE
+			      ,A.PIWI_BEND_PONT                              PIWI_BEND_PONT
+			      ,A.PIWI_SHRT_X                                 PIWI_SHRT_X
+			      ,A.PIWI_LONG_Y                                 PIWI_LONG_Y
+			      ,A.PIWI_LONG_RADI                              PIWI_LONG_RADI
+			      ,A.PIWI_LONG_LENG                              PIWI_LONG_LENG
+			      ,A.PIWI_SPAR_LEN1                              PIWI_SPAR_LEN1
+			      ,A.PIWI_SPAR_LEN2                              PIWI_SPAR_LEN2
+			      ,A.PIWI_BEND_LENG                              PIWI_BEND_LENG
+			      ,A.PIWI_CUT2_GUBN                              PIWI_CUT2_GUBN
+			      ,A.PIWI_CUT2_CODE                              PIWI_CUT2_CODE
+			      ,A.PIWI_BELL_GUBN                              PIWI_BELL_GUBN
+			      ,A.PIWI_BELL_CODE                              PIWI_BELL_CODE
+			      ,A.PIWI_EXRE_CNT0                              PIWI_EXRE_CNT0
+			      ,A.PIWI_REDU_CNT0                              PIWI_REDU_CNT0
+			      ,A.PIWI_PIER_CNT0                              PIWI_PIER_CNT0
+			      ,A.PIWI_SIZE_CNT0                              PIWI_SIZE_CNT0
+			      ,A.PIWI_CHAM_CNT0                              PIWI_CHAM_CNT0
+			      ,A.PIWI_ROLL_CNT0                              PIWI_ROLL_CNT0
+			      ,A.PIWI_ENDF_CNT0                              PIWI_ENDF_CNT0
+			      ,A.PIWI_BURR_CNT0                              PIWI_BURR_CNT0
+			      ,A.PIWI_BRUS_CNT0                              PIWI_BRUS_CNT0
+			      ,A.PIWI_LEAK_CNT0                              PIWI_LEAK_CNT0
+			      ,A.PIWI_EXPN_GUBN                              PIWI_EXPN_GUBN
+			      ,A.PIWI_EXPN_CODE                              PIWI_EXPN_CODE
+			      ,A.PIWI_DOIL_YN                                PIWI_DOIL_YN
+			      ,A.PIWI_INPT_LENG                              PIWI_INPT_LENG
+			      ,A.PIWI_INPT_WEGT                              PIWI_INPT_WEGT
+			      ,A.PIWI_CNCB_CODE                              PIWI_CNCB_CODE
+			      ,A.PIWI_MAKE_YN                                PIWI_MAKE_YN
+			      ,A.PIWI_BEFR_DIA0                              PIWI_BEFR_DIA0
+			      ,A.PIWI_BEFR_THIK                              PIWI_BEFR_THIK
+			      ,REPLACE(A.PIWI_CNCB_CODE, 'BEND', 'BEND''G ') PIWI_CNCB_VALU
+                  ,A.PIWI_WELD_LENG                              PIWI_WELD_LENG
+                  ,A.PIWI_HOLE_CNT0                              PIWI_HOLE_CNT0
+			      ,B.MATL_NAME                                   PIWI_MATL_NAME
+			      ,B.MATL_PRIC                                   PIWI_MATL_PRIC
+			      ,B.MATL_SCRP_PRIC                              PIWI_SCRP_PRIC
+			      ,B.MATL_UNIT                                   PIWI_MATL_UNIT
+			  FROM CATBPIWI A
+			      LEFT OUTER JOIN
+			       CITBMATL B
+			      ON     B.MATL_CORP_CODE = A.PIWI_MATL_CORP
+			         AND B.MATL_STND_GUBN = A.PIWI_MATL_STND
+			         AND B.MATL_APPL_DATE = A.PIWI_MATL_APDT
+			         AND B.MATL_GUBN      = A.PIWI_MATL_GUBN
+			         AND B.MATL_CODE      = A.PIWI_MATL_CODE
+			 WHERE A.PIWI_CORP_CODE = #corp_code#
+			   AND A.PIWI_PART_NO   = #part_no#
+			   AND A.PIWI_EONO      = #eono#
+			   AND A.PIWI_CUMT_NO   = #cumt_no#
+		]]>
+	</sql>
+	
+	<sql id="get.piwaInfo.select" comment="BENDING 입력 데이터 조회">
+        <![CDATA[
+			SELECT PIWA_CORP_CODE
+			      ,PIWA_PART_NO
+			      ,PIWA_EONO
+			      ,PIWA_CUMT_NO
+			      ,PIWA_SEQ0
+			      ,PIWA_D
+			      ,PIWA_T
+			      ,PIWA_R
+			      ,PIWA_DT
+			      ,PIWA_RD
+			      ,PIWA_CNCB_CODE
+			      ,REPLACE(PIWA_CNCB_CODE, 'BEND', 'BEND''G ') PIWA_CNCB_NAME
+			  FROM CATBPIWA
+			 WHERE PIWA_CORP_CODE = #corp_code#
+			   AND PIWA_PART_NO   = #part_no#
+			   AND PIWA_EONO      = #eono#
+			   AND PIWA_CUMT_NO   = #cumt_no#
+        ]]>
+	</sql>
+
+	<sql id="piwr.Info.delete" comment="PIPE 가공 입력 데이터 삭제">
+        <![CDATA[
+			  DELETE
+			    FROM CATBPIWI
+			   WHERE PIWI_CORP_CODE =  #corp_code#
+			     AND PIWI_PART_NO   =  #part_no#
+			     AND PIWI_EONO      =  #eono#
+			     AND PIWI_CUMT_NO   =  #cumt_no#
+		]]>
+	</sql>
+	
+	<sql id="piwr.Info.insert" comment="PIPE 가공 입력 데이터 추가">
+        <![CDATA[
+			  INSERT INTO CATBPIWI
+			  (
+			    PIWI_CORP_CODE
+			   ,PIWI_PART_NO
+			   ,PIWI_EONO
+			   ,PIWI_CUMT_NO
+			   ,PIWI_MATL_CORP
+			   ,PIWI_MATL_STND
+			   ,PIWI_MATL_CODE
+			   ,PIWI_MATL_APDT
+			   ,PIWI_MATL_GUBN
+			   ,PIWI_MATL_YN
+			   ,PIWI_GRVT_NUMB
+			   ,PIWI_COIL_WIDT
+			   ,PIWI_COIL_PITC
+			   ,PIWI_COIL_THIK
+			   ,PIWI_MATT_GUBN
+			   ,PIWI_MATT_CODE
+			   ,PIWI_SHAP_GUBN
+			   ,PIWI_SHAP_CODE
+			   ,PIWI_PROD_GUBN
+			   ,PIWI_PROD_CODE
+			   ,PIWI_SQUA_GUBN
+			   ,PIWI_SQUA_CODE
+			   ,PIWI_AFTR_DIA0
+			   ,PIWI_AFTR_THIK
+			   ,PIWI_NET0_LENG
+			   ,PIWI_NET0_WEGT
+			   ,PIWI_BEND_GUBN
+			   ,PIWI_BEND_CODE
+			   ,PIWI_ANGL_GUBN
+			   ,PIWI_ANGL_CODE
+			   ,PIWI_BEND_PONT
+			   ,PIWI_SHRT_X
+			   ,PIWI_LONG_Y
+			   ,PIWI_LONG_RADI
+			   ,PIWI_LONG_LENG
+			   ,PIWI_SPAR_LEN1
+			   ,PIWI_SPAR_LEN2
+			   ,PIWI_BEND_LENG
+			   ,PIWI_CUT2_GUBN
+			   ,PIWI_CUT2_CODE
+			   ,PIWI_BELL_GUBN
+			   ,PIWI_BELL_CODE
+			   ,PIWI_EXRE_CNT0
+			   ,PIWI_REDU_CNT0
+			   ,PIWI_PIER_CNT0
+			   ,PIWI_SIZE_CNT0
+			   ,PIWI_CHAM_CNT0
+			   ,PIWI_ROLL_CNT0
+			   ,PIWI_ENDF_CNT0
+			   ,PIWI_BURR_CNT0
+			   ,PIWI_BRUS_CNT0
+			   ,PIWI_LEAK_CNT0
+			   ,PIWI_EXPN_GUBN
+			   ,PIWI_EXPN_CODE
+			   ,PIWI_DOIL_YN
+			   ,PIWI_INPT_LENG
+			   ,PIWI_INPT_WEGT
+			   ,PIWI_UPDT_CMAN
+			   ,PIWI_UPDT_DATE
+			   ,PIWI_INIT_CMAN
+			   ,PIWI_INIT_DATE
+			   ,PIWI_CNCB_CODE
+			   ,PIWI_MAKE_YN
+			   ,PIWI_BEFR_DIA0
+			   ,PIWI_BEFR_THIK
+               ,PIWI_WELD_LENG
+               ,PIWI_HOLE_CNT0
+			  )
+			  SELECT #corp_code#
+			        ,#part_no#
+			        ,#eono#
+			        ,#cumt_no#
+			        ,#piwi_matl_corp#
+			        ,#piwi_matl_stnd#
+			        ,#piwi_matl_code#
+			        ,#piwi_matl_apdt#
+			        ,#piwi_matl_gubn#
+			        ,#piwi_matl_yn#
+			        ,#piwi_grvt_numb#
+			        ,#piwi_coil_widt#
+			        ,#piwi_coil_pitc#
+			        ,#piwi_coil_thik#
+			        ,#piwi_matt_gubn#
+			        ,#piwi_matt_code#
+			        ,#piwi_shap_gubn#
+			        ,#piwi_shap_code#
+			        ,#piwi_prod_gubn#
+			        ,#piwi_prod_code#
+			        ,#piwi_squa_gubn#
+			        ,#piwi_squa_code#
+			        ,#piwi_aftr_dia0#
+			        ,#piwi_aftr_thik#
+			        ,#piwi_net0_leng#
+			        ,#piwi_net0_wegt#
+			        ,#piwi_bend_gubn#
+			        ,#piwi_bend_code#
+			        ,#piwi_angl_gubn#
+			        ,#piwi_angl_code#
+			        ,#piwi_bend_pont#
+			        ,#piwi_shrt_x#
+			        ,#piwi_long_y#
+			        ,#piwi_long_radi#
+			        ,#piwi_long_leng#
+			        ,#piwi_spar_len1#
+			        ,#piwi_spar_len2#
+			        ,#piwi_bend_leng#
+			        ,#piwi_cut2_gubn#
+			        ,#piwi_cut2_code#
+			        ,#piwi_bell_gubn#
+			        ,#piwi_bell_code#
+			        ,#piwi_exre_cnt0#
+			        ,#piwi_redu_cnt0#
+			        ,#piwi_pier_cnt0#
+			        ,#piwi_size_cnt0#
+			        ,#piwi_cham_cnt0#
+			        ,#piwi_roll_cnt0#
+			        ,#piwi_endf_cnt0#
+			        ,#piwi_burr_cnt0#
+			        ,#piwi_brus_cnt0#
+			        ,#piwi_leak_cnt0#
+			        ,#piwi_expn_gubn#
+			        ,#piwi_expn_code#
+			        ,#piwi_doil_yn#
+			        ,#piwi_inpt_leng#
+			        ,#piwi_inpt_wegt#
+			        ,#reg_id#
+			        ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			        ,#reg_id#
+			        ,TO_CHAR(SYSDATE,'YYYYMMDD')
+			        ,#piwi_cncb_code#
+			        ,#piwi_make_yn#
+			        ,#piwi_befr_dia0#
+			        ,#piwi_befr_thik#
+                    ,#piwi_weld_leng#
+                    ,#piwi_hole_cnt0#
+			    FROM DUAL
+		]]>
+	</sql>
+	
+	<sql id="piwa.Info.delete" comment="BENDING 입력 데이터 삭제">
+       <![CDATA[
+              DELETE
+                FROM CATBPIWA
+               WHERE PIWA_CORP_CODE =  #corp_code#
+                 AND PIWA_PART_NO   =  #part_no#
+                 AND PIWA_EONO      =  #eono#
+                 AND PIWA_CUMT_NO   =  #cumt_no#
+		]]>
+	</sql>
+	
+	<sql id="piwa.Info.insert" comment="BENDING 입력 데이터 추가">
+        <![CDATA[
+              INSERT INTO CATBPIWA
+              (
+                PIWA_CORP_CODE
+               ,PIWA_PART_NO
+               ,PIWA_EONO
+               ,PIWA_CUMT_NO
+               ,PIWA_SEQ0
+               ,PIWA_D
+               ,PIWA_T
+               ,PIWA_R
+               ,PIWA_DT
+               ,PIWA_RD
+               ,PIWA_CNCB_CODE
+               ,PIWA_UPDT_CMAN
+               ,PIWA_UPDT_DATE
+               ,PIWA_INIT_CMAN
+               ,PIWA_INIT_DATE
+              )
+              SELECT #piwa_corp_code#
+                    ,#piwa_part_no#
+                    ,#piwa_eono#
+                    ,#piwa_cumt_no#
+                    ,#piwa_seq0#
+                    ,#piwa_d#
+                    ,#piwa_t#
+                    ,#piwa_r#
+                    ,#piwa_dt#
+                    ,#piwa_rd#
+                    ,#piwa_cncb_code#
+                    ,#reg_id#
+                    ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                    ,#reg_id#
+                    ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                FROM DUAL
+		]]>
+	</sql>
+	
+	<sql id="get.piwa.calcRes.select" comment="PIPE 가공  계산(프로시저)" callable="true"> 
+         <![CDATA[ 
+			CALL CASPPIWR_A@degr_proc@ (
+			                    #piwa_corp_code:varchar:in#
+			                   ,#degr#
+			                   ,#piwa_d:numeric:in#
+			                   ,#piwa_t:numeric:in#
+			                   ,#piwa_r:numeric:in#
+			                   
+			                   ,#DT:numeric:out#
+			                   ,#RD:numeric:out#
+			                   ,#CNCB_CODE:varchar:out#
+			                   ,#CNCB_NAME:varchar:out#
+			                   ,#MESG_CODE:varchar:out#
+			                   ,#MESG:varchar:out#
+			                   ,#SQL0_CODE:varchar:out#
+			                   ,#PRGM_ID:varchar:out#
+			                   ,#LINE_NO:varchar:out#
+			                  )        
+         ]]>
+	</sql>
+	
+	<sql id="get.piwr.calcRes.select" comment="PIPE 가공  계산(프로시저)" callable="true"> 
+         <![CDATA[ 
+            CALL CASPPIWR_P@degr_proc@(
+                               #corp_code:char:in#
+                              ,#part_no:varchar:in#
+                              ,#eono:varchar:in#
+                              ,#cumt_no:numeric:in#
+                              ,#reg_id:varchar:in#
+
+                              ,#MESG_CODE:varchar:out#
+                              ,#MESG:varchar:out#
+                              ,#SQL0_CODE:varchar:out#
+                              ,#PRGM_ID:varchar:out#
+                              ,#LINE_NO:varchar:out#
+                             )
+         ]]>
+	</sql>
+	
+	<sql id="get.MandColCommon">
+     <![CDATA[
+      WITH CHK_COL AS
+      (
+              SELECT  1 SEQ, 'piwi_matl_code' COL, 'ROUND,SQUARE'  PIWI_SHAP_CODE, 'Y'       PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  2 SEQ, 'piwi_grvt_numb' COL, 'ROUND,SQUARE'  PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        -- UNION SELECT  3 SEQ, 'piwi_befr_dia0' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        -- UNION SELECT  4 SEQ, 'piwi_befr_thik' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  5 SEQ, 'piwi_aftr_dia0' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  6 SEQ, 'piwi_aftr_thik' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  7 SEQ, 'piwi_net0_leng' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  8 SEQ, 'piwi_net0_wegt' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT  9 SEQ, 'piwi_cham_cnt0' COL, 'ROUND'         PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, '^ONE^,^DBL^' PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT 10 SEQ, 'piwi_coil_widt' COL, 'SQUARE'        PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT 11 SEQ, 'piwi_coil_pitc' COL, 'SQUARE'        PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+        UNION SELECT 12 SEQ, 'piwi_coil_thik' COL, 'SQUARE'        PIWI_SHAP_CODE, 'Y,N'     PIWI_MATL_YN, NULL PIWI_CUT2_CODE FROM DUAL
+      )
+      SELECT SEQ              SEQ
+            ,COL              COL
+            ,B.PKCL_COLM_NAME DES
+        FROM CHK_COL A
+            INNER JOIN 
+             CITBPKCL B
+            ON    B.PKCL_TABL_ID = 'CATBPIWI'
+              AND B.PKCL_COLM_ID = UPPER(A.COL)
+       WHERE INSTR(A.PIWI_SHAP_CODE,#piwi_shap_code#) > 0 
+         AND INSTR(A.PIWI_MATL_YN  ,#piwi_matl_yn#  ) > 0
+         AND (PIWI_CUT2_CODE IS NULL OR INSTR(A.PIWI_CUT2_CODE, '^' || #piwi_cut2_code# || '^') > 0)
+       ORDER BY A.SEQ		
+     ]]>
+	</sql>
+	
+</sql-descriptor> 
