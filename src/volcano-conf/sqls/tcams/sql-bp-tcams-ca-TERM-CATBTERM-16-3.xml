@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/TERM/CATBTERM/16-3" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  TERM_CORP_CODE
+ ,TERM_STND_GUBN
+ ,TERM_STND_DEGR
+ ,TERM_MATL_SEQ0
+ ,TERM_MATL_GUBN
+ ,TERM_TYPE_CODE
+ ,TERM_TERM_GRP1
+ ,TERM_SIZE_MIN0
+ ,TERM_PLAT_CODE
+ ,TERM_SIZE_MAX0
+ ,TERM_TINP_YN
+ ,TERM_MATL_NAME
+ ,TERM_MATL_PRIC
+ ,TERM_MATL_UNIT
+ ,TERM_APPL_GUBN
+ ,TERM_REMK
+ ,TERM_UPDT_CMAN
+ ,TERM_UPDT_DATE
+ ,TERM_INIT_CMAN
+ ,TERM_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'16-3' ,'1' ,'PACK' ,'END' ,'ALL' ,'0' ,'ALL' ,'99999999' ,'ALL' ,'종이포장비' ,'0.26' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'2' ,'PACK' ,'SIDE' ,'GRP1_GEN' ,'0' ,'ALL' ,'99999999' ,'ALL' ,'종이포장비' ,'0.37' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'3' ,'PACK' ,'SIDE' ,'GRP1_ETC' ,'0' ,'ALL' ,'25' ,'ALL' ,'종이포장비' ,'0.1' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'4' ,'PACK' ,'SIDE' ,'GRP1_ETC' ,'25' ,'ALL' ,'70' ,'ALL' ,'종이포장비' ,'0.21' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'5' ,'PACK' ,'SIDE' ,'GRP1_ETC' ,'70' ,'ALL' ,'110' ,'ALL' ,'종이포장비' ,'0.31' ,'EA' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'6' ,'PL_AU' ,'ALL' ,'ALL' ,'0' ,'AU' ,'99999999' ,'ALL' ,'금도금' ,'3558.22' ,'EA' ,'Y' ,'면적반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'7' ,'PL_SN' ,'ALL' ,'ALL' ,'0' ,'AU' ,'99999999' ,'Y' ,'주석도금' ,'88.31' ,'EA' ,'Y' ,'면적반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'8' ,'PL_AG' ,'ALL' ,'ALL' ,'0' ,'AG' ,'99999999' ,'ALL' ,'은도금' ,'351.4' ,'EA' ,'Y' ,'면적반영' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.TERM_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.TERM_UPDT_DATE > B.TERM_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBTERM B                                          
+      ON    B.TERM_CORP_CODE = A.TERM_CORP_CODE
+        AND B.TERM_STND_GUBN = A.TERM_STND_GUBN
+        AND B.TERM_STND_DEGR = A.TERM_STND_DEGR
+        AND B.TERM_MATL_SEQ0 = A.TERM_MATL_SEQ0
+        AND B.TERM_MATL_GUBN = A.TERM_MATL_GUBN
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBTERM (
+  TERM_CORP_CODE
+ ,TERM_STND_GUBN
+ ,TERM_STND_DEGR
+ ,TERM_MATL_SEQ0
+ ,TERM_MATL_GUBN
+ ,TERM_TYPE_CODE
+ ,TERM_TERM_GRP1
+ ,TERM_SIZE_MIN0
+ ,TERM_PLAT_CODE
+ ,TERM_SIZE_MAX0
+ ,TERM_TINP_YN
+ ,TERM_MATL_NAME
+ ,TERM_MATL_PRIC
+ ,TERM_MATL_UNIT
+ ,TERM_APPL_GUBN
+ ,TERM_REMK
+ ,TERM_UPDT_CMAN
+ ,TERM_UPDT_DATE
+ ,TERM_INIT_CMAN
+ ,TERM_INIT_DATE
+) VALUES (
+  #term_corp_code#
+ ,#term_stnd_gubn#
+ ,#term_stnd_degr#
+ ,#term_matl_seq0#
+ ,#term_matl_gubn#
+ ,#term_type_code#
+ ,#term_term_grp1#
+ ,#term_size_min0#
+ ,#term_plat_code#
+ ,#term_size_max0#
+ ,#term_tinp_yn#
+ ,#term_matl_name#
+ ,#term_matl_pric#
+ ,#term_matl_unit#
+ ,#term_appl_gubn#
+ ,#term_remk#
+ ,#term_updt_cman#
+ ,#term_updt_date#
+ ,#term_init_cman#
+ ,#term_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBTERM
+   SET TERM_TYPE_CODE = #term_type_code#
+      ,TERM_TERM_GRP1 = #term_term_grp1#
+      ,TERM_SIZE_MIN0 = #term_size_min0#
+      ,TERM_PLAT_CODE = #term_plat_code#
+      ,TERM_SIZE_MAX0 = #term_size_max0#
+      ,TERM_TINP_YN = #term_tinp_yn#
+      ,TERM_MATL_NAME = #term_matl_name#
+      ,TERM_MATL_PRIC = #term_matl_pric#
+      ,TERM_MATL_UNIT = #term_matl_unit#
+      ,TERM_APPL_GUBN = #term_appl_gubn#
+      ,TERM_REMK = #term_remk#
+      ,TERM_UPDT_CMAN = #term_updt_cman#
+      ,TERM_UPDT_DATE = #term_updt_date#
+ WHERE TERM_CORP_CODE = #term_corp_code#
+   AND TERM_STND_GUBN = #term_stnd_gubn#
+   AND TERM_STND_DEGR = #term_stnd_degr#
+   AND TERM_MATL_SEQ0 = #term_matl_seq0#
+   AND TERM_MATL_GUBN = #term_matl_gubn#
+  ]]>
+ </sql>
+</sql-descriptor> 
