@@ -458,7 +458,7 @@
                         me.set("searchParam.items", provider.getItems());
                         me.$.setConf.body = { param : me.searchParam };
 
-                        ci11.setConf(me.$.setConf).then((data) => me.$.msg.showMsg(data));
+                        commonJS.callService(me.$.setConf).then((data) => me.$.msg.showMsg(data));
                         break;
                     default :
                         break;
