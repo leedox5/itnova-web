@@ -69,7 +69,12 @@ SELECT CASE
   FROM T1 A                                                
       LEFT OUTER JOIN                                      
        CATBCMPK B                                          
-
+      ON    B.CMPK_CORP_CODE = A.CMPK_CORP_CODE
+        AND B.CMPK_STND_GUBN = A.CMPK_STND_GUBN
+        AND B.CMPK_STND_DEGR = A.CMPK_STND_DEGR
+        AND B.CMPK_GUBN_CODE = A.CMPK_GUBN_CODE
+        AND B.CMPK_CODE = A.CMPK_CODE
+        AND B.CMPK_SORT_NUMB = A.CMPK_SORT_NUMB
   ]]>
  </sql>
 
@@ -134,12 +139,7 @@ INSERT INTO CATBCMPK (
  <sql id="update" comment="업데이트">
   <![CDATA[
 UPDATE CATBCMPK
-CMPK_CORP_CODE = #cmpk_corp_code#   SET CMPK_STND_GUBN = #cmpk_stnd_gubn#
-      ,CMPK_STND_DEGR = #cmpk_stnd_degr#
-      ,CMPK_GUBN_CODE = #cmpk_gubn_code#
-      ,CMPK_CODE = #cmpk_code#
-      ,CMPK_SORT_NUMB = #cmpk_sort_numb#
-      ,CMPK_GUBN_NAME = #cmpk_gubn_name#
+   SET CMPK_GUBN_NAME = #cmpk_gubn_name#
       ,CMPK_CODE_NAME = #cmpk_code_name#
       ,CMPK_APPL_VALU = #cmpk_appl_valu#
       ,CMPK_APPL_PRIC = #cmpk_appl_pric#
@@ -156,7 +156,12 @@ CMPK_CORP_CODE = #cmpk_corp_code#   SET CMPK_STND_GUBN = #cmpk_stnd_gubn#
       ,CMPK_REMK = #cmpk_remk#
       ,CMPK_UPDT_CMAN = #cmpk_updt_cman#
       ,CMPK_UPDT_DATE = #cmpk_updt_date#
-
+ WHERE CMPK_CORP_CODE = #cmpk_corp_code#
+   AND CMPK_STND_GUBN = #cmpk_stnd_gubn#
+   AND CMPK_STND_DEGR = #cmpk_stnd_degr#
+   AND CMPK_GUBN_CODE = #cmpk_gubn_code#
+   AND CMPK_CODE = #cmpk_code#
+   AND CMPK_SORT_NUMB = #cmpk_sort_numb#
   ]]>
  </sql>
 </sql-descriptor> 
