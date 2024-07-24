@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/TERM/CATBTERP/16-3" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  TERP_CORP_CODE
+ ,TERP_STND_GUBN
+ ,TERP_STND_DEGR
+ ,TERP_PROC_SEQ0
+ ,TERP_PROC_GUBN
+ ,TERP_TERM_CODE
+ ,TERP_TON0_CODE
+ ,TERP_PLAT_CODE
+ ,TERP_MASK_YN
+ ,TERP_PROC_NAME
+ ,TERP_NET0_CYTM
+ ,TERP_TINP_YN
+ ,TERP_CAVT
+ ,TERP_PREP_HOUR
+ ,TERP_PRSN_CNT0
+ ,TERP_MCHH_CODE
+ ,TERP_APPL_GUBN
+ ,TERP_REMK
+ ,TERP_UPDT_CMAN
+ ,TERP_UPDT_DATE
+ ,TERP_INIT_CMAN
+ ,TERP_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'16-3' ,'1' ,'PRESS' ,'EAR_RING' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.26' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,'준비시간=SEC : NET CT에 합산 처리' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'2' ,'PRESS' ,'GEN_RING' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'3' ,'PRESS' ,'COM_ISRT' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.21' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'4' ,'PRESS' ,'COM_JOIN' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.38' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'5' ,'PRESS' ,'BRONZE' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'6' ,'PRESS' ,'PCB_TAB' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.1' ,'1' ,'0.001' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'7' ,'PRESS' ,'GEN_R550' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.11' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'8' ,'PRESS' ,'GEN_R450' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'9' ,'PRESS' ,'GEN_R300' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'10' ,'PRESS' ,'GEN_T500' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'11' ,'PRESS' ,'GEN_T400' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.15' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'12' ,'PRESS' ,'GEN_T300' ,'30T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'30TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'13' ,'PRESS' ,'EAR_RING' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.26' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,'준비시간=SEC : NET CT에 합산 처리' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'14' ,'PRESS' ,'GEN_RING' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'15' ,'PRESS' ,'COM_ISRT' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.21' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'16' ,'PRESS' ,'COM_JOIN' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.38' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'17' ,'PRESS' ,'BRONZE' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'18' ,'PRESS' ,'PCB_TAB' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.1' ,'1' ,'0.001' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'19' ,'PRESS' ,'GEN_R550' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.11' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'20' ,'PRESS' ,'GEN_R450' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'21' ,'PRESS' ,'GEN_R300' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'22' ,'PRESS' ,'GEN_T500' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'23' ,'PRESS' ,'GEN_T400' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.15' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'24' ,'PRESS' ,'GEN_T300' ,'45T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'45TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'25' ,'PRESS' ,'EAR_RING' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.26' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,'준비시간=SEC : NET CT에 합산 처리' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'26' ,'PRESS' ,'GEN_RING' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'27' ,'PRESS' ,'COM_ISRT' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.21' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'28' ,'PRESS' ,'COM_JOIN' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.38' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'29' ,'PRESS' ,'BRONZE' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'30' ,'PRESS' ,'PCB_TAB' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.1' ,'1' ,'0.001' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'31' ,'PRESS' ,'GEN_R550' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.11' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'32' ,'PRESS' ,'GEN_R450' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.13' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'33' ,'PRESS' ,'GEN_R300' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'34' ,'PRESS' ,'GEN_T500' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.12' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'35' ,'PRESS' ,'GEN_T400' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.15' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'36' ,'PRESS' ,'GEN_T300' ,'60T' ,'ALL' ,'ALL' ,'고속 PRESS' ,'ALL' ,'0.2' ,'1' ,'0.013' ,'0.8' ,'60TON-PRESS' ,'Y' ,NULL ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'37' ,'PL_NI' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'니켈도금' ,'ALL' ,'2.76' ,'1' ,'0' ,'1.5' ,'TERM-NI-COAT-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'38' ,'PL_NI' ,'ALL' ,'ALL' ,'AG' ,'ALL' ,'니켈도금' ,'ALL' ,'2.76' ,'1' ,'0' ,'1.5' ,'TERM-NI-COAT-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'39' ,'PL_MASK1' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'마스킹' ,'ALL' ,'1.13' ,'1' ,'0' ,'1' ,'TERM-MASKING-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'40' ,'PL_MASK1' ,'ALL' ,'ALL' ,'AG' ,'ALL' ,'마스킹' ,'ALL' ,'1.13' ,'1' ,'0' ,'1' ,'TERM-MASKING-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'41' ,'PL_AU' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'금도금' ,'ALL' ,'0.52' ,'1' ,'0' ,'1.5' ,'TERM-AU-COAT-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'42' ,'PL_AUWA' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'금도금 후 세척' ,'ALL' ,'4.49' ,'1' ,'0' ,'1.5' ,'TERM-AU-WASH-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'43' ,'PL_AG' ,'ALL' ,'ALL' ,'AG' ,'ALL' ,'은도금' ,'ALL' ,'4.49' ,'1' ,'0' ,'1.5' ,'TERM-AG-COAT-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'44' ,'PL_AGWA' ,'ALL' ,'ALL' ,'AG' ,'ALL' ,'은도금 후 세척' ,'ALL' ,'4.49' ,'1' ,'0' ,'1.5' ,'TERM-AG-WASH-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'45' ,'PL_MASK2' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'마스킹' ,'Y' ,'4.49' ,'1' ,'0' ,'1.5' ,'TERM-MASKING-LINE' ,'Y' ,'NET CT=별도계산,주석도금시 마스킹함' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-3' ,'46' ,'PL_SN' ,'ALL' ,'ALL' ,'AU' ,'ALL' ,'주석도금' ,'Y' ,'4.49' ,'1' ,'0' ,'1.5' ,'TERM-SN-COAT-LINE' ,'Y' ,'NET CT=별도계산' ,'SYSTEM24' ,'20240206' ,'SYSTEM24' ,'20240206'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.TERP_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.TERP_UPDT_DATE > B.TERP_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBTERP B                                          
+      ON    B.TERP_CORP_CODE = A.TERP_CORP_CODE
+        AND B.TERP_STND_GUBN = A.TERP_STND_GUBN
+        AND B.TERP_STND_DEGR = A.TERP_STND_DEGR
+        AND B.TERP_PROC_SEQ0 = A.TERP_PROC_SEQ0
+        AND B.TERP_PROC_GUBN = A.TERP_PROC_GUBN
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBTERP (
+  TERP_CORP_CODE
+ ,TERP_STND_GUBN
+ ,TERP_STND_DEGR
+ ,TERP_PROC_SEQ0
+ ,TERP_PROC_GUBN
+ ,TERP_TERM_CODE
+ ,TERP_TON0_CODE
+ ,TERP_PLAT_CODE
+ ,TERP_MASK_YN
+ ,TERP_PROC_NAME
+ ,TERP_NET0_CYTM
+ ,TERP_TINP_YN
+ ,TERP_CAVT
+ ,TERP_PREP_HOUR
+ ,TERP_PRSN_CNT0
+ ,TERP_MCHH_CODE
+ ,TERP_APPL_GUBN
+ ,TERP_REMK
+ ,TERP_UPDT_CMAN
+ ,TERP_UPDT_DATE
+ ,TERP_INIT_CMAN
+ ,TERP_INIT_DATE
+) VALUES (
+  #terp_corp_code#
+ ,#terp_stnd_gubn#
+ ,#terp_stnd_degr#
+ ,#terp_proc_seq0#
+ ,#terp_proc_gubn#
+ ,#terp_term_code#
+ ,#terp_ton0_code#
+ ,#terp_plat_code#
+ ,#terp_mask_yn#
+ ,#terp_proc_name#
+ ,#terp_net0_cytm#
+ ,#terp_tinp_yn#
+ ,#terp_cavt#
+ ,#terp_prep_hour#
+ ,#terp_prsn_cnt0#
+ ,#terp_mchh_code#
+ ,#terp_appl_gubn#
+ ,#terp_remk#
+ ,#terp_updt_cman#
+ ,#terp_updt_date#
+ ,#terp_init_cman#
+ ,#terp_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBTERP
+   SET TERP_TERM_CODE = #terp_term_code#
+      ,TERP_TON0_CODE = #terp_ton0_code#
+      ,TERP_PLAT_CODE = #terp_plat_code#
+      ,TERP_MASK_YN = #terp_mask_yn#
+      ,TERP_PROC_NAME = #terp_proc_name#
+      ,TERP_NET0_CYTM = #terp_net0_cytm#
+      ,TERP_TINP_YN = #terp_tinp_yn#
+      ,TERP_CAVT = #terp_cavt#
+      ,TERP_PREP_HOUR = #terp_prep_hour#
+      ,TERP_PRSN_CNT0 = #terp_prsn_cnt0#
+      ,TERP_MCHH_CODE = #terp_mchh_code#
+      ,TERP_APPL_GUBN = #terp_appl_gubn#
+      ,TERP_REMK = #terp_remk#
+      ,TERP_UPDT_CMAN = #terp_updt_cman#
+      ,TERP_UPDT_DATE = #terp_updt_date#
+ WHERE TERP_CORP_CODE = #terp_corp_code#
+   AND TERP_STND_GUBN = #terp_stnd_gubn#
+   AND TERP_STND_DEGR = #terp_stnd_degr#
+   AND TERP_PROC_SEQ0 = #terp_proc_seq0#
+   AND TERP_PROC_GUBN = #terp_proc_gubn#
+  ]]>
+ </sql>
+</sql-descriptor> 
