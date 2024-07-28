@@ -1,4 +1,3 @@
-src-git.txt
 src\ui\bp\tcams\cr\cr01\es-cr01-01.html
 src\volcano-conf\services\tcams\service-bp-tcams-cr-cr01.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDT.xml
