@@ -21,3 +21,5 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-PKMS.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBBRAP-19-2.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBBRAM-19-2.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBCMPK-19-2.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CASPBRAZ_P19_2.xml
+
