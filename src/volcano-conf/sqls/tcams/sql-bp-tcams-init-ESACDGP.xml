@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/ESACDGP" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE ESACDGP(
+ SYS_ID VARCHAR(18),
+ GRP_CD VARCHAR(18),
+ CD_TYP VARCHAR(18),
+ USE_YN CHAR(1),
+ REM VARCHAR(128),
+ STS CHAR(1),
+ REG_ID VARCHAR(18),
+ REG_DT TIMESTAMP(0) WITH TIME ZONE(17),
+ MOD_ID VARCHAR(18),
+ MOD_DT TIMESTAMP(0) WITH TIME ZONE(17),
+ CONSTRAINT ESACDGP_PK PRIMARY KEY (
+  SYS_ID,
+  GRP_CD
+ )
+)  
+  ]]>
+ </sql>
+
+ <sql id="COLS">
+  <![CDATA[
+WITH T01(C01, C02, C03, C04, C05) AS (
+       SELECT 1, 'ESACDGP' , 'SYS_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 2, 'ESACDGP' , 'GRP_CD', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 3, 'ESACDGP' , 'CD_TYP', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 4, 'ESACDGP' , 'USE_YN', 'CHAR', 1 FROM DUAL
+ UNION SELECT 5, 'ESACDGP' , 'REM', 'VARCHAR', 128 FROM DUAL
+ UNION SELECT 6, 'ESACDGP' , 'STS', 'CHAR', 1 FROM DUAL
+ UNION SELECT 7, 'ESACDGP' , 'REG_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 8, 'ESACDGP' , 'REG_DT', 'TIMESTAMP(0) WITH TIME ZONE', 17 FROM DUAL
+ UNION SELECT 9, 'ESACDGP' , 'MOD_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 10, 'ESACDGP' , 'MOD_DT', 'TIMESTAMP(0) WITH TIME ZONE', 17 FROM DUAL
+)
+SELECT CASE WHEN B.COLUMN_NAME IS NULL THEN 'N' ELSE 'Y' END CHK_YN
+      ,A.*
+  FROM T01 A
+      LEFT OUTER JOIN
+       USER_TAB_COLUMNS B
+      ON    B.TABLE_NAME  = A.C02
+        AND B.COLUMN_NAME = A.C03
+ ORDER BY A.C01         
+  ]]>
+ </sql>
+
+ <sql id="DESC">
+  <![CDATA[
+WITH T01(C01, C02, C03) AS (
+       SELECT 1, 'SYS_ID', '... ... ' FROM DUAL
+ UNION SELECT 2, 'GRP_CD', '.. .. ' FROM DUAL
+ UNION SELECT 3, 'CD_TYP', '.. .. ' FROM DUAL
+ UNION SELECT 4, 'USE_YN', '.. .. ' FROM DUAL
+ UNION SELECT 5, 'REM', '.. ' FROM DUAL
+ UNION SELECT 6, 'STS', '.. ' FROM DUAL
+ UNION SELECT 7, 'REG_ID', '... ... ' FROM DUAL
+ UNION SELECT 8, 'REG_DT', '.. .. ' FROM DUAL
+ UNION SELECT 9, 'MOD_ID', '... ... ' FROM DUAL
+ UNION SELECT 10, 'MOD_DT', '.. .. ' FROM DUAL  
+)
+SELECT CASE WHEN B.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,B.TABLE_NAME
+      ,B.COMMENTS
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS B
+      ON    B.TABLE_NAME  = #table_name#
+        AND B.COLUMN_NAME = A.C02
+   
+  ]]>
+ </sql>
+
+ <sq id="SELECT">
+  <![CDATA[
+WITH T01 (
+  SYS_ID
+ ,GRP_CD
+ ,CD_TYP
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) AS (
+       SELECT '100', 'CHK_USER', 'WCA', 'Y', NULL, 'C', 'SYSTEMPG', '2024-07-28 17:01:00', 'SYSTEMPG', '2024-07-28 17:01:00' FROM DUAL
+)
+SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       ESACDGP B
+      ON    B.SYS_ID = A.SYS_ID
+        AND B.GRP_CD = A.GRP_CD
+  ]]>
+ </sq> 
+
+ <sq id="INSERT">
+  <![CDATA[
+INSERT INTO ESACDGP (
+  SYS_ID
+ ,GRP_CD
+ ,CD_TYP
+ ,USE_YN
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) VALUES (
+  #sys_id#
+ ,#grp_cd#
+ ,#cd_typ#
+ ,#use_yn#
+ ,#rem#
+ ,#sts#
+ ,#reg_id#
+ ,#reg_dt#
+ ,#mod_id#
+ ,#mod_dt#
+)
+  ]]>
+ </sq> 
+
+ <sq id="SELECT.2407.01">
+  <![CDATA[
+SELECT *
+  FROM ESACDGP
+ WHERE CD_TYP = 'WCA' 
+   AND GRP_CD IN ('CHK_USER')
+  ]]>
+ </sq> 
+ 
+</sql-descriptor>
