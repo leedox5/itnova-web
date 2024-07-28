@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 공통코드 관련 sql xml 공통 콤보 관련 조회성 서비스들 -->
+<!-- CC01:콤보박스, CC02:코드 팝업 그외 추가시 반드시 주석에 해당정보를 기술할 것 -->
+<sql-descriptor id="bp/tcams/cc/cc02" data-source="tcamsDS">
+	<sql id="ca_matltype.list.select" comment="공통코드 재료종류 조회">
+        <![CDATA[
+		SELECT A.DTL_CD    CODE
+		      ,B.DTL_CD_NM CODE_NAME
+		  FROM ESACDDT A
+		      ,ESACDDL B
+		 WHERE A.SYS_ID = #sys_id#
+           AND A.GRP_CD = 'CA_MATLTYPE'
+           AND B.LANG_CD = 'ko_KR'
+           AND A.SYS_ID = B.SYS_ID (+)
+           AND A.GRP_CD = B.GRP_CD (+)
+           AND A.DTL_CD = B.DTL_CD (+)
+           ORDER BY A.SORT_ORD
+	    ]]>
+	</sql>
+	<sql id="ca_matlclas.list.select" comment="공통코드 재료분류 조회">
+        <![CDATA[
+		SELECT A.SORT_ORD  SORT_NO
+		      ,A.DTL_CD    CODE
+		      ,B.DTL_CD_NM CODE_NAME
+		      ,B.REM       CODE_DESC
+		      ,'N'         CHK
+		  FROM ESACDDT A
+		      ,ESACDDL B
+		 WHERE A.SYS_ID = '100'
+           AND A.GRP_CD = 'CA_MATLCLAS'
+           AND B.LANG_CD = 'ko_KR'
+          [AND A.DTL_CD  LIKE UPPER(#matl_clas_code#)||'%']
+           AND A.SYS_ID = B.SYS_ID (+)
+           AND A.GRP_CD = B.GRP_CD (+)
+           AND A.DTL_CD = B.DTL_CD (+)
+           ORDER BY A.SORT_ORD
+        ]]>
+	</sql>
+	<sql id="ca_unit.list.select" comment="공통코드  단위정보 조회">
+        <![CDATA[
+		SELECT A.SORT_ORD  SORT_NO
+		      ,A.DTL_CD    CODE
+		      ,B.DTL_CD_NM CODE_NAME
+		      ,B.REM       CODE_DESC
+		  FROM ESACDDT A
+		      ,ESACDDL B
+		 WHERE A.SYS_ID  = '100'
+           AND A.GRP_CD  = 'CA_UNIT'
+           AND B.LANG_CD = 'ko_KR'
+          [AND B.REM     = #sb_unit_gubn#]
+           AND A.SYS_ID  = B.SYS_ID (+)
+           AND A.GRP_CD  = B.GRP_CD (+)
+           AND A.DTL_CD  = B.DTL_CD (+)
+           ORDER BY A.SORT_ORD
+        ]]>
+	</sql>
+	
+	<sql id="comecode_degr.list.select" comment="공법 적용차수 선택 조회">
+        <![CDATA[
+			SELECT A.MTCD_SORT_KEY0
+			      ,A.MTCD_COME_CODE       COMD_COME_CODE
+			      ,A.MTCD_METH_NAME       COMD_METH_NAME
+			      ,B.MTDG_STND_DEGR       CODE
+			      ,B.MTDG_TRAN_DEGR       COMD_TRAN_DEGR
+			      ,B.MTDG_STND_DEGR||'차'  COMD_MTDG_DESC
+			      ,B.MTDG_HKMC_DEGR       COMD_HKMC_DEGR
+			      ,B.MTDG_APPL_DATE       COMD_APPL_DATE
+			      ,B.MTDG_DEGR_CONT       COMD_DEGR_CONT
+			      ,(
+			        SELECT COUNT(E.ATT_SEQ) AS FILE_CNT
+			          FROM ESAATTH E
+			         WHERE E.STS <> 'D'
+			           AND E.SYS_ID = #sys_id#
+			           AND E.GRP_CD = MTDG_ATT_GRP_CD
+			       ) FILE_CNT
+			      ,MTDG_ATT_GRP_CD COMD_ATT_GRP_CD
+			  FROM CITBMTCD A
+			      ,CITBMTDG B
+			 WHERE A.MTCD_CORP_CODE  = #corp_cd#
+			   AND A.MTCD_CORP_CODE  = B.MTDG_CORP_CODE
+			   AND A.MTCD_COME_CODE  = B.MTDG_COME_CODE
+			   AND A.MTCD_METH_GUBN  = B.MTDG_METH_GUBN
+			   AND B.MTDG_APPL_DATE <= #cur_date#
+			   AND MTDG_APPL_YN      = 'Y'
+			   [AND MTDG_METH_GUBN = #mtdg_meth_gubn#]
+			   AND NVL(MTDG_MXML_PATH, ' ') <> ' '
+			   @sql@
+			 ORDER BY A.MTCD_SORT_KEY0
+			         ,A.MTCD_COME_CODE
+			         ,B.MTDG_APPL_DATE
+        ]]>
+	</sql>
+
+</sql-descriptor> 

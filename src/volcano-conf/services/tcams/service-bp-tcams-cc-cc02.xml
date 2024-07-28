@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 공통코드 관련 서비스 호출 xml 공통 콤보 관련 조회성 서비스들 -->
+<!-- CC01:콤보박스, CC02:코드 팝업 그외 추가시 반드시 주석에 해당정보를 기술할 것 -->
+<service-descriptor id="bp/tcams/cc/cc02">
+    <service id="get.ca_matltype.list" label="공통코드 재료종류 조회">
+        <script>
+            <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/cc/cc02", "ca_matltype.list.select", $data.param)
+            ]]>
+        </script>
+    </service>
+    <service id="get.ca_matlclas.list" label="공통코드 재료분류 조회">
+        <script>
+            <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/cc/cc02", "ca_matlclas.list.select", $data.param)
+            ]]>
+        </script>
+    </service>
+    <service id="get.ca_unit.list" label="공통코드  단위정보 조회">
+        <script>
+            <![CDATA[
+            $data.result = $jdbc.queryList("bp/tcams/cc/cc02", "ca_unit.list.select", $data.param)
+            ]]>
+        </script>
+    </service>
+
+ <service id="get.comecode_degr.list" label="공법 적용차수 선택 조회">
+  <script>
+   <![CDATA[
+    if ($data.param.come_code == 'PIPE' || $data.param.come_code == 'PIWR') {
+        $data.param.sql = "AND A.MTCD_COME_CODE IN ('PIPE', 'PIWR')";
+    } else {
+        $data.param.sql = "AND A.MTCD_COME_CODE = '" + $data.param.come_code + "'";
+    }
+
+    if($data.param.come_code.substring(0,1) == "M") {
+        if($data.param.come_code == "MCHH") {
+            $data.param.mtdg_meth_gubn = "A";
+        } else if($data.param.come_code == "MANU"){
+            $data.param.mtdg_meth_gubn = "A";
+        } else if($data.param.come_code == "MIMF"){
+            $data.param.mtdg_meth_gubn = "A";
+        } else if($data.param.come_code == "MT10"){
+            $data.param.mtdg_meth_gubn = "A";
+        } else if($data.param.come_code == "MT20"){
+            $data.param.mtdg_meth_gubn = "A";
+        } else {
+            $data.param.mtdg_meth_gubn = "M";
+        }
+    } else {
+        $data.param.mtdg_meth_gubn = "A";
+    }
+
+    var chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0001", null);
+    chk = $jdbc.query("bp/tcams/cd/cd09/2023", "08.0002", chk);
+    $data.param.cur_date = chk.cur_date;
+
+    $data.result = $jdbc.queryList("bp/tcams/cc/cc02", "comecode_degr.list.select", $data.param)
+   ]]>
+  </script>
+ </service>
+</service-descriptor>
