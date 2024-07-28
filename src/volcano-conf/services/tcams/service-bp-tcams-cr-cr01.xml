@@ -201,10 +201,6 @@
                 $data.param.encdQryStr = "";
                 $data.param.dstdQryStr = "";
                 
-				if($data.param.comd_cost_gubn_R == "AA") {
-				    $data.param.comd_cost_gubn_R = null;
-				}
-                
                 if( !( $data.param.tmcdCodeStr == null || $data.param.tmcdCodeStr == '' ) ) {
             		$data.param.tmcdQryStr = "AND EMST_TMCD_CODE IN (" + $data.param.tmcdCodeStr + ")";    
                 }
@@ -228,18 +224,27 @@
 		</script>
 	</service>	
 
-	<!-- 개발부문 -->
-	<service id="get.comm.codes" label="공통코드 제공">
-		<script>
-			<![CDATA[
-			$data.result = $jdbc.queryList("bp/tcams/cr/cr01","get.comm.codes",$data.param);
-			var chkList = new List();
-			$data.param.dept_cd = $user.dept_cd;
-			chkList = $jdbc.queryList("bp/tcams/cr/cr01", "get.chk", $data.param);
-			$data.chk = chkList[0];
-			]]>
-		</script>
-	</service>
+ <service id="get.comm.codes" label="공통코드 제공">
+  <script>
+   <![CDATA[
+    var chkList = new List();
+    var chk
+    
+    try {
+        $data.result = $jdbc.queryList("bp/tcams/cr/cr01","get.comm.codes",$data.param);
+        
+        $data.param.dept_cd = $user.dept_cd;
+        chkList = $jdbc.queryList("bp/tcams/cr/cr01", "get.chk", $data.param);
+        $data.chk = chkList[0];
+        
+        var auths = $jdbc.queryList("bp/tcams/ci/ci03/conf/USER", "select", null);
+        $data.auth = auths[0];
+    } catch(e) {
+        $logger.info(e.message);
+    }
+   ]]>
+  </script>
+ </service>
 
 	<!-- END ITEM tmcd -->
 	<service id="get.ca_tmcdcode.list" label="기종 가져오기">

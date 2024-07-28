@@ -818,6 +818,9 @@
                 console.log(data);
                 me.set("searchParam.chk_dept", data.chk.chk_dept);
 
+                if(data.auth.dev_auth == "Y") {
+                	me.set("searchParam.comd_from_date", "");
+                }
                 me.controlComp();
             },
 
