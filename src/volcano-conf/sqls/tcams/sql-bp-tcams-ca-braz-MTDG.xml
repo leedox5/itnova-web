@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<sql-descriptor id="bp/tcams/ca/braz/MTDG" data-source="tcamsDS">
+<sql-descriptor id="bp/tcams/ca/BRAZ/MTDG" data-source="tcamsDS">
 
  <sql id="select" comment="조회">
   <![CDATA[
@@ -30,12 +30,13 @@ WITH T1 (
  ,MTDG_MCHH_DATE
  ,MTDG_MODL_NAME
 ) AS (
-           SELECT 'K1', 'A', 'BRAZ', '16-1', NULL, '20140101', '20150901', NULL, '전력소비율 개정', NULL, '소순철', '5297', '한창선', NULL, 'PCF20020', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', '13312', 'N', '20151207', 'ADMIN', '20151207', 'ADMIN', NULL, NULL, NULL FROM DUAL
- UNION ALL SELECT 'K1', 'A', 'BRAZ', '17', NULL, '20171201', '20171201', '17', '원가계산기준 일원화', NULL, '우한섭', '5295', '한창선', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', '13613', 'Y', '20171214', 'SYSTEM', '20171214', 'SYSTEM', '1', '20171201', 'CASPBRAZ_P17_3' FROM DUAL
+           SELECT 'K1', 'A', 'BRAZ', '16-1', NULL, '20140101', '20150901', NULL  , '전력소비율 개정', NULL, '소순철', '5297', '한창선', NULL, 'PCF20020', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', '13312', 'N', '20151207', 'ADMIN', '20151207', 'ADMIN', NULL, NULL, NULL FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'BRAZ', '17'  , NULL, '20171201', '20171201', '17'  , '원가계산기준 일원화', NULL, '우한섭', '5295', '한창선', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', '13613', 'Y', '20171214', 'SYSTEM', '20171214', 'SYSTEM', '1', '20171201', 'CASPBRAZ_P17_3' FROM DUAL
  UNION ALL SELECT 'K1', 'A', 'BRAZ', '17-3', NULL, '20191201', '20191201', '17-3', 'LNG단가변경외', NULL, '나종훈', '5393', '한창선', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p17c.html', '13613', 'Y', '20191217', 'SYSTEM', '20191217', 'SYSTEM', '2', '20191201', 'CASPBRAZ_P17_3' FROM DUAL
  UNION ALL SELECT 'K1', 'A', 'BRAZ', '18-1', NULL, '20221102', '20221102', '18-1', '개정 2022', NULL, '나종훈', '5393', '한창선', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p18a.html', '13613', 'Y', '20220701', 'SYSTEMPG', '20220629', 'SYSTEMPG', '3', '20221102', 'CASPBRAZ_P18_1' FROM DUAL
  UNION ALL SELECT 'K1', 'A', 'BRAZ', '18-3', NULL, '20231001', '20231001', '18-3', NULL, NULL, '손한민', '5393', '한창선', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p18a.html', NULL, 'Y', '20230930', 'ADMIN', '20230930', 'ADMIN', '4', '20231002', 'CASPBRAZ_P18_3' FROM DUAL
- UNION ALL SELECT 'K1', 'A', 'BRAZ', '18-5', NULL, '20240215', '20240215', '18-5', '전력단가 변경/LPG GAS단가 변경', NULL, '안정환', '5374', '오원규', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p18a.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '5', '20240215', 'CASPBRAZ_P18_5' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'BRAZ', '18-5', NULL, '20240215', '20240215', '18-5', '전력단가 변경/LPG GAS단가 변경'                                                , NULL, '안정환', '5374', '오원규', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p18a.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '5', '20240215', 'CASPBRAZ_P18_5' FROM DUAL
+ UNION ALL SELECT 'K1', 'A', 'BRAZ', '19-2', NULL, '20240901', '20240901', '19-2', '전력단가변경,임율변경,진공NI브레이징 부재료단가 개정 및 연속진공로 가공비 제정', NULL, '안정환', '5374', '오원규', '5272', 'PCF30160', 'ui/bp/tcams/ca/braz/em-cabraz-p18a.html', NULL, 'Y', '20240901', 'ADMIN', '20240901', 'ADMIN', '6', '20240901', 'CASPBRAZ_P19_2' FROM DUAL 
 )
 SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,CASE WHEN A.MTDG_UPDT_DATE > B.MTDG_UPDT_DATE THEN 'N' ELSE 'Y' END UPDATED_YN
@@ -52,7 +53,7 @@ SELECT CASE WHEN B.MTDG_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
         AND B.MTDG_METH_GUBN = A.MTDG_METH_GUBN
         AND B.MTDG_COME_CODE = A.MTDG_COME_CODE
         AND B.MTDG_STND_DEGR = A.MTDG_STND_DEGR
- ORDER BY MTDG_APPL_DATE        
+ ORDER BY A.MTDG_APPL_DATE
   ]]>
  </sql>
  

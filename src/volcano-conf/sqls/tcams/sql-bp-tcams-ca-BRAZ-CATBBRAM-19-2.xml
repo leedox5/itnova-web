@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/BRAZ/CATBBRAM/19-2" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  BRAM_CORP_CODE
+ ,BRAM_STND_GUBN
+ ,BRAM_STND_DEGR
+ ,BRAM_MATL_SEQ0
+ ,BRAM_MATL_NAME
+ ,BRAM_MATL_CODE
+ ,BRAM_IMPT_CODE
+ ,BRAM_MATL_PRIC
+ ,BRAM_MATL_UNT0
+ ,BRAM_MATL_UNIT
+ ,BRAM_MATL_USE0
+ ,BRAM_MATL_APLY
+ ,BRAM_APPL_GUBN
+ ,BRAM_REMK
+ ,BRAM_UPDT_CMAN
+ ,BRAM_UPDT_DATE
+ ,BRAM_INIT_CMAN
+ ,BRAM_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'19-2' ,'1' ,'질소가스(진공제어,냉각)' ,'NITROGAS' ,NULL ,'201' ,'m3' ,'m3' ,'40' ,'0' ,'Y' ,NULL ,'SYSTEM24' ,'20240901' ,'SYSTEM24' ,'20240901'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-2' ,'2' ,'브레이징 PASTE(내부 BNI-5 계열)' ,'IN_BNI_5' ,NULL ,'49118' ,'kg' ,'kg' ,'0.11' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240901' ,'SYSTEM24' ,'20240901'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-2' ,'3' ,'브레이징 PASTE(외부 BNI-2 계열)' ,'IN_BNI_2' ,NULL ,'44274' ,'kg' ,'kg' ,'0.11' ,'1' ,'Y' ,NULL ,'SYSTEM24' ,'20240901' ,'SYSTEM24' ,'20240901'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-2' ,'4' ,'브레이징 FOIL' ,'FOIL' ,NULL ,'82171' ,'kg' ,'kg' ,'0' ,'1' ,'Y' ,'사용량=입력값 적용' ,'SYSTEM24' ,'20240901' ,'SYSTEM24' ,'20240901'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'19-2' ,'5' ,'SCRAP비' ,'SCRAP' ,NULL ,'0' ,'kg' ,'kg' ,'0' ,'0' ,'Y' ,'단가=직접입력가 적용' ,'SYSTEM24' ,'20240901' ,'SYSTEM24' ,'20240901'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.BRAM_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.BRAM_UPDT_DATE > B.BRAM_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBBRAM B                                          
+      ON    B.BRAM_CORP_CODE = A.BRAM_CORP_CODE
+        AND B.BRAM_STND_GUBN = A.BRAM_STND_GUBN
+        AND B.BRAM_STND_DEGR = A.BRAM_STND_DEGR
+        AND B.BRAM_MATL_SEQ0 = A.BRAM_MATL_SEQ0
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBBRAM (
+  BRAM_CORP_CODE
+ ,BRAM_STND_GUBN
+ ,BRAM_STND_DEGR
+ ,BRAM_MATL_SEQ0
+ ,BRAM_MATL_NAME
+ ,BRAM_MATL_CODE
+ ,BRAM_IMPT_CODE
+ ,BRAM_MATL_PRIC
+ ,BRAM_MATL_UNT0
+ ,BRAM_MATL_UNIT
+ ,BRAM_MATL_USE0
+ ,BRAM_MATL_APLY
+ ,BRAM_APPL_GUBN
+ ,BRAM_REMK
+ ,BRAM_UPDT_CMAN
+ ,BRAM_UPDT_DATE
+ ,BRAM_INIT_CMAN
+ ,BRAM_INIT_DATE
+) VALUES (
+  #bram_corp_code#
+ ,#bram_stnd_gubn#
+ ,#bram_stnd_degr#
+ ,#bram_matl_seq0#
+ ,#bram_matl_name#
+ ,#bram_matl_code#
+ ,#bram_impt_code#
+ ,#bram_matl_pric#
+ ,#bram_matl_unt0#
+ ,#bram_matl_unit#
+ ,#bram_matl_use0#
+ ,#bram_matl_aply#
+ ,#bram_appl_gubn#
+ ,#bram_remk#
+ ,#bram_updt_cman#
+ ,#bram_updt_date#
+ ,#bram_init_cman#
+ ,#bram_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBBRAM
+   SET BRAM_MATL_NAME = #bram_matl_name#
+      ,BRAM_MATL_CODE = #bram_matl_code#
+      ,BRAM_IMPT_CODE = #bram_impt_code#
+      ,BRAM_MATL_PRIC = #bram_matl_pric#
+      ,BRAM_MATL_UNT0 = #bram_matl_unt0#
+      ,BRAM_MATL_UNIT = #bram_matl_unit#
+      ,BRAM_MATL_USE0 = #bram_matl_use0#
+      ,BRAM_MATL_APLY = #bram_matl_aply#
+      ,BRAM_APPL_GUBN = #bram_appl_gubn#
+      ,BRAM_REMK = #bram_remk#
+      ,BRAM_UPDT_CMAN = #bram_updt_cman#
+      ,BRAM_UPDT_DATE = #bram_updt_date#
+ WHERE BRAM_CORP_CODE = #bram_corp_code#
+   AND BRAM_STND_GUBN = #bram_stnd_gubn#
+   AND BRAM_STND_DEGR = #bram_stnd_degr#
+   AND BRAM_MATL_SEQ0 = #bram_matl_seq0#
+  ]]>
+ </sql>
+</sql-descriptor> 
