@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/ESACDGL" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE ESACDGL(
+ SYS_ID VARCHAR(18),
+ LANG_CD VARCHAR(18),
+ GRP_CD VARCHAR(18),
+ GRP_CD_NM VARCHAR(60),
+ REM VARCHAR(128),
+ STS CHAR(1),
+ REG_ID VARCHAR(18),
+ REG_DT TIMESTAMP(0) WITH TIME ZONE(17),
+ MOD_ID VARCHAR(18),
+ MOD_DT TIMESTAMP(0) WITH TIME ZONE(17),
+ CONSTRAINT ESACDGL_PK PRIMARY KEY (
+  SYS_ID,
+  LANG_CD,
+  GRP_CD
+ )
+)  
+  ]]>
+ </sql>
+
+ <sql id="COLS">
+  <![CDATA[
+WITH T01(C01, C02, C03, C04, C05) AS (
+       SELECT 1, 'ESACDGL' , 'SYS_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 2, 'ESACDGL' , 'LANG_CD', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 3, 'ESACDGL' , 'GRP_CD', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 4, 'ESACDGL' , 'GRP_CD_NM', 'VARCHAR', 60 FROM DUAL
+ UNION SELECT 5, 'ESACDGL' , 'REM', 'VARCHAR', 128 FROM DUAL
+ UNION SELECT 6, 'ESACDGL' , 'STS', 'CHAR', 1 FROM DUAL
+ UNION SELECT 7, 'ESACDGL' , 'REG_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 8, 'ESACDGL' , 'REG_DT', 'TIMESTAMP(0) WITH TIME ZONE', 17 FROM DUAL
+ UNION SELECT 9, 'ESACDGL' , 'MOD_ID', 'VARCHAR', 18 FROM DUAL
+ UNION SELECT 10, 'ESACDGL' , 'MOD_DT', 'TIMESTAMP(0) WITH TIME ZONE', 17 FROM DUAL
+)
+SELECT CASE WHEN B.COLUMN_NAME IS NULL THEN 'N' ELSE 'Y' END CHK_YN
+      ,A.*
+  FROM T01 A
+      LEFT OUTER JOIN
+       USER_TAB_COLUMNS B
+      ON    B.TABLE_NAME  = A.C02
+        AND B.COLUMN_NAME = A.C03
+ ORDER BY A.C01         
+  ]]>
+ </sql>
+
+ <sql id="DESC">
+  <![CDATA[
+WITH T01(C01, C02, C03) AS (
+       SELECT 1, 'SYS_ID', '시스템 아이디 ' FROM DUAL
+ UNION SELECT 2, 'LANG_CD', '언어 코드 ' FROM DUAL
+ UNION SELECT 3, 'GRP_CD', '그룹 코드 ' FROM DUAL
+ UNION SELECT 4, 'GRP_CD_NM', '그룹 코드 명 ' FROM DUAL
+ UNION SELECT 5, 'REM', '비고 ' FROM DUAL
+ UNION SELECT 6, 'STS', '상태 ' FROM DUAL
+ UNION SELECT 7, 'REG_ID', '등록자 아이디 ' FROM DUAL
+ UNION SELECT 8, 'REG_DT', '등록 일시 ' FROM DUAL
+ UNION SELECT 9, 'MOD_ID', '수정자 아이디 ' FROM DUAL
+ UNION SELECT 10, 'MOD_DT', '수정 일시 ' FROM DUAL  
+)
+SELECT CASE WHEN B.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,B.TABLE_NAME
+      ,B.COMMENTS
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS B
+      ON    B.TABLE_NAME  = #table_name#
+        AND B.COLUMN_NAME = A.C02
+   
+  ]]>
+ </sql>
+
+ <sq id="SELECT">
+  <![CDATA[
+WITH T01 (
+  SYS_ID
+ ,LANG_CD
+ ,GRP_CD
+ ,GRP_CD_NM
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) AS (
+       SELECT '100', 'ko_KR', 'CHK_USER', '사용자 체크', NULL, 'C', 'SYSTEMPG', '2024-07-28 17:26:00', 'SYSTEMPG', '2024-07-28 17:28:00' FROM DUAL
+)
+SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       ESACDGL B
+      ON    B.SYS_ID = A.SYS_ID
+        AND B.LANG_CD = A.LANG_CD
+        AND B.GRP_CD = A.GRP_CD
+  ]]>
+ </sq> 
+
+ <sq id="INSERT">
+  <![CDATA[
+INSERT INTO ESACDGL (
+  SYS_ID
+ ,LANG_CD
+ ,GRP_CD
+ ,GRP_CD_NM
+ ,REM
+ ,STS
+ ,REG_ID
+ ,REG_DT
+ ,MOD_ID
+ ,MOD_DT
+) VALUES (
+  #sys_id#
+ ,#lang_cd#
+ ,#grp_cd#
+ ,#grp_cd_nm#
+ ,#rem#
+ ,#sts#
+ ,#reg_id#
+ ,#reg_dt#
+ ,#mod_id#
+ ,#mod_dt#
+)
+  ]]>
+ </sq> 
+
+ <sq id="SELECT.2407.01">
+  <![CDATA[
+SELECT *
+  FROM ESACDGL
+ WHERE GRP_CD = 'CHK_USER'
+  ]]>
+ </sq> 
+ 
+</sql-descriptor>
