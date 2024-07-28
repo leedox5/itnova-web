@@ -7,3 +7,4 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGP.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-PKMS.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAI.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAM.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAP.xml
