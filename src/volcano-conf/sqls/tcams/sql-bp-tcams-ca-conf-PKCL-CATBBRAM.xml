@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/conf/PKCL/CATBBRAM" data-source="tcamsDS">
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PKCL_CORP_CODE
+ ,PKCL_COME_CODE
+ ,PKCL_TABL_ID
+ ,PKCL_COLM_ID
+ ,PKCL_SORT_NUMB
+ ,PKCL_COLM_NAME
+ ,PKCL_DATA_TYPE
+ ,PKCL_DATA_LENG
+ ,PKCL_COLM_ALGN
+ ,PKCL_WITH_SCRN
+ ,PKCL_DISP_ALLW
+ ,PKCL_UPDT_DATE
+ ,PKCL_UPDT_CMAN
+ ,PKCL_INIT_DATE
+ ,PKCL_INIT_CMAN  
+) AS (
+           SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_CORP_CODE' ,1 ,'법인코드' ,'VARCHAR2' ,'4' ,'C' ,'60' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_STND_GUBN' ,2 ,'표준구분' ,'CHAR' ,'1' ,'C' ,'40' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_STND_DEGR' ,3 ,'개정차수 ' ,'VARCHAR2' ,'10' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_SEQ0' ,4 ,'재료SEQ' ,'NUMBER' ,'5' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_NAME' ,5 ,'재료명' ,'VARCHAR2' ,'80' ,'L' ,'120' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_CODE' ,6 ,'재료코드' ,'VARCHAR2' ,'8' ,'L' ,'80' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_IMPT_CODE' ,7 ,'수입코드' ,'CHAR' ,'3' ,'C' ,'40' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_PRIC' ,8 ,'재료단가' ,'NUMBER' ,'14' ,'R' ,'100' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_UNT0' ,9 ,'단위' ,'VARCHAR2' ,'8' ,'L' ,'80' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_UNIT' ,10 ,'환산단위' ,'VARCHAR2' ,'8' ,'L' ,'80' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_USE0' ,11 ,'사용량' ,'NUMBER' ,'13' ,'R' ,'100' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_MATL_APLY' ,12 ,'적용량' ,'NUMBER' ,'13' ,'R' ,'100' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_APPL_GUBN' ,13 ,'적용여부' ,'CHAR' ,'1' ,'C' ,'40' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_REMK' ,14 ,'REMARK' ,'VARCHAR2' ,'200' ,'L' ,'200' ,'Y' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_UPDT_CMAN' ,15 ,'수정자' ,'VARCHAR2' ,'8' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_UPDT_DATE' ,16 ,'수정일' ,'VARCHAR2' ,'8' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_INIT_CMAN' ,17 ,'등록자' ,'VARCHAR2' ,'8' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'BRAM_INIT_DATE' ,18 ,'등록일' ,'VARCHAR2' ,'8' ,'C' ,'80' ,'Y' ,'20220629' ,'SYSTEMPG' ,'20171214' ,'SYSTEM'  FROM DUAL
+)
+SELECT CASE WHEN B.TABLE_NAME     IS NOT NULL THEN 'Y' ELSE 'N' END CREATED_YN
+      ,CASE WHEN C.COMMENTS       IS NOT NULL THEN 'Y' ELSE 'N' END COMMENTS_YN
+      ,CASE WHEN D.PKCL_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN 
+      ,CASE WHEN D.PKCL_UPDT_DATE >= A.PKCL_UPDT_DATE THEN 'Y' ELSE 'N' END UPDATED_YN
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN 
+       USER_TAB_COLUMNS B
+      ON    B.TABLE_NAME     = A.PKCL_TABL_ID
+        AND B.COLUMN_NAME    = A.PKCL_COLM_ID
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS C
+      ON    C.TABLE_NAME     = A.PKCL_TABL_ID
+        AND C.COLUMN_NAME    = A.PKCL_COLM_ID
+      LEFT OUTER JOIN
+       CITBPKCL D
+      ON    D.PKCL_CORP_CODE = A.PKCL_CORP_CODE
+        AND D.PKCL_COME_CODE = A.PKCL_COME_CODE
+        AND D.PKCL_TABL_ID   = A.PKCL_TABL_ID  
+        AND D.PKCL_COLM_ID   = A.PKCL_COLM_ID    
+ ORDER BY A.PKCL_SORT_NUMB      
+  ]]>
+ </sql>
+ 
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBPKCL (
+  PKCL_CORP_CODE
+ ,PKCL_COME_CODE
+ ,PKCL_TABL_ID
+ ,PKCL_COLM_ID
+ ,PKCL_SORT_NUMB
+ ,PKCL_COLM_NAME
+ ,PKCL_DATA_TYPE
+ ,PKCL_DATA_LENG
+ ,PKCL_COLM_ALGN
+ ,PKCL_WITH_SCRN
+ ,PKCL_DISP_ALLW
+ ,PKCL_UPDT_DATE
+ ,PKCL_UPDT_CMAN
+ ,PKCL_INIT_DATE
+ ,PKCL_INIT_CMAN  
+) VALUES ( 
+  #pkcl_corp_code#
+ ,#pkcl_come_code#
+ ,#pkcl_tabl_id#
+ ,#pkcl_colm_id#
+ ,#pkcl_sort_numb#
+ ,#pkcl_colm_name#
+ ,#pkcl_data_type#
+ ,#pkcl_data_leng#
+ ,#pkcl_colm_algn#
+ ,#pkcl_with_scrn#
+ ,#pkcl_disp_allw#
+ ,#pkcl_updt_date#
+ ,#pkcl_updt_cman#
+ ,#pkcl_init_date#
+ ,#pkcl_init_cman#  
+)
+  ]]>
+ </sql> 
+ 
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CITBPKCL
+   SET PKCL_SORT_NUMB = #pkcl_sort_numb#
+      ,PKCL_COLM_NAME = #pkcl_colm_name#
+      ,PKCL_DATA_TYPE = #pkcl_data_type#
+      ,PKCL_DATA_LENG = #pkcl_data_leng#
+      ,PKCL_COLM_ALGN = #pkcl_colm_algn#
+      ,PKCL_WITH_SCRN = #pkcl_with_scrn#
+      ,PKCL_DISP_ALLW = #pkcl_disp_allw#
+      ,PKCL_UPDT_DATE = #pkcl_updt_date#
+      ,PKCL_UPDT_CMAN = #pkcl_updt_cman#
+ WHERE PKCL_CORP_CODE = #pkcl_corp_code#
+   AND PKCL_COME_CODE = #pkcl_come_code#
+   AND PKCL_TABL_ID   = #pkcl_tabl_id#  
+   AND PKCL_COLM_ID   = #pkcl_colm_id#    
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
