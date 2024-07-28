@@ -23,9 +23,9 @@
                 </sc-toolbar>
                 <sc-grid-columns>
                     <sc-combobox-column data-field="brai_kind_code"  header-text="용접구분"     width="200" text-readonly="true" text-align="left" editable="true" items="{{braiKindCodes}}" display-field="label" value-field="data"></sc-combobox-column>
-                    <sc-combobox-column data-field="brai_wldr_code"  header-text="용접로"       width="170" text-readonly="true" text-align="left" item-editable-function="onItemEditableFn1" items-function="onItemsFn"></sc-combobox-column>
-                    <sc-data-column     data-field="brai_item_wdth"  header-text="제품가로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn1" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
-                    <sc-data-column     data-field="brai_item_hegt"  header-text="제품세로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn1" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-combobox-column data-field="brai_wldr_code"  header-text="용접로"       width="170" text-readonly="true" text-align="left" item-editable-function="onItemEditableFn10" items-function="onItemsFn"></sc-combobox-column>
+                    <sc-data-column     data-field="brai_item_wdth"  header-text="제품가로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn20" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
+                    <sc-data-column     data-field="brai_item_hegt"  header-text="제품세로(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn30" data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
                     <sc-data-column     data-field="brai_weld_thik"  header-text="용접두께(mm)" width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
                     <sc-data-column     data-field="brai_weld_leng"  header-text="용접길이(cm)" width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9.]/" max-length="13" format-type="number"></sc-data-column>
                     <sc-data-column     data-field="brai_part_cnt0"  header-text="부품수(EA)"   width="150" text-align="right" item-editable-function="onItemEditableFn"  data-type="number" editor-maskre="/[0-9]/"  max-length="13" format-type="number"></sc-data-column>
@@ -254,7 +254,7 @@
                 }
             },
 
-            onItemEditableFn1 : function(data,item){
+            onItemEditableFn10: function(data,item){
                 var me = this;
                 /*
                 var provider = me.$.dgCodeType.getDataProvider();
@@ -268,6 +268,27 @@
 
                 if(data["brai_kind_code"] == "FNAC") {
                     return true;
+                }
+                
+                if(data.brai_kind_code === "VNI_FNAC") {
+                    if(me.searchParam.degr == "19-2") {
+                        return true;
+                    }
+                }
+                
+                return false;
+            },
+
+            onItemEditableFn20: function(data, item) {
+                if(data.brai_kind_code === "FNAC") {
+                	return true;
+                }
+                return false;
+            },
+
+            onItemEditableFn30: function(data, item) {
+                if(data.brai_kind_code === "FNAC") {
+                	return true;
                 }
                 return false;
             },
@@ -321,8 +342,10 @@
              *  combobox의 list를 동적으로 구성한다.
              **************************************************/
             onItemsFn : function(data, item) {
+            	var arr = UT.arrayFilterChange(this.standInfoList, {key: "cmpk_gubn_code", value: "BRAZ02"})
+            	
                 if(item.dataField === "brai_wldr_code") {
-                    var items = UT.arrayFilterChange(this.get("standInfoList"), {key : "cmpk_code_grp1", value : data["brai_kind_code"]});
+                    var items = UT.arrayFilterChange(arr, {key : "cmpk_code_grp1", value : data["brai_kind_code"]});
                     return items;
                 }
             },
@@ -374,6 +397,9 @@
                         provider.setItemAt(item.rowIndex, {"brai_scrp_wegt" : null});
                         provider.setItemAt(item.rowIndex, {"brai_scrp_pric" : null});
                     } else if(newValue == "FNAC") {
+                        if(oldValue == "VNI_FNAC") {
+                            provider.setItemAt(item.rowIndex, {"brai_wldr_code" : null});
+                        }
                         provider.setItemAt(item.rowIndex, {"brai_weld_thik" : null});
                         provider.setItemAt(item.rowIndex, {"brai_part_cnt0" : null});
 

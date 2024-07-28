@@ -273,20 +273,21 @@
              * 계산 처리 후 로직
              **/
             calcComplete: function(e, res) {
-            	var me = this,
-            	data = res.response,
-            	target = e.currentTarget.id;
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
 
-               	var calcResult = data.calc_Result ;
-               	
-            	if(calcResult.MESG_CODE == "SA-001") {
-            		UT.alert(calcResult.MESG);
-            		me.$.getInfoRPC.service();
-            		me.$.es_cacm_01.getResult();
-            		me.moduleCall();
-            	} else {
-            		commonAS.comeAlert(calcResult);
-            	}            	
+                var calcResult = data.calc_Result ;
+                   
+                if(calcResult.MESG_CODE == "SA-001") {
+                    UT.alert(calcResult.MESG, null, null, {autoGrowMessageBox: true});
+                    me.$.es_cacm_01.showStat(calcResult);
+                    me.$.getInfoRPC.service();
+                    me.$.es_cacm_01.getResult();
+                    me.moduleCall();
+                } else {
+                    commonAS.comeAlert(calcResult);
+                }            	
             },
 
          	/**

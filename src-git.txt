@@ -1,5 +1,7 @@
 src\ui\bp\tcams\cr\cr01\es-cr01-01.html
 src\ui\bp\tcams\ca\braz\es-cabraz-p17c-01.html
+src\ui\bp\tcams\ca\braz\es-cabraz-p18a-01.html
+src\ui\bp\tcams\ca\braz\es-cabraz-p18a-02.html
 src\volcano-conf\services\tcams\service-bp-tcams-cr-cr01.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
