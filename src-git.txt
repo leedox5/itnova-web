@@ -4,3 +4,4 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGP.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-PKMS.xml

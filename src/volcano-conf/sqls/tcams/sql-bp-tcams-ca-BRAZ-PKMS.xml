@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/ca/BRAZ/PKMS" data-source="tcamsDS">
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  PKMS_CORP_CODE
+ ,PKMS_COME_CODE
+ ,PKMS_TABL_ID
+ ,PKMS_SORT_NUMB
+ ,PKMS_TABL_NAME
+ ,PKMS_UPDT_DATE
+ ,PKMS_UPDT_CMAN
+ ,PKMS_INIT_DATE
+ ,PKMS_INIT_CMAN
+) AS (
+           SELECT 'K1' ,'ALL0' ,'CATBCMPK' ,'0' ,'공통 패키지 정보'   ,'20140901' ,'SYSTEM' ,'20140901' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAM' ,'1' ,'BRAZING 재료비정보' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'BRAZ' ,'CATBBRAP' ,'2' ,'BRAZING 가공비정보' ,'20171214' ,'SYSTEM' ,'20171214' ,'SYSTEM'  FROM DUAL
+)
+SELECT CASE WHEN B.TABLE_NAME IS NOT NULL THEN 'Y' ELSE 'N' END CREATED_YN
+      ,CASE WHEN C.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END COMMENTS_YN
+      ,A.*
+  FROM T1 A
+      LEFT OUTER JOIN 
+       USER_TABLES B
+      ON B.TABLE_NAME = A.PKMS_TABL_ID
+      LEFT OUTER JOIN 
+       USER_TAB_COMMENTS C
+      ON C.TABLE_NAME = A.PKMS_TABL_ID
+  ]]>
+ </sql>
+ 
+ <sql id="insert" comment="저장">
+  <![CDATA[
+INSERT INTO CITBPKMS (
+  PKMS_CORP_CODE
+ ,PKMS_COME_CODE
+ ,PKMS_TABL_ID
+ ,PKMS_SORT_NUMB
+ ,PKMS_TABL_NAME
+ ,PKMS_UPDT_DATE
+ ,PKMS_UPDT_CMAN
+ ,PKMS_INIT_DATE
+ ,PKMS_INIT_CMAN
+) VALUES ( 
+  #pkms_corp_code#
+ ,#pkms_come_code#
+ ,#pkms_tabl_id#
+ ,#pkms_sort_numb#
+ ,#pkms_tabl_name#
+ ,#pkms_updt_date#
+ ,#pkms_updt_cman#
+ ,#pkms_init_date#
+ ,#pkms_init_cman#
+)
+  ]]>
+ </sql> 
+</sql-descriptor> 
