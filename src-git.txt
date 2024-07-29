@@ -3,6 +3,8 @@ src\ui\bp\tcams\ca\braz\es-cabraz-p17c-01.html
 src\ui\bp\tcams\ca\braz\es-cabraz-p18a-01.html
 src\ui\bp\tcams\ca\braz\es-cabraz-p18a-02.html
 src\ui\bp\tcams\ca\term\es-caterm-p16-01.html
+src\ui\bp\tcams\ca\term\es-caterm-p16-02.html
+src\ui\bp\tcams\ca\term\es-caterm-p16-03.html
 src\volcano-conf\services\tcams\service-bp-tcams-cr-cr01.xml
 src\volcano-conf\services\tcams\service-bp-tcams-cc-cc02.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cc-cc02.xml

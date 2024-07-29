@@ -1,0 +1,959 @@
+<sc-link rel="import" href="../common/es-cacm-03.html"></sc-link>
+<sc-link rel="import" href="es-caterm-p16-02-01.html"></sc-link>
+
+<dom-module id="es-caterm-p16-02">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : TERMINAL 자동공법_02(16차)
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2019.11.25
+        ** @History         : 2019.11.25 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+    	<!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+	    <sc-label text="[ 재료비 정보 ]" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+    	
+    	<div id="matlDiv">
+		    <div id="div_gubn" validation-group="gubnData">
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="구분"></sc-label>
+			    </sc-toolbar>
+	
+				<div class="page">
+			        <table class="come-form">
+			            <colgroup>
+			                <col style="width:220px">
+			                <col style="width:220px">
+			                <col style="width:170px">
+			                <col style="width:170px">
+			                <col>
+			            </colgroup>
+			            <tr>
+			                <th style="padding-right:0px;">
+			                    <sc-label text="진행 TYPE" style="width:190px;"></sc-label>
+			                	<a><img src="../../../../assets/img/bull_reference.gif" id="img_type_gubn" on-click="PopupHandler" style="padding-left:5px;"/></a>
+			                </th>
+			                <td>
+								<sc-combobox-field id="sb_type_gubn" display-field="label" value-field="data" 
+												   items="{{type_gubn_list}}" value="{{inputParam.teri_type_code}}" style="width:160px"
+												   selected-index="0" reset="false" input-clear="false" on-select="onChangeTypeGubn">
+								</sc-combobox-field>	                    
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			        </table>
+			    </div>    
+		    </div>
+		    
+		    <div id="div_matl" validation-group="matlData">
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="재질"></sc-label>
+			    </sc-toolbar>
+			    
+			    <!-- 재질 Key Data Hidden -->
+			    <sc-text-field id="ti_matl_corp" name="재질" value="{{inputParam.teri_matl_corp}}" hidden="true" style="width:0;"></sc-text-field>
+			    <sc-text-field id="ti_matl_stnd" name="재질" value="{{inputParam.teri_matl_stnd}}" hidden="true" style="width:0;"></sc-text-field>
+			    <sc-text-field id="ti_matl_gubn" name="재질" value="{{inputParam.teri_matl_gubn}}" hidden="true" style="width:0;"></sc-text-field>
+	
+		    	<div class="page">
+		    		<form name="matlData">
+			        <table class="come-form">
+			            <colgroup>
+			                <col style="width:220px">
+			                <col style="width:220px">
+			                <col style="width:170px">
+			                <col style="width:170px">
+			                <col>
+			            </colgroup>
+			            <tr>
+			                <th>
+			                    <sc-label text="주재료비 적용구분"></sc-label>
+			                </th>
+			                <td>
+								<sc-combobox-field id="sb_main_appl" display-field="label" value-field="data" 
+												   items="{{main_appl_list}}" value="{{inputParam.teri_main_appl}}" style="width:160px"
+												   selected-index="0" reset="false" input-clear="false" on-select="onChangeAppl">
+								</sc-combobox-field>	                    
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr id="tr_matl_nm01" hidden="[[!formula('isAppl')]]">
+			                <th style="align:left">
+			                    <sc-label text="명칭"></sc-label>
+			                    <a><img src="../../../../assets/img/bull_choice.gif" on-click="onSearchMatl" style="padding-left:15px"/></a>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_matl_nm01" name="명칭" value="{{inputParam.matl_name}}" disabled="true" style="width:160px"></sc-text-field>
+			                </td>
+			                <th>
+			                    <sc-label text="CODE"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_matl_code" name="CODE" value="{{inputParam.teri_matl_code}}" disabled="true" style="width:160px"></sc-text-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			            <tr id="tr_matl_prc1" hidden="[[!formula('isAppl')]]">
+			                <th>
+			                    <sc-label text="단가"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_matl_prc1" name="단가" value="{{inputParam.matl_pric}}" disabled="true" on-blur="substr2num" format-type="number" input-cover="true" style="width:115px"></sc-text-field>
+			                    <sc-label text="/" style="padding-left : 10px; padding-right: 10px;"></sc-label>
+			                    <sc-label id="ti_matl_unit" text="{{inputParam.unit}}"></sc-label>
+			                </td>
+			                <th>
+			                    <sc-label text="적용일"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-date-field id="ti_matl_apdt" name="적용일" value="{{inputParam.teri_matl_apdt}}" string-date="true" disabled="true" style="width:160px"></sc-date-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			            <tr id="tr_scrp_prc1" hidden="[[!formula('isAppl')]]">
+			                <th>
+			                    <sc-label text="SCRAP단가(kg)"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_scrp_prc1" name="SCRAP단가(kg)" value="{{inputParam.scrp_pric}}" disabled="true" on-blur="substr2num" format-type="number" input-cover="true" maxlength="14"
+			                    			   on-blur="substr2num" mask-re="/[0-9.]/" style="width:160px"></sc-text-field>
+			                </td>
+			                <th>
+			                    <sc-label text="밀도(g/cm3)"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_spec_grv1" class="align-right" name="밀도(g/cm3)" value="{{inputParam.teri_spec_grav1}}" maxlength="6" on-blur="substr2num" 
+			                      			   format-type="number" mask-re="/[0-9.]/" style="width:160px;" on-change="inptWegtCalc" editVal></sc-text-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			            <tr id="tr_matl_nm02" hidden="[[formula('isAppl')]]">
+			                <th style="align:left">
+			                    <sc-label text="재료명"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_matl_nm02" name="재료명" value="{{inputParam.teri_matl_name}}" style="width:160px" maxlength="50" editVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr id="tr_matl_prc2" hidden="[[formula('isAppl')]]">
+			                <th>
+			                    <sc-label text="재료단가(원/kg)"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_matl_prc2" class="align-right" name="재료단가(원/kg)" value="{{inputParam.teri_matl_pric}}" maxlength="14" format-type="number" input-cover="true"
+			                    			   on-blur="substr2num" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr id="tr_scrp_prc2" hidden="[[formula('isAppl')]]">
+			                <th>
+			                    <sc-label text="SCRAP단가(kg)"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_scrp_prc2" class="align-right" name="SCRAP단가(kg)" value="{{inputParam.teri_scrp_pric}}" on-blur="substr2num" format-type="number" input-cover="true" maxlength="14"
+			                    			   on-blur="substr2num" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <th>
+			                    <sc-label text="밀도(g/cm3)"></sc-label>
+			                </th>
+			                <td>
+			                    <sc-text-field id="ti_spec_grv2" class="align-right" name="밀도(g/cm3)" value="{{inputParam.teri_spec_grav2}}" maxlength="6" on-blur="substr2num"
+			                      			   format-type="number" mask-re="/[0-9.]/" style="width:160px;" on-change="inptWegtCalc" editVal></sc-text-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			        </table>
+			        </form>
+			     </div>   
+		    </div>
+		    
+		    <div id="div_prod" validation-group="prodData">
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="제품 정보"></sc-label>
+			    </sc-toolbar>
+	
+				<div class="page">
+			        <table class="come-form">
+			            <colgroup>
+			                <col style="width:220px">
+			                <col style="width:220px">
+			                <col style="width:170px">
+			                <col style="width:170px">
+			                <col>
+			            </colgroup>
+			            <tr>
+			                <th>
+			                    <sc-label text="NET SIZE(mm) (장변 X 단변)"></sc-label>
+			                </th>
+			                <td colspan="4">
+			                	<sc-text-field id="ti_nets_leng" class="align-right" name="NET SIZE(mm) (장변)" value="{{inputParam.teri_nets_leng}}" maxlength="10" on-change="netaSizeCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                	<sc-label style="width : 10px;"></sc-label>
+			                	<sc-label text="X" style="width : 15px;"></sc-label>
+			                	<sc-text-field id="ti_nets_wide" class="align-right" name="NET SIZE(mm) (단변)" value="{{inputParam.teri_nets_wide}}" maxlength="10"  on-change="netbSizeCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			            </tr>
+			            <tr>
+			                <th>
+			                    <sc-label text="여유포함SIZE(mm) (장변 X 단변)"></sc-label>
+			                </th>
+			                <td colspan="4">
+			                	<sc-text-field id="ti_a" class="align-right" name="여유포함SIZE(mm) (장변)" value="{{inputParam.teri_a}}" maxlength="10" on-change="inptWegtCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" calcVal></sc-text-field>
+			                	<sc-label style="width : 10px;"></sc-label>
+			                	<sc-label text="X" style="width : 15px;"></sc-label>
+			                	<sc-text-field id="ti_b" class="align-right" name="여유포함SIZE(mm) (단변)" value="{{inputParam.teri_b}}" maxlength="10"  on-change="inptWegtCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" calcVal></sc-text-field>
+			                </td>
+			            </tr>
+			            <tr>
+			                <th>
+			                    <sc-label text="소재두께(mm)"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_matt_thik" class="align-right" name="소재두께(mm)" value="{{inputParam.teri_matt_thik}}" maxlength="10"  on-change="inptWegtCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr>
+			                <th>
+			                    <sc-label text="NET 중량(g)"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_net0_wegt" class="align-right" name="NET 중량(g)" value="{{inputParam.teri_net0_wegt}}" maxlength="10"  on-change="inptWegtCalc" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr>
+			                <th>
+			                    <sc-label text="투입 중량(g)"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_inpt_wegt" class="align-right" name="투입 중량(g)" value="{{inputParam.teri_inpt_wegt}}" maxlength="10" disabled="true"  on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" calcVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			            <tr>
+			                <th>
+			                    <sc-label text="TERMINAL SIZE"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-combobox-field id="sb_size_gubn" display-field="label" value-field="data" 
+												   items="{{size_gubn_list}}" value="{{inputParam.teri_size_code}}" style="width:160px"
+												   selected-index="0" reset="false" input-clear="false">
+								</sc-combobox-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			        </table>
+				</div>
+		    </div>
+		    
+		    <div id="div_plat" validation-group="platData">
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="도금"></sc-label>
+			    </sc-toolbar>
+	
+				<div class="page">
+			        <table class="come-form">
+			            <colgroup>
+			                <col style="width:220px">
+			                <col style="width:220px">
+			                <col style="width:170px">
+			                <col style="width:170px">
+			                <col>
+			            </colgroup>
+			            <tr>
+			                <th>
+			                    <sc-label text="도금종류"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-combobox-field id="sb_plat_gubn" display-field="label" value-field="data" 
+												   items="{{plat_gubn_list}}" value="{{inputParam.teri_plat_code}}" style="width:160px"
+												   selected-index="0" reset="false" input-clear="false" on-select="onChangePlatGubn">
+								</sc-combobox-field>
+			                </td>
+			                <th>
+			                    <sc-label text="도금면적(dm2)" id="lb_plat_area1"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_plat_area1" name="도금면적(dm2)" value="{{inputParam.teri_plat_area1}}" maxlength="10" on-blur="substr3num"
+			                				   format-type="number" class="align-right" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			            <tr id="tr_tinp">
+			                <th>
+			                    <sc-label text="주석도금" id="lb_tinp_yn"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-combobox-field id="sb_tinp_yn" display-field="label" value-field="data" 
+												   items="{{tinp_yn_list}}" value="{{inputParam.teri_tinp_yn}}" style="width:160px"
+												   selected-index="0" reset="false" input-clear="false" on-select="onChangeTinpYn">
+								</sc-combobox-field>
+			                </td>
+			                <th>
+			                    <sc-label text="도금면적(dm2)" id="lb_plat_area2"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_plat_area2" name="도금면적(dm2)" value="{{inputParam.teri_plat_area2}}" maxlength="10" on-blur="substr3num"
+			                				   format-type="number" class="align-right" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			            <tr id="tr_pitc">
+			                <th>
+			                    <sc-label id="lb_pitc" text="제품 PITCH"></sc-label>
+			                </th>
+			                <td>
+			                	<sc-text-field id="ti_pitc" class="align-right" name="제품 PITCH" value="{{inputParam.teri_pitc}}" maxlength="10" on-blur="substr2num"
+			                				   format-type="number" mask-re="/[0-9.]/" style="width:160px;" editVal></sc-text-field>
+			                </td>
+			                <td colspan="3">
+			                </td>
+			            </tr>
+			        </table>
+				</div>
+		    </div>
+		</div>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+    <script>
+        Polymer({
+            is: "es-caterm-p16-02",
+
+            properties: {
+             	// 표준정보 ComboList 데이터
+             	standInfoList  : {type: Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam     : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam      : {type: Object , value: function() { return {}; } },
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam    : {type: Object , value: function() { return {}; } , notify : true},
+		    	// 초기 진입 구분값
+		    	initFlag       : {type: Boolean, value: true },
+
+		    	// 화면에서 사용할 콤보 구성 들....
+		    	// 진행 TYPE Combo List
+		    	type_gubn_list : {type : Array  , value : function() { return [];} },
+            	// TERMINAL SIZE Combo List
+            	size_gubn_list : {type : Array  , value : function() { return [];} },
+            	// 주재료비 적용구분 (전산등록가/실사가) Combo List
+            	main_appl_list : {type : Array  , value : function() { return [ {label: this.translate("전산등록가"), data: "S"},{label: this.translate("실사가"), data: "R"}];}},
+            	// 주석도금
+                tinp_yn_list   : {type : Array  , value : function() { return commonAS.defaultYn();} },
+             	// 필수체크(전산등록가)
+		    	validList1     : {type : Array  , value : function() { return [ {data:"ti_matl_corp"},{data:"ti_matl_stnd"},{data:"ti_matl_gubn"},{data:"ti_matl_nm01"}
+		    																   ,{data:"ti_matl_code"},{data:"ti_matl_apdt"},{data:"ti_spec_grv1"}];} },
+             	// 필수체크(실사)
+		    	validList2     : {type : Array  , value : function() { return [ {data:"ti_matl_nm02"},{data:"ti_matl_prc2"},{data:"ti_scrp_prc2"},{data:"ti_spec_grv2"}];} },
+             	// 필수체크(공통)
+		    	validList3     : {type : Array  , value : function() { return [ {data:"ti_nets_leng"},{data:"ti_nets_wide"},{data:"ti_a"        },{data:"ti_b"        }
+		    																   ,{data:"ti_matt_thik"},{data:"ti_net0_wegt"},{data:"ti_inpt_wegt"}];} }
+
+            },
+
+          	//Formulas
+            formulas : {
+            	// 재료비 적용구분 (전산등록가/실사가)
+                isAppl : function() {
+                    if (this.$.sb_main_appl.value == "S") {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                },
+            },
+
+            /**
+             * 초기화 완료 후 호출 함수
+             **/
+            initialized: function() {
+                var me = this;
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+                me.set('initFlag'    , true);
+                me.initParam = {};
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+
+                // 조회된 값이 존재하는 경우만 별도 저장
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+
+                me.applyFormula("isAppl");
+
+                me.onChangePlatGubn();
+				
+                me.set('initFlag'    , false);
+            },
+
+            /**
+             * 콤보박스 초기화
+             **/
+		    comboInit : function() {
+		    	var me = this;
+
+		    	me.set("type_gubn_list", commonAS.makeComoboList(me.get("standInfoList"), "TERM01"));
+			    me.set("size_gubn_list", commonAS.makeComoboList(me.get("standInfoList"), "TERM04"));
+			    me.set("plat_gubn_list", commonAS.makeComoboList(me.get("standInfoList"), "TERM05"));
+
+			    if (me.get("initParam.iCount") != "0" && me.get("initFlag") == true) { // 기존 데이터가 존재하는 경우
+			    	//콤보 구성 후 기존 값 SET
+			    	me.$.sb_type_gubn.value = me.initParam.teri_type_code;
+			    	me.$.sb_size_gubn.value = me.initParam.teri_size_code;
+			    	me.$.sb_plat_gubn.value = me.initParam.teri_plat_code;
+
+			    	// 작업 완료 후 조회된 기 등록 내역으로 ALL SET
+			    	me.set("inputParam", UT.copy(me.get("initParam")));
+					
+				} else { // 기존 데이터가 존재하지 않는 경우
+				    me.$.sb_type_gubn.selectedIndex = 0;
+				    me.$.sb_main_appl.selectedIndex = 0;
+				    me.$.sb_size_gubn.selectedIndex = 0;
+				    me.$.sb_plat_gubn.selectedIndex = 0;
+				    me.$.sb_tinp_yn.selectedIndex   = 0;
+				}
+		    },
+
+        	/**
+             * 구분 코드 SET
+             **/
+		    gubnCodeSet : function() {
+		    	var me = this;
+		    	me.set("inputParam.teri_type_gubn", "TERM01");
+                me.set("inputParam.teri_size_gubn", "TERM04");
+                me.set("inputParam.teri_plat_gubn", "TERM05");
+		    },
+
+        	/**
+             * 재료비 입력 내역 추출
+             **/
+		    getInputData : function() {
+		    	var me = this;
+
+		    	//size 관련 체크
+				if (me.changeNetSize() == false){
+					return false;
+				}
+
+				var applGubn = me.$.sb_main_appl.value;	// 주재료비 적용구분
+
+				//주재료비 적용구분 '전산등록가'
+				if (applGubn == "S") {
+					me.set("inputParam.teri_spec_grav", me.$.ti_spec_grv1.value);
+				//주재료비 적용구분 '실사가'
+				} else if (applGubn == "R") {
+					me.set("inputParam.teri_spec_grav", me.$.ti_spec_grv2.value);
+				}
+
+				if (parseFloat(me.get("inputParam.teri_net0_wegt") > parseFloat(me.get("inputParam.teri_inpt_wegt")))) {
+					UT.alert("NET중량이 투입중량 보다 큽니다.");
+					return false;
+				}
+
+				// 구분코드 SET
+				me.gubnCodeSet();
+
+				// 숨김처리된 콤포넌트 값 초기화
+				me.cleanUnvisibleData();
+
+				// Validation Check
+				if (!me.validCheck()) {
+                    return false;
+				}
+				
+				return true;
+		    },
+
+        	/**
+             * 숨김 처리된 콤포넌트 값 초기화 처리
+             **/
+		    cleanUnvisibleData : function() {
+		    	var me = this;
+		    	var applGubn = me.$.sb_main_appl.value;	// 주재료비 적용구분
+
+				// 각 공법별 상이하게 구현(예시-구분코드와 코드는 항상 쌍으로 움직이도록 처리!!)
+				if (me.$.sb_type_gubn.hidden == true) {
+					me.set("inputParam.teri_type_gubn", "");
+					me.set("inputParam.teri_type_code", "");
+				}
+
+				if (me.$.sb_size_gubn.hidden == true) {
+					me.set("inputParam.teri_size_gubn", "");
+					me.set("inputParam.teri_size_code", "");
+				}								
+
+				if (me.$.sb_plat_gubn.hidden == true) {
+					me.set("inputParam.teri_plat_gubn", "");
+					me.set("inputParam.teri_plat_code", "");
+				}
+
+				//주재료비 적용구분 '전산등록가'
+				if (applGubn == "S") {
+					me.$.ti_matl_nm02.value = null;
+					me.$.ti_matl_prc2.value = null;
+					me.$.ti_scrp_prc2.value = null;
+					me.$.ti_spec_grv2.value = null;
+					
+				//주재료비 적용구분 '실사가'
+				} else if (applGubn == "R") {
+					me.$.ti_matl_corp.value = null;
+					me.$.ti_matl_stnd.value = null;
+					me.$.ti_matl_gubn.value = null;
+					me.$.ti_matl_nm01.value = null;
+					me.$.ti_matl_code.value = null;
+					me.$.ti_matl_prc1.value = null;
+					me.$.ti_matl_apdt.value = null;
+					me.$.ti_scrp_prc1.value = null;
+					me.$.ti_spec_grv1.value = null;
+					me.$.ti_matl_unit.value = null;
+				}
+
+				// 주석도금
+				if (me.$.sb_tinp_yn.hidden == true) {
+					me.set("inputParam.teri_tinp_yn", null);
+				}
+
+				// 도금면적1
+				if (me.$.ti_plat_area1.hidden == true) {
+					me.set("inputParam.teri_plat_area1", null);
+				}
+				
+				// 도금면적2
+				if (me.$.ti_plat_area2.hidden == true) {
+					me.set("inputParam.teri_plat_area2", null);
+				}
+
+				// 제품 PITCH
+				if (me.$.ti_pitc.hidden == true) {
+					me.set("inputParam.teri_pitc", null);
+				}
+		    },
+
+        	/**
+             * 필수 값 체크
+             **/
+		    validCheck: function() {
+		    	var me = this;
+		    	var applGubn = me.$.sb_main_appl.value;	// 주재료비 적용구분
+
+		    	// 주재료비 적용구분 '전산등록가'
+		    	if (applGubn == "S") {
+		    		if (!commonAS.validCheck(me.validList1)) {
+	                     return false;
+	 				}
+
+			    // 주재료비 적용구분 '실사가'
+		    	} else {
+		    		if (!commonAS.validCheck(me.validList2)) {
+	                     return false;
+	 				}
+		    	}
+
+		    	// 공통 체크 사항
+		    	if (!commonAS.validCheck(me.validList3)) {
+                    return false;
+				}
+
+		    	// 도금종류
+		    	if (me.$.sb_plat_gubn.hidden == false) {
+					if (me.$.sb_plat_gubn.value == "Y") {
+						if (UT.isEmpty(me.get("inputParam.teri_plat_area1"))) {
+							UT.alert("도금면적(dm2)은 필수입력 항목입니다.", function() {
+		                   		me.$.ti_plat_area1.focus();
+		    				});
+		    				return false;
+						}
+					}
+		    	}
+
+		    	// 주석도금
+		    	if (me.$.sb_tinp_yn.hidden == false) {
+					if (me.$.sb_tinp_yn.value == "Y") {
+						if (UT.isEmpty(me.get("inputParam.teri_plat_area2"))) {
+							UT.alert("도금면적(dm2)은 필수입력 항목입니다.", function() {
+		                   		me.$.ti_plat_area2.focus();
+		    				});
+		    				return false;
+						}
+					}
+		    	}
+
+		    	if (me.$.sb_plat_gubn.value == "AU" || me.$.sb_plat_gubn.value == "AG") {
+			    	if (UT.isEmpty(me.$.ti_pitc.value)) {
+			    		UT.alert("제품 PTICH는 필수입력 항목입니다.", function() {
+	                   		me.$.ti_pitc.focus();
+	    				});
+				    	return false;
+			    	}
+		    	}
+
+				return true;
+
+		    },
+
+		    /**
+             * 주재료비 적용구분 Change Event
+             **/
+            onChangeAppl: function() {
+                var me = this;
+                me.applyFormula("isAppl");
+            },
+
+            /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                eval("me.$." + e.target.id).setAttribute("value", commonAS.substr2num(e.target.value));
+            },
+
+            /**             
+             * 숫자 소수점 3자리로 고정
+             **/			
+            substr3num: function(e) {
+                var me = this;
+                eval("me.$." + e.target.id).setAttribute("value", commonAS.substr3num(e.target.value));
+            },
+
+         	/**
+             * 재료단가 정보
+             **/
+            onSearchMatl : function(){
+            	var me = this;
+
+   				if (!me.PopupMatl) {
+   					me.PopupMatl = UT.popup("es-cacm-03", me, 1400, 550, {
+   						"getMatlInfo" : function(popup, e) {
+   							var selected = e.detail;
+   							
+   							// 선택 완료 후 callback
+   			    			me.onPopupSelectedItems("es-cacm-03", selected);
+   							popup.close();
+   						}
+   		            }, {title: me.translate("재료단가 정보")});
+   				}
+
+				me.PopupMatl.show();
+				me.PopupMatl.getWindowContent().load({singleSelect : true, defaultParam : me.searchParam});
+            },
+            
+            /**
+             * 팝업에서 선택된 아이템 재료코드에 반환
+             **/
+            onPopupSelectedItems : function(sPopupID, matlParam) {
+            	var me = this;
+
+            	// =============================================
+				// 재질정보                	
+               	// =============================================
+                if (sPopupID == "es-cacm-03") {
+                	me.set("inputParam.teri_matl_corp" , matlParam.comd_corp_code);
+                	me.set("inputParam.teri_matl_stnd" , matlParam.comd_stnd_gubn);
+                	me.set("inputParam.teri_matl_gubn" , matlParam.comd_matl_gubn);
+                	me.set("inputParam.teri_matl_code" , matlParam.comd_matl_code);
+                	me.set("inputParam.teri_matl_apdt" , matlParam.comd_appl_date);
+                	me.set("inputParam.matl_name"      , matlParam.comd_matl_name);
+                	me.set("inputParam.matl_pric"      , matlParam.comd_matl_pric);
+                	me.set("inputParam.unit"           , matlParam.comd_matl_unit);
+                	me.set("inputParam.scrp_pric"      , matlParam.comd_scrp_pric);
+                	me.set("inputParam.teri_spec_grav1", matlParam.comd_spec_grav);
+                }
+            },
+
+         	/**
+             * 도움말 팝업
+             **/
+	        PopupHandler : function(e){
+	         	var me = this;
+	         	var targetId = e.target.id;
+
+					if (!me.PopupTerm) {
+						me.PopupTerm = UT.popup("es-caterm-p16-02-01", me, 1050, 350, {
+			            }, {title: me.translate("도움말")});
+					}
+	
+				me.PopupTerm.show();
+				me.PopupTerm.getWindowContent().load({singleSelect : true, defaultParam : targetId});
+	        },
+
+	      	/**
+             * NET SIZE 직접 수정하는 경우 체크
+             **/
+	        changeNetSize : function() {
+		    	var me = this;
+	        	//여유포함SIZE(mm) A
+		   		if (UT.isEmpty(me.get("inputParam.teri_a"))) {
+					me.netaSizeCalc();
+		       	} else {
+					if (parseFloat(me.get("inputParam.teri_a")) < parseFloat(me.get("inputParam.teri_nets_leng"))) {
+						UT.alert("NET SIZE(mm)(장변) 보다 작은 값은 입력할 수 없습니다.");
+						me.set("inputParam.teri_a", null);
+						me.$.ti_a.setFocus();
+
+			        	return false;
+			        }
+				}
+
+				//여유포함SIZE(mm) B
+				if (UT.isEmpty(me.get("inputParam.teri_b"))) {
+					me.netbSizeCalc();
+				} else {
+					if (parseFloat(me.get("inputParam.teri_b")) < parseFloat(me.get("inputParam.teri_nets_wide"))) {
+						UT.alert("NET SIZE(mm)(단변) 보다 작은 값은 입력할 수 없습니다.");
+						me.set("inputParam.teri_b", null);
+						me.$.ti_b.setFocus();
+
+			        	return false;
+			       }
+		       }
+
+		       return true;
+	        },
+
+	        /**
+             * NET SIZE A(장변) 자동계산
+             **/
+	        netaSizeCalc : function() {
+		        var me = this;
+		        
+		        var netsLeng = me.get("inputParam.teri_nets_leng");
+		        var netA     = parseFloat(0.00);
+		        var type     = me.$.sb_type_gubn.value;
+
+		        if (UT.isNotEmpty(me.get("inputParam.teri_nets_leng"))) {
+			        if (type == "SIDE") {
+			       		netA = parseFloat(netsLeng) + parseFloat(5);
+			       		me.set("inputParam.teri_a", isNaN(netA) ? null : commonAS.substr2num(netA.toString()));
+			        } else if(type == "END") {
+			       		netA = parseFloat(netsLeng) + parseFloat(1);
+			       		me.set("inputParam.teri_a", isNaN(netA) ? null : commonAS.substr2num(netA.toString()));
+			        } else {
+			       		me.set("inputParam.teri_a", null);
+			        }
+		        } else {
+		       		me.set("inputParam.teri_a", null);
+		        }
+
+		        me.inptWegtCalc();
+	        },
+
+	        /**
+             * NET SIZE B(단변) 자동계산
+             **/
+	        netbSizeCalc : function() {
+			 var me = this;
+		        
+		        var netsWide = me.get("inputParam.teri_nets_wide");
+		        var netB     = 0;
+		        var type     = me.$.sb_type_gubn.value;
+
+		        if (UT.isNotEmpty(me.get("inputParam.teri_nets_wide"))) {
+			        if (type == "SIDE") {
+			       		netB = parseFloat(netsWide) + parseFloat(1);
+			       		me.set("inputParam.teri_b", isNaN(netB) ? null : commonAS.substr2num(netB.toString()));
+			        } else if(type == "END") {
+			       		netB = parseFloat(netsWide) + parseFloat(2);
+			       		me.set("inputParam.teri_b", isNaN(netB) ? null : commonAS.substr2num(netB.toString()));
+			        } else {
+			       		me.set("inputParam.teri_b", null);
+			        }
+		        } else {
+		       		me.set("inputParam.teri_b", null);
+		        }
+
+		        me.inptWegtCalc();
+	        },
+
+	        /**
+			*	투입중량 자동계산
+			*/
+			/**************************************************************************************************
+			 - TERMINAL 계산식 -
+			 
+			 1) NET SIZE 계산식
+			 (1) 진행 TYPE : SIDE TYPE 일 경우
+			 => 여유포함SIZE(장변) = NET SIZE(장변) + 5, 여유포함SIZE(단변) = NET SIZE(단변) + 1
+			 
+			 (2) 진행 TYPE : END TYPE 일 경우
+			 => 여유포함SIZE(장변) = NET SIZE(장변) + 2, 여유포함SIZE(단변) = NET SIZE(단변) + 1
+			 
+			 3) 투입중량 계산식
+			 => 투입중량 = (여유포함SIZE(장변) * 여유포함SIZE(단변)) * 소재두께 * 밀도(g/cm3) / 1000 * (1 + LOSS율 / 100)
+			 
+			 ## 참고사항: 여유포함SIZE(장변), 여유포함SIZE(단변) 값은 사용자가 수정 가능 (단, NET SIZE보다 작을수는 없음.)
+			 
+			 *************************************************************************************************/
+			inptWegtCalc : function() {
+			  var me = this;
+
+			  var netA     = 0;
+			  var netB     = 0;
+			  var mattThik = 0;
+			  var net0Wegt = 0;
+			  var specGrav = 0;
+			  var inptWegt = 0;
+			  var lossRate = 0;
+			  var applGubn = me.$.sb_main_appl.value;
+
+			  //주재료비 적용구분 '전산등록가'
+			  if (applGubn == "S") {
+			  	  specGrav = parseFloat(me.$.ti_spec_grv1.value);
+			  //주재료비 적용구분 '실사가'
+			  } else if (applGubn == "R") {
+			  	  specGrav = parseFloat(me.$.ti_spec_grv2.value);
+			  }
+
+			  if (   UT.isNotEmpty(me.get("inputParam.teri_a"))
+				  && UT.isNotEmpty(me.get("inputParam.teri_b"))
+				  && UT.isNotEmpty(me.get("inputParam.teri_matt_thik"))) {
+
+				  netA     = parseFloat(me.get("inputParam.teri_a"));
+				  netB     = parseFloat(me.get("inputParam.teri_b"));
+				  mattThik = parseFloat(me.get("inputParam.teri_matt_thik"));
+				  lossRate = parseFloat(me.$.sb_type_gubn.selectedItem.cmpk_appl_rate1);
+
+				  inptWegt = (netA * netB) * mattThik * specGrav / 1000 * (1 + lossRate / 100);
+
+				  me.set("inputParam.teri_inpt_wegt", isNaN(inptWegt) ? null : commonAS.substr2num(inptWegt.toString()));
+			  } else {
+				  me.set("inputParam.teri_inpt_wegt", null);
+			  }
+			},
+
+			/**
+			*	진행TYPE 콤보 Change Event Handler
+			*/
+			onChangeTypeGubn : function() {
+			  var me = this;
+			  me.netaSizeCalc();
+			  me.netbSizeCalc();
+			},
+
+			/**
+			*	도금종류 콤보 Change Event Handler
+			*/
+			onChangePlatGubn : function() {
+			  var me = this;
+
+			  // 도금종류 금(AU), 은(AG)
+			  if (me.$.sb_plat_gubn.value == "AU" || me.$.sb_plat_gubn.value == "AG") {
+				  me.$.lb_plat_area1.hidden = false;
+				  me.$.ti_plat_area1.hidden = false;
+				  me.$.tr_pitc.hidden       = false;
+				  me.$.lb_pitc.hidden       = false;
+				  me.$.ti_pitc.hidden       = false;
+
+				  // 도금종류 금(AU)
+				  if (me.$.sb_plat_gubn.value == "AU") {
+					  me.$.lb_tinp_yn.hidden = false;
+					  me.$.sb_tinp_yn.hidden = false;
+					  me.$.tr_tinp.hidden    = false;
+
+					  if (UT.isNotEmpty(me.get("inputParam.teri_tinp_yn"))) {
+						  me.$.sb_tinp_yn.value = me.get("inputParam.teri_tinp_yn");
+					  } else {
+						  me.$.sb_tinp_yn.selectedIndex = 0;
+					  }
+					  
+				  } else {
+					  me.$.lb_tinp_yn.hidden = true;
+					  me.$.sb_tinp_yn.hidden = true;
+					  me.$.tr_tinp.hidden    = true;
+
+					  me.$.sb_tinp_yn.selectedIndex = 0;
+				  }
+				  
+			  } else {
+				  me.$.lb_plat_area1.hidden = true;
+				  me.$.ti_plat_area1.hidden = true;
+				  me.$.lb_tinp_yn.hidden    = true;
+				  me.$.sb_tinp_yn.hidden    = true;
+				  me.$.tr_tinp.hidden       = true;
+				  me.$.tr_pitc.hidden       = true;
+				  me.$.lb_pitc.hidden       = true;
+				  me.$.ti_pitc.hidden       = true;
+
+				  me.$.ti_plat_area1.value = null;
+				  me.$.ti_pitc.value       = null;
+				  
+				  me.$.sb_tinp_yn.selectedIndex = 0;
+			  }
+
+			  me.onChangeTinpYn();
+			},
+			
+			/**
+			*	주석도금 콤보 Change Event Handler
+			*/
+			onChangeTinpYn : function() {
+			  var me = this;
+
+			  if (me.$.sb_tinp_yn.value == "Y") {
+				  me.$.lb_plat_area2.hidden = false;
+				  me.$.ti_plat_area2.hidden = false;
+			  } else {
+				  me.$.lb_plat_area2.hidden = true;
+				  me.$.ti_plat_area2.hidden = true;
+				  me.$.ti_plat_area2.value = null;
+			  }
+			}
+        });
+        
+    </script>
+
+</dom-module>

@@ -1,0 +1,278 @@
+<sc-link rel="import" href="es-caterm-p16-02-01.html"></sc-link>
+
+<dom-module id="es-caterm-p16-03">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : TERMINAL 자동공법_03(16차)
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2019.11.25
+        ** @History         : 2019.11.25 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+    	<!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+        <sc-label text="[ 가공비 정보 ]" class="txt-noraml" style="text-align:center; font-weight:bold; height:20px; font-size:15px;"></sc-label>
+        
+        <div id="cproDiv">
+	        <div id="div_proc" validation-group="procData">
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="장비용량"></sc-label>
+			    </sc-toolbar>
+	
+				<div class="page">
+			        <table class="come-form">
+			            <colgroup>
+			                <col style="width:220px;">
+			                <col style="width:220px;">
+			                <col>
+			            </colgroup>
+			            <tr>
+			                <th>
+			                    <sc-label text="적용 TON"></sc-label>
+			                </th>
+			                <td>
+			                	<a><img src="../../../../assets/img/bull_reference.gif" id="img_ton0_gubn" on-click="PopupHandler" style="padding-left:5px; padding-right:5px;"/></a>
+			                	<sc-combobox-field id="sb_ton0_gubn" display-field="label" value-field="data" reset="false" input-clear="false" 
+												   items="{{ton0_gubn_list}}" value="{{inputParam.teri_ton0_code}}" style="width:160px" selected-index="0">
+								</sc-combobox-field>
+			                </td>
+			                <td>
+			                </td>
+			            </tr>
+			        </table>
+				</div>
+		    </div>
+		    
+		    <div>
+			    <sc-toolbar style="padding-top:20px">
+			        <sc-label text="형상 TYPE"></sc-label>
+			    </sc-toolbar>
+		        
+		        <div style="height:530px;">
+			   		<sc-grid id="gridPanel" data-provider="{{resultProc}}" editable="true" class="flex" style="height : 100%;" row-height="40" sortable="false"
+			   				 show-number-line="false" use-state="false" use-selection="false" row-height="41" header-height="40">
+			            <sc-grid-columns>
+				            	<sc-radio-column header-text="선택"  			 	 data-field="select"          width="40"  text-align="center" editable="true" check-value="Y" un-checked-value="N"></sc-radio-column>
+					            <sc-data-column  header-text="TERMINAL CODE" 	 data-field="tert_term_code"  			  text-align="left"   editable="false" visible="false"></sc-data-column>
+					            <sc-data-column  header-text="TERMINAL&#xa;TYPE" data-field="tert_remk"       width="90"  text-align="left"   editable="false"></sc-data-column>
+					            <sc-data-column  header-text="SPM&#xa;기준" 		 data-field="tert_spm0_remk"  width="35"  text-align="center" editable="false"></sc-data-column>
+					            <sc-image-column header-text="참조형상" 			 data-field="tert_shap_img0"  width="120"></sc-image-column>
+					            <sc-data-column  header-text="형상설명" 			 data-field="tert_shap_remk"  width="450" text-align="left"   editable="false"></sc-data-column>
+					            <sc-image-column header-text="" 				 data-field="tert_shap_remk2" width="90"></sc-image-column>
+					            <sc-data-column  header-text="비고" 				 data-field="tert_add0_remk"  			  text-align="left"   editable="false" visible="false"></sc-data-column>
+			            </sc-grid-columns>
+			        </sc-grid>
+		        </div>
+		    </div>
+		</div>
+	</template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+    <script>
+        Polymer({
+            is: "es-caterm-p16-03",
+
+            properties: {
+
+             	// 표준정보 ComboList 데이터
+             	standInfoList  : { type : Array  , value : function() { return [];} },
+				// 재료비 및 가공비 I 테이블 정보
+		    	inputParam     : {type: Object , value: function() { return {}; } , notify : true},
+				// 재료비 및 가공비 I 테이블 정보
+		    	initParam      : {type: Object , value: function() { return {}; } },
+				// 재료비 및 가공비 I 테이블 정보
+		    	searchParam    : {type: Object , value: function() { return {}; } , notify : true},
+		    	//	초기 진입 구분값
+		    	initFlag       : {type: Boolean, value: true },
+		    	// 공정정보 List
+             	resultProc     : {type: Array  , value : function() { return [];} , notify : true},
+
+		    	// 화면에서 사용할 콤보 구성 들....
+             	// 적용 TON Combo List
+            	ton0_gubn_list : {type : Array  , value : function() { return [];} }
+            },
+
+			/**
+             * 초기화 완료 후 호출 함수
+             **/
+            initialized: function() {
+                var me = this;
+            },
+
+			/**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+                me.set('initFlag'    , true);
+                me.initParam = {};
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj.searchParam);
+                me.set('standInfoList', obj.standInfoList);
+                me.set('resultProc'   , obj.resultProc);
+
+                if (obj.inputParam.iCount != "0") {
+                	me.set('initParam'    , UT.copy(obj.inputParam));
+                	me.set('inputParam'   , UT.copy(obj.inputParam));
+                } else {
+                	me.set('inputParam'      , obj.inputParam);
+                	me.set('initParam.iCount', obj.inputParam.iCount);
+                }
+
+                // 콤보 초기화
+                me.comboInit();
+
+                me.cproResult();
+
+                me.set('initFlag'    , false);
+            },
+
+			/**
+             * 콤보박스 초기화
+             **/
+		    comboInit : function() {
+		    	var me = this;
+
+		    	me.set('standInfoList', me.get('standInfoList'));
+
+		    	me.set("ton0_gubn_list", commonAS.makeComoboList(me.get("standInfoList"), "TERM03"));
+
+			    // 콤보 변경 후 기존 값 처리
+			    if (me.get('initParam.iCount') != "0" && me.get('initFlag')) { // 기존 데이터가 존재하는 경우
+			    	me.set("inputParam", UT.copy(me.get("initParam")));
+
+				} else { // 기존 데이터가 존재하지 않는 경우
+			    	me.$.sb_ton0_gubn.selectedIndex = 0;
+				}
+
+		    },
+
+			/**
+             * 구분 코드 SET
+             **/
+		    gubnCodeSet : function() {
+		    	var me = this;
+		    	me.set('inputParam.teri_term_gubn', "TERM02");
+		    	me.set('inputParam.teri_ton0_gubn', "TERM03");
+		    },
+
+			/**
+             *  가공비 입력 내역 추출
+             **/
+		    getInputData : function() {
+		    	var me = this;
+		    	
+		    	// 형상TYPE
+		    	if (!me.getProc()) {
+                    return false;
+				}
+				
+				// 구분코드 SET
+				me.gubnCodeSet();
+
+				// 숨김처리된 콤포넌트 값 초기화
+				me.cleanUnvisibleData();
+
+				// Validation Check
+				if (!me.validCheck()) {
+                    return false;
+				}
+
+				return true
+		    },
+
+        	/**
+             * 숨김 처리된 콤포넌트 값 초기화 처리
+             **/
+		    cleanUnvisibleData : function() {
+		    	var me = this;
+		    },
+
+        	/**
+             * 필수 값 체크
+             **/
+		    validCheck : function() {
+		    	var me = this;
+				return true;
+		    },
+
+		 	// 도움말 팝업
+	        PopupHandler : function(e){
+	         	var me = this;
+	         	var targetId = e.target.id;
+
+					if (!me.PopupTerm) {
+						me.PopupTerm = UT.popup("es-caterm-p16-02-01", me, 1050, 350, {
+			            }, {title: me.translate("도움말")});
+					}
+	
+				me.PopupTerm.show();
+				me.PopupTerm.getWindowContent().load({singleSelect : true, defaultParam : targetId});
+	        },
+
+	     	// TERMINAL 공정 리스트 set
+	        cproResult : function() {
+		        var me = this;
+		        var provider = me.$.gridPanel.getDataProvider();
+				var allItems = provider.getItems();
+
+				for (var i = 0; i < allItems.length; i++) {
+                    if (allItems[i].tert_term_code == me.get("inputParam.teri_term_code")) {
+                    	provider.setItemAt(i, {'select': "Y"});
+                    } else {
+                    	provider.setItemAt(i, {'select': "N"});
+                    }
+				}
+	        },
+
+	        /**             
+             * 숫자 소수점 2자리로 고정
+             **/			
+            substr2num: function(e) {
+                var me = this;
+                eval("me.$." + e.target.id).setAttribute("value", commonAS.substr2num(e.target.value));
+            },
+
+            /**             
+             * 형상 TYPE 선택 항목 set
+             **/
+            getProc : function() {
+                var me = this;
+                var provider = me.$.gridPanel.getDataProvider();
+				var allItems = provider.getItems();
+                var isChecked = false;
+
+                for (var i = 0; i < allItems.length; i++) {
+                    if (allItems[i].select == "Y") {
+                    	me.set("inputParam.teri_term_code", allItems[i].tert_term_code)
+						isChecked = true;
+                    }
+				}
+
+                if (isChecked == false) {
+					UT.alert("[ 형상TYPE ]"+ "\r필수입력 항목입니다.");
+					return false;
+				}
+
+                return true;
+            }
+        });
+    </script>
+</dom-module>
