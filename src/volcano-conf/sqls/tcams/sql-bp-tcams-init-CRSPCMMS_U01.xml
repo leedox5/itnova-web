@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CRSPCMMS_U01" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CRSPCMMS_U01  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CRSPCMMS_U01'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CRSPCMMS_U01
+(
+    I_EMPL_NUMB  IN  CRTBCMMS.CMMS_INIT_CMAN%TYPE,
+    I_FUNC       IN  VARCHAR2,                      -- 'RE'
+    I_PROC_TYPE  IN  VARCHAR2,                      -- 'C':공법 단위 (DEFAULT)
+
+    I_CORP_CODE  IN  CRTBCMMS.CMMS_CORP_CODE%TYPE,
+    I_PART_NO    IN  CRTBCMMS.CMMS_PART_NO%TYPE,
+    I_EONO       IN  CRTBCMMS.CMMS_EONO%TYPE,
+    I_CUMT_NO    IN  CRTBCMMS.CMMS_CUMT_NO%TYPE,
+    I_METH_GUBN  IN  CRTBCMMS.CMMS_METH_GUBN%TYPE,  -- 'A':자동 'M'
+    I_COME_CODE  IN  CRTBCMMS.CMMS_COME_CODE%TYPE,
+    I_STND_DEGR  IN  CRTBCMMS.CMMS_STND_DEGR%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM   ] 부품원가산정 (개발원가)
+ * [PROCEDURE] CMMS 공법 차수 변경
+ * [HISTORY  ]
+ *  - [J.Y.J] : 신규작성
+ *  - 2017.09.27 [A.S.M] : 차수변경시 집계SIGN CLEAR 추가
+ *
+ * [COMMENT ]
+ * 1. 공법 삭제와 통합할 가능성이 있으므로 I_FUNC를 삭제하지 말것.
+ * 2. I_PROC_TYPE 는 무조건 공법단위 C, 파트단위 업데이트는 없다.
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --WORKING VARIABLE
+    v_IN_TITLE          VARCHAR2(20) ;
+
+    v_CMMS_REFF_CNT0    NUMBER;                       -- 참조 횟수
+    v_CMMS_PASS_STAT    CRTBEMST.EMST_PASS_STAT%TYPE; -- 승인된 SUB의 END PASS STAT
+    v_CMMS_COST_ENDI    CRTBSPMS.SPMS_COST_ENDI%TYPE;
+    v_CMMS_PART_ENDI    CRTBSPMS.SPMS_PART_ENDI%TYPE;
+    v_CMMS_EONO_ENDI    CRTBSPMS.SPMS_EONO_ENDI%TYPE;
+    v_CMMS_CUMT_ENDI    CRTBSPMS.SPMS_CUMT_ENDI%TYPE;
+
+    v_CMMS_METH_GUBN    CRTBCMMS.CMMS_METH_GUBN%TYPE; -- 금형/ 자동 공법 구분
+    v_REPY_CNT          NUMBER;
+
+    -- ============= 차수변경 삭제 대상 ==============
+    -- . 재료비
+    -- . 가공비-기계경비
+    -- . 공통률 적용정보
+    -- . 공법별계산결과
+    -- . SUB-ITEM 집계
+    -- . END-ITEM 집계
+    -- . 공법MASTER(자기것) UPDATE
+    -- ================================================
+
+BEGIN
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '삭제를 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CRSPCMMS_U01';
+    O_LINE_NO   := 'ST-START';
+
+    --------------------------------------------------------
+    -- 입력값 검증
+    --------------------------------------------------------
+    IF TRIM(I_EMPL_NUMB) IS NULL THEN  v_IN_TITLE := '사용자ID       ';  END IF; --사용자ID
+    IF TRIM(I_FUNC     ) IS NULL THEN  v_IN_TITLE := 'FUNC           ';  END IF; --FUNC
+    IF TRIM(I_PROC_TYPE) IS NULL THEN  v_IN_TITLE := '작업구분       ';  END IF; --작업구분
+    IF TRIM(I_CORP_CODE) IS NULL THEN  v_IN_TITLE := '법인코드       ';  END IF; --법인코드
+    IF TRIM(I_PART_NO  ) IS NULL THEN  v_IN_TITLE := '파트넘버       ';  END IF; --파트넘버
+    IF TRIM(I_EONO     ) IS NULL THEN  v_IN_TITLE := 'EONO           ';  END IF; --EONO
+    IF TRIM(I_CUMT_NO  ) IS NULL THEN  v_IN_TITLE := '계산번호       ';  END IF; --계산번호
+    IF TRIM(I_METH_GUBN) IS NULL THEN  v_IN_TITLE := '공법구분       ';  END IF; --공법구분
+    IF TRIM(I_COME_CODE) IS NULL THEN  v_IN_TITLE := '공법코드       ';  END IF; --공법코드
+    IF TRIM(I_STND_DEGR) IS NULL THEN  v_IN_TITLE := '공법차수       ';  END IF; --공법차수
+    IF  I_PROC_TYPE NOT IN ('P','C') THEN
+        v_IN_TITLE := '처리단위'; RAISE UD_EX_IN;
+    END IF;
+
+    IF (v_IN_TITLE IS NOT NULL) THEN
+        RAISE UD_EX_IN;
+    END IF;
+
+    ---------------------------------------------------------------------------
+    -- 1. 기본 데이터 얻기
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    -- 기본 데이터 얻기
+    SELECT SPEM.EMST_PASS_STAT
+          ,SPMS.SPMS_COST_ENDI
+          ,SPMS.SPMS_PART_ENDI
+          ,SPMS.SPMS_EONO_ENDI
+          ,SPMS.SPMS_CUMT_ENDI
+      INTO v_CMMS_PASS_STAT
+          ,v_CMMS_COST_ENDI
+          ,v_CMMS_PART_ENDI
+          ,v_CMMS_EONO_ENDI
+          ,v_CMMS_CUMT_ENDI
+      FROM CRTBSPMS SPMS
+             INNER JOIN
+           CRTBEMST SPEM
+               ON SPEM.EMST_CORP_CODE = SPMS_CORP_ENDI
+              AND SPEM.EMST_COST_GUBN = SPMS_COST_ENDI
+              AND SPEM.EMST_PART_NO   = SPMS_PART_ENDI
+              AND SPEM.EMST_EONO      = SPMS_EONO_ENDI
+              AND SPEM.EMST_CUMT_NO   = SPMS_CUMT_ENDI
+     WHERE SPMS_CORP_CODE = I_CORP_CODE
+       AND SPMS_PART_NO   = I_PART_NO
+       AND SPMS_EONO      = I_EONO
+       AND SPMS_CUMT_NO   = I_CUMT_NO
+    ;
+
+    O_LINE_NO := 'ST-20000';
+
+    ----------------------------------
+    -- 승인난건은 삭제 못한다.
+    ----------------------------------
+    IF v_CMMS_PASS_STAT = '40' THEN
+        O_LINE_NO := 'ST-20010';
+        O_MESG := '삭제 불가 : 승인난 PART 임';
+           RAISE UD_EX_ERROR;
+
+    ----------------------------------
+    -- 결재 진행중인 건은 삭제 못한다.
+    ----------------------------------
+    ELSIF (v_CMMS_PASS_STAT = '30') THEN
+        O_LINE_NO := 'ST-20020';
+        O_MESG := '삭제 불가 : 결재 진행중인 PART 임';
+           RAISE UD_EX_ERROR;
+    END IF;
+
+    ----------------------------------
+    -- 기계경비
+    ----------------------------------
+    O_LINE_NO := 'ST-21200';
+    DELETE FROM CRTBMCPR
+     WHERE MCPR_CORP_CODE = I_CORP_CODE
+       AND MCPR_PART_NO   = I_PART_NO
+       AND MCPR_EONO      = I_EONO
+       AND MCPR_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND MCPR_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 재료비
+    ----------------------------------
+    O_LINE_NO := 'ST-21300';
+    DELETE FROM CRTBCMAT
+     WHERE CMAT_CORP_CODE = I_CORP_CODE
+       AND CMAT_PART_NO   = I_PART_NO
+       AND CMAT_EONO      = I_EONO
+       AND CMAT_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND CMAT_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 가공비
+    ----------------------------------
+    O_LINE_NO := 'ST-21400';
+    DELETE FROM CRTBCPRO
+     WHERE CPRO_CORP_CODE = I_CORP_CODE
+       AND CPRO_PART_NO   = I_PART_NO
+       AND CPRO_EONO      = I_EONO
+       AND CPRO_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND CPRO_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 공법별집계
+    ----------------------------------
+    O_LINE_NO := 'ST-21500';
+    DELETE FROM CRTBSPCR
+     WHERE SPCR_CORP_CODE = I_CORP_CODE
+       AND SPCR_PART_NO   = I_PART_NO
+       AND SPCR_EONO      = I_EONO
+       AND SPCR_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND SPCR_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 금형재료비
+    ----------------------------------
+    O_LINE_NO := 'ST-21600';
+    DELETE FROM CRTBMMAT
+     WHERE MMAT_CORP_CODE = I_CORP_CODE
+       AND MMAT_PART_NO   = I_PART_NO
+       AND MMAT_EONO      = I_EONO
+       AND MMAT_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND MMAT_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 금형가공비
+    ----------------------------------
+    O_LINE_NO := 'ST-21700';
+    DELETE FROM CRTBMPRO
+     WHERE MPRO_CORP_CODE = I_CORP_CODE
+       AND MPRO_PART_NO   = I_PART_NO
+       AND MPRO_EONO      = I_EONO
+       AND MPRO_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND MPRO_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 금형코드별집계
+    ----------------------------------
+    O_LINE_NO := 'ST-21800';
+    DELETE FROM CRTBMSUM
+     WHERE MSUM_CORP_CODE = I_CORP_CODE
+       AND MSUM_PART_NO   = I_PART_NO
+       AND MSUM_EONO      = I_EONO
+       AND MSUM_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND MSUM_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- 적용율
+    ----------------------------------
+    O_LINE_NO := 'ST-21900';
+    DELETE FROM CRTBCAPL
+     WHERE CAPL_CORP_CODE = I_CORP_CODE
+       AND CAPL_PART_NO   = I_PART_NO
+       AND CAPL_EONO      = I_EONO
+       AND CAPL_CUMT_NO   = I_CUMT_NO
+       AND (    I_PROC_TYPE = 'P'
+            OR (I_PROC_TYPE = 'C' AND CAPL_COME_CODE = I_COME_CODE)
+           )
+    ;
+    ----------------------------------
+    -- SUB ITEM집계
+    ----------------------------------
+    O_LINE_NO := 'ST-22100';
+    DELETE FROM CRTBSPSM
+     WHERE SPSM_CORP_CODE = I_CORP_CODE
+       AND SPSM_PART_NO   = I_PART_NO
+       AND SPSM_EONO      = I_EONO
+       AND SPSM_CUMT_NO   = I_CUMT_NO
+    ;
+    ----------------------------------
+    -- END-ITEM 집계
+    ----------------------------------
+    O_LINE_NO := 'ST-22200';
+    DELETE FROM CRTBESUM
+     WHERE ESUM_CORP_CODE = I_CORP_CODE
+       AND ESUM_COST_GUBN = v_CMMS_COST_ENDI
+       AND ESUM_PART_NO   = v_CMMS_PART_ENDI
+       AND ESUM_EONO      = v_CMMS_EONO_ENDI
+       AND ESUM_CUMT_NO   = v_CMMS_CUMT_ENDI
+    ;
+
+    ---------------------------------------------------------------------------
+    -- 3. 후속처리
+    ---------------------------------------------------------------------------
+    ----------------------------------
+    -- END MASTER 집계SIGN CLEAR
+    ----------------------------------
+    O_LINE_NO := 'ST-31000';
+    UPDATE CRTBEMST
+       SET EMST_SUM0_GUBN = NULL
+     WHERE EMST_CORP_CODE = I_CORP_CODE
+       AND EMST_COST_GUBN = v_CMMS_COST_ENDI
+       AND EMST_PART_NO   = v_CMMS_PART_ENDI
+       AND EMST_EONO      = v_CMMS_EONO_ENDI
+       AND EMST_CUMT_NO   = v_CMMS_CUMT_ENDI
+    ;
+
+    -- CHIN SUB-ASSY가 초기화
+    O_LINE_NO := 'ST-32000';
+    UPDATE CRTBCHIN
+       SET CHIN_ASSY_PRIC = 0
+          ,CHIN_UPDT_DATE = TO_CHAR(SYSDATE,'YYYYMMDD')
+          ,CHIN_UPDT_CMAN = I_EMPL_NUMB
+     WHERE CHIN_CORP_CODE = I_CORP_CODE
+       AND CHIN_COST_GUBN = v_CMMS_COST_ENDI
+       AND CHIN_PART_NO   = v_CMMS_PART_ENDI
+       AND CHIN_EONO      = v_CMMS_EONO_ENDI
+       AND CHIN_CUMT_NO   = v_CMMS_CUMT_ENDI
+    ;
+
+    -------------------------------
+    -- 공법 마스터 업데이트
+    -------------------------------
+    O_LINE_NO := 'ST-33000';
+    UPDATE CRTBCMMS
+       SET CMMS_STND_DEGR = I_STND_DEGR
+          ,CMMS_SUM0_GUBN = NULL
+     WHERE CMMS_CORP_CODE = I_CORP_CODE
+       AND CMMS_PART_NO   = I_PART_NO
+       AND CMMS_EONO      = I_EONO
+       AND CMMS_CUMT_NO   = I_CUMT_NO
+       AND CMMS_COME_CODE = I_COME_CODE
+    ;
+
+    -------------------------------
+    -- 재집계 처리
+    -------------------------------
+    O_LINE_NO := 'ST-34000';
+    CRSPSPCR_C01(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO, I_COME_CODE, I_EMPL_NUMB
+                ,O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'SA-001' THEN
+          O_MESG := '재집계 처리(CRSPSPCR_C01) 오류:' || O_MESG;
+        RAISE UD_EX_ERROR;
+
+    ELSE
+        O_PRGM_ID   := 'CRSPSPCR_C01';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    -------------------------------
+    -- CRSPSPCR_C01 에서  CMMS_SUM0_GUBN이 'Y' SET 되므로 다시 CLEAR함
+    -------------------------------
+    O_LINE_NO := 'ST-35000';
+    UPDATE CRTBCMMS
+       SET CMMS_SUM0_GUBN = NULL
+     WHERE CMMS_CORP_CODE = I_CORP_CODE
+       AND CMMS_PART_NO   = I_PART_NO
+       AND CMMS_EONO      = I_EONO
+       AND CMMS_CUMT_NO   = I_CUMT_NO
+       AND CMMS_COME_CODE = I_COME_CODE
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
