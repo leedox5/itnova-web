@@ -1,0 +1,506 @@
+<sc-link rel="import" href="es-caterm-p16-02.html"></sc-link>
+<sc-link rel="import" href="es-caterm-p16-03.html"></sc-link>
+<sc-link rel="import" href="../common/es-cacm-01.html"></sc-link>
+
+<dom-module id="es-caterm-p16-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : TERMINAL 자동공법_01(16차)
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2019.11.25
+        ** @History         : 2019.11.25 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 코드 조회 -->
+        <sc-service-provider id="getStndInfoRPC" descriptor="bp/tcams/ca/common" service-id="get.stndInfo" on-response="resultStndInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="combo_info" target="{{standInfoList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 COUNT 조회 -->
+        <sc-service-provider id="getInfoCountRPC" descriptor="bp/tcams/ca/term/p16" service-id="get.TERMInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 조회 -->
+        <sc-service-provider id="getInfoRPC" descriptor="bp/tcams/ca/term/p16" service-id="get.TERMInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info"    target="{{result}}"></sc-service-output>
+                <sc-service-output name="resultProc" target="{{resultProc}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 입력factor 저장 -->
+        <sc-service-provider id="saveInfoRPC" descriptor="bp/tcams/ca/term/p16" service-id="save.TERMInfo" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 계산 & 결과 조회 -->
+        <sc-service-provider id="getCalcResRPC" descriptor="bp/tcams/ca/common" service-id="CALL.PROC" on-response="calcComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 선택한 복사대상 key로 input data COUNT 조회 -->
+        <sc-service-provider id="getCopyInfoCountRPC" descriptor="bp/tcams/ca/term/p16" service-id="get.TERMInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 선택한 복사대상 key로 input data 조회 -->
+        <sc-service-provider id="getCopyInfoRPC" descriptor="bp/tcams/ca/term/p16" service-id="get.TERMInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{copyParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info"    target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 터미널 공정정보  조회 -->
+        <sc-service-provider id="getProcInfoRPC" descriptor="bp/tcams/ca/term/p16" service-id="get.StndTERTInfo" on-response="resultTert">
+	        <inputs>
+	            <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+	        </inputs>
+	        <outputs>
+	            <sc-service-output name="resultProc" target="{{resultProc}}" change-comparable="true"></sc-service-output>
+	        </outputs>
+	    </sc-service-provider>
+
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+    	<cc-page-title-bar hidden="true"></cc-page-title-bar>
+   		<div class="vbox flex" style="min-height:3%;">
+   		   			<es-cacm-01 class="flex" id="topMain" search-param="{{searchParam}}" on-copy="copyInputData"
+   			            on-get-info="getInfo" on-init-data="initData" on-calculate="checkData" on-result-calc="toParentResult"></es-cacm-01>
+   		</div>
+   		<div class="vbox flex-8">
+    		<div class="hbox flex">
+		        <es-caterm-p16-02 id="matlMain" class="flex-5"
+		        	search-param="{{searchParam}}" input-param="{{inputParam}}"></es-caterm-p16-02>
+		        <sc-splitter split-type="vertical"></sc-splitter>
+				<es-caterm-p16-03 id="cproMain" class="flex-5"
+					search-param="{{searchParam}}" input-param="{{inputParam}}" result-proc="{{resultProc}}"></es-caterm-p16-03>
+   			</div>
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "es-caterm-p16-01",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object , value: function() { return {}; } ,notify : true},
+                // 조회 결과
+                resultMap     : {type: Object , value: function() { return {}; } },
+				// 표준 패키지 정보 조회
+				standInfoList : {type : Array , value : function() { return [];}},
+				// 조회 결과용
+		    	result        : {type: Object , value: function() { return {}; } },
+				// Input 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } },
+				// copy 대상 정보
+		    	copyParam     : {type: Object , value: function() { return {}; } },
+				// save 대상 정보
+		    	saveParam     : {type: Object , value: function() { return {}; } },
+				// 계산번호 저장용
+		    	orgCumtNo     : {type : String, value : function() { return '';} },
+				// TERMINAL 공정정보 조회
+				resultProc    : {type : Array , value : function() { return [];}}
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj);
+				me.set('orgCumtNo', UT.copy(obj.cmms_cumt_no));
+
+
+                // 상태체크
+                me.checkPassStat();
+
+				// 공통 타이틀 명 SET
+                me.set('searchParam.title', "TERMINAL 원가계산");
+
+                // 공통 영역(TOP FRAME) 조회조건 전달
+                me.$.topMain.load(me.get("searchParam"));
+
+                // 표준 정보 조회
+                me.$.getStndInfoRPC.service();
+
+            },
+
+            /**
+             * 표준 패키지 정보 조회 후처리 로직
+             **/
+            resultStndInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	///////////////////
+            	// 개별 공법 조회 기능 추가 후 마지막 response 처리에서 getInfoCountRPC 호출
+            	///////////////////
+
+            	// TERMINAL 공정 조회
+            	me.$.getProcInfoRPC.service();
+            },
+
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultCountInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id
+            	me.set("inputParam" , {});
+
+            	if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+				if(me.get("result.teri_count") == 0 || me.get("result.teri_count") == '0'){
+					me.set('inputParam.iCount', "0");
+
+					var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam"),resultProc:me.get("resultProc")};
+					// 값 초기화 후 정보 전달
+					me.set('inputParam.iCount', me.get("result.teri_count"));
+	            	me.$.matlMain.load(obj);
+	            	me.$.cproMain.load(obj);
+
+				} else {
+
+					// service-provider id 로 분기처리
+					if (target == "getCopyInfoRPC") {
+						getCopyInfoRPC.bind();
+					} else {
+						me.$.getInfoRPC.service();
+					}
+				}
+
+            },
+
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 공법 Input Factor 정보
+            	me.set('inputParam' , data.ca_info);
+            	me.set('resultProc', data.resultProc);
+            	me.set('inputParam.iCount', "1");
+
+            	var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),inputParam:me.get("inputParam"),resultProc:me.get("resultProc")};
+
+            	me.$.matlMain.load(obj);
+            	me.$.cproMain.load(obj);
+
+            },
+
+            /**
+             * LOT량 변화 이벤트 처리
+             **/
+            changeLot: function(e, data) {
+                var me = this;
+
+                //me.$.matlMain.setCodeList(res.response);
+				//me.$.cproMain.setCodeList(res.response);
+            },
+
+            /**
+             * 초기화 버튼 이벤트
+             **/
+            initData: function(e, data) {
+                var me = this;
+
+				// 입력 값 초기화
+                me.set("inputParam", {});
+                me.set("searchParam.cumt_no"  , "-1");
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 조회 버튼 이벤트
+             **/
+            getInfo: function() {
+                var me = this;
+
+                if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 결과조회 버튼 이벤트
+             **/
+            toParentResult: function() {
+            	var me = this;
+
+            	me.fire("show-detail");
+            },
+
+            /**
+             * 계산 버튼 이벤트 (계산 전 체크)
+             **/
+             checkData: function() {
+            	var me = this;
+
+            	// 계산 로직 전 적용장비 체크
+			    var mattThik = parseFloat(me.get("inputParam.teri_matt_thik"));
+			    var ton0Code = me.get("inputParam.teri_ton0_code");
+
+				// 소재두께 >= 1.0 & 적용장비 30TON or 45TON인 경우
+				if (mattThik >= 1.0 && (ton0Code == "30T" || ton0Code == "45T")) {
+					UT.confirm("소재두께 1.0 초과 시, 60톤 이상 장비를 설정하시기 바랍니다. \n계속 진행하시겠습니까?"
+								,function() {
+									me.calculation();
+								});
+
+				// 소재두께 > 0.5 & 적용장비 30TON인 경우
+				} else if (mattThik > 0.5 && ton0Code == "30T") {
+					UT.confirm("소재두께 0.5 초과 시, 45톤 이상 장비를 설정하시기 바랍니다. \n계속 진행하시겠습니까?"
+								,function() {
+									me.calculation();
+								});
+				} else {
+					me.calculation();
+				}
+            },
+            
+            /**
+             * 계산 버튼 이벤트
+             **/
+            calculation : function() {
+            	var me = this;
+
+            	if (!me.$.matlMain.getInputData()) {
+                    return false;
+				}
+				
+            	if (!me.$.cproMain.getInputData()) {
+                    return false;
+				}
+
+                me.set("saveParam", commonAS.mergeObj(me.inputParam, me.searchParam));
+
+                // 공법 factor 저장 호출
+                me.$.saveInfoRPC.service();
+            },
+
+            /**
+             * 입력 factor 저장 후 계산 호출
+             **/
+            goCalc: function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+				if(me.get("result.MESG_CODE") == 'SA-001'){
+					// 계산 procedure 호출
+					me.$.getCalcResRPC.service();
+				} else {
+					UT.alert(me.get("result.MESG"));
+					return;
+				}
+            },
+
+            /**
+             * 계산 처리 후 로직
+             **/
+            calcComplete: function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                console.log(data);
+                
+                if (me.get("result.MESG_CODE") == 'SA-001') {
+                    UT.alert(me.get("result.MESG"), null, null, {autoGrowMessageBox : true});
+                    me.$.topMain.showStat(data.calc_Result);
+                    me.toParentResult();
+                    me.$.getInfoRPC.service();
+                    me.moduleCall();
+                } else {
+                    me.$.topMain.showStat(data.calc_Result);
+                    commonAS.comeAlert(me.get("result"));
+                }
+            },
+
+            /**
+         	 * 모듈간 통신 END ITEM MASTER/CHAIN/공법선택 마스터 화면 재조회
+         	 */
+         	moduleCall: function() {
+                var me = this;
+                
+				// END ITEM MASTER
+				if ( me.searchParam['cmms_cost_gubn'] == 'R1'
+					  || me.searchParam['cmms_cost_gubn'] == 'R2'
+					  || me.searchParam['cmms_cost_gubn'] == 'R3') {
+					var target1 = document.querySelector("sc-pages").children.PCA00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00020;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 개발
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RD') {
+					var target1 = document.querySelector("sc-pages").children.PCB00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00030;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 임시
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RC') {
+					var target1 = document.querySelector("sc-pages").children.PCK00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00010;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				}
+				
+				// 공법선택
+// 				var target3 = document.querySelector("sc-pages").children.PCF00020;
+// 				if (UT.isNotEmpty(target3)) {
+
+// 					if (UT.isNotEmpty(target3.module.$.autoCome)) {
+// 						target3.module.$.autoCome.getSelectedList();
+// 					}
+
+// 					if (UT.isNotEmpty(target3.module.$.moldCome)) {
+// 						target3.module.$.moldCome.getSelectedList();
+// 					}
+// 				}
+				
+            },
+
+            /**
+             * 복사 버튼 이벤트
+             **/
+            copyInputData: function() {
+            	var me = this;
+				/*
+	            var param = {};
+	            if(!me.escacm07){
+	                me.escacm07 = UT.popup('es-cacm-07', me, 940, 500, {
+                		'selected-item' : function(popup, e) {
+                			var result = e.detail;
+
+                				me.set("copyParma.corp_code", result.comd_corp_code);
+                				me.set("copyParma.part_no"  , result.comd_part_no);
+                				me.set("copyParma.eono"     , result.comd_eono);
+                				me.set("copyParma.cumt_no"  , result.comd_cumt_no);
+
+        						me.$.getCopyInfoCountRPC.service();
+                            popup.close();
+                		}
+	                }, {title : "복사대상선택"});
+	            }
+                me.escacm07.show();
+				me.escacm07.getWindowContent().load({singleSelect : true, defaultParam : param, autoComplete : true});
+				*/
+
+            },
+
+            /**
+             * 상태 체크
+             **/
+			checkPassStat : function () {
+				var me = this;
+
+				if (me.get("searchParam.pass_cnt") != "0") {
+					me.$.matlMain.$.matlDiv.setAttribute("disabled", true);
+					me.$.cproMain.$.cproDiv.setAttribute("disabled", true);
+				} else {
+					me.$.matlMain.$.matlDiv.removeAttribute("disabled");
+					me.$.cproMain.$.cproDiv.removeAttribute("disabled");
+				}
+			},
+
+			/**
+             * TERMINAL공정 정보 조회 후 처리
+             **/
+             resultTert : function() {
+				var me = this;
+				me.$.getInfoCountRPC.service();
+			},
+        });
+	</script>
+</dom-module>
