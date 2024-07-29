@@ -30,6 +30,7 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBTERT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-MTDG.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERT-16-3.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBCMPK-16-4.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERM-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERP-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERT-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CASPTERM_P16_4.xml
