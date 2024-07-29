@@ -10,6 +10,7 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGP.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDTP.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMATL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAI.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAM.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAP.xml
