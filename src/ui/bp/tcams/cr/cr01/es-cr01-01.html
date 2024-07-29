@@ -340,7 +340,7 @@
                 <sc-button text="계산완료"  id="btn_complete" on-click="complete"             ></sc-button>
                 <sc-button text="계산완료취소" id="btn_cancel" on-click="chkCancel"></sc-button>
                 <sc-button text="담당자변경" id="btn_charger" on-click="popup_ESCD01_01_01"  ></sc-button>
-                <sc-button text="조회"                      style="margin-left: 15px;" on-click="list"               ></sc-button>
+                <sc-button text="조회" style="margin-left: 15px;" on-click="list"></sc-button>
                 <sc-button text="추가"     id="btn_add"     on-click="addItem"             ></sc-button>
                 <sc-button text="저장"     id="btn_save"    on-click="saveList"            ></sc-button>
                 <sc-button text="복사"     id="btn_copy"    on-click="copyAlert"           ></sc-button>
@@ -726,7 +726,7 @@
             /**
              * 조회 버튼 클릭 시 이벤트
              */
-             list : function() {
+            list: function() {
                 var me = this;
 
                 me.set("searchParam.comd_cumto_no_R", "");
@@ -819,7 +819,8 @@
                 me.set("searchParam.chk_dept", data.chk.chk_dept);
 
                 if(data.auth.dev_auth == "Y") {
-                	me.set("searchParam.comd_from_date", "");
+                    me.set("searchParam.comd_from_date", "");
+                    me.list();
                 }
                 me.controlComp();
             },
