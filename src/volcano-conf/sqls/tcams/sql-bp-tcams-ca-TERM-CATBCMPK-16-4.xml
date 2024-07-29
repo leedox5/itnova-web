@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/ca/TERM/CATBCMPK/16-4" data-source="tcamsDS">
+
+ <sql id="select" comment="조회">
+  <![CDATA[
+WITH T1 (
+  CMPK_CORP_CODE
+ ,CMPK_STND_GUBN
+ ,CMPK_STND_DEGR
+ ,CMPK_GUBN_CODE
+ ,CMPK_CODE
+ ,CMPK_SORT_NUMB
+ ,CMPK_GUBN_NAME
+ ,CMPK_CODE_NAME
+ ,CMPK_APPL_VALU
+ ,CMPK_APPL_PRIC
+ ,CMPK_APPL_RATE1
+ ,CMPK_APPL_RATE2
+ ,CMPK_APPL_RATE3
+ ,CMPK_CODE_GRP1
+ ,CMPK_CODE_GRP2
+ ,CMPK_CODE_GRP3
+ ,CMPK_CODE_GRP4
+ ,CMPK_CODE_GRP5
+ ,CMPK_APPL_GUBN
+ ,CMPK_END0_DATE
+ ,CMPK_REMK
+ ,CMPK_UPDT_CMAN
+ ,CMPK_UPDT_DATE
+ ,CMPK_INIT_CMAN
+ ,CMPK_INIT_DATE
+) AS (
+           SELECT 'K1' ,'H' ,'16-4' ,'TERM01' ,'SIDE' ,'1' ,'진행TYPE' ,'SIDE TYPE' ,'0' ,'0' ,'1.2' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'적용율1=LOSS율' ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM01' ,'END' ,'2' ,'진행TYPE' ,'END TYPE' ,'0' ,'0' ,'1.2' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'EAR_RING' ,'3' ,'TERMINAL TYPE' ,'EARTH RING' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'분류그룹1=터미널분류(부재료산출용)' ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_RING' ,'4' ,'TERMINAL TYPE' ,'일반 RING' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_GEN' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'COM_ISRT' ,'5' ,'TERMINAL TYPE' ,'복합(INSERT)' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'COM_JOIN' ,'6' ,'TERMINAL TYPE' ,'복합(결합시)' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'BRONZE' ,'7' ,'TERMINAL TYPE' ,'BRONZE재질' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'PCB_TAB' ,'8' ,'TERMINAL TYPE' ,'PCB용 TAB' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_R550' ,'9' ,'TERMINAL TYPE' ,'일반-RECEPT' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_R450' ,'10' ,'TERMINAL TYPE' ,'일반-RECEPT' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_R300' ,'11' ,'TERMINAL TYPE' ,'일반-RECEPT' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_T500' ,'12' ,'TERMINAL TYPE' ,'일반-TAP' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_T400' ,'13' ,'TERMINAL TYPE' ,'일반-TAP' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM02' ,'GEN_T300' ,'14' ,'TERMINAL TYPE' ,'일반-TAP' ,'0' ,'0' ,'0' ,'0' ,'0' ,'GRP1_ETC' ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM03' ,'N' ,'17' ,'적용TON' ,NULL ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM03' ,'30T' ,'18' ,'적용TON' ,'30 TON' ,'30' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM03' ,'45T' ,'19' ,'적용TON' ,'45 TON' ,'45' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM03' ,'60T' ,'20' ,'적용TON' ,'60 TON' ,'60' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'030' ,'21' ,'TERMINAL SIZE' ,'030' ,'30' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'040' ,'22' ,'TERMINAL SIZE' ,'040' ,'40' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'050' ,'23' ,'TERMINAL SIZE' ,'050' ,'50' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'060' ,'24' ,'TERMINAL SIZE' ,'060' ,'60' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'070' ,'25' ,'TERMINAL SIZE' ,'070' ,'70' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'080' ,'26' ,'TERMINAL SIZE' ,'080' ,'80' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'090' ,'27' ,'TERMINAL SIZE' ,'090' ,'90' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'110' ,'28' ,'TERMINAL SIZE' ,'110' ,'110' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM04' ,'250' ,'29' ,'TERMINAL SIZE' ,'250' ,'250' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM05' ,'N' ,'30' ,'도금종류' ,NULL ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,'16차 추가' ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM05' ,'AU' ,'31' ,'도금종류' ,'금도금' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+ UNION ALL SELECT 'K1' ,'H' ,'16-4' ,'TERM05' ,'AG' ,'32' ,'도금종류' ,'은도금' ,'0' ,'0' ,'0' ,'0' ,'0' ,NULL ,NULL ,NULL ,NULL ,NULL ,'Y' ,NULL ,NULL ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+)
+SELECT CASE                                                   
+        WHEN B.CMPK_CORP_CODE IS NULL THEN 'I'             
+        WHEN A.CMPK_UPDT_DATE > B.CMPK_UPDT_DATE THEN 'U'  
+       END MG_MODE                                         
+      ,A.*                                                 
+  FROM T1 A                                                
+      LEFT OUTER JOIN                                      
+       CATBCMPK B                                          
+      ON    B.CMPK_CORP_CODE = A.CMPK_CORP_CODE
+        AND B.CMPK_STND_GUBN = A.CMPK_STND_GUBN
+        AND B.CMPK_STND_DEGR = A.CMPK_STND_DEGR
+        AND B.CMPK_GUBN_CODE = A.CMPK_GUBN_CODE
+        AND B.CMPK_CODE = A.CMPK_CODE
+        AND B.CMPK_SORT_NUMB = A.CMPK_SORT_NUMB
+  ]]>
+ </sql>
+
+ <sql id="insert" comment="저장">
+  <![CDATA[ 
+INSERT INTO CATBCMPK (
+  CMPK_CORP_CODE
+ ,CMPK_STND_GUBN
+ ,CMPK_STND_DEGR
+ ,CMPK_GUBN_CODE
+ ,CMPK_CODE
+ ,CMPK_SORT_NUMB
+ ,CMPK_GUBN_NAME
+ ,CMPK_CODE_NAME
+ ,CMPK_APPL_VALU
+ ,CMPK_APPL_PRIC
+ ,CMPK_APPL_RATE1
+ ,CMPK_APPL_RATE2
+ ,CMPK_APPL_RATE3
+ ,CMPK_CODE_GRP1
+ ,CMPK_CODE_GRP2
+ ,CMPK_CODE_GRP3
+ ,CMPK_CODE_GRP4
+ ,CMPK_CODE_GRP5
+ ,CMPK_APPL_GUBN
+ ,CMPK_END0_DATE
+ ,CMPK_REMK
+ ,CMPK_UPDT_CMAN
+ ,CMPK_UPDT_DATE
+ ,CMPK_INIT_CMAN
+ ,CMPK_INIT_DATE
+) VALUES (
+  #cmpk_corp_code#
+ ,#cmpk_stnd_gubn#
+ ,#cmpk_stnd_degr#
+ ,#cmpk_gubn_code#
+ ,#cmpk_code#
+ ,#cmpk_sort_numb#
+ ,#cmpk_gubn_name#
+ ,#cmpk_code_name#
+ ,#cmpk_appl_valu#
+ ,#cmpk_appl_pric#
+ ,#cmpk_appl_rate1#
+ ,#cmpk_appl_rate2#
+ ,#cmpk_appl_rate3#
+ ,#cmpk_code_grp1#
+ ,#cmpk_code_grp2#
+ ,#cmpk_code_grp3#
+ ,#cmpk_code_grp4#
+ ,#cmpk_code_grp5#
+ ,#cmpk_appl_gubn#
+ ,#cmpk_end0_date#
+ ,#cmpk_remk#
+ ,#cmpk_updt_cman#
+ ,#cmpk_updt_date#
+ ,#cmpk_init_cman#
+ ,#cmpk_init_date#
+)
+  ]]>
+ </sql>
+
+ <sql id="update" comment="업데이트">
+  <![CDATA[
+UPDATE CATBCMPK
+   SET CMPK_GUBN_NAME = #cmpk_gubn_name#
+      ,CMPK_CODE_NAME = #cmpk_code_name#
+      ,CMPK_APPL_VALU = #cmpk_appl_valu#
+      ,CMPK_APPL_PRIC = #cmpk_appl_pric#
+      ,CMPK_APPL_RATE1 = #cmpk_appl_rate1#
+      ,CMPK_APPL_RATE2 = #cmpk_appl_rate2#
+      ,CMPK_APPL_RATE3 = #cmpk_appl_rate3#
+      ,CMPK_CODE_GRP1 = #cmpk_code_grp1#
+      ,CMPK_CODE_GRP2 = #cmpk_code_grp2#
+      ,CMPK_CODE_GRP3 = #cmpk_code_grp3#
+      ,CMPK_CODE_GRP4 = #cmpk_code_grp4#
+      ,CMPK_CODE_GRP5 = #cmpk_code_grp5#
+      ,CMPK_APPL_GUBN = #cmpk_appl_gubn#
+      ,CMPK_END0_DATE = #cmpk_end0_date#
+      ,CMPK_REMK = #cmpk_remk#
+      ,CMPK_UPDT_CMAN = #cmpk_updt_cman#
+      ,CMPK_UPDT_DATE = #cmpk_updt_date#
+ WHERE CMPK_CORP_CODE = #cmpk_corp_code#
+   AND CMPK_STND_GUBN = #cmpk_stnd_gubn#
+   AND CMPK_STND_DEGR = #cmpk_stnd_degr#
+   AND CMPK_GUBN_CODE = #cmpk_gubn_code#
+   AND CMPK_CODE = #cmpk_code#
+   AND CMPK_SORT_NUMB = #cmpk_sort_numb#
+  ]]>
+ </sql>
+</sql-descriptor> 
