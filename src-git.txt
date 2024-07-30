@@ -19,6 +19,7 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGP.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDTP.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMLST.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTCD.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTDG.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMATL.xml
