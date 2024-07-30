@@ -1,0 +1,1116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CMSPMALC_P07_4" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CMSPMALC_P07_4  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CMSPMALC_P07_4'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CMSPMALC_P07_4
+(
+    I_CORP_CODE  IN  CMTBMALI.MALI_CORP_CODE%TYPE,
+    I_PART_NO    IN  CMTBMALI.MALI_PART_NO%TYPE  ,
+    I_EONO       IN  CMTBMALI.MALI_EONO%TYPE     ,
+    I_CUMT_NO    IN  CMTBMALI.MALI_CUMT_NO%TYPE  ,
+    I_MOLD_SEQ0  IN  CMTBMALI.MALI_MOLD_SEQ0%TYPE,
+    I_INIT_CMAN  IN  CMTBMALI.MALI_INIT_CMAN%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [SYSTEM  ] TCAMS
+ * [FUNCTION] 금형공법_AL중력주조
+ * [HISTORY ]
+ *  - 2020.01.01 [A.S.M] : 신규    (7-1차) 
+ *  - 2023.04.20 [A.S.M] : 기계경비추출기준 변경에 따른 수정 (CRFT_MCIF_APPL_DATE 호출일자 변경 : SUB적용일 -> 차수별적용일)
+ *                         [참고] 재질단가는 기존적용일 처리 유지함.
+ *  - 2023.05.01 [A.S.M] : 개정    (7-2차) : 기계경비 변경외 특이사항없음 (SQL EXCEPTION CODE변경 -1438 -> -15115)
+ *  - 2024.02.01 [A.S.M] : 개정    (7-4차) : 전력단가 변경외 특이사항없음 
+ *
+ * [COMMENT ]
+ *  - 
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    rt_MALI      CMTBMALI%ROWTYPE;
+
+    rt_CORT      CITBCORT%ROWTYPE;
+    rt_MTCD      CITBMTCD%ROWTYPE;
+    rt_MTDG      CITBMTDG%ROWTYPE;
+    rt_CAYR      CITBCAYR%ROWTYPE;
+    rt_CMMS      CRTBCMMS%ROWTYPE;
+    rt_SPMS      CRTBSPMS%ROWTYPE;
+
+    --WORKING VARIABLE
+    v_IN_TITLE        VARCHAR2(20) ;
+    v_COME_CODE       CRTBCMMS.CMMS_COME_CODE%TYPE;
+    v_APPL_CORP       CRTBCMMS.CMMS_CORP_CODE%TYPE;
+    trCo              NUMBER := 2  ; --원가TRUNC처리소수점단위
+    vt_PI             NUMBER := 3.141592;
+    vt_SMAT_TOT       NUMBER;        --SMAT_CHECK ='Y'인 재료비합계
+    --WT합계
+    vt_MATL_WT_SKD61  NUMBER;
+    vt_MATL_WT_S45C   NUMBER;
+    vt_MATL_WT_FCX    NUMBER;
+    vt_MATL_WT_HP4    NUMBER;
+    vt_MATL_WT_SCM440 NUMBER;
+
+    vt_A              NUMBER;  --금형접촉표면적
+    vt_B              NUMBER;  --총부품투영면적
+    vt_C              NUMBER;  --측면부면적
+    vt_D              NUMBER;  --총부품표면적
+    vt_E              NUMBER;  --총부품부피
+    vt_F              NUMBER;  --금형내 제품깊이
+    
+    --중자용
+    vt_A1             NUMBER;  --금형접촉표면적
+    vt_B1             NUMBER;  --총부품투영면적
+    vt_C1             NUMBER;  --측면부면적
+    vt_D1             NUMBER;  --총부품표면적
+    vt_E1             NUMBER;  --총부품부피
+    vt_F1             NUMBER;  --금형내 제품깊이
+
+    vt_A2             NUMBER;  --금형접촉표면적
+    vt_B2             NUMBER;  --총부품투영면적
+    vt_C2             NUMBER;  --측면부면적
+    vt_D2             NUMBER;  --총부품표면적
+    vt_E2             NUMBER;  --총부품부피
+    vt_F2             NUMBER;  --금형내 제품깊이
+
+    --재료비처리를 위한 임시저장장소
+    idx BINARY_INTEGER := 0;
+    TYPE type_CMTBMALM IS TABLE OF CMTBMALM%ROWTYPE INDEX BY BINARY_INTEGER;
+    TYPE type_CITBMATL IS TABLE OF CITBMATL%ROWTYPE INDEX BY BINARY_INTEGER;
+    ty_MALM      type_CMTBMALM;
+    ty_MATL      type_CITBMATL;
+
+    vt_MMAT_MATL_COST CRTBMMAT.MMAT_MATL_COST%TYPE;  --재료비
+    vt_MPRO_IBR_COST  CRTBMPRO.MPRO_IBR_COST%TYPE;   --노무비
+    vt_MPRO_EXPM_COST CRTBMPRO.MPRO_EXPM_COST%TYPE;  --경비
+    vt_MPRO_GME0_COST CRTBMPRO.MPRO_GME0_COST%TYPE;  --일반관리비
+    vt_MPRO_PROF_COST CRTBMPRO.MPRO_PROF_COST%TYPE;  --이윤
+
+    vt_TOT_MATL_COST  CRTBMMAT.MMAT_MATL_COST%TYPE;  --재료비합계
+    vt_TOT_PROC_COST  CRTBMPRO.MPRO_PROC_COST%TYPE;  --가공비
+    vt_TOT_IBR_COST   CRTBMPRO.MPRO_IBR_COST%TYPE;   --노무비
+    vt_TOT_EXPM_COST  CRTBMPRO.MPRO_EXPM_COST%TYPE;  --경비
+    vt_TOT_GME0_COST  CRTBMPRO.MPRO_GME0_COST%TYPE;  --일반관리비
+    vt_TOT_PROF_COST  CRTBMPRO.MPRO_PROF_COST%TYPE;  --이윤
+
+    ------------------------------------------------------
+    -- CURSOR 선언
+    ------------------------------------------------------
+    -- 1.재료비
+    ------------------------------------------------------
+    CURSOR cs_MALM IS
+        SELECT MALM_MATL_SEQ0                                --재료 SEQ
+              ,NVL(MALM_BASE_WIDT,0) MALM_BASE_WIDT          --가로             
+              ,NVL(MALM_BASE_LENG,0) MALM_BASE_LENG          --세로             
+              ,NVL(MALM_BASE_HEGT,0) MALM_BASE_HEGT          --높이             
+              ,NVL(MALM_WIDT_MAGN,0) MALM_WIDT_MAGN          --가로여유         
+              ,NVL(MALM_LENG_MAGN,0) MALM_LENG_MAGN          --세로여유         
+              ,NVL(MALM_HEGT_MAGN,0) MALM_HEGT_MAGN          --높이여유         
+              ,NVL(MALM_WEGT_RATE,0) MALM_WEGT_RATE          --중량배수         
+              ,NVL(MALM_FACT_A   ,0) MALM_FACT_A             --FACT A           
+              ,NVL(MALM_FACT_B   ,0) MALM_FACT_B             --FACT B           
+              ,NVL(MALM_FACT_C   ,0) MALM_FACT_C             --FACT C           
+              ,MALM_SMAT_CHEK                                --부재료비 항목    
+              ,MALM_HEAT_CHEK                                --열처리 중량 CHECK
+              ,MALM_MATL_CODE                                --재료코드         
+              ,MALM_MATL_NAME                                --재료명칭         
+              ,NVL(MALM_MATL_PRIC,0) MALM_MATL_PRIC          --단가             
+              ,NVL(MALM_MATL_USE ,0) MALM_MATL_USE           --사용량           
+              ,NVL(MALM_MATL_WT  ,0) MALM_MATL_WT            --중량             
+              ,MALM_MATL_UNIT                                --단위             
+              ,NVL(MATL_PRIC     ,0)  MATL_PRIC
+              ,NVL(MATL_SPEC_GRAV,0)  MATL_SPEC_GRAV
+          FROM CMTBMALM
+
+            LEFT OUTER JOIN
+               CITBMATL
+            ON     MALM_CORP_CODE = MATL_CORP_CODE
+               AND MALM_STND_GUBN = MATL_STND_GUBN
+               AND MALM_MATL_CODE = MATL_CODE
+               AND CRFT_MATL_APPL_DATE(MALM_CORP_CODE,MALM_STND_GUBN,MALM_MATL_CODE,rt_SPMS.SPMS_BASE_DATE,'LFO') =  MATL_APPL_DATE
+               AND 'LFO'          = MATL_GUBN                     --금형재료는 구분값처리하지 않음
+
+         WHERE MALM_CORP_CODE = v_APPL_CORP
+           AND MALM_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND MALM_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND MALM_MOLD_CODE = rt_MALI.MALI_MOLD_CODE
+           AND MALM_ITEM_CODE IN ('ALL', rt_MALI.MALI_ITEM_CODE)
+           AND MALM_EQUI_CODE IN ('ALL', rt_MALI.MALI_EQUI_CODE)
+           AND NVL(MALM_LIFE_MIN0,0) <= rt_MALI.MALI_LIFE_CNT0
+           AND NVL(MALM_LIFE_MAX0,0) >  rt_MALI.MALI_LIFE_CNT0
+           AND MALM_APPL_GUBN = 'Y'
+         ORDER BY MALM_MATL_SEQ0
+        ;
+
+    ------------------------------------------------------
+    -- 2.가공비
+    ------------------------------------------------------
+    CURSOR cs_MALP IS
+        SELECT MALP_PROC_SEQ0       
+              ,NVL(MALP_FACT_A ,0)   MALP_FACT_A 
+              ,NVL(MALP_FACT_B ,0)   MALP_FACT_B 
+              ,NVL(MALP_FACT_C ,0)   MALP_FACT_C 
+              ,NVL(MALP_FACT_D ,0)   MALP_FACT_D 
+              ,NVL(MALP_FACT_E ,0)   MALP_FACT_E 
+              ,NVL(MALP_FACT_F ,0)   MALP_FACT_F 
+              ,NVL(MALP_FACT_G ,0)   MALP_FACT_G 
+              ,NVL(MALP_FACT_SC,0)   MALP_FACT_SC
+              ,NVL(MALP_FACT_RA,0)   MALP_FACT_RA  --간접경비율 예외대상
+              ,MALP_PROC_NAME
+              ,NVL(MALP_NET0_CYTM,0) MALP_NET0_CYTM
+              ,NVL(MALP_PRSN_CNT0,0) MALP_PRSN_CNT0
+              ,MALP_MACH_CODE
+              ,MALP_INDS_CODE
+              ,NVL(MCIF_DRCT_COST,0) MCIF_DRCT_COST
+              ,MCIF_MCHH_NAME
+          FROM CMTBMALP
+            LEFT OUTER JOIN
+               CITBMCIF
+            ON      MALP_CORP_CODE = MCIF_CORP_CODE
+               AND  MALP_STND_GUBN = MCIF_STND_GUBN
+            -- AND  CRFT_MCIF_APPL_DATE(MALP_CORP_CODE,MALP_STND_GUBN,rt_SPMS.SPMS_BASE_DATE,'M',v_COME_CODE,MALP_MACH_CODE) = MCIF_APPL_DATE
+               AND  CRFT_MCIF_APPL_DATE(MALP_CORP_CODE,MALP_STND_GUBN,rt_MTDG.MTDG_MCHH_DATE,'M',v_COME_CODE,MALP_MACH_CODE) = MCIF_APPL_DATE  --2023.04.20 적용일변경
+               AND  'M'            = MCIF_ATMO_GUBN  --금형구분
+               AND  MCIF_COME_CODE IN ('ALL',v_COME_CODE)
+               AND  MALP_MACH_CODE = MCIF_MCHH_CODE
+
+         WHERE MALP_CORP_CODE = v_APPL_CORP
+           AND MALP_STND_GUBN = rt_CMMS.CMMS_STND_GUBN
+           AND MALP_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+           AND MALP_MOLD_CODE = rt_MALI.MALI_MOLD_CODE
+           AND MALP_ITEM_CODE  IN ('ALL', rt_MALI.MALI_ITEM_CODE)
+           AND MALP_EQUI_CODE  IN ('ALL', rt_MALI.MALI_EQUI_CODE)
+           AND MALP_REGT_NNUMB IN ('ALL', rt_MALI.MALI_1PRO_GUBN)
+           AND NVL(MALP_LIFE_MIN0,0) <= rt_MALI.MALI_LIFE_CNT0
+           AND NVL(MALP_LIFE_MAX0,0) >  rt_MALI.MALI_LIFE_CNT0
+           AND NVL(MALP_WIDT_MIN0,0) <= CASE WHEN rt_MALI.MALI_PROD_WIDT > rt_MALI.MALI_PROD_LENG THEN rt_MALI.MALI_PROD_WIDT ELSE rt_MALI.MALI_PROD_LENG END
+           AND NVL(MALP_WIDT_MAX0,0) >  CASE WHEN rt_MALI.MALI_PROD_WIDT > rt_MALI.MALI_PROD_LENG THEN rt_MALI.MALI_PROD_WIDT ELSE rt_MALI.MALI_PROD_LENG END
+           AND NVL(MALP_PROD_MIN0,0) <= rt_MALI.MALI_PROD_CNT0
+           AND NVL(MALP_PROD_MAX0,0) >  rt_MALI.MALI_PROD_CNT0
+           AND MALP_APPL_GUBN = 'Y'
+         ORDER BY MALP_PROC_SEQ0
+        ;
+
+BEGIN
+    DBMS_OUTPUT.ENABLE(100000);
+  --DBMS_OUTPUT.DISABLE;
+
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'SA-002';
+    O_MESG      := '계산을 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CMSPMALC_P07_4';
+    O_LINE_NO   := 'ST-START';
+
+    v_COME_CODE := 'MALC';
+
+    --법인별 단가소수단위 적용 : 현재 소수단위 2로 맞추었으나 해외 적용시 확인하여 자릿수조정
+    CASE I_CORP_CODE
+         WHEN 'K1' THEN trCo := 2; v_APPL_CORP := I_CORP_CODE;
+         ELSE           trCo := 2; v_APPL_CORP := I_CORP_CODE;
+    END CASE;
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  TRIM(I_CORP_CODE) IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_PART_NO  ) IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_EONO     ) IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  TRIM(I_INIT_CMAN) IS NULL THEN v_IN_TITLE := '사번'    ; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0      THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_MOLD_SEQ0,0) = 0    THEN v_IN_TITLE := '금형순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --2.기준정보추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-11000';
+
+    --공통율정보 추출 (M->금형)
+    CRSPCORT_Q02(I_CORP_CODE,I_PART_NO,I_EONO,I_CUMT_NO,v_COME_CODE,'M','DE',  --M:금형, 금형은 DE업종사용
+                 rt_SPMS.SPMS_BASE_DATE, --원가계산기준일
+                 rt_SPMS.SPMS_VEND_CODE, --업체_코드
+                 rt_SPMS.SPMS_VEND_APFR, --업체_적용일
+                 rt_MTCD.MTCD_INDS_CODE, --업종코드
+                 rt_CAYR.CAYR_VEHL_GUBN, --승상구분
+                 rt_CMMS.CMMS_STND_GUBN, --표준 구분
+                 rt_CMMS.CMMS_STND_DEGR, --개정차수
+                 rt_CMMS.CMMS_LOTQ_QTY0, --LOT량
+                 rt_CMMS.CMMS_PROD_CNT0, --총생산개수
+                 rt_CORT.CORT_PAY0_RATE, --임율
+                 rt_CORT.CORT_IDRT_RATE, --간접경비율
+                 rt_CORT.CORT_GME0_RATE, --일반관리비율
+                 rt_CORT.CORT_MATL_RATE, --재료관리비율
+                 rt_CORT.CORT_MAPT_RATE, --재료관리비율_부품
+                 rt_CORT.CORT_PROF_RATE, --이익율
+                 rt_CORT.CORT_ET00_RATE, --ET율
+                 rt_CORT.CORT_APPL_DATE, --적용일
+                 O_MESG_CODE,O_MESG,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO);
+
+    IF  O_MESG_CODE != 'IQ-001' THEN
+        O_MESG := O_MESG; --오류메세지를 그대로 넘김
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CMSPMALC_P07_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    ---------------------------------------------------------------------------
+    -- 2023.04.20 : 기계경비 적용기준일 추출
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-12000';
+    
+    BEGIN
+        SELECT NVL(MTDG_MCHH_DATE,'00010101')
+          INTO rt_MTDG.MTDG_MCHH_DATE
+          FROM CITBMTDG
+         WHERE MTDG_CORP_CODE = I_CORP_CODE
+           AND MTDG_METH_GUBN = 'M'
+           AND MTDG_COME_CODE = v_COME_CODE
+           AND MTDG_STND_DEGR = rt_CMMS.CMMS_STND_DEGR
+        ;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN O_MESG := '기본원가정보>공법차수정보에 해당 차수정보가 존재하지 않습니다.' || '<br>'
+                                       || '▶공법코드=' || v_COME_CODE || '<br>'
+                                       || '▶차수정보=' || rt_CMMS.CMMS_STND_DEGR || '<br>';
+                                RAISE UD_EX_ERROR;
+    END;
+    
+    IF  rt_MTDG.MTDG_MCHH_DATE <= '00010101' THEN
+        O_MESG := '기계경비 적용일 정보가 등록되지 않았습니다.' || '<br>'
+               || '▶기본원가정보>공법차수정보에서 등록후 계산하시기 바랍니다.' || '<br>';
+        RAISE UD_EX_ERROR;
+    END IF;
+             
+    --------------------------------------------------------------------------------------------------------------------
+    --3.데이터정리-기생성테이블자료삭제
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-13000';
+
+    CRSPSUM0_D10(I_CORP_CODE,I_PART_NO,I_EONO     ,I_CUMT_NO,v_COME_CODE, I_MOLD_SEQ0,
+                 O_MESG_CODE,O_MESG   ,O_SQL0_CODE,O_PRGM_ID,O_LINE_NO  );
+
+    IF  O_MESG_CODE != 'DE-001' THEN
+        O_MESG := '집계결과 삭제시 오류가 발생하였습니다.';
+        RAISE UD_EX_ERROR;
+    ELSE
+        O_PRGM_ID   := 'CMSPMALC_P07_4';
+        O_MESG_CODE := 'SA-002';
+    END IF;
+
+    --------------------------------------------------------------------------------------------------------------------
+    --MAIN
+    --------------------------------------------------------------------------------------------------------------------
+    --21000.입력데이터추출
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-21000';
+
+    BEGIN
+        SELECT MALI_MOLD_CODE
+              ,MALI_SORT_KEY
+              ,MALI_DMOLD_COST
+              ,MALI_LAST_COST
+              ,MALI_ADEL_PRIC
+              ,MALI_TMOLD_COST
+              ,MALI_MATL_COST
+              ,MALI_PROC_COST
+              ,MALI_GME0_COST
+              ,MALI_PROF_COST
+              ,MALI_ITEM_CODE
+              ,NVL(MALI_PROD_WIDT ,0)
+              ,NVL(MALI_PROD_LENG ,0)
+              ,NVL(MALI_PROD_HEGT ,0)
+              ,NVL(MALI_SCOR_NUMB ,0)
+              ,MALI_EQUI_CODE
+              ,NVL(MALI_CORE_WIDT1,0)
+              ,NVL(MALI_CORE_LENG1,0)
+              ,NVL(MALI_CORE_HEGT1,0)
+              ,NVL(MALI_CORE_CAVT1,0)
+              ,NVL(MALI_CORE_WIDT2,0)
+              ,NVL(MALI_CORE_LENG2,0)
+              ,NVL(MALI_CORE_HEGT2,0)
+              ,NVL(MALI_CORE_CAVT2,0)
+              ,NVL(MALI_CORE_WIDT3,0)
+              ,NVL(MALI_CORE_LENG3,0)
+              ,NVL(MALI_CORE_HEGT3,0)
+              ,NVL(MALI_CORE_CAVT3,0)
+              ,MALI_HARD_NDEGR
+              ,MALI_1PRO_GUBN
+              ,MALI_LHRH_CODE
+              ,MALI_LHRH_CODE1
+              ,NVL(MALI_MOLD_LIFE  ,0)
+              ,NVL(MALI_LIFE_CNT0  ,0)
+              ,NVL(MALI_ADEL_FACT  ,0)
+              ,NVL(MALI_KIND_NNUMB ,0)
+              ,NVL(MALI_CAVT_NNUMB ,0)
+              ,NVL(MALI_MOLD_CNT0  ,0)
+              ,NVL(MALI_PROD_CNT0  ,0)
+              ,CMMS_RPAY_GUBN
+          INTO
+               rt_MALI.MALI_MOLD_CODE
+              ,rt_MALI.MALI_SORT_KEY
+              ,rt_MALI.MALI_DMOLD_COST
+              ,rt_MALI.MALI_LAST_COST
+              ,rt_MALI.MALI_ADEL_PRIC
+              ,rt_MALI.MALI_TMOLD_COST
+              ,rt_MALI.MALI_MATL_COST
+              ,rt_MALI.MALI_PROC_COST
+              ,rt_MALI.MALI_GME0_COST
+              ,rt_MALI.MALI_PROF_COST
+              ,rt_MALI.MALI_ITEM_CODE 
+              ,rt_MALI.MALI_PROD_WIDT 
+              ,rt_MALI.MALI_PROD_LENG 
+              ,rt_MALI.MALI_PROD_HEGT 
+              ,rt_MALI.MALI_SCOR_NUMB 
+              ,rt_MALI.MALI_EQUI_CODE 
+              ,rt_MALI.MALI_CORE_WIDT1
+              ,rt_MALI.MALI_CORE_LENG1
+              ,rt_MALI.MALI_CORE_HEGT1
+              ,rt_MALI.MALI_CORE_CAVT1
+              ,rt_MALI.MALI_CORE_WIDT2
+              ,rt_MALI.MALI_CORE_LENG2
+              ,rt_MALI.MALI_CORE_HEGT2
+              ,rt_MALI.MALI_CORE_CAVT2
+              ,rt_MALI.MALI_CORE_WIDT3
+              ,rt_MALI.MALI_CORE_LENG3
+              ,rt_MALI.MALI_CORE_HEGT3
+              ,rt_MALI.MALI_CORE_CAVT3
+              ,rt_MALI.MALI_HARD_NDEGR
+              ,rt_MALI.MALI_1PRO_GUBN
+              ,rt_MALI.MALI_LHRH_CODE   --LHD/RHD
+              ,rt_MALI.MALI_LHRH_CODE1  --LH/RH
+              ,rt_MALI.MALI_MOLD_LIFE
+              ,rt_MALI.MALI_LIFE_CNT0
+              ,rt_MALI.MALI_ADEL_FACT
+              ,rt_MALI.MALI_KIND_NNUMB  --벌수
+              ,rt_MALI.MALI_CAVT_NNUMB
+              ,rt_MALI.MALI_MOLD_CNT0
+              ,rt_MALI.MALI_PROD_CNT0  --생산수량
+              ,rt_CMMS.CMMS_RPAY_GUBN  --상각구분
+          FROM CMTBMALI
+              ,CRTBCMMS
+         WHERE MALI_CORP_CODE  = I_CORP_CODE
+           AND MALI_PART_NO    = I_PART_NO
+           AND MALI_EONO       = I_EONO
+           AND MALI_CUMT_NO    = I_CUMT_NO
+           AND MALI_METH_CODE  = v_COME_CODE
+           AND MALI_MOLD_SEQ0  = I_MOLD_SEQ0
+           AND CMMS_CORP_CODE  = MALI_CORP_CODE
+           AND CMMS_PART_NO    = MALI_PART_NO
+           AND CMMS_EONO       = MALI_EONO
+           AND CMMS_CUMT_NO    = MALI_CUMT_NO
+           AND CMMS_METH_GUBN  = 'M'
+           AND CMMS_COME_CODE  = v_COME_CODE
+        ;
+
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN O_MESG := '입력정보가 존재하지 않습니다.';       RAISE UD_EX_ERROR;
+        WHEN TOO_MANY_ROWS THEN O_MESG := '입력정보가 2건 이상 검색되었습니다.'; RAISE UD_EX_ERROR;
+    END;
+
+    IF  rt_MALI.MALI_KIND_NNUMB <= 0 THEN
+        O_MESG := '금형벌수를 입력하시기 바랍니다.';       
+        RAISE UD_EX_ERROR;
+    END IF;
+    
+    -- 2020.04.01 REMARK
+    ---------------------------------------
+    -- 연생산수량 입력->입력제외함에 따라, 사용처를 확인해본 바 T/OUT2 공정에서 사용되나
+    -- T/OUT2 공정도 장비분리에서 원복함에 따라 사용처가 없음 
+    --  -> 만약을 위해 로직은 남기고, 값 은 임의의 값을 SET 해 놓았음.
+    ---------------------------------------
+    rt_MALI.MALI_PROD_CNT0 := 99999;
+    ---------------------------------------
+    
+    
+    
+    --계산값 
+    --------------------------------------------------------------------------------------------------------------------
+    --금형접촉 표면적(d㎥)  {(가로×세로)÷2 + (가로×높이) + (세로×높이)}×2×CVT÷10,000
+    --총부품투영면적(d㎡)   가로×세로÷10,000×CVT
+    --측면부면적(d㎡)       {(가로×높이) ＋ (세로×높이)}×2×CVT÷10,000
+    --총부품표면적(d㎡)     {(가로×세로)＋(가로×높이)＋(세로×높이)}×2×CVT÷10,000
+    --총부품부피(d㎥)       (가로×세로×높이×CVT)÷1,000,000
+    --금형內 제품깊이(㎜)    높이×CVT
+    --------------------------------------------------------------------------------------------------------------------
+    --중자는 중자size로 처리함.
+    --------------------------------------------------------------------------------------------------------------------
+    IF  rt_MALI.MALI_MOLD_CODE = 'CTALST' THEN
+        vt_A := (  (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_LENG) / 2.0 
+                 + (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_HEGT)
+                 + (rt_MALI.MALI_PROD_LENG * rt_MALI.MALI_PROD_HEGT) ) * 2.0 * rt_MALI.MALI_CAVT_NNUMB / 10000.0;
+        vt_B := (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_LENG) / 10000.0 * rt_MALI.MALI_CAVT_NNUMB;
+        vt_C := (  (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_HEGT)
+                 + (rt_MALI.MALI_PROD_LENG * rt_MALI.MALI_PROD_HEGT) ) * 2.0 * rt_MALI.MALI_CAVT_NNUMB / 10000.0;
+        vt_D := (  (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_LENG)
+                 + (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_HEGT)
+                 + (rt_MALI.MALI_PROD_LENG * rt_MALI.MALI_PROD_HEGT) ) * 2.0 * rt_MALI.MALI_CAVT_NNUMB / 10000.0;
+        vt_E :=  (rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_PROD_LENG * rt_MALI.MALI_PROD_HEGT * rt_MALI.MALI_CAVT_NNUMB) / 1000000.0;
+        vt_F := rt_MALI.MALI_PROD_HEGT * rt_MALI.MALI_CAVT_NNUMB;
+    ELSE
+        vt_A1:= (  (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_LENG1) / 2.0 
+                 + (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_HEGT1)
+                 + (rt_MALI.MALI_CORE_LENG1 * rt_MALI.MALI_CORE_HEGT1) ) * 2.0 * rt_MALI.MALI_CORE_CAVT1 / 10000.0;
+        vt_B1:= (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_LENG1) / 10000.0 * rt_MALI.MALI_CORE_CAVT1;
+        vt_C1:= (  (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_HEGT1)
+                 + (rt_MALI.MALI_CORE_LENG1 * rt_MALI.MALI_CORE_HEGT1) ) * 2.0 * rt_MALI.MALI_CORE_CAVT1 / 10000.0;
+        vt_D1:= (  (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_LENG1)
+                 + (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_HEGT1)
+                 + (rt_MALI.MALI_CORE_LENG1 * rt_MALI.MALI_CORE_HEGT1) ) * 2.0 * rt_MALI.MALI_CORE_CAVT1 / 10000.0;
+        vt_E1:=  (rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_LENG1 * rt_MALI.MALI_CORE_HEGT1 * rt_MALI.MALI_CORE_CAVT1) / 1000000.0;
+        vt_F1:= rt_MALI.MALI_CORE_HEGT1 * rt_MALI.MALI_CORE_CAVT1;
+
+        vt_A2:= (  (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_LENG2) / 2.0 
+                 + (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_HEGT2)
+                 + (rt_MALI.MALI_CORE_LENG2 * rt_MALI.MALI_CORE_HEGT2) ) * 2.0 * rt_MALI.MALI_CORE_CAVT2 / 10000.0;
+        vt_B2:= (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_LENG2) / 10000.0 * rt_MALI.MALI_CORE_CAVT2;
+        vt_C2:= (  (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_HEGT2)
+                 + (rt_MALI.MALI_CORE_LENG2 * rt_MALI.MALI_CORE_HEGT2) ) * 2.0 * rt_MALI.MALI_CORE_CAVT2 / 10000.0;
+        vt_D2:= (  (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_LENG2)
+                 + (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_HEGT2)
+                 + (rt_MALI.MALI_CORE_LENG2 * rt_MALI.MALI_CORE_HEGT2) ) * 2.0 * rt_MALI.MALI_CORE_CAVT2 / 10000.0;
+        vt_E2:=  (rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_LENG2 * rt_MALI.MALI_CORE_HEGT2 * rt_MALI.MALI_CORE_CAVT2) / 1000000.0;
+        vt_F2:= rt_MALI.MALI_CORE_HEGT2 * rt_MALI.MALI_CORE_CAVT2;
+
+        vt_A := vt_A1 + vt_A2;  
+        vt_B := vt_B1 + vt_B2; 
+        vt_C := vt_C1 + vt_C2; 
+        vt_D := vt_D1 + vt_D2; 
+        vt_E := vt_E1 + vt_E2; 
+        vt_F := vt_F1 + vt_F2; 
+    END IF;
+    
+    --------------------------------------------------------------------------------------------------------------------
+    --22000.재료비처리MAIN
+    --------------------------------------------------------------------------------------------------------------------
+    vt_SMAT_TOT      := 0;  --SMAT CHECK재료비합계
+    vt_TOT_MATL_COST := 0;  --재료비
+
+    idx := 0;
+    --------------------------------------------------------------------------------------------------------------------
+    FOR MALM_R IN cs_MALM LOOP
+     -- DBMS_OUTPUT.PUT_LINE('CMTBMALM CURSOR FETCH SEQ='|| MALM_R.MALM_MATL_SEQ0 || '-----');
+
+        O_LINE_NO := 'ST-22101';
+        -- 제품가로
+        CASE MALM_R.MALM_BASE_WIDT
+             WHEN -150 THEN MALM_R.MALM_BASE_WIDT := rt_MALI.MALI_PROD_WIDT + MALM_R.MALM_WIDT_MAGN;
+             WHEN -151 THEN MALM_R.MALM_BASE_WIDT := rt_MALI.MALI_PROD_WIDT * rt_MALI.MALI_CAVT_NNUMB + (rt_MALI.MALI_CAVT_NNUMB - 1.0) * 30 + MALM_R.MALM_WIDT_MAGN;
+             WHEN -152 THEN MALM_R.MALM_BASE_WIDT := rt_MALI.MALI_CORE_WIDT1 * rt_MALI.MALI_CORE_CAVT1
+                                                   + rt_MALI.MALI_CORE_WIDT2 * rt_MALI.MALI_CORE_CAVT2
+                                                   + (rt_MALI.MALI_CORE_CAVT1 + rt_MALI.MALI_CORE_CAVT2 - 1.0) * 30
+                                                   + MALM_R.MALM_WIDT_MAGN;
+             ELSE NULL;
+        END CASE;
+
+        O_LINE_NO := 'ST-22102';
+        -- 제품세로
+        CASE MALM_R.MALM_BASE_LENG
+             WHEN -170 THEN MALM_R.MALM_BASE_LENG := rt_MALI.MALI_PROD_LENG + MALM_R.MALM_LENG_MAGN;
+             WHEN -172 THEN MALM_R.MALM_BASE_LENG := GREATEST(rt_MALI.MALI_CORE_LENG1,rt_MALI.MALI_CORE_LENG2) + MALM_R.MALM_LENG_MAGN;
+             ELSE NULL;
+        END CASE;
+
+        O_LINE_NO := 'ST-22103';
+        -- 제품높이
+        CASE MALM_R.MALM_BASE_HEGT
+             WHEN -190 THEN MALM_R.MALM_BASE_HEGT := rt_MALI.MALI_PROD_HEGT + MALM_R.MALM_HEGT_MAGN;
+             WHEN -191 THEN MALM_R.MALM_BASE_HEGT := (rt_MALI.MALI_PROD_HEGT / 2.0) + MALM_R.MALM_HEGT_MAGN;
+             WHEN -192 THEN MALM_R.MALM_BASE_HEGT := GREATEST(rt_MALI.MALI_CORE_HEGT1,rt_MALI.MALI_CORE_HEGT2) / 2.0 + MALM_R.MALM_HEGT_MAGN;
+             ELSE NULL;
+        END CASE;
+
+        -- USAGE
+        CASE MALM_R.MALM_MATL_USE
+             WHEN -210 THEN MALM_R.MALM_MATL_USE := rt_MALI.MALI_CAVT_NNUMB;
+             WHEN -230 THEN MALM_R.MALM_MATL_USE := rt_MALI.MALI_SCOR_NUMB ;
+             ELSE NULL;
+        END CASE;
+
+        --재사용을 위해 임시테이블에 저장
+        idx := idx + 1;
+        ty_MALM(idx).MALM_MATL_SEQ0 := MALM_R.MALM_MATL_SEQ0; 
+        ty_MALM(idx).MALM_BASE_WIDT := MALM_R.MALM_BASE_WIDT; 
+        ty_MALM(idx).MALM_BASE_LENG := MALM_R.MALM_BASE_LENG; 
+        ty_MALM(idx).MALM_BASE_HEGT := MALM_R.MALM_BASE_HEGT; 
+        ty_MALM(idx).MALM_WIDT_MAGN := MALM_R.MALM_WIDT_MAGN; 
+        ty_MALM(idx).MALM_LENG_MAGN := MALM_R.MALM_LENG_MAGN; 
+        ty_MALM(idx).MALM_HEGT_MAGN := MALM_R.MALM_HEGT_MAGN; 
+        ty_MALM(idx).MALM_WEGT_RATE := MALM_R.MALM_WEGT_RATE; 
+        ty_MALM(idx).MALM_FACT_A    := MALM_R.MALM_FACT_A   ; 
+        ty_MALM(idx).MALM_FACT_B    := MALM_R.MALM_FACT_B   ; 
+        ty_MALM(idx).MALM_FACT_C    := MALM_R.MALM_FACT_C   ; 
+        ty_MALM(idx).MALM_SMAT_CHEK := MALM_R.MALM_SMAT_CHEK; 
+        ty_MALM(idx).MALM_HEAT_CHEK := MALM_R.MALM_HEAT_CHEK; 
+        ty_MALM(idx).MALM_MATL_CODE := MALM_R.MALM_MATL_CODE; 
+        ty_MALM(idx).MALM_MATL_NAME := MALM_R.MALM_MATL_NAME; 
+        ty_MALM(idx).MALM_MATL_PRIC := MALM_R.MALM_MATL_PRIC; 
+        ty_MALM(idx).MALM_MATL_USE  := MALM_R.MALM_MATL_USE ; 
+        ty_MALM(idx).MALM_MATL_WT   := MALM_R.MALM_MATL_WT  ; 
+        ty_MALM(idx).MALM_MATL_UNIT := MALM_R.MALM_MATL_UNIT; 
+        ty_MATL(idx).MATL_PRIC      := MALM_R.MATL_PRIC     ; 
+        ty_MATL(idx).MATL_SPEC_GRAV := MALM_R.MATL_SPEC_GRAV; 
+
+    END LOOP;
+
+    --------------------------------------------------------------------------------------------------------------------
+    --22200.재료비LOOP2:재질단가/중량계산 LOOP
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-22200';
+
+    vt_MATL_WT_SKD61  := 0.0;
+    vt_MATL_WT_S45C   := 0.0;
+    vt_MATL_WT_FCX    := 0.0;
+    vt_MATL_WT_HP4    := 0.0;
+    vt_MATL_WT_SCM440 := 0.0;
+    
+    FOR i IN 1..idx LOOP
+        --중량
+        CASE ty_MALM(i).MALM_MATL_WT
+             WHEN -610 THEN ty_MALM(i).MALM_MATL_WT := ty_MALM(i).MALM_BASE_WIDT * ty_MALM(i).MALM_BASE_LENG * ty_MALM(i).MALM_BASE_HEGT / 1000 * 7.85 / 1000 * ty_MALM(i).MALM_WEGT_RATE;
+             WHEN -620 THEN ty_MALM(i).MALM_MATL_WT := ty_MALM(i).MALM_BASE_WIDT * ty_MALM(i).MALM_BASE_LENG * ty_MALM(i).MALM_BASE_HEGT / 1000 * 7.25 / 1000 * ty_MALM(i).MALM_WEGT_RATE;
+             --열처리용
+             WHEN -710 THEN ty_MALM(i).MALM_MATL_WT := vt_MATL_WT_SKD61  * ty_MALM(i).MALM_WEGT_RATE;
+             WHEN -720 THEN ty_MALM(i).MALM_MATL_WT := vt_MATL_WT_S45C   * ty_MALM(i).MALM_WEGT_RATE;
+             WHEN -730 THEN ty_MALM(i).MALM_MATL_WT := vt_MATL_WT_FCX    * ty_MALM(i).MALM_WEGT_RATE;
+             WHEN -740 THEN ty_MALM(i).MALM_MATL_WT := vt_MATL_WT_HP4    * ty_MALM(i).MALM_WEGT_RATE;
+             WHEN -760 THEN ty_MALM(i).MALM_MATL_WT := vt_MATL_WT_SCM440 * ty_MALM(i).MALM_WEGT_RATE;
+             ELSE NULL;
+        END CASE;
+
+        --부재료(-110)인 경우 TRUNC처리하지 않음
+        IF  ty_MALM(i).MALM_MATL_PRIC <> -110 THEN
+            ty_MALM(i).MALM_MATL_WT := TRUNC(ty_MALM(i).MALM_MATL_WT,2);
+        END IF;
+
+        --단가
+        CASE ty_MALM(i).MALM_MATL_PRIC
+             WHEN -100 THEN ty_MALM(i).MALM_MATL_PRIC := ty_MATL(i).MATL_PRIC;
+             ELSE NULL;
+        END CASE;
+
+        ty_MALM(i).MALM_MATL_PRIC := TRUNC(ty_MALM(i).MALM_MATL_PRIC,2);
+
+        -- MALM_HEAT_CHECK 중량합계
+        IF  ty_MALM(i).MALM_MATL_USE > 0 AND
+            ty_MALM(i).MALM_HEAT_CHEK = 'Y' THEN
+            CASE WHEN ty_MALM(i).MALM_MATL_CODE = 'DESKD61'  THEN vt_MATL_WT_SKD61  := vt_MATL_WT_SKD61  + (ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE);
+                 WHEN ty_MALM(i).MALM_MATL_CODE = 'DES45C'   THEN vt_MATL_WT_S45C   := vt_MATL_WT_S45C   + (ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE);
+                 WHEN ty_MALM(i).MALM_MATL_CODE LIKE 'DEFC%' THEN vt_MATL_WT_FCX    := vt_MATL_WT_FCX    + (ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE);
+                 WHEN ty_MALM(i).MALM_MATL_CODE = 'DEHP4'    THEN vt_MATL_WT_HP4    := vt_MATL_WT_HP4    + (ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE);
+                 WHEN ty_MALM(i).MALM_MATL_CODE = 'DESCM440' THEN vt_MATL_WT_SCM440 := vt_MATL_WT_SCM440 + (ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE);
+                 ELSE NULL;
+            END CASE;
+        END IF;
+    END LOOP;
+
+    --------------------------------------------------------------------------------------------------------------------
+    --22300.재료비 INSERT
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-22300';
+
+    FOR i IN 1..idx LOOP
+        --부재료단가처리
+        IF  ty_MALM(i).MALM_MATL_PRIC = -200 THEN
+            ty_MALM(i).MALM_MATL_PRIC := vt_SMAT_TOT;
+        END IF;
+
+        IF  NVL(ty_MALM(i).MALM_MATL_PRIC,0) <= 0 THEN
+            O_MESG := '재료단가가 산출되지 않았습니다. 재료명=' || ty_MALM(i).MALM_MATL_NAME;
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        IF     ty_MALM(i).MALM_MATL_WT  >  0 AND
+               ty_MALM(i).MALM_MATL_USE >  0 THEN
+               vt_MMAT_MATL_COST := TRUNC(ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_USE * ty_MALM(i).MALM_MATL_PRIC,0);
+        ELSIF  ty_MALM(i).MALM_MATL_WT  >  0 AND
+               (ty_MALM(i).MALM_MATL_USE IS NULL OR ty_MALM(i).MALM_MATL_USE = 0) THEN
+               vt_MMAT_MATL_COST := TRUNC(ty_MALM(i).MALM_MATL_WT * ty_MALM(i).MALM_MATL_PRIC,0);
+        ELSIF  (ty_MALM(i).MALM_MATL_WT  IS NULL OR ty_MALM(i).MALM_MATL_WT  = 0) AND
+               ty_MALM(i).MALM_MATL_USE >  0 THEN
+               -- 중량단위인데 중량이 없으면 산출하지 않음
+               --(참고) 열처리의 경우 kg단위이나, HKMC의 경우 SET로 처리하고 있어 만약을 위해 SET도 추가하여 체크해 놓았음
+               IF  UPPER(ty_MALM(i).MALM_MATL_UNIT) IN ('KG','G','SET') THEN
+                   vt_MMAT_MATL_COST := 0;
+               ELSE
+                   vt_MMAT_MATL_COST := TRUNC(ty_MALM(i).MALM_MATL_USE * ty_MALM(i).MALM_MATL_PRIC,0);
+               END IF;
+        ELSIF  (ty_MALM(i).MALM_MATL_WT  IS NULL OR ty_MALM(i).MALM_MATL_WT  = 0) AND
+               (ty_MALM(i).MALM_MATL_USE IS NULL OR ty_MALM(i).MALM_MATL_USE = 0) THEN
+               vt_MMAT_MATL_COST := 0;
+        END IF;
+
+        --재료비/일반관리비누적=재료비*(일반관리비율/100)
+        vt_TOT_MATL_COST := vt_TOT_MATL_COST + vt_MMAT_MATL_COST;
+
+        IF  vt_MMAT_MATL_COST > 0 THEN
+            INSERT INTO CRTBMMAT
+                  (
+                   MMAT_CORP_CODE
+                  ,MMAT_PART_NO
+                  ,MMAT_EONO
+                  ,MMAT_CUMT_NO
+                  ,MMAT_COME_CODE
+                  ,MMAT_CUMT_GUBN
+                  ,MMAT_MOLD_SEQ0
+                  ,MMAT_SEQ0
+                  ,MMAT_MOLD_CODE
+                  ,MMAT_MATL_CODE
+                  ,MMAT_MATL_NAME
+                  ,MMAT_UNIT
+                  ,MMAT_MATL_PRIC
+                  ,MMAT_USE0_WEGT
+                  ,MMAT_WEGT
+                  ,MMAT_MATL_COST
+                  ,MMAT_APPL_GUBN
+                  ,MMAT_ADD0_GUBN
+                  ,MMAT_UPDT_DATE,MMAT_UPDT_CMAN
+                  ,MMAT_INIT_DATE,MMAT_INIT_CMAN
+                  ,MMAT_REMK
+                  )
+             VALUES
+                  (
+                   I_CORP_CODE
+                  ,I_PART_NO
+                  ,I_EONO
+                  ,I_CUMT_NO
+                  ,v_COME_CODE
+                  ,'S'
+                  ,I_MOLD_SEQ0
+                  ,ty_MALM(i).MALM_MATL_SEQ0
+                  ,rt_MALI.MALI_MOLD_CODE
+                  ,ty_MALM(i).MALM_MATL_CODE
+                  ,ty_MALM(i).MALM_MATL_NAME
+                  ,ty_MALM(i).MALM_MATL_UNIT
+                  ,ty_MALM(i).MALM_MATL_PRIC
+                  ,ty_MALM(i).MALM_MATL_USE
+                  ,ty_MALM(i).MALM_MATL_WT
+                  ,vt_MMAT_MATL_COST
+                  ,'Y'
+                  ,'S'
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+                  ,'가로=' || ty_MALM(i).MALM_BASE_WIDT || CHR(10) ||
+                   '세로=' || ty_MALM(i).MALM_BASE_LENG || CHR(10) ||
+                   '두께=' || ty_MALM(i).MALM_BASE_HEGT || CHR(10) ||
+                   '비중=' || ty_MATL(i).MATL_SPEC_GRAV
+                  )
+            ;
+
+            -- MALM_SMAT_CHECK = "Y" 인 항목의 재료비 합계
+            IF  ty_MALM(i).MALM_SMAT_CHEK = 'Y' THEN
+                vt_SMAT_TOT := vt_SMAT_TOT + vt_MMAT_MATL_COST;
+            END IF;
+        END IF;
+    END LOOP;
+
+    --------------------------------------------------------------------------------------------------------------------
+    --23000.가공비처리
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-23000';
+
+    vt_TOT_IBR_COST  := 0;
+    vt_TOT_EXPM_COST := 0;
+    vt_TOT_GME0_COST := 0;
+    vt_TOT_PROF_COST := 0;
+
+    DBMS_OUTPUT.PUT_LINE('A='|| vt_A);
+    DBMS_OUTPUT.PUT_LINE('B='|| vt_B);
+    DBMS_OUTPUT.PUT_LINE('C='|| vt_C);
+    DBMS_OUTPUT.PUT_LINE('D='|| vt_D);
+    DBMS_OUTPUT.PUT_LINE('E='|| vt_E);
+
+    FOR MALP_R IN cs_MALP LOOP
+        DBMS_OUTPUT.PUT_LINE('CMTBMALP CURSOR FETCH SEQ='|| MALP_R.MALP_PROC_SEQ0 || '-----');
+        DBMS_OUTPUT.PUT_LINE('CMTBMALP CURSOR FETCH SEQ='|| MALP_R.MALP_NET0_CYTM           );
+        DBMS_OUTPUT.PUT_LINE('CMTBMALP CURSOR FETCH SEQ='|| MALP_R.MALP_FACT_E              );
+        DBMS_OUTPUT.PUT_LINE('CMTBMALP CURSOR FETCH SEQ='|| MALP_R.MALP_FACT_G              );
+
+        CASE MALP_R.MALP_NET0_CYTM
+             WHEN -211 THEN MALP_R.MALP_NET0_CYTM := (vt_A * MALP_R.MALP_FACT_A) + MALP_R.MALP_FACT_G;
+             WHEN -212 THEN MALP_R.MALP_NET0_CYTM := (vt_B * MALP_R.MALP_FACT_B) + MALP_R.MALP_FACT_G;
+             WHEN -213 THEN MALP_R.MALP_NET0_CYTM := (vt_C * MALP_R.MALP_FACT_C) + MALP_R.MALP_FACT_G;
+             WHEN -214 THEN MALP_R.MALP_NET0_CYTM := (vt_D * MALP_R.MALP_FACT_D) + MALP_R.MALP_FACT_G;
+             WHEN -215 THEN MALP_R.MALP_NET0_CYTM := (vt_E * MALP_R.MALP_FACT_E) + MALP_R.MALP_FACT_G; 
+             ----------   
+             WHEN -311 THEN MALP_R.MALP_NET0_CYTM := (vt_A * MALP_R.MALP_FACT_A) + MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             WHEN -312 THEN MALP_R.MALP_NET0_CYTM := (vt_B * MALP_R.MALP_FACT_B) + MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             WHEN -313 THEN MALP_R.MALP_NET0_CYTM := (vt_C * MALP_R.MALP_FACT_C) + MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             WHEN -314 THEN MALP_R.MALP_NET0_CYTM := (vt_D * MALP_R.MALP_FACT_D) + MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             WHEN -315 THEN MALP_R.MALP_NET0_CYTM := (vt_E * MALP_R.MALP_FACT_E) + MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             WHEN -319 THEN MALP_R.MALP_NET0_CYTM :=                               MALP_R.MALP_FACT_G + (rt_MALI.MALI_SCOR_NUMB * MALP_R.MALP_FACT_SC);
+             ----------   
+             WHEN -411 THEN MALP_R.MALP_NET0_CYTM := (vt_A * MALP_R.MALP_FACT_A) + MALP_R.MALP_FACT_G + (MALP_R.MALP_FACT_F * MALP_R.MALP_FACT_SC);
+             ----------   
+             ELSE NULL;
+        END CASE;
+
+        DBMS_OUTPUT.PUT_LINE('CMTBMALP CURSOR FETCH SEQ='|| MALP_R.MALP_NET0_CYTM            );
+
+        IF  NVL(MALP_R.MALP_NET0_CYTM,0) < 0 THEN
+            O_MESG := 'NET CT가 음수가 발생했습니다.'
+                   || CHR(10) || '(운영자에 연락요망)'
+                   || CHR(10) || '공정명=' || MALP_R.MALP_PROC_NAME;
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        --기본가공시간에 대칭금형보정계수 적용 (설계, CAM 공정에 적용) 
+        --2호이상 OIL PAN은 비율적용
+        --------------------------------------------------------------------------------------------------------------------
+        IF  rt_MALI.MALI_ITEM_CODE IN ('O_OIL1','O_OIL2','C_OILP') THEN
+            CASE WHEN MALP_R.MALP_MACH_CODE = 'DECAD' THEN
+                      MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8;  --80%
+                 WHEN MALP_R.MALP_MACH_CODE = 'DECAM' THEN
+                      MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8;  --80%
+                 ELSE NULL;
+            END CASE;
+        ELSE
+            /**** 2020.04.01 : 한창선연구원의 요청에 의해 변경
+            CASE WHEN MALP_R.MALP_MACH_CODE = 'DECAD' THEN
+                      CASE WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_LHRH_CODE1 = 'LH' THEN                       --LHD:100%, LH:100%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0 * 1.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_LHRH_CODE1 = 'RH' THEN                       --LHD:100%, RH: 10%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0 * 0.1;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_LHRH_CODE1 = 'LH' THEN                       --RHD: 80%, LH:100% 
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8 * 1.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_LHRH_CODE1 = 'RH' THEN                       --RHD: 80%, RH: 10%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8 * 0.1;
+                           ELSE NULL;
+                      END CASE;
+    
+                 WHEN MALP_R.MALP_MACH_CODE = 'DECAM' THEN
+                      CASE WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_LHRH_CODE1 = 'LH' THEN                       --LHD:100%, LH:100%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0 * 1.0;                                                           
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_LHRH_CODE1 = 'RH' THEN                       --LHD:100%, RH: 90% 
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0 * 0.9;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_LHRH_CODE1 = 'LH' THEN                       --RHD: 90%, LH:100%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.9 * 1.0;                                                           
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_LHRH_CODE1 = 'RH' THEN                       --RHD: 90%, RH: 90%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.9 * 0.9;
+                           ELSE NULL;
+                      END CASE;
+    
+                 ELSE NULL;
+            END CASE;
+            ****/
+
+            CASE WHEN MALP_R.MALP_MACH_CODE = 'DECAD' THEN
+                      CASE WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_1PRO_GUBN = 'GENL' THEN                       --LH:100%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_1PRO_GUBN = 'LHRH' THEN                       --LH:100%, RH:10%
+                                MALP_R.MALP_NET0_CYTM := (MALP_R.MALP_NET0_CYTM * 1.0  + MALP_R.MALP_NET0_CYTM * 0.1) / 2.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_1PRO_GUBN = 'GENL' THEN                       --LH:80%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_1PRO_GUBN = 'LHRH' THEN                       --LH:80%,  RH:10%
+                                MALP_R.MALP_NET0_CYTM := (MALP_R.MALP_NET0_CYTM * 0.8  + MALP_R.MALP_NET0_CYTM * 0.1) / 2.0;
+                           ELSE NULL;
+                      END CASE;
+            
+                 WHEN MALP_R.MALP_MACH_CODE = 'DECAM' THEN
+                      CASE WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_1PRO_GUBN = 'GENL' THEN                       --LH:100%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 1.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'LHD' AND rt_MALI.MALI_1PRO_GUBN = 'LHRH' THEN                       --LH:100%, RH:90%
+                                MALP_R.MALP_NET0_CYTM :=(MALP_R.MALP_NET0_CYTM * 1.0  + MALP_R.MALP_NET0_CYTM * 0.9 ) / 2.0;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_1PRO_GUBN = 'GENL' THEN                       --LH:90%
+                                MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.9;
+                           WHEN rt_MALI.MALI_LHRH_CODE = 'RHD' AND rt_MALI.MALI_1PRO_GUBN = 'LHRH' THEN                       --LH:90%,  RH:90%
+                                MALP_R.MALP_NET0_CYTM :=(MALP_R.MALP_NET0_CYTM * 0.9  + MALP_R.MALP_NET0_CYTM * 0.9 ) / 2.0;
+                           ELSE NULL;
+                      END CASE;
+            
+                 ELSE NULL;
+            END CASE;
+            
+        END IF;
+        --------------------------------------------------------------------------------------------------------------------
+        --설계, NC PGM은 벌수 감안한 공수반영
+        IF  MALP_R.MALP_MACH_CODE IN ('DECAM','DECAD') THEN
+            MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM / rt_MALI.MALI_KIND_NNUMB;
+        END IF;
+
+        -- 복제2호 이상의 경우, 전극가공, T/OUT(1차) 공정은  보정계수적용 (OIL PAN은 비율이 상이함)
+        --------------------------------------------------------------------------------------------------------------------
+        IF  rt_MALI.MALI_1PRO_GUBN = 'B1' THEN
+            IF  rt_MALI.MALI_ITEM_CODE IN ('O_OIL1','O_OIL2','C_OILP') THEN
+                CASE WHEN REPLACE(MALP_R.MALP_PROC_NAME,' ','') = '전극가공' THEN
+                          MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.7;    --70%
+                     WHEN REPLACE(MALP_R.MALP_PROC_NAME,' ','') IN ('T/OUT','TRYOUT') THEN
+                          MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.8;    --80%
+                     ELSE NULL;    
+                END CASE;    
+            ELSE
+                CASE WHEN REPLACE(MALP_R.MALP_PROC_NAME,' ','') = '전극가공' THEN
+                          MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.5;    --50%
+                     WHEN REPLACE(MALP_R.MALP_PROC_NAME,' ','') IN ('T/OUT','TRYOUT') THEN
+                          MALP_R.MALP_NET0_CYTM := MALP_R.MALP_NET0_CYTM * 0.7;    --70%
+                     ELSE NULL;    
+                END CASE;    
+            END IF;
+        END IF; 
+        --------------------------------------------------------------------------------------------------------------------
+
+        MALP_R.MALP_NET0_CYTM := TRUNC(MALP_R.MALP_NET0_CYTM,1);
+
+        --------------------------------------------------------------------------------------------------------------------
+        --노무비:공수 * (1 + ET율 / 100) * 임율     * 인원
+        --경비  :공수 * (1 + ET율 / 100) * 기계경비 * (1 + 간접경비율 / 100) : 주의 : 간접경비에 추가경비율 적용함 (TRY OUT)
+        --일반관리비누적=가공비(=노무비+경비)*(일반관리비율/100)
+        --------------------------------------------------------------------------------------------------------------------
+        O_LINE_NO := 'ST-23400';
+
+        IF  TRIM(MALP_R.MALP_MACH_CODE) > ' ' AND
+            NVL(MALP_R.MCIF_DRCT_COST,0) <= 0 THEN
+            O_MESG := '기계경비가 산출되지 않았습니다.' || CHR(10)
+                   || '공정명=' || MALP_R.MALP_PROC_NAME
+                   || '장비코드=' || MALP_R.MALP_MACH_CODE;
+            RAISE UD_EX_ERROR;
+        END IF;
+
+        vt_MPRO_IBR_COST  := TRUNC(MALP_R.MALP_NET0_CYTM  * (1 + rt_CORT.CORT_ET00_RATE / 100)
+                                 * rt_CORT.CORT_PAY0_RATE * MALP_R.MALP_PRSN_CNT0,0);
+        
+        -- T/OUT2는 별도의 간접경비율적용(60%)
+        IF  MALP_R.MALP_FACT_RA > 0 THEN
+            vt_MPRO_EXPM_COST := TRUNC(MALP_R.MALP_NET0_CYTM * (1 + rt_CORT.CORT_ET00_RATE / 100)
+                                     * MALP_R.MCIF_DRCT_COST * (1 + MALP_R.MALP_FACT_RA / 100),0);
+        ELSE
+            vt_MPRO_EXPM_COST := TRUNC(MALP_R.MALP_NET0_CYTM * (1 + rt_CORT.CORT_ET00_RATE / 100)
+                                     * MALP_R.MCIF_DRCT_COST * (1 + rt_CORT.CORT_IDRT_RATE / 100),0);
+        END IF;
+        vt_MPRO_GME0_COST := TRUNC((vt_MPRO_IBR_COST + vt_MPRO_EXPM_COST) * (rt_CORT.CORT_GME0_RATE / 100),0);
+        vt_MPRO_PROF_COST := TRUNC((vt_MPRO_IBR_COST + vt_MPRO_EXPM_COST + vt_MPRO_GME0_COST) * (rt_CORT.CORT_PROF_RATE / 100),0);
+
+        vt_TOT_IBR_COST   := vt_TOT_IBR_COST  + vt_MPRO_IBR_COST ;
+        vt_TOT_EXPM_COST  := vt_TOT_EXPM_COST + vt_MPRO_EXPM_COST;
+        vt_TOT_GME0_COST  := vt_TOT_GME0_COST + vt_MPRO_GME0_COST;
+        vt_TOT_PROF_COST  := vt_TOT_PROF_COST + vt_MPRO_PROF_COST;
+
+        --------------------------------------------------------------------------------------------------------------------
+        --23500.가공비INSERT
+        --------------------------------------------------------------------------------------------------------------------
+        O_LINE_NO := 'ST-23500';
+
+        INSERT INTO CRTBMPRO
+              (
+               MPRO_CORP_CODE
+              ,MPRO_PART_NO
+              ,MPRO_EONO
+              ,MPRO_CUMT_NO
+              ,MPRO_COME_CODE
+              ,MPRO_CUMT_GUBN
+              ,MPRO_MOLD_SEQ0
+              ,MPRO_SEQ0
+              ,MPRO_MOLD_CODE
+              ,MPRO_PROC_NAME
+              ,MPRO_MACH_NAME
+              ,MPRO_MACH_CODE
+              ,MPRO_NET0_CYTM
+              ,MPRO_PRSN_CNT0
+              ,MPRO_PAY0_PRIC
+              ,MPRO_MCHH_COST
+              ,MPRO_IBR_COST
+              ,MPRO_EXPM_COST
+              ,MPRO_PROC_COST
+              ,MPRO_GME0_COST
+              ,MPRO_PROF_COST
+              ,MPRO_INDS_CLAS
+              ,MPRO_APPL_GUBN
+              ,MPRO_ADD0_GUBN
+              ,MPRO_UPDT_DATE
+              ,MPRO_UPDT_CMAN
+              ,MPRO_INIT_DATE
+              ,MPRO_INIT_CMAN
+              )
+        VALUES
+              (
+               I_CORP_CODE
+              ,I_PART_NO
+              ,I_EONO
+              ,I_CUMT_NO
+              ,v_COME_CODE
+              ,'S'
+              ,I_MOLD_SEQ0
+              ,MALP_R.MALP_PROC_SEQ0
+              ,rt_MALI.MALI_MOLD_CODE
+              ,MALP_R.MALP_PROC_NAME
+              ,MALP_R.MCIF_MCHH_NAME
+              ,MALP_R.MALP_MACH_CODE
+              ,MALP_R.MALP_NET0_CYTM
+              ,MALP_R.MALP_PRSN_CNT0
+              ,rt_CORT.CORT_PAY0_RATE
+              ,MALP_R.MCIF_DRCT_COST
+              ,vt_MPRO_IBR_COST
+              ,vt_MPRO_EXPM_COST
+              ,vt_MPRO_IBR_COST + vt_MPRO_EXPM_COST
+              ,vt_MPRO_GME0_COST
+              ,vt_MPRO_PROF_COST
+              ,MALP_R.MALP_INDS_CODE
+              ,'Y'
+              ,'S'
+              ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+              ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+              )
+        ;
+    END LOOP;
+
+    --------------------------------------------------------------------------------------------------------------------
+    --LAST
+    --------------------------------------------------------------------------------------------------------------------
+    --31000.입력테이블 UPDATE
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-31000';
+
+    --계산금형비=(재+가(=노+경)+일+이) * 금형벌수: 천단위버림
+    --결정금형비=계산금형비+조정금액: 천단위버림
+    --상각금형비=결정금형비/상각수량(변경후) - CVT는 이미 상각수량에 적용됨
+
+    -- 영구상각일 경우, 1개 금형에 대한 상각비 계산(벌수 미반영). 일시불인 경우 벌수반영
+    IF  rt_CMMS.CMMS_RPAY_GUBN = 'P' THEN
+        rt_MALI.MALI_KIND_NNUMB := 1;
+    END IF;
+
+    UPDATE CMTBMALI
+       SET --상각금형비
+           MALI_DMOLD_COST = CASE WHEN rt_MALI.MALI_MOLD_CNT0 = 0 THEN 0
+                                  ELSE TRUNC(rt_MALI.MALI_KIND_NNUMB
+                                     * TRUNC(vt_TOT_MATL_COST + vt_TOT_IBR_COST + vt_TOT_EXPM_COST + vt_TOT_GME0_COST + vt_TOT_PROF_COST + NVL(rt_MALI.MALI_ADEL_PRIC,0), -4)
+                                     / rt_MALI.MALI_MOLD_CNT0, trCo)
+                             END
+           --결정금형비
+          ,MALI_LAST_COST  = TRUNC(((vt_TOT_MATL_COST + vt_TOT_IBR_COST + vt_TOT_EXPM_COST + vt_TOT_GME0_COST + vt_TOT_PROF_COST) * rt_MALI.MALI_KIND_NNUMB) + NVL(rt_MALI.MALI_ADEL_PRIC,0), -4)
+           --계산금형비
+          ,MALI_TMOLD_COST = TRUNC((vt_TOT_MATL_COST + vt_TOT_IBR_COST + vt_TOT_EXPM_COST + vt_TOT_GME0_COST + vt_TOT_PROF_COST) * rt_MALI.MALI_KIND_NNUMB, -4)
+           --재료비
+          ,MALI_MATL_COST  = vt_TOT_MATL_COST
+           --가공비
+          ,MALI_PROC_COST  = vt_TOT_IBR_COST + vt_TOT_EXPM_COST
+           --일반관리비
+          ,MALI_GME0_COST  = vt_TOT_GME0_COST
+           --이윤
+          ,MALI_PROF_COST  = vt_TOT_PROF_COST
+     WHERE MALI_CORP_CODE  = I_CORP_CODE
+       AND MALI_PART_NO    = I_PART_NO
+       AND MALI_EONO       = I_EONO
+       AND MALI_CUMT_NO    = I_CUMT_NO
+       AND MALI_METH_CODE  = v_COME_CODE
+       AND MALI_MOLD_SEQ0  = I_MOLD_SEQ0
+    ;
+
+    <<SUM_PROC>>
+    --------------------------------------------------------------------------------------------------------------------
+    --32000.DAMSUMTB INSERT
+    --------------------------------------------------------------------------------------------------------------------
+    O_LINE_NO := 'ST-32000';
+
+    INSERT INTO CRTBMSUM
+          (
+           MSUM_CORP_CODE
+          ,MSUM_PART_NO
+          ,MSUM_EONO
+          ,MSUM_CUMT_NO
+          ,MSUM_COME_CODE
+          ,MSUM_CUMT_GUBN
+          ,MSUM_MOLD_SEQ0
+          ,MSUM_MOLD_CODE
+          ,MSUM_SORT_KEY0
+          ,MSUM_TMLD_COST
+          ,MSUM_MATL_COST
+          ,MSUM_PROC_COST
+          ,MSUM_GME0_COST
+          ,MSUM_PROF_COST
+          ,MSUM_KIND_CONT
+          ,MSUM_ADEL_PRIC
+          ,MSUM_LAST_COST
+          ,MSUM_CAVT
+          ,MSUM_RPAY_CONT
+          ,MSUM_DMLD_COST
+          ,MSUM_UPDT_DATE
+          ,MSUM_UPDT_CMAN
+          ,MSUM_INIT_DATE
+          ,MSUM_INIT_CMAN
+          )
+    SELECT MALI_CORP_CODE
+          ,MALI_PART_NO
+          ,MALI_EONO
+          ,MALI_CUMT_NO
+          ,v_COME_CODE
+          ,'S'
+          ,MALI_MOLD_SEQ0
+          ,MALI_MOLD_CODE
+          ,MALI_SORT_KEY
+          ,SUM(MALI_TMOLD_COST)
+          ,SUM(MALI_MATL_COST )
+          ,SUM(MALI_PROC_COST )
+          ,SUM(MALI_GME0_COST )
+          ,SUM(MALI_PROF_COST )
+          ,SUM(CASE WHEN rt_CMMS.CMMS_RPAY_GUBN = 'P' THEN 0 ELSE MALI_KIND_NNUMB END) --,SUM(MALI_KIND_NNUMB)
+          ,SUM(MALI_ADEL_PRIC )
+          ,SUM(MALI_LAST_COST )
+          ,SUM(MALI_CAVT_NNUMB)
+          ,SUM(MALI_MOLD_CNT0 )
+          ,SUM(MALI_DMOLD_COST)
+          ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+          ,TO_CHAR(SYSDATE,'YYYYMMDD'),I_INIT_CMAN
+      FROM CMTBMALI
+     WHERE MALI_CORP_CODE = I_CORP_CODE
+       AND MALI_PART_NO   = I_PART_NO
+       AND MALI_EONO      = I_EONO
+       AND MALI_CUMT_NO   = I_CUMT_NO
+       AND MALI_MOLD_SEQ0 = I_MOLD_SEQ0
+     GROUP BY MALI_CORP_CODE
+             ,MALI_PART_NO
+             ,MALI_EONO
+             ,MALI_CUMT_NO
+             ,MALI_MOLD_SEQ0
+             ,MALI_MOLD_CODE
+             ,MALI_SORT_KEY
+    ;
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'SA-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다-' || v_IN_TITLE;
+    WHEN UD_EX_ERROR   THEN NULL;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE;
+                            CASE SQLCODE WHEN -15115 THEN O_MESG := '계산결과값이 허용치를 넘었습니다. 입력값을 확인하시기 바랍니다.';
+                                         ELSE             O_MESG := '계산오류(입력값 확인요망):' || CHR(10) || SQLERRM;
+                            END CASE;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
