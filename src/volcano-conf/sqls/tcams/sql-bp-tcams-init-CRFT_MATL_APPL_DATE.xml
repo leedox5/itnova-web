@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CRFT_MATL_APPL_DATE" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CRFT_MATL_APPL_DATE  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CRFT_MATL_APPL_DATE'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE
+FUNCTION CRFT_MATL_APPL_DATE
+(
+    I_CORP_CODE     CITBMATL.MATL_CORP_CODE%TYPE
+   ,I_MATL_STND     CITBMATL.MATL_STND_GUBN%TYPE
+   ,I_MATL_CODE     CITBMATL.MATL_CODE%TYPE
+   ,I_MATL_APPL     CITBMATL.MATL_APPL_DATE%TYPE
+   ,I_MATL_GUBN     CITBMATL.MATL_GUBN%TYPE
+)
+RETURN CHAR IS
+    v_MATL_APPL_DATE CITBMATL.MATL_APPL_DATE%TYPE;
+/******************************************************************************
+ * [SYSTEM  ] 설계원가산정 고도화
+ * [FUNCTION] 적용일기준 최종재료적용일 구하기
+ * [HISTORY ]
+ *  - 2014.07.01 [A.S.M] : 신규작성
+ *
+ * [COMMENT ]
+ *  -
+ *******************************************************************************/
+BEGIN
+    SELECT MAX(MATL_APPL_DATE)
+      INTO v_MATL_APPL_DATE
+      FROM CITBMATL
+     WHERE MATL_CORP_CODE = I_CORP_CODE
+       AND MATL_STND_GUBN = I_MATL_STND
+       AND MATL_CODE      = I_MATL_CODE
+       AND MATL_APPL_DATE <= I_MATL_APPL
+       AND MATL_GUBN      = I_MATL_GUBN
+    ;
+
+    RETURN v_MATL_APPL_DATE;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN RETURN v_MATL_APPL_DATE;
+    WHEN TOO_MANY_ROWS THEN RETURN v_MATL_APPL_DATE; RAISE_APPLICATION_ERROR (-20002,'기초코드 자료가 2건 이상 존재합니다.');
+    WHEN PROGRAM_ERROR THEN RETURN v_MATL_APPL_DATE; RAISE_APPLICATION_ERROR (-29001,'INTERNAL 오류가 발생하였습니다.');
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
