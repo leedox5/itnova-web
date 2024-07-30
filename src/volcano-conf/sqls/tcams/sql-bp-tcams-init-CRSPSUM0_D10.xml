@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CRSPSUM0_D10" data-source="tcamsDS">
+
+ <sql id="DROP" comment="생성">
+  <![CDATA[
+DROP PROCEDURE CRSPSUM0_D10  
+  ]]>
+ </sql>
+
+ <sql id="ERROR" comment="오류확인">
+  <![CDATA[
+SELECT *
+  FROM USER_ERRORS
+ WHERE NAME = 'CRSPSUM0_D10'    
+  ]]>
+ </sql>
+
+ <sql id="CREATE" comment="생성">
+  <![CDATA[
+CREATE OR REPLACE PROCEDURE CRSPSUM0_D10
+(
+    I_CORP_CODE  IN  CRTBMMAT.MMAT_CORP_CODE%TYPE,
+    I_PART_NO    IN  CRTBMMAT.MMAT_PART_NO%TYPE  ,
+    I_EONO       IN  CRTBMMAT.MMAT_EONO%TYPE     ,
+    I_CUMT_NO    IN  CRTBMMAT.MMAT_CUMT_NO%TYPE  ,
+    I_COME_CODE  IN  CRTBMMAT.MMAT_COME_CODE%TYPE,
+    I_MOLD_SEQ0  IN  CRTBMMAT.MMAT_MOLD_SEQ0%TYPE,
+
+    O_MESG_CODE  OUT VARCHAR2,
+    O_MESG       OUT VARCHAR2,
+    O_SQL0_CODE  OUT VARCHAR2,
+    O_PRGM_ID    OUT VARCHAR2,
+    O_LINE_NO    OUT VARCHAR2
+) IS
+
+/******************************************************************************
+ * [FUNCTION] 원가계산공통_금형공법_SUMMARY TABLE 삭제
+ * [HISTORY ]
+ *  - 2014.08.01 : 신규작성
+ *
+ * [COMMENT ]
+ * - 공법 등에서 재계산시 기 계산내역을 삭제할 경우에 사용 (각 공법프로시저에서 사용됨)
+ * - I_COME_CODE = 'ALL'인 경우 전체공법 계산자료 삭제됨.  (표준/실사 모두 삭제)
+ *******************************************************************************/
+    --예외처리
+    UD_EX_IN     EXCEPTION;
+    UD_EX_ERROR  EXCEPTION;
+
+    --테이블변수선언
+    rt_CHIN      CRTBCHIN%ROWTYPE ;
+
+    --WORKING VARIABLE
+    v_IN_TITLE        VARCHAR2(20) ;
+
+BEGIN
+    ---------------------------------------------------
+    -- START
+    ---------------------------------------------------
+    O_MESG_CODE := 'DE-002';
+    O_MESG      := '삭제를 실패했습니다.';
+    O_SQL0_CODE := '0';
+    O_PRGM_ID   := 'CRSPSUM0_D10';
+    O_LINE_NO   := 'ST-START';
+
+    ---------------------------------------------------------------------------
+    --1.INPUT 정보 검증
+    ---------------------------------------------------------------------------
+    O_LINE_NO := 'ST-10000';
+
+    IF  REPLACE(I_CORP_CODE,' ','') IS NULL THEN v_IN_TITLE := '법인'    ; RAISE UD_EX_IN; END IF;
+    IF  REPLACE(I_PART_NO  ,' ','') IS NULL THEN v_IN_TITLE := 'PART NO' ; RAISE UD_EX_IN; END IF;
+    IF  REPLACE(I_EONO     ,' ','') IS NULL THEN v_IN_TITLE := 'EO NO'   ; RAISE UD_EX_IN; END IF;
+    IF  REPLACE(I_COME_CODE,' ','') IS NULL THEN v_IN_TITLE := '공법코드'; RAISE UD_EX_IN; END IF;
+    IF  NVL(I_CUMT_NO,0) = 0                THEN v_IN_TITLE := '계산순번'; RAISE UD_EX_IN; END IF;
+
+    ---------------------------------------------------------------------------
+    --MAIN
+    ---------------------------------------------------------------------------
+    --재료비 삭제
+    O_LINE_NO := 'ST-21000';
+
+    DELETE FROM CRTBMMAT
+     WHERE MMAT_CORP_CODE = I_CORP_CODE
+       AND MMAT_PART_NO   = I_PART_NO
+       AND MMAT_EONO      = I_EONO
+       AND MMAT_CUMT_NO   = I_CUMT_NO
+       AND (   I_COME_CODE = 'ALL'
+            OR (    I_COME_CODE != 'ALL'
+                AND MMAT_COME_CODE = I_COME_CODE
+                AND MMAT_CUMT_GUBN = 'S'
+                AND MMAT_MOLD_SEQ0 = I_MOLD_SEQ0
+               )
+           )
+    ;
+
+    --가공비 삭제
+    O_LINE_NO := 'ST-22000';
+
+    DELETE FROM CRTBMPRO
+     WHERE MPRO_CORP_CODE = I_CORP_CODE
+       AND MPRO_PART_NO   = I_PART_NO
+       AND MPRO_EONO      = I_EONO
+       AND MPRO_CUMT_NO   = I_CUMT_NO
+       AND (   I_COME_CODE = 'ALL'
+            OR (    I_COME_CODE != 'ALL'
+                AND MPRO_COME_CODE = I_COME_CODE
+                AND MPRO_CUMT_GUBN = 'S'
+                AND MPRO_MOLD_SEQ0 = I_MOLD_SEQ0
+               )
+           )
+    ;
+
+    --SUM삭제
+    O_LINE_NO := 'ST-22000';
+
+    DELETE FROM CRTBMSUM
+     WHERE MSUM_CORP_CODE = I_CORP_CODE
+       AND MSUM_PART_NO   = I_PART_NO
+       AND MSUM_EONO      = I_EONO
+       AND MSUM_CUMT_NO   = I_CUMT_NO
+       AND (   I_COME_CODE = 'ALL'
+            OR (    I_COME_CODE != 'ALL'
+                AND MSUM_COME_CODE = I_COME_CODE
+                AND MSUM_CUMT_GUBN = 'S'
+                AND MSUM_MOLD_SEQ0 = I_MOLD_SEQ0
+               )
+           )
+    ;
+    --SUB집계여부 CLEAR
+    O_LINE_NO := 'ST-23000';
+
+    UPDATE CRTBCMMS
+       SET CMMS_SUM0_GUBN = ''
+     WHERE CMMS_CORP_CODE = I_CORP_CODE
+       AND CMMS_PART_NO   = I_PART_NO
+       AND CMMS_EONO      = I_EONO
+       AND CMMS_CUMT_NO   = I_CUMT_NO
+       AND CMMS_METH_GUBN = 'M'  --금형구분
+       AND CMMS_COME_CODE = I_COME_CODE
+    ;
+
+    --END ITEM MASTER집계SIGN CLEAR
+    O_LINE_NO := 'ST-24000';
+
+    SELECT DISTINCT
+           CHIN_CORP_CODE
+          ,CHIN_COST_GUBN
+          ,CHIN_PART_NO
+          ,CHIN_EONO
+          ,CHIN_CUMT_NO
+      INTO rt_CHIN.CHIN_CORP_CODE
+          ,rt_CHIN.CHIN_COST_GUBN
+          ,rt_CHIN.CHIN_PART_NO
+          ,rt_CHIN.CHIN_EONO
+          ,rt_CHIN.CHIN_CUMT_NO
+      FROM CRTBCHIN
+     WHERE CHIN_CORP_CODE = I_CORP_CODE
+       AND CHIN_PART_SUB0 = I_PART_NO
+       AND CHIN_EONO_SUB0 = I_EONO
+       AND CHIN_CUMT_SUB0 = I_CUMT_NO
+    ;
+
+    UPDATE CRTBEMST
+       SET EMST_SUM0_GUBN = ''
+     WHERE EMST_CORP_CODE = rt_CHIN.CHIN_CORP_CODE
+       AND EMST_COST_GUBN = rt_CHIN.CHIN_COST_GUBN
+       AND EMST_PART_NO   = rt_CHIN.CHIN_PART_NO
+       AND EMST_EONO      = rt_CHIN.CHIN_EONO
+       AND EMST_CUMT_NO   = rt_CHIN.CHIN_CUMT_NO
+    ;
+
+    -- CHIN의 SUB-ASSY가 UPDATE : 집계시 다시생성하므로 처리하지 않음 : 필요시 삽입
+    /*
+    O_LINE_NO := 'ST-25000';
+
+    UPDATE CRTBCHIN
+       SET CHIN_ASSY_PRIC = 0
+     WHERE CHIN_CORP_CODE = rt_CRTBCHIN.CHIN_CORP_CODE
+       AND CHIN_COST_GUBN = rt_CRTBCHIN.CHIN_COST_GUBN
+       AND CHIN_PART_NO   = rt_CRTBCHIN.CHIN_PART_NO
+       AND CHIN_EONO      = rt_CRTBCHIN.CHIN_EONO
+       AND CHIN_CUMT_NO   = rt_CRTBCHIN.CHIN_CUMT_NO
+    ;
+    */
+
+    ---------------------------------------------------------------------------
+    --종료처리
+    ---------------------------------------------------------------------------
+    O_MESG_CODE := 'DE-001';
+    O_MESG      := '정상처리 되었습니다.';
+    O_SQL0_CODE := '0';
+    O_LINE_NO   := 'ST-90000';
+
+EXCEPTION
+    WHEN UD_EX_IN      THEN O_MESG := '필수 입력항목이 누락되었습니다.' || v_IN_TITLE;
+    WHEN NO_DATA_FOUND THEN O_SQL0_CODE := SQLCODE; O_MESG := '처리할 자료가 존재하지 않습니다.';
+    WHEN PROGRAM_ERROR THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+    WHEN OTHERS        THEN O_SQL0_CODE := SQLCODE; O_MESG := '시스템오류:' || SQLERRM;
+
+END;  
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 
