@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- module:금형 공통 author:knk period: 2010/07/20 -->
+<service-descriptor id="bp/tcams/cm/common">
+
+ <service id="get.MoldInfo.2208" label="금형정보 조회">
+  <script>
+   <![CDATA[
+    var result = new Map();
+    var mold_list = new List();
+    var opts1 = new List();
+    
+    try {
+        mold_list = $jdbc.queryList("bp/tcams/cm/common", "get.MoldInfo.select", $data.param);
+        opts1 = $jdbc.queryList("bp/tcams/cm/common/conf", "get.opt.1", $data.param);
+        result.code = "Y";
+        result.mesg = "OK";     
+    } catch(e) {
+        $logger.info(e.message)
+        result.code = "N";
+        result.mesg = e.message;
+    }
+    
+    $data.result = result;
+    $data.mold_list = mold_list;
+    $data.opts1 = opts1;
+   ]]>   
+  </script>
+ </service>
+ 
+	<service id="get.MoldInfo" label="금형정보 조회">
+		<select descriptor="bp/tcams/cm/common" sql-id="get.MoldInfo.select"
+			parameter-name="param" result-class="list" result-name="mold_list" />
+	</service>
+	
+	<service id="get.MoldLifeInfo" label="상각수량 선택 정보 조회">
+		<select descriptor="bp/tcams/cm/common" sql-id="get.MoldLifeInfo.select"
+			parameter-name="param" result-class="list" result-name="life_list" />
+	</service>
+
+	<service id="get.MoldSumListInfo" label="수정금형 금형비 합계조회">
+		<select descriptor="bp/tcams/cm/common" sql-id="get.MoldSumListInfo.select"
+			parameter-name="param" result-class="map" result-name="sum_list" />
+	</service>
+
+	<!-- 수정 금형 공법용 -->
+	<service id="get.mold.totl" label="종합내역 얻기">
+		<script>
+			<![CDATA[
+				$data.result     = $jdbc.queryList("bp/tcams/cm/common", "get.mold.totl", $data.param);
+				// 단순 형복사...
+				$data.initParam = $data.param;
+				
+				var mold_code = '';
+				var mold_seq0 = '';
+				
+				//System.out.println("##########################################");
+				//System.out.println("##########################################");
+				//System.out.println("##########################################");
+				//System.out.println("#### : " + $data.param.mold_seq0);
+				if($data.result.size() > 0){
+					for(var i=0; i < $data.result.size(); i++) {
+						//System.out.println("####1 : " + $data.result[i].zsum_mold_code);
+						//System.out.println("####2 : " + $data.param.mold_code);
+						// 기본 첫번째 값을 셋팅
+						if (i == 1) {
+							mold_code = $data.result[1].zsum_mold_code;
+							mold_seq0 = $data.result[1].zsum_mold_seq0;
+						}
+						
+						// 같은 값이 있으면 그 값으로 셋팅
+						if($data.result[i].zsum_mold_code == $data.param.mold_code) {
+							mold_code = $data.result[i].zsum_mold_code;
+							mold_seq0 = $data.result[i].zsum_mold_seq0;
+						} 
+					}
+				}
+				if($data.param.mold_code == '' || $data.param.mold_code == null) {
+					$data.param.mold_code = mold_code;	
+				} else {
+					$data.param.mold_seq0 = $data.param.mold_seq0;
+				}
+				
+				if($data.param.mold_seq0 == '' || $data.param.mold_seq0 == null) {
+					$data.param.mold_seq0 = mold_seq0;
+				} else {
+					$data.param.mold_seq0 = $data.param.mold_seq0;
+				}
+				
+				//System.out.println("#### FLAG : " + $data.param.calc_flag);
+				
+				if($data.param.calc_flag == 'Y' && $data.result.size() > 1) {
+					$data.param.mold_code = $data.result[1].zsum_mold_code;
+					$data.param.mold_seq0 = $data.result[1].zsum_mold_seq0;
+				}
+				
+				$data.resultZmat = $jdbc.queryList("bp/tcams/cm/common", "get.mold.zmat", $data.param);
+				$data.resultZpro = $jdbc.queryList("bp/tcams/cm/common", "get.mold.zpro", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<service id="get.zmat.zpro" label="재료비, 가공비 별도 조회">
+		<script>
+			<![CDATA[
+				$data.resultZmat = $jdbc.queryList("bp/tcams/cm/common", "get.mold.zmat", $data.param);
+				$data.resultZpro = $jdbc.queryList("bp/tcams/cm/common", "get.mold.zpro", $data.param);
+			]]>
+		</script>
+	</service>
+
+	<service id="update.CMMSRpay" label="공법마스터 상각구분 업데이트(금형전용)">
+		<insert descriptor="bp/tcams/cm/common" sql-id="CMMSRpay.update"
+			parameter-name="params" parameter-class="map" />
+	</service>
+	<service id="get.CMMSRpay" label="공법마스터 상각구분 조회">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.query("bp/tcams/cm/common", "get.mody_stat", $data.param);
+				
+			]]>
+		</script>
+		<!--<select descriptor="bp/tcams/cm/common" sql-id="get.CMMSRpay.select" 
+			parameter-name="param" result-class="map" result-name="cmms_rpay" /> -->
+	</service>
+
+	<service id="get.mody_stat" label="가격관리 진행상태(수정금형 )">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.query("bp/tcams/cm/common", "get.mody_stat", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<service id="get.new0_stat" label="가격관리 진행상태(신작금형 )">
+		<script>
+			<![CDATA[
+				$data.result = $jdbc.query("bp/tcams/cm/common", "get.new0_stat", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<!-- 복사 대상 조회(팝업) -->
+	<service id="getCopyInputData" label="복사 대상 조회">
+		<script>
+			<![CDATA[				
+				var cost_gubn_sql = "AND EMST_COST_GUBN = ''";
+				
+				if ($data.searchParam.cost_gubn == "RD") {
+					cost_gubn_sql = "AND EMST_COST_GUBN = 'RD'";
+				} else if ($data.searchParam.cost_gubn == "R1" ||
+						   $data.searchParam.cost_gubn == "R2" ||
+						   $data.searchParam.cost_gubn == "R3") {
+					cost_gubn_sql = "AND EMST_COST_GUBN IN ('R0', 'R1', 'R2', 'R3')";
+				} 
+				
+				$data.searchParam.put("cost_gubn_sql", cost_gubn_sql);			
+				$data.resultList = $jdbc.queryList("bp/tcams/cm/common", "getCopyInputData", $data.searchParam);
+			]]>
+		</script>
+	</service>
+
+	<service id="get.moldupdt" label="수정금형 조회">
+		<script>
+			<![CDATA[				
+				$data.result = $jdbc.query("bp/tcams/cm/common", "get.moldupdt", $data.param);
+			]]>
+		</script>
+	</service>
+	
+	
+	<service id="get.stndInfo" label="표준정보 조회">
+		<select descriptor="bp/tcams/cm/common" sql-id="get.stndInfo.select"
+			parameter-name="param" result-class="list" result-name="combo_info" />
+	</service>
+	
+</service-descriptor>

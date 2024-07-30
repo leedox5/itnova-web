@@ -8,6 +8,7 @@ src\ui\bp\tcams\ca\term\es-caterm-p16-03.html
 src\ui\bp\tcams\cm\malc\es-cmmalc-p07a-01.html
 src\volcano-conf\services\tcams\service-bp-tcams-cr-cr01.xml
 src\volcano-conf\services\tcams\service-bp-tcams-cc-cc02.xml
+src\volcano-conf\services\tcams\service-bp-tcams-cm-common.xml
 src\volcano-conf\services\tcams\service-bp-tcams-cm-malc-p07a.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cc-cc02.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cm-malc-p07a.xml
