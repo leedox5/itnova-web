@@ -47,7 +47,7 @@
     var degr = new Map();
     
     try {
-        var degr = $jdbc.query("bp/tcams/cm/malc/p07a", "CHK.DEGR", $data.param_cmms);
+        degr = $jdbc.query("bp/tcams/cm/malc/p07a", "CHK.DEGR", $data.param_cmms);
         
         for(var i = 0 ; i < $data.param.size() ; i++) {
             $data.param[i].proc_name = degr.proc_name;

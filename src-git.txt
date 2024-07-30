@@ -11,11 +11,16 @@ src\volcano-conf\services\tcams\service-bp-tcams-cc-cc02.xml
 src\volcano-conf\services\tcams\service-bp-tcams-cm-malc-p07a.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cc-cc02.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cm-malc-p07a.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESAAUMM.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESAAUML.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESAAURF.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGP.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDTP.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTCD.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTDG.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMATL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAI.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAM.xml

@@ -150,7 +150,10 @@ WITH T01 (
  ,MTDG_MCHH_DATE
  ,MTDG_MODL_NAME
 ) AS (
-#DATA_TEXT#
+       SELECT 'K1', 'M', 'MALC', '7-1', NULL, '20221102', '20221102', '7-1', '원가계산기준 일원화', NULL, '전유종', '5141', '손한민', NULL, 'PCF30610', 'ui/bp/tcams/cm/malc/em-cmmalc-p07a.html', '1586853296616', 'Y', '20200219', 'ADMIN', '20200219', 'ADMIN', '1', '20221102', 'CMSPMALC_P07_1' FROM DUAL
+ UNION SELECT 'K1', 'M', 'MALC', '7-2', NULL, '20230601', '20230501', '7-2', '전력단가 변경'      , NULL, '전유종', '5141', '손한민', NULL, 'PCF30610', 'ui/bp/tcams/cm/malc/em-cmmalc-p07a.html', NULL, 'Y', '20230501', 'ADMIN', '20230501', 'ADMIN', '3', '20230501', 'CMSPMALC_P07_2' FROM DUAL
+ UNION SELECT 'K1', 'M', 'MALC', '7-4', NULL, '20240215', '20240215', '7-4', '전력단가변경'       , NULL, '전유종', '5141', '손한민', NULL, 'PCF30610', 'ui/bp/tcams/cm/malc/em-cmmalc-p07a.html', NULL, 'Y', '20240215', 'ADMIN', '20240215', 'ADMIN', '4', '20240215', 'CMSPMALC_P07_4' FROM DUAL
+ UNION SELECT 'K1', 'M', 'MALC', '7-5', NULL, '20240901', '20240901', '7-5', '전력단가변경'       , NULL, '전유종', '5141', '손한민', NULL, 'PCF30610', 'ui/bp/tcams/cm/malc/em-cmmalc-p07a.html', NULL, 'Y', '20240901', 'ADMIN', '20240901', 'ADMIN', '5', '20240901', 'CMSPMALC_P07_4' FROM DUAL
 )
 SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,A.* 
@@ -222,9 +225,12 @@ INSERT INTO CITBMTDG (
   ]]>
  </sq> 
 
- <sq id="SELECT.YYMM.NN">
+ <sq id="SELECT.MALC.00">
   <![CDATA[
-#SELECT_YYMM_NN#
+SELECT *
+  FROM CITBMTDG
+ WHERE MTDG_COME_CODE = 'MALC'
+ ORDER BY MTDG_APPL_DATE 
   ]]>
  </sq> 
  

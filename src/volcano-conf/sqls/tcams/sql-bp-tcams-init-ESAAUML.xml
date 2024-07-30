@@ -18,7 +18,7 @@ CREATE TABLE ESAAUML (
   ]]>
  </sql>
  
- <sql id="select" comment="조회">
+ <sql id="SELECT" comment="조회">
   <![CDATA[
 WITH T1 (
   SYS_ID
@@ -84,7 +84,8 @@ WITH T1 (
  UNION SELECT '100', 'ko_KR', 'PCF00020', '공법선택', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
  UNION SELECT '100', 'ko_KR', 'PCC00000', '기본원가정보', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
  UNION SELECT '100', 'ko_KR', 'PCC00110', '공법 차수 정보', NULL, 'U', 'SYSTEMPG', NULL, 'SYSTEMPG', NULL FROM DUAL
- UNION SELECT '100', 'ko_KR', 'PCF30160', 'BRAZING 공법 계산', NULL, 'U', 'SYSTEM', '2017-12-04 17:40:00.0 Asia/Seoul', 'ADMIN', '2019-12-23 13:49:36.0 Asia/Seoul' FROM DUAL
+ UNION SELECT '100', 'ko_KR', 'PCF30160', 'BRAZING 공법 계산'   , NULL, 'U', 'SYSTEM'  , '2017-12-04 17:40:00.0 Asia/Seoul', 'ADMIN'   , '2019-12-23 13:49:36.0 Asia/Seoul' FROM DUAL
+ UNION SELECT '100', 'ko_KR', 'PCF30610', 'AL중력주조(수정금형)', NULL, 'U', 'SYSTEMPG', '2019-12-05 09:36:00.0 Asia/Seoul', 'SYSTEMPG', '2019-12-23 13:49:36.0 Asia/Seoul' FROM DUAL
 )
 SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,A.* 
@@ -97,7 +98,7 @@ SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
   ]]>
  </sql>
  
- <sql id="insert" comment="저장">
+ <sql id="INSERT" comment="저장">
   <![CDATA[
 INSERT INTO ESAAUML (
   SYS_ID
@@ -125,9 +126,19 @@ INSERT INTO ESAAUML (
   <![CDATA[
 SELECT *
   FROM ESAAUML
- WHERE MENU_CD LIKE 'PCF301%'
+ WHERE MENU_CD LIKE 'PCF306%'
    AND LANG_CD = 'ko_KR'
   ]]>
  </sql> 
+
+ <sql id="SELECT.PIWR.19-3">
+  <![CDATA[
+SELECT *
+  FROM ESAAUML
+ WHERE MENU_CD LIKE 'PCF302%'
+   AND LANG_CD = 'ko_KR'
+  ]]>
+ </sql> 
+
  
 </sql-descriptor>
