@@ -49,7 +49,7 @@ CREATE TABLE CITBMATL (
 )
   ]]>
  </sql>
- <sql id="select" comment="조회">
+ <sql id="SELECT" comment="조회">
   <![CDATA[
 WITH T1 (
   MATL_CORP_CODE
@@ -91,6 +91,8 @@ WITH T1 (
        SELECT 'K1', 'H', 'RBACMSEAL3'  , '20130101', 'LFO', 'RB', 'G','ACM (T7767)',12002,'KG',0,0,1.35,0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'20160907','82103128','20140926','ADMIN',NULL,NULL,NULL,NULL,NULL,'S','SUCCESS' FROM DUAL
  UNION SELECT 'K1', 'H', 'PC010101'    , '20220701', 'LFO', 'LE', 'W','단면 FR-1 (1.0t / 1oz)',17736,'SHT',0,0,0,0,1,1200,1000,NULL,NULL,NULL,NULL,'1 OZ',NULL,NULL,'20220816','82103601','20220816','82103601',' ',' ',' ',' ',' ','N',NULL FROM DUAL
  UNION SELECT 'K1', 'H', 'BMSG295-002C', '20220801', 'LFO', 'PR', 'A', 'SG295 ALL', 938, 'KG', 556, 99, 7.85, 0, 0, 0, 0, NULL, null, null, null, '직구매철판', NULL, NULL, '20220816', '82103601', '20220816', '82103601', ' ', '철판 SCRAP', ' ', ' ', ' ', 'N', NULL FROM DUAL
+ UNION SELECT 'K1', 'H', 'DESKD61'     , '20140101', 'LFO', 'DE', 'K', 'SKD61', 6541, 'kg', 0, null, 7.85, null, null, null, null, NULL, null, null, null, '열간단조,다이캐스팅 금형용', NULL, NULL, '20140901', 'SYSTEM', '20140901', 'SYSTEM', NULL, NULL, NULL, NULL, NULL, 'S', 'SUCCESS' FROM DUAL
+ UNION SELECT 'K1', 'H', 'DESKD61'     , '20191001', 'LFO', 'DE', 'K', 'SKD61', 4491, 'kg', 0, null, 7.85, null, null, null, null, '   ', null, null, null, '열간단조,다이캐스팅 금형용', NULL, NULL, '20200219', 'ADMIN', '20200219', 'ADMIN', NULL, NULL, ' ', NULL, NULL, NULL, NULL FROM DUAL
 )
 SELECT CASE WHEN B.MATL_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
       ,A.* 
@@ -186,8 +188,8 @@ INSERT INTO CITBMATL (
   <![CDATA[
 SELECT *
   FROM CITBMATL
- WHERE MATL_CLAS_CODE = 'PR'
-   AND MATL_CODE LIKE 'BM%'
+ WHERE MATL_CLAS_CODE LIKE '%'
+   AND MATL_CODE LIKE 'DESKD61%'
   ]]>
  </sql>
  
