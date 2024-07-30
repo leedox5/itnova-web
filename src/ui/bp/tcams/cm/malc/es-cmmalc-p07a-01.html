@@ -290,21 +290,30 @@
             },
 
             /**
-			 * 금형코드 데이터 금형 정보 화면에 Set
-			 */
+             * 금형코드 데이터 금형 정보 화면에 Set
+             */
             resultStndInfo : function(e, res) {
-            	var me = this,
-            	data = res.response,
-            	target = e.currentTarget.id;
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
 
-            	if (me.standMoldList.length > 0 && me.standInfoList.length > 0) {
-            		// 입력 데이터 조회
-                	me.getInfo();
-               	} else {
-               		// 금형코드, 표준데이터 미존재 - 메세지 처리
-               		UT.alert("표준정보가 존재하지 않습니다.\r관리자에게 문의하세요.");
-               		return;
-              	}
+                console.log(data);
+                
+                var message = data.message;
+                
+                if(message.code != "Y") {
+                    UT.alert(message.mesg);
+                    return;
+                }
+                
+                if (me.standMoldList.length > 0 && me.standInfoList.length > 0) {
+                    // 입력 데이터 조회
+                    me.getInfo();
+                } else {
+                    // 금형코드, 표준데이터 미존재 - 메세지 처리
+                    UT.alert("표준정보가 존재하지 않습니다.\r관리자에게 문의하세요.");
+                    return;
+                }
             },
 
             /**

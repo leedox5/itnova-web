@@ -168,9 +168,33 @@
 	</service>
 	
 	
-	<service id="get.stndInfo" label="표준정보 조회">
+	<service id="get.stndInfo.X.20240730" label="표준정보 조회">
 		<select descriptor="bp/tcams/cm/common" sql-id="get.stndInfo.select"
 			parameter-name="param" result-class="list" result-name="combo_info" />
 	</service>
 	
+ <service id="get.stndInfo">
+  <script>
+   <![CDATA[
+    var result = new List();
+    var message = new Map();
+    
+    try {
+        result = $jdbc.queryList("bp/tcams/cm/common", "get.stndInfo.select", $data.param);
+        
+        message.code = "Y";
+        message.mesg = "OK";
+    } catch(e) {
+        $logger.info(e.message);
+        message.code = "E";
+        message.mesg = e.message;
+    }
+    
+    $data.combo_info = result;
+    $data.message = message;
+    
+   ]]>
+  </script>
+ </service>
+    
 </service-descriptor>
