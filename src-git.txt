@@ -5,9 +5,12 @@ src\ui\bp\tcams\ca\braz\es-cabraz-p18a-02.html
 src\ui\bp\tcams\ca\term\es-caterm-p16-01.html
 src\ui\bp\tcams\ca\term\es-caterm-p16-02.html
 src\ui\bp\tcams\ca\term\es-caterm-p16-03.html
+src\ui\bp\tcams\cm\malc\es-cmmalc-p07a-01.html
 src\volcano-conf\services\tcams\service-bp-tcams-cr-cr01.xml
 src\volcano-conf\services\tcams\service-bp-tcams-cc-cc02.xml
+src\volcano-conf\services\tcams\service-bp-tcams-cm-malc-p07a.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-cc-cc02.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-cm-malc-p07a.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDDL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-ESACDGL.xml
@@ -17,6 +20,10 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMATL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAI.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAM.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAP.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CASPBRAZ_P19_2.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CRSPCMMS_U01.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CRTBMCPR.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBTERT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-conf-PKCL-CATBCMPK.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-conf-PKCL-CATBBRAM.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-conf-PKCL-CATBBRAP.xml
@@ -25,13 +32,9 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-PKMS.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBBRAP-19-2.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBBRAM-19-2.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-BRAZ-CATBCMPK-19-2.xml
-src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CASPBRAZ_P19_2.xml
-src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBTERT.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-MTDG.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERT-16-3.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBCMPK-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERM-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERP-16-4.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-ca-TERM-CATBTERT-16-4.xml
-src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CRSPCMMS_U01.xml
-src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CRTBMCPR.xml

@@ -1,0 +1,1070 @@
+<sc-link rel="import" href="es-cmmalc-p07a-02.html"></sc-link>
+<sc-link rel="import" href="es-cmmalc-p07a-03.html"></sc-link>
+<sc-link rel="import" href="../../ca/common/es-cacm-01.html"></sc-link>
+
+<dom-module id="es-cmmalc-p07a-01">
+	<!--
+        ******************************************************************************************
+        ** @Program-name    : AL중력주조 금형공법_01(7-1차)
+        ** @Description     :
+        ** @Author          : JMBAEK
+        ** @Create Date     : 2020.02.27
+        ** @History         : 2020.02.27 최초작성
+        ******************************************************************************************
+    -->
+	<style>
+		:host {
+			@apply(--vbox-layout);
+		}
+	</style>
+
+    <template>
+   	 	<!--
+	        ************************************************************************************************************
+	        * Service Area
+	        ************************************************************************************************************
+	    -->
+		<!-- 표준정보(금형)(CITBMLST-금형코드) 조회 -->
+        <sc-service-provider id="getStndMoldInfoRPC" descriptor="bp/tcams/cm/common" service-id="get.MoldInfo" on-response="resultStndMoldInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="mold_list" target="{{standMoldList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+		<!-- 표준정보(금형)(CMTBMTCD-표준) 조회 -->
+        <sc-service-provider id="getStandInfoRPC" descriptor="bp/tcams/cm/common" service-id="get.stndInfo" on-response="resultStndInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="combo_info" target="{{standInfoList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 COUNT 조회 -->
+        <sc-service-provider id="getInfoCountRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 공법 입력 조회 -->
+        <sc-service-provider id="getInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info" target="{{resultList}}"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+        
+        <!-- 입력factor 삭제(초기화) -->
+        <sc-service-provider id="deleteMALCInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="delete.MALCInfo" on-response="getInfo" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+        </sc-service-provider>
+        
+        <!-- 입력factor 삭제(저장 전) -->
+        <sc-service-provider id="deleteInsertMALCInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="delete.MALCInfo" on-response="saveMALCInfo" >
+            <inputs>
+                <sc-service-input name="params" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+        </sc-service-provider>
+
+		<!-- 이전 계산결과 삭제(최초) -->
+        <sc-service-provider id="deleteMALCResInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="delete.MALCResInfo" on-response="delComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="del_Result" target="{{delResult}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 입력factor 저장 -->
+        <sc-service-provider id="saveInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="save.MALCInfo" on-response="goCalc" >
+            <inputs>
+                <sc-service-input name="params" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+        </sc-service-provider>
+
+		<!-- 공법 계산 & 결과 조회 -->
+        <sc-service-provider id="getCalcResRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCCalcRes" on-response="calcComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+                <sc-service-input name="param_cmms" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="calc_Result" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 집계  & 결과 조회 -->
+        <sc-service-provider id="getMALCSumResRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCSumRes" on-response="sumComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="sum_Result" target="{{sumResult}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- User ID Session Check -->
+        <sc-service-provider id="checkSessionRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.SessionInfo" on-response="checkSession" >
+            <inputs>
+                <sc-service-input name="param" value="{{isSave}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="session_info" target="{{sessionOn}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 입력데이터 자릿수 체크 -->
+        <sc-service-provider id="checkDataLengthRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="check.MALCInsert" on-response="checkLengComplete" >
+            <inputs>
+                <sc-service-input name="param" value="{{saveParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="result" target="{{message}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!-- 선택한 복사대상 key로 input data COUNT 조회 -->
+        <sc-service-provider id="getCopyInfoCountRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCInfoCount" on-response="resultCountInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{searchParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_count" target="{{result}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+		<!-- 선택한 복사대상 key로 input data 조회 -->
+        <sc-service-provider id="getCopyInfoRPC" descriptor="bp/tcams/cm/malc/p07a" service-id="get.MALCInfo" on-response="resultInfo" >
+            <inputs>
+                <sc-service-input name="param" value="{{copyParam}}"></sc-service-input>
+            </inputs>
+            <outputs>
+                <sc-service-output name="ca_info" target="{{resultList}}" change-comparable="true"></sc-service-output>
+            </outputs>
+        </sc-service-provider>
+
+        <!--
+	        ************************************************************************************************************
+	        * UI Area
+	        ************************************************************************************************************
+	    -->
+    	<cc-page-title-bar hidden="true"></cc-page-title-bar>
+   		<div class="vbox flex" style="min-height:3%;">
+   		   			<es-cacm-01 class="flex" id="topMain" search-param="{{searchParam}}" on-copy="copyInputData" on-prod-change="clearValue" on-rpay-change="rpayGubnChange"
+   			            on-get-info="getInfo" on-init-data="initData" on-calculate="calculation" on-result-calc="toParentResult"></es-cacm-01>
+   		</div>
+   		<div class="vbox flex-8">
+    		<div class="hbox flex">
+		        <es-cmmalc-p07a-02 id="matlMain" class="flex" on-clear-value="clearValue" on-copy-item="copyItem" on-resort="reSortButtonClick"
+		        	search-param="{{searchParam}}" input-param="{{inputParam}}"></es-cmmalc-p07a-02>
+   			</div>
+   		</div>
+    </template>
+
+	<!--
+        ************************************************************************************************************
+        * Script Area
+        ************************************************************************************************************
+    -->
+	<script>
+		Polymer({
+			is: "es-cmmalc-p07a-01",
+
+			properties: {
+             	// 조회조건
+                searchParam   : {type: Object , value: function() { return {}; } ,notify : true},
+                // 조회 결과
+                resultMap     : {type: Object , value: function() { return {}; } },
+				// 표준 패키지 정보 조회
+				standInfoList : {type : Array , value : function() { return [];}},
+				// 표준 패키지 정보 조회(금형)
+				standMoldList : {type : Array , value : function() { return [];}},
+				// 조회 결과
+				resultList    : {type : Array , value : function() { return [];}},
+				// 계산 결과
+				calcResult    : {type : Array , value : function() { return [];}},
+				// 집계 결과
+				sumResult     : {type : Array , value : function() { return [];}},
+				// 삭제 결과
+				delResult     : {type : Array , value : function() { return [];}},
+				// 조회 결과용
+		    	result        : {type: Object , value: function() { return {}; } },
+				// 세션체크
+		    	sessionOn     : {type: Object , value: function() { return {}; } },
+				// 메세지
+		    	message       : {type: Object , value: function() { return {}; } },
+				// 세션체크 input
+		    	isSave        : {type: Object , value: function() { return {}; } },
+				// Input 테이블 정보
+		    	inputParam    : {type: Object , value: function() { return {}; } },
+				// copy 대상 정보
+		    	copyParam     : {type: Object , value: function() { return {}; } },
+				// save 대상 정보
+		    	saveParam     : {type: Array  , value: function() { return []; } },
+				// 계산번호 저장용
+		    	orgCumtNo     : {type: String , value : function() { return '';} },
+		    	// save 대상
+				saveList      : {type: Array  , value : function() { return [];}}
+		    },
+
+            /**
+             * 초기화 설정
+             **/
+            initialized : function() {
+                var me = this;
+            },
+
+            /**
+             * 부모에서 호출
+             **/
+            load: function(obj) {
+                var me = this;
+
+				// 부모로 부터 전달된 파라미터 SET
+                me.set('searchParam'  , obj);
+				me.set('orgCumtNo', UT.copy(obj.cmms_cumt_no));
+
+                // 상태체크
+                me.checkPassStat();
+
+				// 공통 타이틀 명 SET
+                me.set('searchParam.title', "AL중력주조(금형) 원가계산");
+
+                // 공통 영역(TOP FRAME) 조회조건 전달
+                me.$.topMain.load(me.get("searchParam"));
+
+             	// 공통 영역(TOP FRAME) 화면 처리
+                me.$.topMain.setComeCode(me.get("searchParam.come_code"));
+
+                // 금형코드 조회
+                me.$.getStndMoldInfoRPC.service();
+
+                // ID SET(자동번호매김을 위한 id번호 Set)
+                me.setId();
+            },
+
+            /**
+			 * ID SET(자동번호매김을 위한 id번호 Set)
+			 */
+            setId : function() {
+                var me = this;
+                me.$.matlMain.$.escmmalc_p07a_03_01.setId('1');
+				me.$.matlMain.$.escmmalc_p07a_03_02.setId('2');
+				me.$.matlMain.$.escmmalc_p07a_03_03.setId('3');
+				me.$.matlMain.$.escmmalc_p07a_03_04.setId('4');
+				me.$.matlMain.$.escmmalc_p07a_03_05.setId('5');
+				me.$.matlMain.$.escmmalc_p07a_03_06.setId('6');
+				me.$.matlMain.$.escmmalc_p07a_03_07.setId('7');
+				me.$.matlMain.$.escmmalc_p07a_03_08.setId('8');
+            },
+
+            /**
+             * 금형코드 데이터 조회 후 처리
+             **/
+            resultStndMoldInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	if (me.standMoldList.length > 0) {
+                	// 데이터 존재 - 표준데이터 조회
+					me.$.getStandInfoRPC.service();
+               	} else {
+               		// 데이터 미존재 - 메세지 처리
+               		UT.alert("표준정보가 존재하지 않습니다.\r관리자에게 문의하세요.");
+               		return;
+              	}
+            },
+
+            /**
+			 * 금형코드 데이터 금형 정보 화면에 Set
+			 */
+            resultStndInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	if (me.standMoldList.length > 0 && me.standInfoList.length > 0) {
+            		// 입력 데이터 조회
+                	me.getInfo();
+               	} else {
+               		// 금형코드, 표준데이터 미존재 - 메세지 처리
+               		UT.alert("표준정보가 존재하지 않습니다.\r관리자에게 문의하세요.");
+               		return;
+              	}
+            },
+
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultCountInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id
+            	me.set("inputParam", {});
+
+            	if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+				if(me.get("result.mali_count") == 0 || me.get("result.mali_count") == '0'){
+					me.set('inputParam.iCount', "0");
+
+					var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),standMoldList:me.get("standMoldList"),inputParam:me.get("inputParam")};
+					// 값 초기화 후 정보 전달
+					me.set('inputParam.iCount', me.get("result.mali_count"));
+	            	me.$.matlMain.load(obj);
+	            	me.clearInputData();
+
+				} else {
+
+					// service-provider id 로 분기처리
+					if (target == "getCopyInfoRPC") {
+						me.$.getCopyInfoRPC.service();
+					} else {
+						me.$.getInfoRPC.service();
+					}
+				}
+
+            },
+
+            /**
+			 * 조회 Data 없을 경우 Input Data Clear  
+			 */
+            clearInputData : function() {
+                var me = this;
+                me.$.matlMain.$.escmmalc_p07a_03_01.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_02.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_03.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_04.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_05.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_06.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_07.clearInputData();
+                me.$.matlMain.$.escmmalc_p07a_03_08.clearInputData();
+            },
+
+            /**
+             * 공법 계산 내역 COUNT 조회 후처리 로직
+             **/
+            resultInfo : function(e, res) {
+            	var me = this,
+            	data = res.response,
+            	target = e.currentTarget.id;
+
+            	// 공법 Input Factor 정보
+            	me.set('inputParam', data.ca_info);
+            	me.set('inputParam.iCount', "1");
+
+            	var obj = {searchParam:me.get("searchParam"),standInfoList:me.get("standInfoList"),standMoldList:me.get("standMoldList"),inputParam:me.get("inputParam")};
+
+            	me.$.matlMain.load(obj);
+            	me.cmatResult(data.ca_info);
+            },
+
+            /**
+             * 초기화 버튼 이벤트
+             **/
+            initData: function(e, data) {
+                var me = this;
+
+				// 입력 값 초기화
+                me.set("inputParam", {});
+                me.set("searchParam.cumt_no"  , "-1");
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 조회 버튼 이벤트
+             **/
+            getInfo: function() {
+                var me = this;
+
+                if (me.get("searchParam.cumt_no") == "-1") {
+					me.set("searchParam.cumt_no", me.get("orgCumtNo"));
+                }
+
+                // 공법 계산 내역 count 조회
+                me.$.getInfoCountRPC.service();
+            },
+
+            /**
+             * 결과조회 버튼 이벤트
+             **/
+            toParentResult: function() {
+            	var me = this;
+
+            	me.fire("show-detail");
+            },
+
+            /**
+             * 계산 버튼 이벤트
+             **/
+            calculation: function() {
+            	var me = this;
+
+            	//재정렬 버튼 누르지 않고 계산 시 재정렬을 먼저 하고 계산 실행
+				me.reSortButtonClick();
+				// 입력 데이터 추출
+				me.set("inputList", me.getInputData("none"));
+				
+				// 필수 입력값 체크
+				if (me.validationCheck(me.get("inputList")) == true) {
+	                me.set("saveParam", me.inputList);
+					// 기 계산된 내역 삭제
+					me.$.deleteMALCResInfoRPC.service();
+				}
+            },
+
+            /**
+             * 입력 factor 저장 후 계산 호출
+             **/
+            goCalc: function(e, res) {
+            	var me = this
+				me.$.getCalcResRPC.service();
+            },
+
+            /**
+             * 계산 처리 후 로직
+             **/
+            calcComplete: function(e, res) {
+                var me = this,
+                data = res.response,
+                target = e.currentTarget.id;
+
+                console.log(data);
+                
+                me.$.topMain.showStat(data.calc_Result);
+                
+                if (me.get("result.MESG_CODE") == 'SA-001') {
+                    me.$.getMALCSumResRPC.service();
+                } else {
+                    commonAS.comeAlert(me.get("result"));
+                }
+            },
+
+            /**
+			 * 집계 결과 이벤트 처리
+			 */
+            sumComplete : function() {
+                var me = this;
+
+                if (me.get("sumResult.MESG_CODE") == 'SA-001'){
+                	// 처리 성공 - 결과 화면으로 이동
+                	me.toParentResult();
+                	// 화면 데이터 재조회(표준데이터-입력데이터 조회)
+                	me.$.getInfoRPC.service();
+                	// 공법 계산시 END ITEM MASTER/CHAIN/공법선택 화면 재조회
+                	me.moduleCall();
+				} else {
+					UT.alert(me.get("sumResult"));
+					return;
+				}
+            },
+
+            /**
+         	 * 모듈간 통신 END ITEM MASTER/CHAIN/공법선택 마스터 화면 재조회
+         	 */
+         	moduleCall: function() {
+                var me = this;
+                
+				// END ITEM MASTER
+				if ( me.searchParam['cmms_cost_gubn'] == 'R1'
+					  || me.searchParam['cmms_cost_gubn'] == 'R2'
+					  || me.searchParam['cmms_cost_gubn'] == 'R3') {
+					var target1 = document.querySelector("sc-pages").children.PCA00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00020;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 개발
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RD') {
+					var target1 = document.querySelector("sc-pages").children.PCB00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00030;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				// 임시
+				} else if (me.searchParam['cmms_cost_gubn'] == 'RC') {
+					var target1 = document.querySelector("sc-pages").children.PCK00010;
+					if (UT.isNotEmpty(target1)) {
+						target1.module.$.main.getList();
+					}
+
+					var target2 = document.querySelector("sc-pages").children.PCX00010;
+					if (UT.isNotEmpty(target2)) {
+						target2.module.$.main.getList();
+					}					
+				}
+				
+				// 공법선택
+// 				var target3 = document.querySelector("sc-pages").children.PCF00020;
+// 				if (UT.isNotEmpty(target3)) {
+
+// 					if (UT.isNotEmpty(target3.module.$.autoCome)) {
+// 						target3.module.$.autoCome.getSelectedList();
+// 					}
+
+// 					if (UT.isNotEmpty(target3.module.$.moldCome)) {
+// 						target3.module.$.moldCome.getSelectedList();
+// 					}
+// 				}
+				
+            },
+
+            /**
+			 *	데이터 자릿수 체크 결과처리 메소드
+			 */
+            checkLengComplete : function() {
+                var me = this;
+                
+                if(_message['MESG_CODE'] == 'SA-001'){
+					// 처리 성공 - 입력 데이터 삭제
+					me.$.deleteMALCResInfoRPC.service();
+				}else{
+					// 처리 실패 - 메세지
+					UT.alert(message['MESG']);
+				}
+            },
+
+            /**
+             * 복사 버튼 이벤트(미사용)
+             **/
+            copyInputData: function() {
+            	var me = this;
+				/*
+	            var param = {};
+	            if(!me.escacm07){
+	                me.escacm07 = UT.popup('es-cacm-07', me, 940, 500, {
+                		'selected-item' : function(popup, e) {
+                			var result = e.detail;
+
+                				me.set("copyParma.corp_code", result.comd_corp_code);
+                				me.set("copyParma.part_no"  , result.comd_part_no);
+                				me.set("copyParma.eono"     , result.comd_eono);
+                				me.set("copyParma.cumt_no"  , result.comd_cumt_no);
+
+        						me.$.getCopyInfoCountRPC.service();
+                            popup.close();
+                		}
+	                }, {title : "복사대상선택"});
+	            }
+                me.escacm07.show();
+				me.escacm07.getWindowContent().load({singleSelect : true, defaultParam : param, autoComplete : true});
+				*/
+
+            },
+
+            /**
+             * 상태 체크
+             **/
+			checkPassStat : function() {
+				var me = this;
+
+				if (me.get("searchParam.rpay_code") == "L" && (me.get("searchParam.new0_stat") == "30" || me.get("searchParam.new0_stat") == "40" || me.get("searchParam.new0_stat") == "2C")) {
+					me.$.matlMain.$.div_gubn.setAttribute('disabled', true);
+				} else if (me.get("searchParam.rpay_code") != "L" && (me.get("searchParam.cmms_pass_stat") == "30" || me.get("searchParam.cmms_pass_stat") == "40" || me.get("searchParam.cmms_pass_stat") == "2C")) {
+					me.$.matlMain.$.div_gubn.setAttribute('disabled', true);
+				} else {
+					me.$.matlMain.$.div_gubn.removeAttribute("disabled");
+				}
+			},
+
+			/**
+			 *	재정렬 버튼 클릭 이벤트 
+			 */
+			reSortButtonClick : function() {
+				var me = this;
+				var tempList = me.getInputData("resort");
+		    	
+		    	if (tempList.length > 1) {
+		    		tempList.sort(function(a, b) {
+		    			return a.mali_sort_key < b.mali_sort_key ? -1 : a.mali_sort_key > b.mali_sort_key ? 1 : a.id_seq < b.id_seq ? -1 : 1;
+		    		});
+		    	}
+		    	
+	            for (var i=0; i<tempList.length; i++) {
+	            	tempList[i].mali_sort_key = tempList[i].mali_sort_key;
+	            }
+	            
+	            me.cmatResult(tempList);
+			},
+
+			/**
+			 * 조회 Data 있을 경우   
+			 */
+			cmatResult : function(list) {
+				var me = this;
+				var i = 0;
+
+				for (i = 0; i < list.length; i++) {
+					// LINE별 처리
+					if (i == 0) {
+						me.$.matlMain.$.escmmalc_p07a_03_01.cmatResult(list[i]);						
+					} else if (i == 1) {
+						me.$.matlMain.$.escmmalc_p07a_03_02.cmatResult(list[i]);
+					} else if (i == 2) {
+						me.$.matlMain.$.escmmalc_p07a_03_03.cmatResult(list[i]);
+					} else if (i == 3) {
+						me.$.matlMain.$.escmmalc_p07a_03_04.cmatResult(list[i]);
+					} else if (i == 4) {
+						me.$.matlMain.$.escmmalc_p07a_03_05.cmatResult(list[i]);
+					} else if (i == 5) {
+						me.$.matlMain.$.escmmalc_p07a_03_06.cmatResult(list[i]);
+					} else if (i == 6) {
+						me.$.matlMain.$.escmmalc_p07a_03_07.cmatResult(list[i]);
+					} else if (i == 7) {
+						me.$.matlMain.$.escmmalc_p07a_03_08.cmatResult(list[i]);
+					}
+				}
+
+				while (i < 8) {
+					// LINE별 처리
+					if (i == 0) {
+						me.$.matlMain.$.escmmalc_p07a_03_01.clearInputData();					
+					} else if (i == 1) {
+						me.$.matlMain.$.escmmalc_p07a_03_02.clearInputData();
+					} else if (i == 2) {
+						me.$.matlMain.$.escmmalc_p07a_03_03.clearInputData();
+					} else if (i == 3) {
+						me.$.matlMain.$.escmmalc_p07a_03_04.clearInputData();
+					} else if (i == 4) {
+						me.$.matlMain.$.escmmalc_p07a_03_05.clearInputData();
+					} else if (i == 5) {
+						me.$.matlMain.$.escmmalc_p07a_03_06.clearInputData();
+					} else if (i == 6) {
+						me.$.matlMain.$.escmmalc_p07a_03_07.clearInputData();
+					} else if (i == 7) {
+						me.$.matlMain.$.escmmalc_p07a_03_08.clearInputData();
+					}
+					
+					i++;
+				}
+			},
+
+			/**
+			 *	input Object -> Array로 조합 
+			*/
+			getInputData : function(mode) {
+				var me = this;
+		    	
+	            var seq = 0;
+	            var inputList = [];
+	            var tempObj1 = me.$.matlMain.$.escmmalc_p07a_03_01.getInputData();
+	            var tempObj2 = me.$.matlMain.$.escmmalc_p07a_03_02.getInputData();
+	            var tempObj3 = me.$.matlMain.$.escmmalc_p07a_03_03.getInputData();
+	            var tempObj4 = me.$.matlMain.$.escmmalc_p07a_03_04.getInputData();
+	            var tempObj5 = me.$.matlMain.$.escmmalc_p07a_03_05.getInputData();
+	            var tempObj6 = me.$.matlMain.$.escmmalc_p07a_03_06.getInputData();
+	            var tempObj7 = me.$.matlMain.$.escmmalc_p07a_03_07.getInputData();
+	            var tempObj8 = me.$.matlMain.$.escmmalc_p07a_03_08.getInputData();
+	            
+	            if (tempObj1 != null) {
+	           		seq++;
+	              	tempObj1.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj1.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj1.mali_eono      = me.get("searchParam.eono");
+	              	tempObj1.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj1.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj1.mali_mold_seq0 = seq;
+	              	tempObj1.id_seq         = 1;
+	              	
+	              	if (mode == 'none') {
+	                	tempObj1.mali_sort_key = seq * 10;
+	              	}
+	              	
+	              	inputList.push(tempObj1);
+	            }
+	            
+	            if (tempObj2 != null) {
+	            	seq++;
+	            	tempObj2.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj2.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj2.mali_eono      = me.get("searchParam.eono");
+	              	tempObj2.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj2.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj2.mali_mold_seq0 = seq;
+	              	tempObj2.id_seq         = 2;
+	              
+	              	if (mode == 'none') {
+	            		tempObj2.mali_sort_key = seq * 10;
+	              	}
+
+	              	inputList.push(tempObj2);
+	            }
+	            
+	            if (tempObj3 != null) {
+	            	seq++;
+	            	tempObj3.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj3.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj3.mali_eono      = me.get("searchParam.eono");
+	              	tempObj3.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj3.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj3.mali_mold_seq0 = seq;
+	              	tempObj3.id_seq         = 3;
+	              
+	              	if (mode == 'none') {
+	            		tempObj3.mali_sort_key = seq * 10;
+	              	}
+	              
+	              	inputList.push(tempObj3);
+	            }
+	            
+	            if (tempObj4 != null) {
+	            	seq++;
+	            	tempObj4.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj4.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj4.mali_eono      = me.get("searchParam.eono");
+	              	tempObj4.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj4.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj4.mali_mold_seq0 = seq;
+	              	tempObj4.id_seq         = 4;
+
+	              	if (mode == 'none') {
+	                	tempObj4.mali_sort_key = seq * 10;
+	              	}
+	              	
+	              	inputList.push(tempObj4);
+	            }
+	            
+	            if (tempObj5 != null) {
+	            	seq++;
+	            	tempObj5.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj5.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj5.mali_eono      = me.get("searchParam.eono");
+	              	tempObj5.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj5.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj5.mali_mold_seq0 = seq;
+	              	tempObj5.id_seq         = 5;
+	              
+	              	if (mode == 'none') {
+	              		tempObj5.mali_sort_key = seq * 10;
+	              	}
+	              
+	              	inputList.push(tempObj5);
+	            }
+	            
+	            if (tempObj6 != null) {
+	            	seq++;
+	            	tempObj6.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj6.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj6.mali_eono      = me.get("searchParam.eono");
+	              	tempObj6.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj6.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj6.mali_mold_seq0 = seq;
+	              	tempObj6.id_seq         = 6;
+	              
+	              	if (mode == 'none') {
+	            		tempObj6.mali_sort_key = seq * 10;
+	              	}
+	              
+	              	inputList.push(tempObj6);
+	            }
+	            
+	            if (tempObj7 != null) {
+	            	seq++;
+	            	tempObj7.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj7.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj7.mali_eono      = me.get("searchParam.eono");
+	              	tempObj7.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj7.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj7.mali_mold_seq0 = seq;
+	              	tempObj7.id_seq         = 7;
+	              
+	              	if (mode == 'none') {
+	            	  	tempObj7.mali_sort_key = seq * 10;
+	              	}
+	              
+	              	inputList.push(tempObj7);
+	            }
+	            
+	            if (tempObj8 != null) {
+	              	seq++;
+	              	tempObj8.mali_corp_code = me.get("searchParam.corp_code");
+	              	tempObj8.mali_part_no   = me.get("searchParam.part_no");
+	              	tempObj8.mali_eono      = me.get("searchParam.eono");
+	              	tempObj8.mali_cumt_no   = me.get("searchParam.cumt_no");
+	              	tempObj8.mali_meth_code = me.get("searchParam.come_code");
+	              	tempObj8.mali_mold_seq0 = seq;
+	              	tempObj8.id_seq         = 8;
+	              	
+	              	if (mode == 'none') {
+	                	tempObj8.mali_sort_key = seq * 10;
+	              	}
+	              	
+	              	inputList.push(tempObj8);
+	            }
+	            
+	            return inputList;
+		    },
+
+		    /**
+			 * 상각구분 변경시 event 
+			 */
+		    rpayGubnChange : function() {
+			    var me = this;
+		    	me.$.matlMain.$.escmmalc_p07a_03_01.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_02.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_03.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_04.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_05.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_06.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_07.rpayGubnChangeEvent();
+                me.$.matlMain.$.escmmalc_p07a_03_08.rpayGubnChangeEvent();
+		    },
+
+		    /**
+			 * 계산 결과 삭제 이벤트 처리
+			 */
+		    delComplete : function() {
+			    var me = this;
+
+			    if(me.get("delResult.MESG_CODE") == "DE-001"){
+					// 처리 성공
+					me.$.deleteInsertMALCInfoRPC.service();
+				} else {
+					// 처리 실패 - 메세지 처리
+					commonAS.comeAlert(me.delResult);
+					return;
+				}
+		    },
+
+		    /**
+			 * 입력정보 저장
+			 */
+		    saveMALCInfo : function() {
+			    var me = this;
+				 // 공법 factor 저장 호출
+			    me.$.saveInfoRPC.service();
+		    },
+
+		    /**
+			 * 필수입력 Validation Check
+			 */
+		    validationCheck : function(list) {
+			    var me = this;
+
+			    if (list.length == 0) {
+			    	UT.confirm("계산할 내역이 없습니다. 입력데이터를 모두 삭제 하시겠습니까?"
+						   ,function() {
+						me.checkAllDel("YES");	
+					}, function() {
+						me.checkAllDel("NO");	
+					});
+					return false;
+			    } else {
+			    	for (var i = 0; i < list.length; i++) {
+				    	var obj = list[i];
+
+				    	// 상각수량은 상각구분이 영구상각일 경우만  필수입력임(공통 영역)
+				    	if (me.get("searchParam.rpay_code") == "P") {
+
+					    	if (UT.isEmpty(obj.mali_mold_life) || parseFloat(obj.mali_mold_life) == 0) {
+						    	UT.alert("금형수명은 필수입력 항목입니다.");
+						    	return false;
+					    	}
+					    	
+					    	if (UT.isEmpty(obj.mali_adel_fact)) {
+						    	UT.alert("조정계수는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+
+					    	if (UT.isEmpty(obj.mali_mold_cnt0)) {
+						    	UT.alert("상각수량은 필수입력 항목입니다.");
+						    	return false;
+					    	}
+
+					    	if (UT.isEmpty(obj.mali_life_cnt0) || parseFloat(obj.mali_life_cnt0) == 0) {
+						    	UT.alert("MODEL LIFE 생산수량은 필수입력 항목입니다.");
+						    	return false;
+					    	}
+				    	}
+
+				    	// 개별 공법 체크 영역
+				    	// 외형금형인 경우
+				    	if (obj.mali_mold_code == "CTALST") {
+					    	if (UT.isEmpty(obj.mali_prod_widt) || parseFloat(obj.mali_prod_widt) == 0) {
+						    	UT.alert("제품가로(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+					    	
+					    	if (UT.isEmpty(obj.mali_prod_leng) || parseFloat(obj.mali_prod_leng) == 0) {
+						    	UT.alert("제품세로(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+					    	
+					    	if (UT.isEmpty(obj.mali_prod_hegt) || parseFloat(obj.mali_prod_hegt) == 0) {
+						    	UT.alert("제품높이(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+				    	}
+
+				    	// 중자금형인 경우
+				    	if (obj.mali_mold_code == "CTALCO") {
+				    		if (UT.isEmpty(obj.mali_core_widt1) || parseFloat(obj.mali_core_widt1) == 0) {
+						    	UT.alert("중자1가로(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+					    	
+				    		if (UT.isEmpty(obj.mali_core_cavt1) || parseFloat(obj.mali_core_cavt1) == 0) {
+						    	UT.alert("중자1 CVT는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+
+				    		if (UT.isEmpty(obj.mali_core_leng1) || parseFloat(obj.mali_core_leng1) == 0) {
+						    	UT.alert("중자1세로(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+					    	
+				    		if (UT.isEmpty(obj.mali_core_hegt1) || parseFloat(obj.mali_core_hegt1) == 0) {
+						    	UT.alert("중자1높이(mm)는 필수입력 항목입니다.");
+						    	return false;
+					    	}
+
+				    		// 중자2 입력 시, 모든 항목이 필수
+					    	if (UT.isNotEmpty(obj.mali_core_widt2)) {
+					    		if (UT.isEmpty(obj.mali_core_leng2) || parseFloat(obj.mali_core_leng2) == 0) {
+							    	UT.alert("중자2세로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+						    	
+					    		if (UT.isEmpty(obj.mali_core_hegt2) || parseFloat(obj.mali_core_hegt2) == 0) {
+							    	UT.alert("중자2높이(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+
+					    		if (UT.isEmpty(obj.mali_core_cavt2) || parseFloat(obj.mali_core_cavt2) == 0) {
+							    	UT.alert("중자2 CVT는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+					    	}
+
+					    	if (UT.isNotEmpty(obj.mali_core_leng2)) {
+					    		if (UT.isEmpty(obj.mali_core_widt2) || parseFloat(obj.mali_core_widt2) == 0) {
+							    	UT.alert("중자2가로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+						    	
+					    		if (UT.isEmpty(obj.mali_core_hegt2) || parseFloat(obj.mali_core_hegt2) == 0) {
+							    	UT.alert("중자2높이(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+
+					    		if (UT.isEmpty(obj.mali_core_cavt2) || parseFloat(obj.mali_core_cavt2) == 0) {
+							    	UT.alert("중자2 CVT는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+					    	}
+					    	
+					    	if (UT.isNotEmpty(obj.mali_core_hegt2)) {
+					    		if (UT.isEmpty(obj.mali_core_widt2) || parseFloat(obj.mali_core_widt2) == 0) {
+							    	UT.alert("중자2가로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+						    	
+					    		if (UT.isEmpty(obj.mali_core_leng2) || parseFloat(obj.mali_core_leng2) == 0) {
+							    	UT.alert("중자2세로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+
+					    		if (UT.isEmpty(obj.mali_core_cavt2) || parseFloat(obj.mali_core_cavt2) == 0) {
+							    	UT.alert("중자2 CVT는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+					    	}
+					    	
+					    	if (UT.isNotEmpty(obj.mali_core_cavt2)) {
+					    		if (UT.isEmpty(obj.mali_core_widt2) || parseFloat(obj.mali_core_widt2) == 0) {
+							    	UT.alert("중자2가로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+						    	
+					    		if (UT.isEmpty(obj.mali_core_leng2) || parseFloat(obj.mali_core_leng2) == 0) {
+							    	UT.alert("중자2세로(mm)는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+
+					    		if (UT.isEmpty(obj.mali_core_hegt2) || parseFloat(obj.mali_core_hegt2) == 0) {
+							    	UT.alert("중자2 높이는 필수입력 항목입니다.");
+							    	return false;
+						    	}
+					    	}
+					    	
+				    	}
+
+				    	if (UT.isEmpty(obj.mali_1pro_gubn) || parseFloat(obj.mali_1pro_gubn) == 0) {
+					    	UT.alert("1호(신작)금형계산구분은 필수입력 항목입니다.");
+					    	return false;
+				    	}
+
+				    	if (UT.isEmpty(obj.mali_lhrh_code) || parseFloat(obj.mali_lhrh_code) == 0) {
+					    	UT.alert("LHD/RHD금형구분은 필수입력 항목입니다.");
+					    	return false;
+				    	}
+			    	}
+			    }
+
+			    return true;
+		    },
+
+		    /**
+			 * 전체 삭제 처리
+			 */
+		    checkAllDel : function(str) {
+			    var me = this;
+
+			    if (str == "YES") {
+				    me.$.deleteMALCInfoRPC.service();
+			    } else {
+			    	me.$.getInfoRPC.service();
+			    }
+		    },
+
+		    /**
+			 *	복사아이콘 클릭 이벤트 처리
+			 */
+			 copyItem : function(e) {
+				var me = this;
+
+				var comp = e.detail;
+	            var param = UT.copy(comp);
+	            var tempList = me.getInputData('none');
+
+	            if (tempList.length > 7) {
+	            	UT.alert("8개까지만 입력 가능합니다.");
+	            } else {
+	                param.mali_sort_key   = (tempList.length + 1) * 10;
+	                param.mali_dmold_cost = null;
+	                param.mali_adel_pric  = null;
+	                param.mali_tmold_cost = null;
+	                param.mali_last_cost  = null;
+
+	                tempList.push(param);
+	              	me.cmatResult(tempList);
+	            }
+			}
+        });
+	</script>
+</dom-module>

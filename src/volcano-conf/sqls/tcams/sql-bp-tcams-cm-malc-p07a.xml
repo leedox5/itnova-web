@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sql-descriptor id="bp/tcams/cm/malc/p07a" data-source="tcamsDS">
+
+	<sql id="MALCInfo.delete" comment="AL중력주조(금형) 입력데이터 삭제">
+        <![CDATA[
+        DELETE FROM CMTBMALI
+         WHERE MALI_CORP_CODE = TO_CHAR(#corp_cd#)
+           AND MALI_PART_NO   = #part_no#
+           AND MALI_EONO      = TO_CHAR(#eono#)
+           AND MALI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+           AND MALI_METH_CODE = TO_CHAR(#come_code#)
+        ]]>
+	</sql>
+	<sql id="MALCInfo.insert" comment="AL중력주조(금형)입력데이터 저장">
+        <![CDATA[
+               
+        INSERT INTO CMTBMALI
+         (
+           MALI_CORP_CODE
+          ,MALI_PART_NO
+          ,MALI_EONO
+          ,MALI_CUMT_NO
+          ,MALI_METH_CODE
+          ,MALI_MOLD_SEQ0
+          ,MALI_MOLD_CODE
+          ,MALI_SORT_KEY
+          ,MALI_DMOLD_COST
+          ,MALI_LAST_COST
+          ,MALI_ADEL_PRIC
+          ,MALI_TMOLD_COST
+          ,MALI_MATL_COST
+          ,MALI_PROC_COST
+          ,MALI_GME0_COST
+          ,MALI_PROF_COST
+
+          ,MALI_ITEM_CODE
+          ,MALI_PROD_WIDT
+          ,MALI_PROD_LENG
+          ,MALI_PROD_HEGT
+          ,MALI_SCOR_NUMB
+          ,MALI_EQUI_CODE
+          ,MALI_CORE_WIDT1
+          ,MALI_CORE_LENG1
+          ,MALI_CORE_HEGT1
+          ,MALI_CORE_CAVT1
+          ,MALI_CORE_WIDT2
+          ,MALI_CORE_LENG2
+          ,MALI_CORE_HEGT2
+          ,MALI_CORE_CAVT2
+          ,MALI_CORE_WIDT3
+          ,MALI_CORE_LENG3
+          ,MALI_CORE_HEGT3
+          ,MALI_CORE_CAVT3
+          ,MALI_HARD_NDEGR
+          ,MALI_1PRO_GUBN
+          ,MALI_LHRH_CODE
+          ,MALI_LHRH_CODE1
+
+          ,MALI_MOLD_LIFE
+          ,MALI_LIFE_CNT0
+          ,MALI_ADEL_FACT
+          ,MALI_KIND_NNUMB
+          ,MALI_CAVT_NNUMB
+          ,MALI_MOLD_CNT0
+          ,MALI_PROD_CNT0
+          ,MALI_UPDT_CMAN
+          ,MALI_UPDT_DATE
+          ,MALI_INIT_CMAN
+          ,MALI_INIT_DATE
+         ) VALUES (
+                    #corp_cd#
+                   ,#mali_part_no#
+                   ,#mali_eono#
+                   ,TO_NUMBER(#mali_cumt_no#)
+                   ,#mali_meth_code#
+                   ,TO_NUMBER(#mali_mold_seq0#)
+                   ,#mali_mold_code#
+                   ,TO_NUMBER(#mali_sort_key#)
+                   ,TO_NUMBER(#mali_dmold_cost#)
+                   ,TO_NUMBER(#mali_last_cost#)
+                   ,TO_NUMBER(#mali_adel_pric#)
+                   ,TO_NUMBER(#mali_tmold_cost#)
+                   ,TO_NUMBER(#mali_matl_cost#)
+                   ,TO_NUMBER(#mali_proc_cost#)
+                   ,TO_NUMBER(#mali_gme0_cost#)
+                   ,TO_NUMBER(#mali_prof_cost#)
+
+                   ,#mali_item_code#
+                   ,TO_NUMBER(#mali_prod_widt#)
+                   ,TO_NUMBER(#mali_prod_leng#)
+                   ,TO_NUMBER(#mali_prod_hegt#)
+                   ,TO_NUMBER(#mali_scor_numb#)
+                   ,#mali_equi_code#
+                   ,TO_NUMBER(#mali_core_widt1#)
+                   ,TO_NUMBER(#mali_core_leng1#)
+                   ,TO_NUMBER(#mali_core_hegt1#)
+                   ,TO_NUMBER(#mali_core_cavt1#)
+                   ,TO_NUMBER(#mali_core_widt2#)
+                   ,TO_NUMBER(#mali_core_leng2#)
+                   ,TO_NUMBER(#mali_core_hegt2#)
+                   ,TO_NUMBER(#mali_core_cavt2#)
+                   ,TO_NUMBER(#mali_core_widt3#)
+                   ,TO_NUMBER(#mali_core_leng3#)
+                   ,TO_NUMBER(#mali_core_hegt3#)
+                   ,TO_NUMBER(#mali_core_cavt3#)
+                   ,#mali_hard_ndegr#
+                   ,#mali_1pro_gubn#
+                   ,#mali_lhrh_code#
+                   ,#mali_lhrh_code1#
+                   
+                   ,TO_NUMBER(#mali_mold_life#)
+                   ,TO_NUMBER(#mali_life_cnt0#)
+                   ,TO_NUMBER(#mali_adel_fact#)
+                   ,TO_NUMBER(#mali_kind_nnumb#)
+                   ,TO_NUMBER(#mali_cavt_nnumb#)
+                   ,TO_NUMBER(#mali_mold_cnt0#)
+                   ,TO_NUMBER(#mali_prod_cnt0#)
+                   ,#reg_id#
+                   ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                   ,#reg_id#
+                   ,TO_CHAR(SYSDATE,'YYYYMMDD')
+                  )
+		
+        ]]>
+	</sql>
+
+	<sql id="get.MALCInfo.count" comment="AL중력주조(금형) 입력데이터  Count">
+        <![CDATA[
+            SELECT COUNT(*)          MALI_COUNT
+              FROM CMTBMALI
+             WHERE MALI_CORP_CODE = TO_CHAR(#corp_cd#)
+               AND MALI_PART_NO   = #part_no#
+               AND MALI_EONO      = TO_CHAR(#eono#)
+               AND MALI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+               AND MALI_METH_CODE = TO_CHAR(#come_code#)
+        	
+        ]]>
+	</sql>
+
+	<sql id="get.MALCInfo.select" comment="AL중력주조(금형) 기본조회">
+        <![CDATA[
+    SELECT MALI_CORP_CODE              CORP_CODE
+          ,MALI_PART_NO                MALI_PART_NO
+          ,MALI_EONO                   MALI_EONO
+          ,MALI_CUMT_NO                MALI_CUMT_NO
+          ,MALI_METH_CODE              MALI_METH_CODE
+          ,MALI_MOLD_SEQ0              MALI_MOLD_SEQ0
+          ,MALI_MOLD_CODE              MALI_MOLD_CODE
+          ,MALI_SORT_KEY               MALI_SORT_KEY
+          ,TRUNC(MALI_DMOLD_COST, 2)   MALI_DMOLD_COST
+          ,MALI_LAST_COST              MALI_LAST_COST
+          ,MALI_ADEL_PRIC              MALI_ADEL_PRIC
+          ,MALI_TMOLD_COST             MALI_TMOLD_COST
+          ,MALI_MATL_COST              MALI_MATL_COST
+          ,MALI_PROC_COST              MALI_PROC_COST
+          ,MALI_GME0_COST              MALI_GME0_COST
+          ,MALI_PROF_COST              MALI_PROF_COST
+
+          ,MALI_ITEM_CODE              MALI_ITEM_CODE
+          ,MALI_PROD_WIDT              MALI_PROD_WIDT
+          ,MALI_PROD_LENG              MALI_PROD_LENG
+          ,MALI_PROD_HEGT              MALI_PROD_HEGT
+          ,MALI_SCOR_NUMB              MALI_SCOR_NUMB
+          ,MALI_EQUI_CODE              MALI_EQUI_CODE
+          ,MALI_CORE_WIDT1             MALI_CORE_WIDT1
+          ,MALI_CORE_LENG1             MALI_CORE_LENG1
+          ,MALI_CORE_HEGT1             MALI_CORE_HEGT1
+          ,MALI_CORE_CAVT1             MALI_CORE_CAVT1
+          ,MALI_CORE_WIDT2             MALI_CORE_WIDT2
+          ,MALI_CORE_LENG2             MALI_CORE_LENG2
+          ,MALI_CORE_HEGT2             MALI_CORE_HEGT2
+          ,MALI_CORE_CAVT2             MALI_CORE_CAVT2
+          ,MALI_CORE_WIDT3             MALI_CORE_WIDT3
+          ,MALI_CORE_LENG3             MALI_CORE_LENG3
+          ,MALI_CORE_HEGT3             MALI_CORE_HEGT3
+          ,MALI_CORE_CAVT3             MALI_CORE_CAVT3
+          ,MALI_HARD_NDEGR             MALI_HARD_NDEGR
+          ,MALI_1PRO_GUBN              MALI_1PRO_GUBN
+          ,MALI_LHRH_CODE              MALI_LHRH_CODE
+          ,MALI_LHRH_CODE1             MALI_LHRH_CODE1
+          
+          ,MALI_MOLD_LIFE              MALI_MOLD_LIFE
+          ,MALI_LIFE_CNT0              MALI_LIFE_CNT0
+          ,MALI_ADEL_FACT              MALI_ADEL_FACT
+          ,MALI_KIND_NNUMB             MALI_KIND_NNUMB
+          ,MALI_CAVT_NNUMB             MALI_CAVT_NNUMB
+          ,MALI_MOLD_CNT0              MALI_MOLD_CNT0
+          ,MALI_PROD_CNT0              MALI_PROD_CNT0
+      FROM CMTBMALI
+     WHERE MALI_CORP_CODE = #corp_cd#
+       AND MALI_PART_NO   = #part_no#
+       AND MALI_EONO      = TO_CHAR(#eono#)
+       AND MALI_CUMT_NO   = TO_NUMBER(#cumt_no#)
+       AND MALI_METH_CODE = #come_code#
+     ORDER BY MALI_SORT_KEY
+        ]]>
+	</sql>
+
+	<sql id="MALCResInfo.delete" comment="AL중력주조(금형) 계산  삭제(프로시저) "
+		callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPSUM0_D11(#corp_cd:char:in#,#part_no:varchar:in#,#eono:varchar:in#,#cumt_no:varchar:in#,#come_code:varchar:in#,#MESG_CODE:varchar:out#,#MESG:varchar:out#,#SQL0_CODE:varchar:out#,#PRGM_ID:varchar:out#,#LINE_NO:varchar:out#) 
+         ]]>
+	</sql>
+
+	<sql id="get.MALCSumRes.select" comment="AL중력주조(금형) 집계(프로시저) "
+		callable="true"> 
+         <![CDATA[ 
+         	CALL CRSPSPCR_C01(#corp_cd:char:in#,#part_no:varchar:in#,#eono:varchar:in#,#cumt_no:varchar:in#,#come_code:varchar:in#,#reg_id:varchar:in#,#MESG_CODE:varchar:out#,#MESG:varchar:out#,#SQL0_CODE:varchar:out#,#PRGM_ID:varchar:out#,#LINE_NO:varchar:out#) 
+         ]]>
+	</sql>
+
+ <sql id="get.MALCCalcRes.select" comment="AL중력주조(금형) 계산 (프로시저) " callable="true"> 
+  <![CDATA[ 
+CALL CMSPMALC_P@degr_proc@(
+  #corp_cd:char:in#
+ ,#mali_part_no:varchar:in#
+ ,#mali_eono:varchar:in#
+ ,#mali_cumt_no:varchar:in#
+ ,#mali_mold_seq0:varchar:in#
+ ,#reg_id:varchar:in#
+ ,#MESG_CODE:varchar:out#
+ ,#MESG:varchar:out#
+ ,#SQL0_CODE:varchar:out#
+ ,#PRGM_ID:varchar:out#
+ ,#LINE_NO:varchar:out#
+)
+  ]]>
+ </sql>
+
+ <sql id="CHK.DEGR">
+  <![CDATA[
+SELECT A.MTDG_MODL_NAME PROC_NAME
+      ,(SELECT CASE WHEN INSTR(A.REM, #reg_id#) > 0 THEN 'Y' ELSE 'N' END
+          FROM ESACDDT A
+         WHERE SYS_ID = '100'
+           AND GRP_CD = 'CHK_USER'
+           AND DTL_CD = 'DEGR') AUTH_YN
+      ,A.*
+  FROM CITBMTDG A
+ WHERE MTDG_CORP_CODE = #cmms_corp_code#
+   AND MTDG_METH_GUBN = #cmms_meth_gubn#
+   AND MTDG_COME_CODE = #cmms_come_code#
+   AND MTDG_STND_DEGR = #cmms_stnd_degr#
+  ]]>
+ </sql>
+
+ <sql id="CALL.CALC" callable="true">
+  <![CDATA[ 
+CALL @proc_name@ (
+  #corp_cd:char:in#
+ ,#mali_part_no:varchar:in#
+ ,#mali_eono:varchar:in#
+ ,#mali_cumt_no:varchar:in#
+ ,#mali_mold_seq0:varchar:in#
+ ,#reg_id:varchar:in#
+ ,#MESG_CODE:varchar:out#
+ ,#MESG:varchar:out#
+ ,#SQL0_CODE:varchar:out#
+ ,#PRGM_ID:varchar:out#
+ ,#LINE_NO:varchar:out#
+)
+  ]]>
+ </sql>
+ 
+</sql-descriptor> 

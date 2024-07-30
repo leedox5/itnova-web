@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<service-descriptor id="bp/tcams/cm/malc/p07a">
+
+	<service id="get.MALCInfoCount" label="AL중력주조(금형)입력데이터  Count">
+		<select descriptor="bp/tcams/cm/malc/p07a" sql-id="get.MALCInfo.count"
+			parameter-name="param" result-class="map" result-name="ca_count" />
+	</service>
+
+	<service id="get.MALCInfo" label="AL중력주조(금형) 입력데이터 조회">
+		<select descriptor="bp/tcams/cm/malc/p07a" sql-id="get.MALCInfo.select"
+			parameter-name="param" result-class="list" result-name="ca_info" />
+	</service>
+
+	<service id="get.MALCCalcRes.X" label="AL중력주조(금형) 계산 (프로시저)">
+		<script>
+		<![CDATA[
+		try {
+			for (var i=0; $data.param.size() > i ; i++) {
+			    $data.param[i].degr_proc = $data.param_cmms.degr.length > 3 ? $data.param_cmms.degr : "0" + $data.param_cmms.degr;
+			    $data.param[i].degr_proc = $data.param[i].degr_proc.replace("-", "_");
+			     
+				var result = $jdbc.call("bp/tcams/cm/malc/p07a", "get.MALCCalcRes.select", $data.param[i]);
+				$data.calc_Result = result;
+				
+				if(result.MESG_CODE == 'SA-002') {
+					throw e;
+				}
+					
+			}
+				
+		} catch (e) {				
+			System.out.println("#### ERROR MESG #### : " + result.LINE_NO);
+			System.out.println("#### ERROR MESG #### : " + result.MESG);
+			$jdbc.rollback;			
+		}			
+		]]>
+		</script>
+
+	</service>
+
+ <service id="get.MALCCalcRes">
+  <script>
+   <![CDATA[
+    importClass(Packages.emro.util.CalendarUtil);
+    var result = new Map();
+    var degr = new Map();
+    
+    try {
+        var degr = $jdbc.query("bp/tcams/cm/malc/p07a", "CHK.DEGR", $data.param_cmms);
+        
+        for(var i = 0 ; i < $data.param.size() ; i++) {
+            $data.param[i].proc_name = degr.proc_name;
+            result = $jdbc.call("bp/tcams/cm/malc/p07a", "CALL.CALC", $data.param[i]);
+            $logger.info(result);
+        }
+        //throw new Exception("Testing...");
+    } catch(e) {
+        $logger.info(e.message);
+        $jdbc.rollback;
+        result.MESG_CODE = "SA-002";
+        result.MESG = e.message;
+    }
+    result.AUTH = degr.auth_yn;
+    result.STAT = "▶ 호출된 프로시저 : " + degr.proc_name + " [" + CalendarUtil.formatNow("HH:mm:ss") + "]";
+    
+    $data.calc_Result = result;
+   ]]>
+  </script>
+ </service>
+
+	<service id="get.MALCSumRes" label="AL중력주조(금형) 집계(프로시저)">
+		<script>
+		<![CDATA[
+			var result = $jdbc.call("bp/tcams/cm/malc/p07a", "get.MALCSumRes.select", $data.param);
+			$data.sum_Result = result;
+						
+		]]>
+		</script>
+
+	</service>
+
+	<service id="delete.MALCResInfo" label="AL중력주조(금형) 계산결과 삭제(프로시저)">
+		<script>
+		<![CDATA[
+			var result = $jdbc.call("bp/tcams/cm/malc/p07a", "MALCResInfo.delete", $data.param);
+			$data.del_Result = result;
+						
+		]]>
+		</script>
+
+	</service>
+
+	<service id="check.MALCInsert" label="AL중력주조(금형) 입력데이터 자릿수 체크">
+		<script>
+		<![CDATA[
+			try{
+				var rollback = new Map();
+				$data.result = new Map();
+				 
+				for(var i=0; i<$data.param.size(); i++){
+					$data.param[i].mhfi_mold_seq0 = i*-1;
+					$jdbc.update("bp/tcams/cm/malc/p07a", "MALCInfo.insert", $data.param[i]);
+				}
+				
+				$data.result.MESG_CODE = "SA-001";
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}catch(e){
+				var rollback = new Map();
+				var msg = e.message;
+				var index = msg.indexOf('JDBC');
+				
+				$data.result.MESG_CODE = 'SA-002';
+				
+				if ("JDBC-5111" == msg.substr(index, 9)) {
+					$data.result.MESG = "지정된 자릿수보다 초과한 값이 입력되었습니다. \r자릿수를 확인하세요.";
+				} else {
+					$data.result.MESG = "저장 시 문제가 발생하였습니다.\r"+msg;
+				}
+				System.out.println("##########################################");
+				System.out.println("## ERROR CODE : " + msg);
+				System.out.println("##########################################");
+				
+				$jdbc.update("bp/tcams/ca/common", "rollback", rollback);
+			}
+		]]>
+		</script>
+	</service>
+
+	<service id="save.MALCInfo" label="AL중력주조(금형) 입력데이터 저장">
+		<insert descriptor="bp/tcams/cm/malc/p07a" sql-id="MALCInfo.insert"
+			parameter-name="params" parameter-class="list" />
+	</service>
+
+	<service id="delete.MALCInfo" label="AL중력주조(금형) 입력데이터 삭제(초기화)">
+		<delete descriptor="bp/tcams/cm/malc/p07a" sql-id="MALCInfo.delete"
+			parameter-name="params" parameter-class="list" />
+	</service>
+
+</service-descriptor>

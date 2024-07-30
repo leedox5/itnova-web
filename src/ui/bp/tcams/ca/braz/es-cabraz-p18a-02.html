@@ -254,6 +254,24 @@
                 }
             },
 
+            chkDegr: function() {
+                var me = this;
+                
+                var degr = me.searchParam.degr;
+                var degrNum = 0;
+                
+                if(degr.indexOf("-") > -1) {
+                    var arr = degr.split("-");
+                    degrNum = parseInt(arr[0]) * 100 + parseInt(arr[1]);
+                } else {
+                    degrNum = parseInt(degr) * 100;
+                }
+                if(degrNum >= 1902) {
+                    return true;
+                }
+                return false;
+            },
+            
             onItemEditableFn10: function(data,item){
                 var me = this;
                 /*
@@ -264,14 +282,13 @@
                     return false;
                 }
                 */
-                //console.log(item);
 
                 if(data["brai_kind_code"] == "FNAC") {
                     return true;
                 }
                 
                 if(data.brai_kind_code === "VNI_FNAC") {
-                    if(me.searchParam.degr == "19-2") {
+                    if(me.chkDegr()) {
                         return true;
                     }
                 }
