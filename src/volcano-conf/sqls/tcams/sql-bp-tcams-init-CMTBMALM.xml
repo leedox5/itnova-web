@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CMTBMALM" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE CMTBMALM(
+ MALM_CORP_CODE VARCHAR(4),
+ MALM_STND_GUBN CHAR(1),
+ MALM_STND_DEGR VARCHAR(10),
+ MALM_MOLD_CODE VARCHAR(7),
+ MALM_MATL_SEQ0 NUMBER(3, 0),
+ MALM_ITEM_CODE VARCHAR(8),
+ MALM_EQUI_CODE VARCHAR(8),
+ MALM_LIFE_MIN0 NUMBER(20, 6),
+ MALM_LIFE_MAX0 NUMBER(20, 6),
+ MALM_BASE_WIDT NUMBER(20, 6),
+ MALM_BASE_LENG NUMBER(20, 6),
+ MALM_BASE_HEGT NUMBER(20, 6),
+ MALM_WIDT_MAGN NUMBER(20, 6),
+ MALM_LENG_MAGN NUMBER(20, 6),
+ MALM_HEGT_MAGN NUMBER(20, 6),
+ MALM_WEGT_RATE NUMBER(20, 6),
+ MALM_FACT_A NUMBER(20, 6),
+ MALM_FACT_B NUMBER(20, 6),
+ MALM_FACT_C NUMBER(20, 6),
+ MALM_SMAT_CHEK VARCHAR(8),
+ MALM_HEAT_CHEK VARCHAR(8),
+ MALM_MATL_CODE VARCHAR(12),
+ MALM_MATL_NAME VARCHAR(30),
+ MALM_MATL_PRIC NUMBER(20, 6),
+ MALM_MATL_USE NUMBER(20, 6),
+ MALM_MATL_WT NUMBER(20, 6),
+ MALM_MODY_MATL VARCHAR(1),
+ MALM_MODY_USE NUMBER(20, 6),
+ MALM_MODY_WT NUMBER(20, 6),
+ MALM_MATL_UNIT VARCHAR(8),
+ MALM_APPL_GUBN CHAR(1),
+ MALM_REMK VARCHAR(200),
+ MALM_UPDT_CMAN VARCHAR(8),
+ MALM_UPDT_DATE VARCHAR(8),
+ MALM_INIT_CMAN VARCHAR(8),
+ MALM_INIT_DATE VARCHAR(8),
+ CONSTRAINT CMTBMALM_PK PRIMARY KEY (
+  MALM_CORP_CODE,
+  MALM_STND_GUBN,
+  MALM_STND_DEGR,
+  MALM_MOLD_CODE,
+  MALM_MATL_SEQ0
+ )
+)  
+  ]]>
+ </sql>
+
+ <sql id="COLS">
+  <![CDATA[
+WITH T01(C01, C02, C03, C04, C05) AS (
+       SELECT 1, 'CMTBMALM' , 'MALM_CORP_CODE', 'VARCHAR', 4 FROM DUAL
+ UNION SELECT 2, 'CMTBMALM' , 'MALM_STND_GUBN', 'CHAR', 1 FROM DUAL
+ UNION SELECT 3, 'CMTBMALM' , 'MALM_STND_DEGR', 'VARCHAR', 10 FROM DUAL
+ UNION SELECT 4, 'CMTBMALM' , 'MALM_MOLD_CODE', 'VARCHAR', 7 FROM DUAL
+ UNION SELECT 5, 'CMTBMALM' , 'MALM_MATL_SEQ0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 6, 'CMTBMALM' , 'MALM_ITEM_CODE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 7, 'CMTBMALM' , 'MALM_EQUI_CODE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 8, 'CMTBMALM' , 'MALM_LIFE_MIN0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 9, 'CMTBMALM' , 'MALM_LIFE_MAX0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 10, 'CMTBMALM' , 'MALM_BASE_WIDT', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 11, 'CMTBMALM' , 'MALM_BASE_LENG', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 12, 'CMTBMALM' , 'MALM_BASE_HEGT', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 13, 'CMTBMALM' , 'MALM_WIDT_MAGN', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 14, 'CMTBMALM' , 'MALM_LENG_MAGN', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 15, 'CMTBMALM' , 'MALM_HEGT_MAGN', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 16, 'CMTBMALM' , 'MALM_WEGT_RATE', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 17, 'CMTBMALM' , 'MALM_FACT_A', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 18, 'CMTBMALM' , 'MALM_FACT_B', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 19, 'CMTBMALM' , 'MALM_FACT_C', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 20, 'CMTBMALM' , 'MALM_SMAT_CHEK', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 21, 'CMTBMALM' , 'MALM_HEAT_CHEK', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 22, 'CMTBMALM' , 'MALM_MATL_CODE', 'VARCHAR', 12 FROM DUAL
+ UNION SELECT 23, 'CMTBMALM' , 'MALM_MATL_NAME', 'VARCHAR', 30 FROM DUAL
+ UNION SELECT 24, 'CMTBMALM' , 'MALM_MATL_PRIC', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 25, 'CMTBMALM' , 'MALM_MATL_USE', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 26, 'CMTBMALM' , 'MALM_MATL_WT', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 27, 'CMTBMALM' , 'MALM_MODY_MATL', 'VARCHAR', 1 FROM DUAL
+ UNION SELECT 28, 'CMTBMALM' , 'MALM_MODY_USE', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 29, 'CMTBMALM' , 'MALM_MODY_WT', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 30, 'CMTBMALM' , 'MALM_MATL_UNIT', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 31, 'CMTBMALM' , 'MALM_APPL_GUBN', 'CHAR', 1 FROM DUAL
+ UNION SELECT 32, 'CMTBMALM' , 'MALM_REMK', 'VARCHAR', 200 FROM DUAL
+ UNION SELECT 33, 'CMTBMALM' , 'MALM_UPDT_CMAN', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 34, 'CMTBMALM' , 'MALM_UPDT_DATE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 35, 'CMTBMALM' , 'MALM_INIT_CMAN', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 36, 'CMTBMALM' , 'MALM_INIT_DATE', 'VARCHAR', 8 FROM DUAL
+)
+SELECT CASE WHEN B.COLUMN_NAME IS NULL THEN 'N' ELSE 'Y' END CHK_YN
+      ,A.*
+  FROM T01 A
+      LEFT OUTER JOIN
+       USER_TAB_COLUMNS B
+      ON    B.TABLE_NAME  = A.C02
+        AND B.COLUMN_NAME = A.C03
+ ORDER BY A.C01         
+  ]]>
+ </sql>
+
+ <sql id="DESC">
+  <![CDATA[
+WITH T01(C01, C02, C03) AS (
+       SELECT 1, 'MALM_CORP_CODE', '법인코드' FROM DUAL
+ UNION SELECT 2, 'MALM_STND_GUBN', '표준구분' FROM DUAL
+ UNION SELECT 3, 'MALM_STND_DEGR', '개정차수 ' FROM DUAL
+ UNION SELECT 4, 'MALM_MOLD_CODE', '금형코드' FROM DUAL
+ UNION SELECT 5, 'MALM_MATL_SEQ0', '재료 SEQ' FROM DUAL
+ UNION SELECT 6, 'MALM_ITEM_CODE', 'ITEM구분' FROM DUAL
+ UNION SELECT 7, 'MALM_EQUI_CODE', '적용장비' FROM DUAL
+ UNION SELECT 8, 'MALM_LIFE_MIN0', 'MODEL LIFE MIN' FROM DUAL
+ UNION SELECT 9, 'MALM_LIFE_MAX0', 'MODEL LIFE MAX' FROM DUAL
+ UNION SELECT 10, 'MALM_BASE_WIDT', '가로' FROM DUAL
+ UNION SELECT 11, 'MALM_BASE_LENG', '세로' FROM DUAL
+ UNION SELECT 12, 'MALM_BASE_HEGT', '높이' FROM DUAL
+ UNION SELECT 13, 'MALM_WIDT_MAGN', '가로여유' FROM DUAL
+ UNION SELECT 14, 'MALM_LENG_MAGN', '세로여유' FROM DUAL
+ UNION SELECT 15, 'MALM_HEGT_MAGN', '높이여유' FROM DUAL
+ UNION SELECT 16, 'MALM_WEGT_RATE', '중량배수' FROM DUAL
+ UNION SELECT 17, 'MALM_FACT_A', 'FACT A' FROM DUAL
+ UNION SELECT 18, 'MALM_FACT_B', 'FACT B' FROM DUAL
+ UNION SELECT 19, 'MALM_FACT_C', 'FACT C' FROM DUAL
+ UNION SELECT 20, 'MALM_SMAT_CHEK', '부재료비 항목' FROM DUAL
+ UNION SELECT 21, 'MALM_HEAT_CHEK', '열처리 중량 CHECK' FROM DUAL
+ UNION SELECT 22, 'MALM_MATL_CODE', '재료코드' FROM DUAL
+ UNION SELECT 23, 'MALM_MATL_NAME', '재료명칭' FROM DUAL
+ UNION SELECT 24, 'MALM_MATL_PRIC', '단가' FROM DUAL
+ UNION SELECT 25, 'MALM_MATL_USE', '사용량' FROM DUAL
+ UNION SELECT 26, 'MALM_MATL_WT', '중량' FROM DUAL
+ UNION SELECT 27, 'MALM_MODY_MATL', '수정금형 대상' FROM DUAL
+ UNION SELECT 28, 'MALM_MODY_USE', '수정금형 사용량' FROM DUAL
+ UNION SELECT 29, 'MALM_MODY_WT', '수정금형 중량' FROM DUAL
+ UNION SELECT 30, 'MALM_MATL_UNIT', '단위' FROM DUAL
+ UNION SELECT 31, 'MALM_APPL_GUBN', '적용여부' FROM DUAL
+ UNION SELECT 32, 'MALM_REMK', 'REMARK' FROM DUAL
+ UNION SELECT 33, 'MALM_UPDT_CMAN', '수정자' FROM DUAL
+ UNION SELECT 34, 'MALM_UPDT_DATE', '수정일' FROM DUAL
+ UNION SELECT 35, 'MALM_INIT_CMAN', '등록자' FROM DUAL
+ UNION SELECT 36, 'MALM_INIT_DATE', '등록일' FROM DUAL  
+)
+SELECT CASE WHEN B.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,B.TABLE_NAME
+      ,B.COMMENTS
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS B
+      ON    B.TABLE_NAME  = #table_name#
+        AND B.COLUMN_NAME = A.C02
+   
+  ]]>
+ </sql>
+
+ <sq id="SELECT">
+  <![CDATA[
+WITH T01 (
+  MALM_CORP_CODE
+ ,MALM_STND_GUBN
+ ,MALM_STND_DEGR
+ ,MALM_MOLD_CODE
+ ,MALM_MATL_SEQ0
+ ,MALM_ITEM_CODE
+ ,MALM_EQUI_CODE
+ ,MALM_LIFE_MIN0
+ ,MALM_LIFE_MAX0
+ ,MALM_BASE_WIDT
+ ,MALM_BASE_LENG
+ ,MALM_BASE_HEGT
+ ,MALM_WIDT_MAGN
+ ,MALM_LENG_MAGN
+ ,MALM_HEGT_MAGN
+ ,MALM_WEGT_RATE
+ ,MALM_FACT_A
+ ,MALM_FACT_B
+ ,MALM_FACT_C
+ ,MALM_SMAT_CHEK
+ ,MALM_HEAT_CHEK
+ ,MALM_MATL_CODE
+ ,MALM_MATL_NAME
+ ,MALM_MATL_PRIC
+ ,MALM_MATL_USE
+ ,MALM_MATL_WT
+ ,MALM_MODY_MATL
+ ,MALM_MODY_USE
+ ,MALM_MODY_WT
+ ,MALM_MATL_UNIT
+ ,MALM_APPL_GUBN
+ ,MALM_REMK
+ ,MALM_UPDT_CMAN
+ ,MALM_UPDT_DATE
+ ,MALM_INIT_CMAN
+ ,MALM_INIT_DATE
+) AS (
+       SELECT 'K1', 'H', '7-4', 'CTALST', 1, 'O_CYLH', 'ALL', 0, 99999999.99, -150, -170, -190, 220, 180, 40, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'LO-DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 2, 'O_CYLH', 'ALL', 0, 99999999.99, -150, 260, -190, 220, null, 40, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'INTAKE DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 3, 'O_CYLH', 'ALL', 0, 99999999.99, -150, 260, -190, 220, null, 40, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'EXHAUST DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 4, 'O_CYLH', 'ALL', 0, 99999999.99, 260, -170, -190, null, 160, 40, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'REAR-DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 5, 'O_CYLH', 'ALL', 0, 99999999.99, 260, -170, -190, null, 160, 40, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'FRONT DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 6, 'O_CYLH', 'ALL', 0, 99999999.99, -150, 260, -190, 220, null, 10, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'IN-RISER DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 7, 'O_CYLH', 'ALL', 0, 99999999.99, -150, 260, -190, 220, null, 10, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'EX-RISER DIE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 8, 'O_CYLH', 'ALL', 0, 99999999.99, 90, -170, 30, null, 20, null, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'IN/EX GUIDE RAIL', -100, 8, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 9, 'O_CYLH', 'ALL', 0, 99999999.99, 45, -170, 30, null, 20, null, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'IN/EX SLIDE RAIL', -100, 8, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 10, 'O_CYLH', 'ALL', 0, 99999999.99, 200, 90, 30, null, null, null, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'RE/FR GUIDE RAIL', -100, 8, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 11, 'O_CYLH', 'ALL', 0, 99999999.99, 130, 45, 30, null, null, null, 1, null, null, null, 'Y', 'Y', 'DESKD61', 'RE/FR SLIDE RAIL', -100, 8, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 12, 'O_CYLH', 'ALL', 0, 99999999.99, 140, 140, -190, null, null, 10, 1, null, null, null, 'Y', 'Y', 'DES45C', 'POST', -100, 4, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 13, 'O_CYLH', 'ALL', 0, 99999999.99, 200, -170, -190, null, 420, 50, 1, null, null, null, 'Y', 'Y', 'DES45C', 'POST PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 14, 'O_CYLH', 'ALL', 0, 99999999.99, -150, 150, -190, 440, null, 10, 1, null, null, null, 'Y', 'Y', 'DES45C', 'SIDE C/BRKT(IN/EX)', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 15, 'O_CYLH', 'ALL', 0, 99999999.99, 150, -170, -190, null, 250, 10, 1, null, null, null, 'Y', 'Y', 'DES45C', 'SIDE C/BRAKT(RE/FR)', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 16, 'O_CYLH', 'ALL', 0, 99999999.99, -150, -170, 30, 180, 190, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE COVER', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 17, 'O_CYLH', 'ALL', 0, 99999999.99, -150, -170, 40, 180, 360, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 18, 'O_CYLH', 'ALL', 0, 99999999.99, -150, -170, 110, 720, 680, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', 'LOWER MOLD BASE', -100, 1, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 19, 'O_CYLH', 'ALL', 0, 99999999.99, 450, 400, 400, null, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFCD55', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', '충전율70%', 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 20, 'O_CYLH', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '열처리(진공QT)', 1500, 1, -710, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 21, 'O_CYLH', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 22, 'O_CYLH', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FCD55)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 23, 'O_CYLH', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.29, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 24, 'O_OIL1', 'ALL', 0, 99999999.99, -151, -170, -190, 200, 150, 100, 1, null, null, null, 'Y', 'Y', 'DEHP4', '상/하 DIE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 25, 'O_OIL1', 'ALL', 0, 99999999.99, -151, -170, 70, 200, 150, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 26, 'O_OIL1', 'ALL', 0, 99999999.99, -151, -170, 100, 200, 150, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 고정 BRKT', -100, 2, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 27, 'O_OIL1', 'ALL', 0, 99999999.99, 250, 250, 250, null, null, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 BRKT', -100, 12, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 28, 'O_OIL1', 'ALL', 0, 99999999.99, -151, 350, 300, 0, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFC30', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 29, 'O_OIL1', 'ALL', 0, 99999999.99, -151, 150, 200, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'SLIDE CORE', -100, -230, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 30, 'O_OIL1', 'ALL', 0, 99999999.99, -151, 150, 100, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'S/C MOLD BRKT', -100, -230, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 31, 'O_OIL1', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(HP4)', 250, 1, -740, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 32, 'O_OIL1', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 33, 'O_OIL1', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 34, 'O_OIL1', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 380000, -230, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 35, 'O_OIL1', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.29, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 36, 'O_OIL2', 'ALL', 0, 99999999.99, -151, -170, -190, 350, 250, 150, 1, null, null, null, 'Y', 'Y', 'DEHP4', '상/하 DIE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 37, 'O_OIL2', 'ALL', 0, 99999999.99, -151, -170, 70, 350, 250, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 38, 'O_OIL2', 'ALL', 0, 99999999.99, -151, -170, 150, 350, 250, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 고정 BRKT', -100, 2, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 39, 'O_OIL2', 'ALL', 0, 99999999.99, 250, 250, 250, null, null, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 BRKT', -100, 12, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 40, 'O_OIL2', 'ALL', 0, 99999999.99, -151, 350, 300, 0, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFC30', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', '충전율70%', 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 41, 'O_OIL2', 'ALL', 0, 99999999.99, -151, 150, 200, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'SLIDE CORE', -100, -230, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 42, 'O_OIL2', 'ALL', 0, 99999999.99, -151, 150, 100, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'S/C MOLD BRKT', -100, -230, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 43, 'O_OIL2', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(HP4)', 250, 1, -740, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 44, 'O_OIL2', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 45, 'O_OIL2', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 46, 'O_OIL2', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 380000, -230, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 47, 'O_OIL2', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.29, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 48, 'O_FLYW', 'ALL', 0, 99999999.99, -151, -170, -190, 300, 300, 150, 1, null, null, null, 'Y', 'Y', 'DEHP4', '상/하 DIE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 49, 'O_FLYW', 'ALL', 0, 99999999.99, -151, -170, 70, 200, 300, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 50, 'O_FLYW', 'ALL', 0, 99999999.99, -151, -170, 200, 300, 200, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 고정 BRKT', -100, 2, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 51, 'O_FLYW', 'ALL', 0, 99999999.99, -151, 350, 300, 0, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFC30', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 52, 'O_FLYW', 'ALL', 0, 99999999.99, -151, 150, 200, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'SLIDE CORE', -100, -230, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 53, 'O_FLYW', 'ALL', 0, 99999999.99, -151, 150, 100, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'S/C MOLD BRKT', -100, -230, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 54, 'O_FLYW', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(HP4)', 250, 1, -740, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 55, 'O_FLYW', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 56, 'O_FLYW', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 57, 'O_FLYW', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 380000, -230, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 58, 'O_FLYW', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.06, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 59, 'O_6MAN', 'ALL', 0, 99999999.99, -151, -170, -190, 300, 300, 150, 1, null, null, null, 'Y', 'Y', 'DEHP4', '상/하 DIE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 60, 'O_6MAN', 'ALL', 0, 99999999.99, -151, -170, 70, 300, 300, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 61, 'O_6MAN', 'ALL', 0, 99999999.99, -151, -170, 200, 300, 200, null, 1, null, null, null, 'Y', 'Y', 'DEFCD55', '상/하 고정 BRKT', -100, 2, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 62, 'O_6MAN', 'ALL', 0, 99999999.99, -151, 350, 300, 0, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFC30', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', '충전율70%', 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 63, 'O_6MAN', 'ALL', 0, 99999999.99, -151, 150, 200, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'SLIDE CORE', -100, -230, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 64, 'O_6MAN', 'ALL', 0, 99999999.99, -151, 150, 100, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'S/C MOLD BRKT', -100, -230, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 65, 'O_6MAN', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(HP4)', 250, 1, -740, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 66, 'O_6MAN', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 67, 'O_6MAN', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 68, 'O_6MAN', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 380000, -230, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 69, 'O_6MAN', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.06, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 70, 'O_GENL', 'ALL', 0, 99999999.99, -151, -170, -191, 200, 250, 100, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'UPR/LWR DIE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 71, 'O_GENL', 'ALL', 0, 99999999.99, -151, -170, 25, 200, 250, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'EJECT PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 72, 'O_GENL', 'ALL', 0, 99999999.99, 200, -170, 100, null, 250, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'MOLD BRKT', -100, 2, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 73, 'O_GENL', 'ALL', 0, 99999999.99, 450, 300, 200, null, null, null, 0.7, null, null, null, 'Y', 'Y', 'DEFC30', '주입컵', -100, 1, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 74, 'O_GENL', 'ALL', 0, 99999999.99, -151, 150, 200, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEHP4', 'SLIDE CORE', -100, -230, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 75, 'O_GENL', 'ALL', 0, 99999999.99, -151, 150, 100, 100, null, null, 1, null, null, null, 'Y', 'Y', 'DEFC30', 'S/C MOLD BRKT', -100, -230, -620, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 76, 'O_GENL', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(HP4)', 250, 1, -740, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 77, 'O_GENL', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 78, 'O_GENL', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 79, 'O_GENL', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 380000, -230, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 80, 'O_GENL', 'ALL', 0, 99999999.99, null, null, null, null, null, null, null, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.11, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 81, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, -152, -172, -192, 150, 100, 80, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 82, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, -152, -172, 40, 150, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 83, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, -152, 500, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 84, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, 550, 170, 55, null, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 85, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 350, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 86, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 300, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 87, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 250, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 88, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 89, 'C_CYLH', 'SHEL_V1', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 90, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, -152, -172, -192, 150, 100, 80, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 91, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, -152, -172, 40, 150, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 92, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, -152, 500, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 93, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, 550, 170, 55, null, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 94, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 350, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 95, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 300, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 96, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 250, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 97, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 98, 'C_CYLH', 'SHEL_V2', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 99, 'C_CYLH', 'ALL', 0, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.46, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 100, 'C_OILP', 'ALL', 100000, 99999999.99, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 101, 'C_OILP', 'ALL', 100000, 99999999.99, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 102, 'C_OILP', 'ALL', 100000, 99999999.99, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 103, 'C_OILP', 'ALL', 100000, 99999999.99, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 104, 'C_OILP', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 250, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 105, 'C_OILP', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 106, 'C_OILP', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 107, 'C_OILP', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 108, 'C_OILP', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 109, 'C_OILP', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 110, 'C_OILP', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 111, 'C_OILP', 'ALL', 0, 100000, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DEFC25', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 112, 'C_OILP', 'ALL', 0, 100000, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 113, 'C_OILP', 'ALL', 0, 100000, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 114, 'C_OILP', 'ALL', 0, 100000, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 115, 'C_OILP', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 116, 'C_OILP', 'ALL', 0, 100000, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 117, 'C_OILP', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 118, 'C_OILP', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 119, 'C_OILP', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 120, 'C_OILP', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 121, 'C_OILP', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 122, 'C_FLYW', 'ALL', 100000, 99999999.99, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 123, 'C_FLYW', 'ALL', 100000, 99999999.99, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 124, 'C_FLYW', 'ALL', 100000, 99999999.99, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 125, 'C_FLYW', 'ALL', 100000, 99999999.99, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 126, 'C_FLYW', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 250, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 127, 'C_FLYW', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 128, 'C_FLYW', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 129, 'C_FLYW', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 130, 'C_FLYW', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 131, 'C_FLYW', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 132, 'C_FLYW', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 133, 'C_FLYW', 'ALL', 0, 100000, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DEFC25', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 134, 'C_FLYW', 'ALL', 0, 100000, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 135, 'C_FLYW', 'ALL', 0, 100000, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 136, 'C_FLYW', 'ALL', 0, 100000, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 137, 'C_FLYW', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 138, 'C_FLYW', 'ALL', 0, 100000, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 139, 'C_FLYW', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 140, 'C_FLYW', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 141, 'C_FLYW', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 142, 'C_FLYW', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 143, 'C_FLYW', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 144, 'C_MANI', 'ALL', 100000, 99999999.99, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 145, 'C_MANI', 'ALL', 100000, 99999999.99, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 146, 'C_MANI', 'ALL', 100000, 99999999.99, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 147, 'C_MANI', 'ALL', 100000, 99999999.99, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 148, 'C_MANI', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 250, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 149, 'C_MANI', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 150, 'C_MANI', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 151, 'C_MANI', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 152, 'C_MANI', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 153, 'C_MANI', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 154, 'C_MANI', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 155, 'C_MANI', 'ALL', 0, 100000, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DEFC25', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 156, 'C_MANI', 'ALL', 0, 100000, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 157, 'C_MANI', 'ALL', 0, 100000, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 158, 'C_MANI', 'ALL', 0, 100000, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 159, 'C_MANI', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 160, 'C_MANI', 'ALL', 0, 100000, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 161, 'C_MANI', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 162, 'C_MANI', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 163, 'C_MANI', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 164, 'C_MANI', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 165, 'C_MANI', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 166, 'C_GENL', 'ALL', 100000, 99999999.99, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DESCM440', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 167, 'C_GENL', 'ALL', 100000, 99999999.99, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 168, 'C_GENL', 'ALL', 100000, 99999999.99, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 169, 'C_GENL', 'ALL', 100000, 99999999.99, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 170, 'C_GENL', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(SCM440)', 250, 1, -760, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 171, 'C_GENL', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 172, 'C_GENL', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 173, 'C_GENL', 'SHEL_V1', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 174, 'C_GENL', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 175, 'C_GENL', 'SHEL_V2', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 176, 'C_GENL', 'ALL', 100000, 99999999.99, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 177, 'C_GENL', 'ALL', 0, 100000, -152, -172, -192, 200, 100, 100, 1, null, null, null, 'Y', 'Y', 'DEFC25', '좌/우 원판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 178, 'C_GENL', 'ALL', 0, 100000, -152, -172, 35, 200, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 고정판', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 179, 'C_GENL', 'ALL', 0, 100000, -152, -172, 70, 100, 100, null, 1, null, null, null, 'Y', 'Y', 'DES45C', '좌/우 E/J PLATE', -100, 2, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 180, 'C_GENL', 'ALL', 0, 100000, -152, 150, 30, 0, null, null, 1, null, null, null, 'Y', 'Y', 'DES45C', 'BLOW PLATE', -100, 1, -610, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 181, 'C_GENL', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '소둔(S45C)', 250, 1, -720, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 182, 'C_GENL', 'ALL', 0, 100000, null, null, null, null, null, null, 0.7, null, null, null, NULL, NULL, NULL, '소둔(FC/FCD)', 200, 1, -730, NULL, null, null, 'KG', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 183, 'C_GENL', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(HEATER)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 184, 'C_GENL', 'SHEL_V1', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 1000000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 185, 'C_GENL', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(CYLINDER)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 186, 'C_GENL', 'SHEL_V2', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '표준부품비(EJECTOR PIN)', 600000, 1, null, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 187, 'C_GENL', 'ALL', 0, 100000, null, null, null, null, null, null, 1, null, null, null, NULL, NULL, NULL, '부재료비', -200, 1, 0.12, NULL, null, null, 'EA', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+)
+SELECT CASE WHEN B.MALM_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       CMTBMALM B
+      ON    B.MALM_CORP_CODE = A.MALM_CORP_CODE
+        AND B.MALM_STND_GUBN = A.MALM_STND_GUBN
+        AND B.MALM_STND_DEGR = A.MALM_STND_DEGR
+        AND B.MALM_MOLD_CODE = A.MALM_MOLD_CODE
+        AND B.MALM_MATL_SEQ0 = A.MALM_MATL_SEQ0
+  ]]>
+ </sq> 
+
+ <sq id="INSERT">
+  <![CDATA[
+INSERT INTO CMTBMALM (
+  MALM_CORP_CODE
+ ,MALM_STND_GUBN
+ ,MALM_STND_DEGR
+ ,MALM_MOLD_CODE
+ ,MALM_MATL_SEQ0
+ ,MALM_ITEM_CODE
+ ,MALM_EQUI_CODE
+ ,MALM_LIFE_MIN0
+ ,MALM_LIFE_MAX0
+ ,MALM_BASE_WIDT
+ ,MALM_BASE_LENG
+ ,MALM_BASE_HEGT
+ ,MALM_WIDT_MAGN
+ ,MALM_LENG_MAGN
+ ,MALM_HEGT_MAGN
+ ,MALM_WEGT_RATE
+ ,MALM_FACT_A
+ ,MALM_FACT_B
+ ,MALM_FACT_C
+ ,MALM_SMAT_CHEK
+ ,MALM_HEAT_CHEK
+ ,MALM_MATL_CODE
+ ,MALM_MATL_NAME
+ ,MALM_MATL_PRIC
+ ,MALM_MATL_USE
+ ,MALM_MATL_WT
+ ,MALM_MODY_MATL
+ ,MALM_MODY_USE
+ ,MALM_MODY_WT
+ ,MALM_MATL_UNIT
+ ,MALM_APPL_GUBN
+ ,MALM_REMK
+ ,MALM_UPDT_CMAN
+ ,MALM_UPDT_DATE
+ ,MALM_INIT_CMAN
+ ,MALM_INIT_DATE
+) VALUES (
+  #malm_corp_code#
+ ,#malm_stnd_gubn#
+ ,#malm_stnd_degr#
+ ,#malm_mold_code#
+ ,#malm_matl_seq0#
+ ,#malm_item_code#
+ ,#malm_equi_code#
+ ,#malm_life_min0#
+ ,#malm_life_max0#
+ ,#malm_base_widt#
+ ,#malm_base_leng#
+ ,#malm_base_hegt#
+ ,#malm_widt_magn#
+ ,#malm_leng_magn#
+ ,#malm_hegt_magn#
+ ,#malm_wegt_rate#
+ ,#malm_fact_a#
+ ,#malm_fact_b#
+ ,#malm_fact_c#
+ ,#malm_smat_chek#
+ ,#malm_heat_chek#
+ ,#malm_matl_code#
+ ,#malm_matl_name#
+ ,#malm_matl_pric#
+ ,#malm_matl_use#
+ ,#malm_matl_wt#
+ ,#malm_mody_matl#
+ ,#malm_mody_use#
+ ,#malm_mody_wt#
+ ,#malm_matl_unit#
+ ,#malm_appl_gubn#
+ ,#malm_remk#
+ ,#malm_updt_cman#
+ ,#malm_updt_date#
+ ,#malm_init_cman#
+ ,#malm_init_date#
+)
+  ]]>
+ </sq> 
+
+ <sq id="SELECT.MALC.7-4">
+  <![CDATA[
+SELECT *
+  FROM CMTBMALM
+ WHERE MALM_STND_DEGR = '7-4'
+ ORDER BY MALM_MATL_SEQ0  
+  ]]>
+ </sq> 
+ 
+</sql-descriptor>
