@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sql-descriptor id="bp/tcams/init/CMTBMALP" data-source="tcamsDS">
+
+ <sql id="CREATE">
+  <![CDATA[
+CREATE TABLE CMTBMALP(
+ MALP_CORP_CODE VARCHAR(4),
+ MALP_STND_GUBN CHAR(1),
+ MALP_STND_DEGR VARCHAR(10),
+ MALP_MOLD_CODE VARCHAR(7),
+ MALP_PROC_SEQ0 NUMBER(3, 0),
+ MALP_REGT_NNUMB VARCHAR(8),
+ MALP_ITEM_CODE VARCHAR(8),
+ MALP_EQUI_CODE VARCHAR(8),
+ MALP_LIFE_MIN0 NUMBER(20, 6),
+ MALP_LIFE_MAX0 NUMBER(20, 6),
+ MALP_WIDT_MIN0 NUMBER(20, 6),
+ MALP_WIDT_MAX0 NUMBER(20, 6),
+ MALP_PROD_MIN0 NUMBER(20, 6),
+ MALP_PROD_MAX0 NUMBER(20, 6),
+ MALP_FACT_A NUMBER(20, 6),
+ MALP_FACT_B NUMBER(20, 6),
+ MALP_FACT_C NUMBER(20, 6),
+ MALP_FACT_D NUMBER(20, 6),
+ MALP_FACT_E NUMBER(20, 6),
+ MALP_FACT_F NUMBER(20, 6),
+ MALP_FACT_G NUMBER(20, 6),
+ MALP_FACT_SC NUMBER(20, 6),
+ MALP_FACT_RA NUMBER(20, 6),
+ MALP_PROC_NAME VARCHAR(30),
+ MALP_NET0_CYTM NUMBER(20, 6),
+ MALP_PRSN_CNT0 NUMBER(20, 6),
+ MALP_MACH_CODE VARCHAR(12),
+ MALP_MODY_PROC VARCHAR(1),
+ MALP_FACT_Q NUMBER(20, 6),
+ MALP_FACT_R NUMBER(20, 6),
+ MALP_FACT_S NUMBER(20, 6),
+ MALP_MODY_NETCT NUMBER(20, 6),
+ MALP_INDS_CODE VARCHAR(2),
+ MALP_APPL_GUBN CHAR(1),
+ MALP_REMK VARCHAR(200),
+ MALP_UPDT_CMAN VARCHAR(8),
+ MALP_UPDT_DATE VARCHAR(8),
+ MALP_INIT_CMAN VARCHAR(8),
+ MALP_INIT_DATE VARCHAR(8),
+ CONSTRAINT CMTBMALP_PK PRIMARY KEY (
+  MALP_CORP_CODE,
+  MALP_STND_GUBN,
+  MALP_STND_DEGR,
+  MALP_MOLD_CODE,
+  MALP_PROC_SEQ0
+ )
+)  
+  ]]>
+ </sql>
+
+ <sql id="COLS">
+  <![CDATA[
+WITH T01(C01, C02, C03, C04, C05) AS (
+       SELECT 1, 'CMTBMALP' , 'MALP_CORP_CODE', 'VARCHAR', 4 FROM DUAL
+ UNION SELECT 2, 'CMTBMALP' , 'MALP_STND_GUBN', 'CHAR', 1 FROM DUAL
+ UNION SELECT 3, 'CMTBMALP' , 'MALP_STND_DEGR', 'VARCHAR', 10 FROM DUAL
+ UNION SELECT 4, 'CMTBMALP' , 'MALP_MOLD_CODE', 'VARCHAR', 7 FROM DUAL
+ UNION SELECT 5, 'CMTBMALP' , 'MALP_PROC_SEQ0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 6, 'CMTBMALP' , 'MALP_REGT_NNUMB', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 7, 'CMTBMALP' , 'MALP_ITEM_CODE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 8, 'CMTBMALP' , 'MALP_EQUI_CODE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 9, 'CMTBMALP' , 'MALP_LIFE_MIN0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 10, 'CMTBMALP' , 'MALP_LIFE_MAX0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 11, 'CMTBMALP' , 'MALP_WIDT_MIN0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 12, 'CMTBMALP' , 'MALP_WIDT_MAX0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 13, 'CMTBMALP' , 'MALP_PROD_MIN0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 14, 'CMTBMALP' , 'MALP_PROD_MAX0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 15, 'CMTBMALP' , 'MALP_FACT_A', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 16, 'CMTBMALP' , 'MALP_FACT_B', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 17, 'CMTBMALP' , 'MALP_FACT_C', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 18, 'CMTBMALP' , 'MALP_FACT_D', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 19, 'CMTBMALP' , 'MALP_FACT_E', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 20, 'CMTBMALP' , 'MALP_FACT_F', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 21, 'CMTBMALP' , 'MALP_FACT_G', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 22, 'CMTBMALP' , 'MALP_FACT_SC', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 23, 'CMTBMALP' , 'MALP_FACT_RA', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 24, 'CMTBMALP' , 'MALP_PROC_NAME', 'VARCHAR', 30 FROM DUAL
+ UNION SELECT 25, 'CMTBMALP' , 'MALP_NET0_CYTM', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 26, 'CMTBMALP' , 'MALP_PRSN_CNT0', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 27, 'CMTBMALP' , 'MALP_MACH_CODE', 'VARCHAR', 12 FROM DUAL
+ UNION SELECT 28, 'CMTBMALP' , 'MALP_MODY_PROC', 'VARCHAR', 1 FROM DUAL
+ UNION SELECT 29, 'CMTBMALP' , 'MALP_FACT_Q', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 30, 'CMTBMALP' , 'MALP_FACT_R', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 31, 'CMTBMALP' , 'MALP_FACT_S', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 32, 'CMTBMALP' , 'MALP_MODY_NETCT', 'NUMBER', 22 FROM DUAL
+ UNION SELECT 33, 'CMTBMALP' , 'MALP_INDS_CODE', 'VARCHAR', 2 FROM DUAL
+ UNION SELECT 34, 'CMTBMALP' , 'MALP_APPL_GUBN', 'CHAR', 1 FROM DUAL
+ UNION SELECT 35, 'CMTBMALP' , 'MALP_REMK', 'VARCHAR', 200 FROM DUAL
+ UNION SELECT 36, 'CMTBMALP' , 'MALP_UPDT_CMAN', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 37, 'CMTBMALP' , 'MALP_UPDT_DATE', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 38, 'CMTBMALP' , 'MALP_INIT_CMAN', 'VARCHAR', 8 FROM DUAL
+ UNION SELECT 39, 'CMTBMALP' , 'MALP_INIT_DATE', 'VARCHAR', 8 FROM DUAL
+)
+SELECT CASE WHEN B.COLUMN_NAME IS NULL THEN 'N' ELSE 'Y' END CHK_YN
+      ,A.*
+  FROM T01 A
+      LEFT OUTER JOIN
+       USER_TAB_COLUMNS B
+      ON    B.TABLE_NAME  = A.C02
+        AND B.COLUMN_NAME = A.C03
+ ORDER BY A.C01         
+  ]]>
+ </sql>
+
+ <sql id="DESC">
+  <![CDATA[
+WITH T01(C01, C02, C03) AS (
+       SELECT 1, 'MALP_CORP_CODE', '법인코드' FROM DUAL
+ UNION SELECT 2, 'MALP_STND_GUBN', '표준구분' FROM DUAL
+ UNION SELECT 3, 'MALP_STND_DEGR', '개정차수 ' FROM DUAL
+ UNION SELECT 4, 'MALP_MOLD_CODE', '금형코드' FROM DUAL
+ UNION SELECT 5, 'MALP_PROC_SEQ0', '가공 SEQ' FROM DUAL
+ UNION SELECT 6, 'MALP_REGT_NNUMB', '금형호수' FROM DUAL
+ UNION SELECT 7, 'MALP_ITEM_CODE', 'ITEM구분' FROM DUAL
+ UNION SELECT 8, 'MALP_EQUI_CODE', '적용장비' FROM DUAL
+ UNION SELECT 9, 'MALP_LIFE_MIN0', 'MODEL LIFE MIN' FROM DUAL
+ UNION SELECT 10, 'MALP_LIFE_MAX0', 'MODEL LIFE MAX' FROM DUAL
+ UNION SELECT 11, 'MALP_WIDT_MIN0', '제품장변 MIN' FROM DUAL
+ UNION SELECT 12, 'MALP_WIDT_MAX0', '제품장변 MAX' FROM DUAL
+ UNION SELECT 13, 'MALP_PROD_MIN0', '연간생산수량 MIN' FROM DUAL
+ UNION SELECT 14, 'MALP_PROD_MAX0', '연간생산수량 MAX' FROM DUAL
+ UNION SELECT 15, 'MALP_FACT_A', 'FACT A' FROM DUAL
+ UNION SELECT 16, 'MALP_FACT_B', 'FACT B' FROM DUAL
+ UNION SELECT 17, 'MALP_FACT_C', 'FACT C' FROM DUAL
+ UNION SELECT 18, 'MALP_FACT_D', 'FACT D' FROM DUAL
+ UNION SELECT 19, 'MALP_FACT_E', 'FACT E' FROM DUAL
+ UNION SELECT 20, 'MALP_FACT_F', 'FACT F' FROM DUAL
+ UNION SELECT 21, 'MALP_FACT_G', 'FACT G' FROM DUAL
+ UNION SELECT 22, 'MALP_FACT_SC', 'FACT SC' FROM DUAL
+ UNION SELECT 23, 'MALP_FACT_RA', 'FACT RATE' FROM DUAL
+ UNION SELECT 24, 'MALP_PROC_NAME', '공정명' FROM DUAL
+ UNION SELECT 25, 'MALP_NET0_CYTM', '적용공수' FROM DUAL
+ UNION SELECT 26, 'MALP_PRSN_CNT0', '인원' FROM DUAL
+ UNION SELECT 27, 'MALP_MACH_CODE', '기계경비CODE' FROM DUAL
+ UNION SELECT 28, 'MALP_MODY_PROC', '수정금형대상' FROM DUAL
+ UNION SELECT 29, 'MALP_FACT_Q', '수정금형 FACT Q' FROM DUAL
+ UNION SELECT 30, 'MALP_FACT_R', '수정금형 FACT R' FROM DUAL
+ UNION SELECT 31, 'MALP_FACT_S', '수정금형 FACT S' FROM DUAL
+ UNION SELECT 32, 'MALP_MODY_NETCT', '수정금형 공수' FROM DUAL
+ UNION SELECT 33, 'MALP_INDS_CODE', '업종' FROM DUAL
+ UNION SELECT 34, 'MALP_APPL_GUBN', '적용여부' FROM DUAL
+ UNION SELECT 35, 'MALP_REMK', 'REMARK' FROM DUAL
+ UNION SELECT 36, 'MALP_UPDT_CMAN', '수정자' FROM DUAL
+ UNION SELECT 37, 'MALP_UPDT_DATE', '수정일' FROM DUAL
+ UNION SELECT 38, 'MALP_INIT_CMAN', '등록자' FROM DUAL
+ UNION SELECT 39, 'MALP_INIT_DATE', '등록일' FROM DUAL  
+)
+SELECT CASE WHEN B.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,B.TABLE_NAME
+      ,B.COMMENTS
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       USER_COL_COMMENTS B
+      ON    B.TABLE_NAME  = #table_name#
+        AND B.COLUMN_NAME = A.C02
+   
+  ]]>
+ </sql>
+
+ <sq id="SELECT">
+  <![CDATA[
+WITH T01 (
+  MALP_CORP_CODE
+ ,MALP_STND_GUBN
+ ,MALP_STND_DEGR
+ ,MALP_MOLD_CODE
+ ,MALP_PROC_SEQ0
+ ,MALP_REGT_NNUMB
+ ,MALP_ITEM_CODE
+ ,MALP_EQUI_CODE
+ ,MALP_LIFE_MIN0
+ ,MALP_LIFE_MAX0
+ ,MALP_WIDT_MIN0
+ ,MALP_WIDT_MAX0
+ ,MALP_PROD_MIN0
+ ,MALP_PROD_MAX0
+ ,MALP_FACT_A
+ ,MALP_FACT_B
+ ,MALP_FACT_C
+ ,MALP_FACT_D
+ ,MALP_FACT_E
+ ,MALP_FACT_F
+ ,MALP_FACT_G
+ ,MALP_FACT_SC
+ ,MALP_FACT_RA
+ ,MALP_PROC_NAME
+ ,MALP_NET0_CYTM
+ ,MALP_PRSN_CNT0
+ ,MALP_MACH_CODE
+ ,MALP_MODY_PROC
+ ,MALP_FACT_Q
+ ,MALP_FACT_R
+ ,MALP_FACT_S
+ ,MALP_MODY_NETCT
+ ,MALP_INDS_CODE
+ ,MALP_APPL_GUBN
+ ,MALP_REMK
+ ,MALP_UPDT_CMAN
+ ,MALP_UPDT_DATE
+ ,MALP_INIT_CMAN
+ ,MALP_INIT_DATE
+) AS (
+       SELECT 'K1', 'H', '7-4', 'CTALST', 1, 'GENL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '설계', 150, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 2, 'GENL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'CAM', 250, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 3, 'XXXX', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '설계', 150, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 4, 'XXXX', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'CAM', 250, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 5, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 270, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 6, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 160, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 7, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 230, null, null, '연마', -211, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 8, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 230, null, null, '드릴링', -211, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 9, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 150, null, null, '형상가공1', -212, 1, 'DENC5', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 10, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, 2, null, null, null, 160, null, null, '형상가공2', -211, 1, 'DENC4', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 11, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 2, null, null, null, 116, null, null, '전극가공', -213, 1, 'DENC3', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 12, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 2, null, null, null, 236, null, null, '방전', -213, 0.5, 'DEEDM2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 13, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '용접', 120, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 14, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 160, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 15, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '사상', 160, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 16, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'T/OUT', 200, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 17, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 300, 0, 100000, null, null, null, null, null, null, null, null, 60, 'T/OUT2', 24, 2, 'DEALST-CL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 18, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 0, 300, 100000, 99999999.99, null, null, null, null, null, null, null, null, 60, 'T/OUT2', 24, 2, 'DEALST-CL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 19, 'ALL', 'O_CYLH', 'ALL', 0, 99999999.99, 300, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'T/OUT2', 24, 2, 'DEALST-CL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 20, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 300, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 21, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 4, null, null, null, null, null, 135, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 22, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 50, 30, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 23, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 50, 5, null, '선반', -319, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 24, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 50, null, null, '평면연마', -211, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 25, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 30, 5, null, '원통연마', -319, 1, 'DEGR2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 26, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 3, null, null, null, 85, null, null, '드릴', -213, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 27, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 50, 5, null, 'W/CUT', -319, 1, 'DEWC', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 28, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 6, null, null, null, null, null, 200, 30, null, '형상가공', -311, 1, 'DENC4', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 29, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 30, 30, null, '전극가공', -311, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 30, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 100, 30, null, '방전', -311, 0.5, 'DEEDM2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 31, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 50, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 32, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 150, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 33, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 3, null, null, null, 100, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 34, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 100, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 35, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 300, 0, 100000, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 36, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 0, 300, 100000, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 37, 'ALL', 'O_OIL1', 'ALL', 0, 99999999.99, 300, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 38, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 400, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 39, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 4, null, null, null, null, null, 250, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 40, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 100, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 41, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 50, 5, null, '선반', -319, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 42, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 50, null, null, '평면연마', -211, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 43, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 30, 5, null, '원통연마', -319, 1, 'DEGR2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 44, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 3, null, null, null, 100, null, null, '드릴', -213, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 45, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, 50, 5, null, 'W/CUT', -319, 1, 'DEWC', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 46, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 6, null, null, null, null, null, 300, 30, null, '형상가공', -311, 1, 'DENC4', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 47, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 160, 30, null, '전극가공', -311, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 48, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 100, 30, null, '방전', -311, 0.5, 'DEEDM2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 49, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 50, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 50, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 200, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 51, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 3, null, null, null, 210, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 52, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 120, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 53, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 300, 0, 100000, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 54, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 0, 300, 100000, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 55, 'ALL', 'O_OIL2', 'ALL', 0, 99999999.99, 300, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2차', 50, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 56, 'GENL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 100, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 57, 'GENL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 100, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 58, 'XXXX', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 100, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 59, 'XXXX', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 100, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 60, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 100, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 61, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1.5, null, null, null, null, null, 50, 5, null, '선반', -311, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 62, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '평면연마', -211, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 63, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 50, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 64, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 3, null, null, null, null, 150, 30, null, '형상가공', -312, 1, 'DENC4', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 65, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 30, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 66, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 80, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 67, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 100, null, null, '사상', -212, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 68, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'T/OUT', 70, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 69, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 300, 0, 100000, null, null, null, null, null, null, null, null, 60, 'T/OUT2', 20, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 70, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 0, 300, 100000, 99999999.99, null, null, null, null, null, null, null, null, 60, 'T/OUT2', 20, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 71, 'ALL', 'O_FLYW', 'ALL', 0, 99999999.99, 300, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'T/OUT2', 20, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 72, 'GENL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 80, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 73, 'GENL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 80, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 74, 'XXXX', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 80, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 75, 'XXXX', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 80, 30, null, 'CAM', -311, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 76, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 50, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 77, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 20, 5, null, '선반', -311, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 78, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '평면연마', -211, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 79, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 30, null, null, '드릴', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 80, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 3, null, null, null, null, 150, 30, null, '형상가공', -312, 1, 'DENC4', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 81, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 30, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 82, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 83, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 50, null, null, '사상', -212, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 84, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 70, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 85, 'ALL', 'O_6MAN', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2차', 20, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 86, 'GENL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 40, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 87, 'GENL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 40, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 88, 'XXXX', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 40, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 89, 'XXXX', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, null, 40, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 90, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 40, null, null, '밀링', -212, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 91, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 30, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 92, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '연마', -212, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 93, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 94, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, 2, null, null, null, null, null, 20, 50, null, '형상가공1', -311, 1, 'DENC3', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 95, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 30, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 96, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 30, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 97, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, 1, null, null, null, 30, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 98, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 99, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 300, 0, 100000, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 10, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 100, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 0, 300, 100000, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2차', 10, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALST', 101, 'ALL', 'O_GENL', 'ALL', 0, 99999999.99, 300, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2차', 10, 2, 'DEALST-GL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 102, 'GENL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '설계', 50, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 103, 'GENL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'CAM', 120, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 104, 'XXXX', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '설계', 50, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 105, 'XXXX', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'CAM', 120, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 106, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '밀링', 60, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 107, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 75, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 108, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '연마', 100, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 109, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 5, null, null, null, null, 100, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 110, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 5, null, 100, null, null, '형상가공', -215, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 111, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 20, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 112, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 113, 'ALL', 'C_CYLH', 'ALL', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 3, null, null, null, null, 50, null, null, '사상', -212, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 114, 'ALL', 'C_CYLH', 'SHEL_V1', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 100, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 115, 'ALL', 'C_CYLH', 'SHEL_V2', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 100, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 116, 'ALL', 'C_CYLH', 'SHEL_V1', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 30, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 117, 'ALL', 'C_CYLH', 'SHEL_V2', 0, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 30, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 118, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 119, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 120, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 50, null, null, '밀링', -212, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 121, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 122, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 30, null, null, '연마', -212, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 123, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 124, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 2, null, 70, null, null, '형상가공', -215, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 125, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 20, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 126, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 127, 'ALL', 'C_OILP', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, 2, null, null, 20, null, null, '사상', -214, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 128, 'ALL', 'C_OILP', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 129, 'ALL', 'C_OILP', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 130, 'ALL', 'C_OILP', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 131, 'ALL', 'C_OILP', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 132, 'GENL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 133, 'GENL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 134, 'XXXX', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 135, 'XXXX', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 136, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 50, null, null, '밀링', -212, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 137, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 138, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 30, null, null, '연마', -212, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 139, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 140, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 2, null, 70, null, null, '형상가공', -215, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 141, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 20, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 142, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 143, 'ALL', 'C_FLYW', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, 2, null, null, 20, null, null, '사상', -214, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 144, 'ALL', 'C_FLYW', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 145, 'ALL', 'C_FLYW', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 146, 'ALL', 'C_FLYW', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 147, 'ALL', 'C_FLYW', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 148, 'GENL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 149, 'GENL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 150, 'XXXX', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 151, 'XXXX', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 152, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 50, null, null, '밀링', -212, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 153, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 154, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 30, null, null, '연마', -212, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 155, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 156, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 2, null, 70, null, null, '형상가공', -215, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 157, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 20, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 158, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 159, 'ALL', 'C_MANI', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, 2, null, null, 20, null, null, '사상', -214, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 160, 'ALL', 'C_MANI', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 161, 'ALL', 'C_MANI', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 162, 'ALL', 'C_MANI', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 163, 'ALL', 'C_MANI', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 164, 'GENL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 165, 'GENL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 166, 'XXXX', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, '설계', -215, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 167, 'XXXX', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 1, null, 40, null, null, 'CAM', -215, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 168, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 50, null, null, '밀링', -212, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 169, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 170, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 1, null, null, null, null, 30, null, null, '연마', -212, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 171, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, 2, null, null, null, null, 30, null, null, '드릴링', -212, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 172, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, 2, null, 70, null, null, '형상가공', -215, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 173, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 20, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 174, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 175, 'ALL', 'C_GENL', 'ALL', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, 2, null, null, 20, null, null, '사상', -214, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 176, 'ALL', 'C_GENL', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 177, 'ALL', 'C_GENL', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 178, 'ALL', 'C_GENL', 'SHEL_V1', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 179, 'ALL', 'C_GENL', 'SHEL_V2', 100000, 99999999.99, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 180, 'GENL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 181, 'GENL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 182, 'XXXX', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 183, 'XXXX', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 184, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 10, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 185, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 186, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 0.5, null, null, null, 10, null, null, '연마', -213, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 187, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '드릴링', 10, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 188, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, 2, 20, 50, null, '형상가공', -411, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 189, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 10, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 190, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 191, 'ALL', 'C_OILP', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 1, null, null, null, 30, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 192, 'ALL', 'C_OILP', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 193, 'ALL', 'C_OILP', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 194, 'ALL', 'C_OILP', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 195, 'ALL', 'C_OILP', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 196, 'GENL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 197, 'GENL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 198, 'XXXX', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 199, 'XXXX', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 200, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 10, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 201, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 202, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 0.5, null, null, null, 10, null, null, '연마', -213, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 203, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '드릴링', 10, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 204, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, 3, 20, 50, null, '형상가공', -411, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 205, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 10, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 206, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 207, 'ALL', 'C_FLYW', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 1, null, null, null, 30, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 208, 'ALL', 'C_FLYW', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 209, 'ALL', 'C_FLYW', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 210, 'ALL', 'C_FLYW', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 211, 'ALL', 'C_FLYW', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 212, 'GENL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 213, 'GENL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 214, 'XXXX', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 215, 'XXXX', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 216, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 10, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 217, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 218, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 0.5, null, null, null, 10, null, null, '연마', -213, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 219, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '드릴링', 10, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 220, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, 13, 20, 50, null, '형상가공', -411, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 221, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 10, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 222, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 223, 'ALL', 'C_MANI', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 1, null, null, null, 30, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 224, 'ALL', 'C_MANI', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 225, 'ALL', 'C_MANI', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 226, 'ALL', 'C_MANI', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 227, 'ALL', 'C_MANI', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 228, 'GENL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 229, 'GENL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 230, 'XXXX', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, '설계', -211, 1, 'DECAD', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 231, 'XXXX', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 20, null, null, 'CAM', -211, 1, 'DECAM', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 232, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 0.5, null, null, null, null, null, 10, null, null, '밀링', -211, 1, 'DEMILL', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 233, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '선반', 10, 1, 'DELT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 234, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 0.5, null, null, null, 10, null, null, '연마', -213, 1, 'DEGR1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 235, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '드릴링', 10, 1, 'DEDR', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 236, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, 1, null, null, null, null, 1, 20, 50, null, '형상가공', -411, 1, 'DENC2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 237, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '접합', 10, 1, 'DED/SPT2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 238, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, '조립', 20, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 239, 'ALL', 'C_GENL', 'ALL', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, 1, null, null, null, 30, null, null, '사상', -213, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 240, 'ALL', 'C_GENL', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 241, 'ALL', 'C_GENL', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT', 50, 1, NULL, NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 242, 'ALL', 'C_GENL', 'SHEL_V1', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, 60, 'TRY OUT 2', 10, 2, 'DEALCO-SV1', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+ UNION SELECT 'K1', 'H', '7-4', 'CTALCO', 243, 'ALL', 'C_GENL', 'SHEL_V2', 0, 100000, 0, 99999999.99, 0, 99999999.99, null, null, null, null, null, null, null, null, null, 'TRY OUT 2', 10, 2, 'DEALCO-SV2', NULL, null, null, null, null, 'DE', 'Y', NULL, 'SYSTEM24', '20240206', 'SYSTEM24', '20240206' FROM DUAL
+)
+SELECT CASE WHEN B.MALP_CORP_CODE IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
+      ,A.* 
+  FROM T01 A
+      LEFT OUTER JOIN 
+       CMTBMALP B
+      ON    B.MALP_CORP_CODE = A.MALP_CORP_CODE
+        AND B.MALP_STND_GUBN = A.MALP_STND_GUBN
+        AND B.MALP_STND_DEGR = A.MALP_STND_DEGR
+        AND B.MALP_MOLD_CODE = A.MALP_MOLD_CODE
+        AND B.MALP_PROC_SEQ0 = A.MALP_PROC_SEQ0
+  ]]>
+ </sq> 
+
+ <sq id="INSERT">
+  <![CDATA[
+INSERT INTO CMTBMALP (
+  MALP_CORP_CODE
+ ,MALP_STND_GUBN
+ ,MALP_STND_DEGR
+ ,MALP_MOLD_CODE
+ ,MALP_PROC_SEQ0
+ ,MALP_REGT_NNUMB
+ ,MALP_ITEM_CODE
+ ,MALP_EQUI_CODE
+ ,MALP_LIFE_MIN0
+ ,MALP_LIFE_MAX0
+ ,MALP_WIDT_MIN0
+ ,MALP_WIDT_MAX0
+ ,MALP_PROD_MIN0
+ ,MALP_PROD_MAX0
+ ,MALP_FACT_A
+ ,MALP_FACT_B
+ ,MALP_FACT_C
+ ,MALP_FACT_D
+ ,MALP_FACT_E
+ ,MALP_FACT_F
+ ,MALP_FACT_G
+ ,MALP_FACT_SC
+ ,MALP_FACT_RA
+ ,MALP_PROC_NAME
+ ,MALP_NET0_CYTM
+ ,MALP_PRSN_CNT0
+ ,MALP_MACH_CODE
+ ,MALP_MODY_PROC
+ ,MALP_FACT_Q
+ ,MALP_FACT_R
+ ,MALP_FACT_S
+ ,MALP_MODY_NETCT
+ ,MALP_INDS_CODE
+ ,MALP_APPL_GUBN
+ ,MALP_REMK
+ ,MALP_UPDT_CMAN
+ ,MALP_UPDT_DATE
+ ,MALP_INIT_CMAN
+ ,MALP_INIT_DATE
+) VALUES (
+  #malp_corp_code#
+ ,#malp_stnd_gubn#
+ ,#malp_stnd_degr#
+ ,#malp_mold_code#
+ ,#malp_proc_seq0#
+ ,#malp_regt_nnumb#
+ ,#malp_item_code#
+ ,#malp_equi_code#
+ ,#malp_life_min0#
+ ,#malp_life_max0#
+ ,#malp_widt_min0#
+ ,#malp_widt_max0#
+ ,#malp_prod_min0#
+ ,#malp_prod_max0#
+ ,#malp_fact_a#
+ ,#malp_fact_b#
+ ,#malp_fact_c#
+ ,#malp_fact_d#
+ ,#malp_fact_e#
+ ,#malp_fact_f#
+ ,#malp_fact_g#
+ ,#malp_fact_sc#
+ ,#malp_fact_ra#
+ ,#malp_proc_name#
+ ,#malp_net0_cytm#
+ ,#malp_prsn_cnt0#
+ ,#malp_mach_code#
+ ,#malp_mody_proc#
+ ,#malp_fact_q#
+ ,#malp_fact_r#
+ ,#malp_fact_s#
+ ,#malp_mody_netct#
+ ,#malp_inds_code#
+ ,#malp_appl_gubn#
+ ,#malp_remk#
+ ,#malp_updt_cman#
+ ,#malp_updt_date#
+ ,#malp_init_cman#
+ ,#malp_init_date#
+)
+  ]]>
+ </sq> 
+
+ <sq id="SELECT.MALC.7-4">
+  <![CDATA[
+SELECT *
+  FROM CMTBMALP
+ WHERE MALP_STND_DEGR = '7-4'
+ ORDER BY MALP_PROC_SEQ0  
+  ]]>
+ </sq> 
+ 
+</sql-descriptor>
