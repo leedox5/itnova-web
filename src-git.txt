@@ -25,6 +25,7 @@ src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTCD.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMTDG.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMATL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBMCIF.xml
+src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBPKCL.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CITBPKMS.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAI.xml
 src\volcano-conf\sqls\tcams\sql-bp-tcams-init-CATBBRAM.xml
