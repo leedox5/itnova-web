@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping package="kr.leedox">
+  <class name="Pkcl" table="PFRKPKCL" schema="MCMFLE">
+    <composite-id name="pkclPK" class="PkclPK">
+      <key-property name="key1" column="PKCL_COME_CODE"/>
+      <key-property name="key2" column="PKCL_TABL_ID"/>
+      <key-property name="key3" column="PKCL_COLM_ID"/>
+    </composite-id>
+    <property name="pkclSortNumb"/>
+    <property name="pkclColmAlgn"/>
+    <property name="pkclWithScrn"/>
+    <property name="pkclUpdtDate"/>
+  </class>
+</hibernate-mapping>
