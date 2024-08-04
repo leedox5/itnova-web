@@ -1,5 +1,9 @@
 package kr.leedox;
 
+import java.util.ArrayList;
+
+import org.assertj.core.util.Arrays;
+
 public class Util {
 
     public static String repeat(String str, int count) {
@@ -10,4 +14,9 @@ public class Util {
         return sb.toString();
     }
 
+    public static Object[] append(Object[] obj, Object[] newObj) {
+        ArrayList<Object> temp = new ArrayList<Object>(Arrays.asList(obj));
+        temp.add(newObj);
+        return temp.toArray();
+    }
 }
