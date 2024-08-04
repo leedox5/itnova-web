@@ -3,10 +3,9 @@ package kr.leedox;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
-import org.hibernate.service.ServiceRegistryBuilder;
-
 import emro.util.CalendarUtil;
 
 public class PkclUpdater {
@@ -15,9 +14,9 @@ public class PkclUpdater {
 
     public static void init() {
         try {
-            Configuration config = new Configuration().configure("hibernate.config.xml");
+            Configuration config = new Configuration().configure("hibernate.cfg.tibero.xml");
             config.setNamingStrategy(new CustomNamingStrategy());
-            ServiceRegistry serviceRegistry = new ServiceRegistryBuilder().applySettings(config.getProperties()).buildServiceRegistry();
+            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(config.getProperties()).build();
             sessionFactory = config.buildSessionFactory(serviceRegistry);
         } catch(Throwable ex) {
             System.err.println(ex.getMessage());
@@ -57,10 +56,11 @@ public class PkclUpdater {
             String key1 = (String) pkclData[0];
             String key2 = (String) pkclData[1];
             String key3 = (String) pkclData[2];
-            int scrnWidth = (int) pkclData[3];
-            String align = (String) pkclData[4];
+            String key4 = (String) pkclData[3];
+            int scrnWidth = (int) pkclData[4];
+            String align = (String) pkclData[5];
 
-            PkclPK pkclPK = new PkclPK(key1, key2, key3);
+            PkclPK pkclPK = new PkclPK(key1, key2, key3, key4);
             Pkcl pkcl = (Pkcl) session.get(Pkcl.class, pkclPK);
 
             if(pkcl == null) {
