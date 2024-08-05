@@ -6,14 +6,22 @@ public class PkclPK implements Serializable {
     private String key1;
     private String key2;
     private String key3;
+    private String key4;
     public PkclPK() {
         super();
     }
-    public PkclPK(String key1, String key2, String key3) {
+    public String getKey4() {
+        return key4;
+    }
+    public void setKey4(String key4) {
+        this.key4 = key4;
+    }
+    public PkclPK(String key1, String key2, String key3, String key4) {
         super();
         this.key1 = key1;
         this.key2 = key2;
         this.key3 = key3;
+        this.key4 = key4;
     }
     @Override
     public int hashCode() {

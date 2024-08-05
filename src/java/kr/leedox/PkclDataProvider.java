@@ -19,7 +19,7 @@ public class PkclDataProvider {
             String line;
             while((line = reader.readLine()) != null) {
                 String[] arr = line.split(",");
-                pkcls = Util.append(pkcls, new Object[] {come, "PFRA" + pkgt, pkgt + "_" + arr[0].trim(), Integer.parseInt(arr[1].trim()), arr[2].trim()});
+                pkcls = Util.append(pkcls, new Object[] {"K1", come, "CATB" + pkgt, pkgt + "_" + arr[0].trim(), Integer.parseInt(arr[1].trim()), arr[2].trim()});
             }
         } catch(IOException e) {
             e.printStackTrace();
