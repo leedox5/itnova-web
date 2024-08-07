@@ -97,7 +97,7 @@ public class PkclUpdater {
 
     private static void showPkcl(String chk, Pkcl pkcl) {
         String msg = String.format("%s: %2d %-15s ==> %s %3d %s", chk, pkcl.getPkclSortNumb(),
-                pkcl.getPkclPK().getKey3(), pkcl.getPkclColmAlgn(), pkcl.getPkclWithScrn(), pkcl.getPkclUpdtDate());
+                pkcl.getPkclPK().getKey4(), pkcl.getPkclColmAlgn(), pkcl.getPkclWithScrn(), pkcl.getPkclUpdtDate());
         System.out.println(msg);
     }
 }
