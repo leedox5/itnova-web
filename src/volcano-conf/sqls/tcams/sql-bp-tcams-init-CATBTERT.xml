@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sql-descriptor id="bp/tcams/init/CATBTERT" data-source="tcamsDS">
 
- <sql id="CREATE">
+  <sql id="CREATE">
   <![CDATA[
-CREATE TABLE CATBTERT(
+CREATE TABLE IF NOT EXISTS CATBTERT(
  TERT_CORP_CODE VARCHAR(4),
  TERT_STND_GUBN CHAR(1),
  TERT_STND_DEGR VARCHAR(10),
@@ -28,7 +28,7 @@ CREATE TABLE CATBTERT(
   ]]>
  </sql>
 
- <sql id="COLS">
+  <sql id="COLS">
   <![CDATA[
 WITH T01(C01, C02, C03, C04, C05) AS (
        SELECT 1, 'CATBTERT' , 'TERT_CORP_CODE', 'VARCHAR', 4 FROM DUAL
@@ -57,7 +57,7 @@ SELECT CASE WHEN B.COLUMN_NAME IS NULL THEN 'N' ELSE 'Y' END CHK_YN
   ]]>
  </sql>
 
- <sql id="DESC">
+  <sql id="DESC">
   <![CDATA[
 WITH T01(C01, C02, C03) AS (
        SELECT 1, 'TERT_CORP_CODE', '법인코드' FROM DUAL
@@ -88,7 +88,7 @@ SELECT CASE WHEN B.COMMENTS IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
   ]]>
  </sql>
 
- <sq id="SELECT">
+  <sq id="SELECT">
   <![CDATA[
 WITH T01 (
   TERT_CORP_CODE
@@ -118,9 +118,9 @@ SELECT CASE WHEN B.SYS_ID IS NOT NULL THEN 'Y' ELSE 'N' END CHK_YN
         AND B.TERT_STND_DEGR = A.TERT_STND_DEGR
         AND B.TERT_SEQ0 = A.TERT_SEQ0
   ]]>
- </sq> 
+ </sq>
 
- <sq id="INSERT">
+  <sq id="INSERT">
   <![CDATA[
 INSERT INTO CATBTERT (
   TERT_CORP_CODE
@@ -154,14 +154,14 @@ INSERT INTO CATBTERT (
  ,#tert_init_date#
 )
   ]]>
- </sq> 
+ </sq>
 
- <sq id="SELECT.2407.01">
+  <sq id="SELECT.2407.01">
   <![CDATA[
 SELECT *
   FROM CATBTERT
  WHERE TERT_STND_DEGR = '16-3'  
   ]]>
- </sq> 
- 
+ </sq>
+
 </sql-descriptor>

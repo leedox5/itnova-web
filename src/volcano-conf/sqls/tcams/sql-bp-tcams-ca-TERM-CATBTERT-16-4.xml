@@ -1,7 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <sql-descriptor id="bp/tcams/ca/TERM/CATBTERT/16-4" data-source="tcamsDS">
 
- <sql id="select" comment="조회">
+  <sql id="select.240819">
+  <![CDATA[ 
+  WITH T1 (
+    TERT_CORP_CODE
+   ,TERT_STND_GUBN
+   ,TERT_STND_DEGR
+   ,TERT_SEQ0
+   ,TERT_TERM_CODE
+   ,TERT_SPM0_REMK
+   ,TERT_SHAP_REMK
+   ,TERT_ADD0_REMK
+   ,TERT_APPL_GUBN
+   ,TERT_REMK
+   ,TERT_UPDT_CMAN
+   ,TERT_UPDT_DATE
+   ,TERT_INIT_CMAN
+   ,TERT_INIT_DATE
+  ) AS (
+         SELECT 'K1' ,'H' ,'16-4' ,'1' ,'EAR_RING' ,'230' ,'' ,'' ,'Y' ,'' ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+   UNION SELECT 'K1' ,'H' ,'16-4' ,'2' ,'GEN_RING' ,'450' ,'' ,'' ,'Y' ,'' ,'ADMIN243' ,'20240801' ,'ADMIN243' ,'20240801'  FROM DUAL
+  )
+  SELECT CASE                                                   
+          WHEN B.TERT_CORP_CODE IS NULL THEN 'I'             
+          WHEN A.TERT_UPDT_DATE > B.TERT_UPDT_DATE THEN 'U'  
+          ELSE 'X'
+         END MG_MODE                                         
+        ,A.*                                                 
+    FROM T1 A                                                
+        LEFT OUTER JOIN                                      
+         CATBTERT B                                          
+        ON    B.TERT_CORP_CODE = A.TERT_CORP_CODE
+          AND B.TERT_STND_GUBN = A.TERT_STND_GUBN
+          AND B.TERT_STND_DEGR = A.TERT_STND_DEGR
+          AND B.TERT_SEQ0 = A.TERT_SEQ0
+  ]]>
+ </sql>
+
+  <sql id="select" comment="조회">
   <![CDATA[
 WITH T1 (
   TERT_CORP_CODE
@@ -47,7 +84,7 @@ SELECT CASE
   ]]>
  </sql>
 
- <sql id="insert" comment="저장">
+  <sql id="insert" comment="저장">
   <![CDATA[ 
 INSERT INTO CATBTERT (
   TERT_CORP_CODE
@@ -83,7 +120,7 @@ INSERT INTO CATBTERT (
   ]]>
  </sql>
 
- <sql id="update" comment="업데이트">
+  <sql id="update" comment="업데이트">
   <![CDATA[
 UPDATE CATBTERT
    SET TERT_TERM_CODE = #tert_term_code#

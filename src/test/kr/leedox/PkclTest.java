@@ -58,7 +58,7 @@ public class PkclTest {
     @Test
     public void scriptTest() {
         Session session = sessionFactory.getCurrentSession();
-        String script = ScriptHelper.getFromXml("SELECT");
+        String script = ScriptHelper.getFromXml("CITBPKCL", "SELECT");
 
         System.out.println(script);
 
